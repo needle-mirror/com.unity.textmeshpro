@@ -18,7 +18,6 @@ namespace TMPro
     [RequireComponent(typeof(RectTransform))]
     [RequireComponent(typeof(CanvasRenderer))]
     [AddComponentMenu("UI/TextMeshPro - Text (UI)", 11)]
-    [SelectionBase]
     public partial class TextMeshProUGUI : TMP_Text, ILayoutElement
     {
         /// <summary>

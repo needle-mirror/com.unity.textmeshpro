@@ -11,10 +11,9 @@ namespace TMPro
     [RequireComponent(typeof(MeshRenderer))]
     [RequireComponent(typeof(MeshFilter))] 
     [AddComponentMenu("Mesh/TextMeshPro - Text")]
-    [SelectionBase]
     public partial class TextMeshPro : TMP_Text, ILayoutElement
     {
-        // Public Properties and Serializable Properties  
+        // Public Properties and Serializable Properties
 
         /// <summary>
         /// Sets the Renderer's sorting Layer ID

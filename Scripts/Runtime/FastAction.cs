@@ -1,11 +1,4 @@
-﻿// Copyright (C) 2014 - 2016 Stephan Bouchard - All Rights Reserved
-// This code can only be used under the standard Unity Asset Store End User License Agreement
-// A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
-
-// This improved method of handling the various events used by TextMesh Pro was contributed by TowerOfBricks aka Aron Granberg.
-
-
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 

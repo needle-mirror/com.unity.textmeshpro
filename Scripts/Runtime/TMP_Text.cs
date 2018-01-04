@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿#define TMP_PRESENT
+
+using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -3475,6 +3477,7 @@ namespace TMPro
             // Reset auto sizing point size bounds
             m_minFontSize = m_fontSizeMin;
             m_maxFontSize = m_fontSizeMax;
+            m_charWidthAdjDelta = 0;
 
             // Set Margins to Infinity
             Vector2 margin = k_LargePositiveVector2;
@@ -3508,6 +3511,7 @@ namespace TMPro
             // Reset auto sizing point size bounds
             m_minFontSize = m_fontSizeMin;
             m_maxFontSize = m_fontSizeMax;
+            m_charWidthAdjDelta = 0;
 
             m_recursiveCount = 0;
             float preferredWidth = CalculatePreferredValues(fontSize, margin, true).x;
@@ -3531,6 +3535,7 @@ namespace TMPro
             // Reset auto sizing point size bounds
             m_minFontSize = m_fontSizeMin;
             m_maxFontSize = m_fontSizeMax;
+            m_charWidthAdjDelta = 0;
 
             Vector2 margin = new Vector2(m_marginWidth != 0 ? m_marginWidth : k_LargePositiveFloat, k_LargePositiveFloat);
 
@@ -3563,6 +3568,7 @@ namespace TMPro
             // Reset auto sizing point size bounds
             m_minFontSize = m_fontSizeMin;
             m_maxFontSize = m_fontSizeMax;
+            m_charWidthAdjDelta = 0;
 
             m_recursiveCount = 0;
             float preferredHeight = CalculatePreferredValues(fontSize, margin, true).y;
@@ -3668,12 +3674,10 @@ namespace TMPro
             }
 
             // Calculate the scale of the font based on selected font size and sampling point size.
-            m_fontScale = (defaultFontSize / m_currentFontAsset.fontInfo.PointSize * (m_isOrthographic ? 1 : 0.1f));
+            // baseScale is calculated using the font asset assigned to the text object.
+            float baseScale = m_fontScale = (defaultFontSize / m_fontAsset.fontInfo.PointSize * m_fontAsset.fontInfo.Scale * (m_isOrthographic ? 1 : 0.1f));
+            float currentElementScale = baseScale;
             m_fontScaleMultiplier = 1;
-
-            // baseScale is calculated based on the font asset assigned to the text object.
-            float baseScale = (defaultFontSize / m_fontAsset.fontInfo.PointSize * m_fontAsset.fontInfo.Scale * (m_isOrthographic ? 1 : 0.1f));
-            float currentElementScale = m_fontScale;
 
             m_currentFontSize = defaultFontSize;
             m_sizeStack.SetDefault(m_currentFontSize);
@@ -3880,19 +3884,43 @@ namespace TMPro
 
                 // Handle Kerning if Enabled.
                 #region Handle Kerning
-                if (m_enableKerning && m_characterCount >= 1)
+                GlyphValueRecord glyphAdjustments = new GlyphValueRecord();
+                if (m_enableKerning)
                 {
-                    int prev_charCode = m_internalCharacterInfo[m_characterCount - 1].character;
-                    KerningPairKey keyValue = new KerningPairKey(prev_charCode, charCode);
+                    KerningPair adjustmentPair = null;
 
-                    KerningPair pair;
-
-                    m_currentFontAsset.kerningDictionary.TryGetValue(keyValue.key, out pair);
-                    if (pair != null)
+                    if (m_characterCount < totalCharacterCount - 1)
                     {
-                        m_xAdvance += pair.XadvanceOffset * currentElementScale;
+                        uint nextGlyph = m_textInfo.characterInfo[m_characterCount + 1].character;
+                        KerningPairKey keyValue = new KerningPairKey((uint)charCode, nextGlyph);
+
+                        m_currentFontAsset.kerningDictionary.TryGetValue((int)keyValue.key, out adjustmentPair);
+                        if (adjustmentPair != null)
+                            glyphAdjustments = adjustmentPair.firstGlyphAdjustments;
+                    }
+
+                    if (m_characterCount >= 1)
+                    {
+                        uint previousGlyph = m_textInfo.characterInfo[m_characterCount - 1].character;
+                        KerningPairKey keyValue = new KerningPairKey(previousGlyph, (uint)charCode);
+
+                        m_currentFontAsset.kerningDictionary.TryGetValue((int)keyValue.key, out adjustmentPair);
+                        if (adjustmentPair != null)
+                            glyphAdjustments += adjustmentPair.secondGlyphAdjustments;
                     }
                 }
+                #endregion
+
+
+                // Initial Implementation for RTL support.
+                #region Handle Right-to-Left
+                //if (m_isRightToLeft)
+                //{
+                //    m_xAdvance -= ((m_cached_TextElement.xAdvance * bold_xAdvance_multiplier + m_characterSpacing + m_wordSpacing + m_currentFontAsset.normalSpacingOffset) * currentElementScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
+
+                //    if (char.IsWhiteSpace((char)charCode) || charCode == 0x200B)
+                //        m_xAdvance -= m_wordSpacing * currentElementScale;
+                //}
                 #endregion
 
 
@@ -3960,8 +3988,9 @@ namespace TMPro
                     bool isJustifiedOrFlush = ((_HorizontalAlignmentOptions)m_lineJustification & _HorizontalAlignmentOptions.Flush) == _HorizontalAlignmentOptions.Flush || ((_HorizontalAlignmentOptions)m_lineJustification & _HorizontalAlignmentOptions.Justified) == _HorizontalAlignmentOptions.Justified;
 
                     // Calculate the line breaking width of the text.
-                    linebreakingWidth = m_xAdvance + m_cached_TextElement.xAdvance * (charCode != 0xAD ? currentElementScale : old_scale);
+                    linebreakingWidth = m_xAdvance + m_cached_TextElement.xAdvance * (1 - m_charWidthAdjDelta) * (charCode != 0xAD ? currentElementScale : old_scale);
 
+                    // Check if Character exceeds the width of the Text Container
                     if (linebreakingWidth > width * (isJustifiedOrFlush ? 1.05f : 1.0f))
                     {
                         // Word Wrapping
@@ -3974,29 +4003,27 @@ namespace TMPro
                             {
                                 // Word wrapping is no longer possible. Shrink size of text if auto-sizing is enabled.
                                 #region Text Auto-Sizing
-                                //if (ignoreTextAutoSizing == false && m_currentFontSize > m_fontSizeMin)
-                                //{
-                                //    // Handle Character Width Adjustments
-                                //    #region Character Width Adjustments
-                                //    if (m_charWidthAdjDelta < m_charWidthMaxAdj / 100)
-                                //    {
-                                //        //loopCountA = 0;
-                                //        //m_charWidthAdjDelta += 0.01f;
-                                //        //GenerateTextMesh();
-                                //        //return Vector2.zero;
-                                //    }
-                                //    #endregion
+                                if (ignoreTextAutoSizing == false && m_currentFontSize > m_fontSizeMin)
+                                {
+                                    // Handle Character Width Adjustments
+                                    #region Character Width Adjustments
+                                    if (m_charWidthAdjDelta < m_charWidthMaxAdj / 100)
+                                    {
+                                        m_recursiveCount = 0;
+                                        m_charWidthAdjDelta += 0.01f;
+                                        return CalculatePreferredValues(defaultFontSize, marginSize, false);
+                                    }
+                                    #endregion
 
-                                //    // Adjust Point Size
-                                //    m_maxFontSize = m_currentFontSize;
+                                    // Adjust Point Size
+                                    m_maxFontSize = defaultFontSize;
 
-                                //    m_currentFontSize -= Mathf.Max((m_currentFontSize - m_minFontSize) / 2, 0.05f);
-                                //    m_currentFontSize = (int)(Mathf.Max(m_currentFontSize, m_fontSizeMin) * 20 + 0.5f) / 20f;
+                                    defaultFontSize -= Mathf.Max((defaultFontSize - m_minFontSize) / 2, 0.05f);
+                                    defaultFontSize = (int)(Mathf.Max(defaultFontSize, m_fontSizeMin) * 20 + 0.5f) / 20f;
 
-                                //    if (m_recursiveCount > 20) return new Vector2(renderedWidth, renderedHeight);
-                                //    Vector2 preferredValues = CalculatePreferredValues(m_currentFontSize, marginSize, false);
-                                //    return preferredValues;
-                                //}
+                                    if (m_recursiveCount > 20) return new Vector2(renderedWidth, renderedHeight);
+                                    return CalculatePreferredValues(defaultFontSize, marginSize, false);
+                                }
                                 #endregion
 
                                 // Word wrapping is no longer possible, now breaking up individual words.
@@ -4018,8 +4045,7 @@ namespace TMPro
                             {
                                 m_isTextTruncated = true;
                                 m_char_buffer[i] = 0x2D;
-                                CalculatePreferredValues(defaultFontSize, marginSize, true);
-                                return Vector2.zero;
+                                return CalculatePreferredValues(defaultFontSize, marginSize, true);
                             }
 
                             // Check if Line Spacing of previous line needs to be adjusted.
@@ -4095,10 +4121,9 @@ namespace TMPro
                             #region Character Width Adjustments
                             if (m_charWidthAdjDelta < m_charWidthMaxAdj / 100)
                             {
-                                //loopCountA = 0;
-                                //m_charWidthAdjDelta += 0.01f;
-                                //GenerateTextMesh();
-                                //return;
+                                m_recursiveCount = 0;
+                                m_charWidthAdjDelta += 0.01f;
+                                return CalculatePreferredValues(defaultFontSize, marginSize, false);
                             }
                             #endregion
 
@@ -4109,8 +4134,7 @@ namespace TMPro
                             defaultFontSize = (int)(Mathf.Max(defaultFontSize, m_fontSizeMin) * 20 + 0.5f) / 20f;
 
                             if (m_recursiveCount > 20) return new Vector2(renderedWidth, renderedHeight);
-                            Vector2 preferredValues = CalculatePreferredValues(defaultFontSize, marginSize, false);
-                            return preferredValues;
+                            return CalculatePreferredValues(defaultFontSize, marginSize, false);
                         }
                         #endregion End Text Auto-Sizing
                     }
@@ -4176,6 +4200,7 @@ namespace TMPro
                 */
                 #endregion Check Vertical Bounds
 
+
                 // Handle xAdvance & Tabulation Stops. Tab stops at every 25% of Font Size.
                 #region XAdvance, Tabulation & Stops
                 if (charCode == 9)
@@ -4186,14 +4211,14 @@ namespace TMPro
                 }
                 else if (m_monoSpacing != 0)
                 {
-                    m_xAdvance += m_monoSpacing - monoAdvance + ((m_characterSpacing + m_currentFontAsset.normalSpacingOffset) * currentElementScale) + m_cSpacing;
+                    m_xAdvance += (m_monoSpacing - monoAdvance + ((m_characterSpacing + m_currentFontAsset.normalSpacingOffset) * currentElementScale) + m_cSpacing) * (1 - m_charWidthAdjDelta);
 
                     if (char.IsWhiteSpace((char)charCode) || charCode == 0x200B)
                         m_xAdvance += m_wordSpacing * currentElementScale;
                 }
                 else
                 {
-                    m_xAdvance += (m_cached_TextElement.xAdvance * bold_xAdvance_multiplier + m_characterSpacing + m_currentFontAsset.normalSpacingOffset) * currentElementScale + m_cSpacing;
+                    m_xAdvance += ((m_cached_TextElement.xAdvance * bold_xAdvance_multiplier + m_characterSpacing + m_currentFontAsset.normalSpacingOffset + glyphAdjustments.xAdvance) * currentElementScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
 
                     if (char.IsWhiteSpace((char)charCode) || charCode == 0x200B)
                         m_xAdvance += m_wordSpacing * currentElementScale;
@@ -4331,8 +4356,7 @@ namespace TMPro
                 defaultFontSize = (int)(Mathf.Min(defaultFontSize, m_fontSizeMax) * 20 + 0.5f) / 20f;
 
                 if (m_recursiveCount > 20) return new Vector2(renderedWidth, renderedHeight);
-                Vector2 preferredValues = CalculatePreferredValues(defaultFontSize, marginSize, false);
-                return preferredValues;
+                return CalculatePreferredValues(defaultFontSize, marginSize, false);
             }
             #endregion End Auto-sizing Check
 
@@ -6614,8 +6638,8 @@ namespace TMPro
                     case 374360934: // </material>
                     case 343615334: // </MATERIAL>
                         {
-                            if (m_currentMaterial.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID() != m_materialReferenceStack.PreviousItem().material.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID())
-                                return false;
+                            //if (m_currentMaterial.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID() != m_materialReferenceStack.PreviousItem().material.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID())
+                            //    return false;
 
                             MaterialReference materialReference = m_materialReferenceStack.Remove();
 

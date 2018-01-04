@@ -1,9 +1,4 @@
-﻿// Copyright (C) 2014 - 2016 Stephan Bouchard - All Rights Reserved
-// This code can only be used under the standard Unity Asset Store End User License Agreement
-// A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
-
-
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -26,7 +21,6 @@ namespace TMPro.EditorUtilities
             TextMeshPro textMeshPro = go.AddComponent<TextMeshPro>();
             textMeshPro.text = "Sample text";
             textMeshPro.alignment = TextAlignmentOptions.TopLeft;
-            //textMeshPro.rectTransform.sizeDelta = new Vector2(20, 5);
 
             Undo.RegisterCreatedObjectUndo((Object)go, "Create " + go.name);
 
@@ -243,7 +237,6 @@ namespace TMPro.EditorUtilities
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             root.AddComponent<CanvasScaler>();
             root.AddComponent<GraphicRaycaster>();
-
             Undo.RegisterCreatedObjectUndo(root, "Create " + root.name);
 
             // if there is no event system add one...

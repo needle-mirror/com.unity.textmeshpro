@@ -1,9 +1,5 @@
-﻿// Copyright (C) 2014 - 2016 Stephan Bouchard - All Rights Reserved
-// This code can only be used under the standard Unity Asset Store End User License Agreement
-// A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
-
-
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.Serialization;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -95,31 +91,13 @@ namespace TMPro
         public bool fontKerning;
     }
 
-
-    // Class which contains pre-defined mesh information for each character. This is not used at this time.
-    [Serializable]
-    public class Glyph2D
-    {
-        // Vertices aligned with pivot located at Midline / Baseline.
-        public Vector3 bottomLeft;
-        public Vector3 topLeft;
-        public Vector3 bottomRight;
-        public Vector3 topRight;
-
-        public Vector2 uv0;
-        public Vector2 uv1;
-        public Vector2 uv2;
-        public Vector2 uv3;
-    }
-
-
     public struct KerningPairKey
     {
-        public int ascii_Left;
-        public int ascii_Right;
-        public int key;
+        public uint ascii_Left;
+        public uint ascii_Right;
+        public uint key;
 
-        public KerningPairKey(int ascii_left, int ascii_right)
+        public KerningPairKey(uint ascii_left, uint ascii_right)
         {
             ascii_Left = ascii_left;
             ascii_Right = ascii_right;
@@ -127,20 +105,111 @@ namespace TMPro
         }
     }
 
+    /// <summary>
+    /// Positional adjustments of a glyph
+    /// </summary>
+    [Serializable]
+    public struct GlyphValueRecord
+    {
+        public float xPlacement;
+        public float yPlacement;
+        public float xAdvance;
+        public float yAdvance;
+
+        public static GlyphValueRecord operator +(GlyphValueRecord a, GlyphValueRecord b)
+        {
+            GlyphValueRecord c;
+            c.xPlacement = a.xPlacement + b.xPlacement;
+            c.yPlacement = a.yPlacement + b.yPlacement;
+            c.xAdvance = a.xAdvance + b.xAdvance;
+            c.yAdvance = a.yAdvance + b.yAdvance;
+
+            return c;
+        }
+    }
+
 
     [Serializable]
     public class KerningPair
     {
-        public int AscII_Left;
-        public int AscII_Right;
-        public float XadvanceOffset;
-
-        public KerningPair(int left, int right, float offset)
-        {
-            AscII_Left = left;
-            AscII_Right = right;
-            XadvanceOffset = offset;
+        /// <summary>
+        /// The first glyph part of a kerning pair.
+        /// </summary>
+        public uint firstGlyph
+    {
+            get { return m_FirstGlyph; }
+            set { m_FirstGlyph = value; }
         }
+        [FormerlySerializedAs("AscII_Left")]
+        [SerializeField]
+        private uint m_FirstGlyph;
+
+        /// <summary>
+        /// The positional adjustment of the first glyph.
+        /// </summary>
+        public GlyphValueRecord firstGlyphAdjustments
+        {
+            get { return m_FirstGlyphAdjustments; }
+        }
+        [SerializeField]
+        private GlyphValueRecord m_FirstGlyphAdjustments;
+
+        /// <summary>
+        /// The second glyph part of a kerning pair.
+        /// </summary>
+        public uint secondGlyph
+        {
+            get { return m_SecondGlyph; }
+            set { m_SecondGlyph = value; }
+        }
+        [FormerlySerializedAs("AscII_Right")]
+        [SerializeField]
+        private uint m_SecondGlyph;
+
+        /// <summary>
+        /// The positional adjustment of the second glyph.
+        /// </summary>
+        public GlyphValueRecord secondGlyphAdjustments
+        {
+            get { return m_SecondGlyphAdjustments; }
+    }
+        [SerializeField]
+        private GlyphValueRecord m_SecondGlyphAdjustments;
+
+        [FormerlySerializedAs("XadvanceOffset")]
+        public float xOffset;
+
+
+        public KerningPair()
+        {
+            m_FirstGlyph = 0;
+            m_FirstGlyphAdjustments = new GlyphValueRecord();
+
+            m_SecondGlyph = 0;
+            m_SecondGlyphAdjustments = new GlyphValueRecord();
+        }
+
+        public KerningPair(uint left, uint right, float offset)
+    {
+            firstGlyph = left;
+            m_SecondGlyph = right;
+            xOffset = offset;
+        }
+
+        public KerningPair(uint firstGlyph, GlyphValueRecord firstGlyphAdjustments, uint secondGlyph, GlyphValueRecord secondGlyphAdjustments)
+        {
+            m_FirstGlyph = firstGlyph;
+            m_FirstGlyphAdjustments = firstGlyphAdjustments;
+            m_SecondGlyph = secondGlyph;
+            m_SecondGlyphAdjustments = secondGlyphAdjustments;
+        }
+
+        internal void ConvertLegacyKerningData()
+        {
+            m_FirstGlyphAdjustments.xAdvance = xOffset;
+            //xOffset = 0;
+        }
+
     }
 
 
@@ -164,23 +233,29 @@ namespace TMPro
             }
             else
             {
-                int left = kerningPairs.Last().AscII_Left;
-                int right = kerningPairs.Last().AscII_Right;
-                float xoffset = kerningPairs.Last().XadvanceOffset;
+                uint left = kerningPairs.Last().firstGlyph;
+                uint right = kerningPairs.Last().secondGlyph;
+                float xoffset = kerningPairs.Last().xOffset;
 
                 kerningPairs.Add(new KerningPair(left, right, xoffset));
             }
-
         }
 
 
-        public int AddKerningPair(int left, int right, float offset)
+        /// <summary>
+        /// Add Kerning Pair
+        /// </summary>
+        /// <param name="first">First glyph</param>
+        /// <param name="second">Second glyph</param>
+        /// <param name="offset">xAdvance value</param>
+        /// <returns></returns>
+        public int AddKerningPair(uint first, uint second, float offset)
         {
-            int index = kerningPairs.FindIndex(item => item.AscII_Left == left && item.AscII_Right == right);
+            int index = kerningPairs.FindIndex(item => item.firstGlyph == first && item.secondGlyph == second);
 
             if (index == -1)
             {
-                kerningPairs.Add(new KerningPair(left, right, offset));
+                kerningPairs.Add(new KerningPair(first, second, offset));
                 return 0;
             }
 
@@ -188,10 +263,31 @@ namespace TMPro
             return -1;
         }
 
+        /// <summary>
+        /// Add Glyph pair adjustment record
+        /// </summary>
+        /// <param name="firstGlyph">The first glyph</param>
+        /// <param name="firstGlyphAdjustments">Adjustment record for the first glyph</param>
+        /// <param name="secondGlyph">The second glyph</param>
+        /// <param name="secondGlyphAdjustments">Adjustment record for the second glyph</param>
+        /// <returns></returns>
+        public int AddGlyphPairAdjustmentRecord(uint first, GlyphValueRecord firstAdjustments, uint second, GlyphValueRecord secondAdjustments)
+        {
+            int index = kerningPairs.FindIndex(item => item.firstGlyph == first && item.secondGlyph == second);
+
+            if (index == -1)
+            {
+                kerningPairs.Add(new KerningPair(first, firstAdjustments, second, secondAdjustments));
+                return 0;
+            }
+
+            // Return -1 if Kerning Pair already exists.
+            return -1;
+        }
 
         public void RemoveKerningPair(int left, int right)
         {
-            int index = kerningPairs.FindIndex(item => item.AscII_Left == left && item.AscII_Right == right);
+            int index = kerningPairs.FindIndex(item => item.firstGlyph == left && item.secondGlyph == right);
 
             if (index != -1)
                 kerningPairs.RemoveAt(index);
@@ -208,7 +304,7 @@ namespace TMPro
         {
             // Sort List of Kerning Info
             if (kerningPairs.Count > 0)
-                kerningPairs = kerningPairs.OrderBy(s => s.AscII_Left).ThenBy(s => s.AscII_Right).ToList();
+                kerningPairs = kerningPairs.OrderBy(s => s.firstGlyph).ThenBy(s => s.secondGlyph).ToList();
         }
     }
 

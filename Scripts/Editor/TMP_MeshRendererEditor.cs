@@ -1,9 +1,4 @@
-﻿// Copyright (C) 2014 - 2016 Stephan Bouchard - All Rights Reserved
-// This code can only be used under the standard Unity Asset Store End User License Agreement
-// A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
-
-
-// When enabled, allows setting the material by dropping a material onto the MeshRenderer inspector component. 
+﻿// When enabled, allows setting the material by dropping a material onto the MeshRenderer inspector component. 
 // The drawback is that the MeshRenderer inspector will not have properties for light probes, so if you need light probe support, do not enable this.
 //#define ALLOW_MESHRENDERER_MATERIAL_DRAG_N_DROP
 

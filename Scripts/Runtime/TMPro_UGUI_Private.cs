@@ -57,6 +57,7 @@ namespace TMPro
         //private System.Diagnostics.Stopwatch m_StopWatch;
         //private int frame = 0;
         //private int m_recursiveCount = 0;
+        private int m_recursiveCountA = 0;
         private int loopCountA = 0;
         //private int loopCountB = 0;
         //private int loopCountC = 0;
@@ -1618,7 +1619,7 @@ namespace TMPro
 
                 // Reset Font min / max used with Auto-sizing
                 if (m_enableAutoSizing)
-                    m_fontSize = Mathf.Clamp(m_fontSize, m_fontSizeMin, m_fontSizeMax);
+                    m_fontSize = Mathf.Clamp(m_fontSizeBase, m_fontSizeMin, m_fontSizeMax);
 
                 m_maxFontSize = m_fontSizeMax;
                 m_minFontSize = m_fontSizeMin;
@@ -1688,10 +1689,9 @@ namespace TMPro
             int totalCharacterCount = m_totalCharacterCount;
 
             // Calculate the scale of the font based on selected font size and sampling point size.
-            m_fontScale = (m_fontSize / m_currentFontAsset.fontInfo.PointSize);
-            // baseScale is calculated based on the font asset assigned to the text object.
-            float baseScale = (m_fontSize / m_fontAsset.fontInfo.PointSize * m_fontAsset.fontInfo.Scale);
-            float currentElementScale = m_fontScale;
+            // baseScale is calculated using the font asset assigned to the text object.
+            float baseScale = m_fontScale = (m_fontSize / m_fontAsset.fontInfo.PointSize * m_fontAsset.fontInfo.Scale);
+            float currentElementScale = baseScale;
             m_fontScaleMultiplier = 1;
 
             m_currentFontSize = m_fontSize;
@@ -1816,6 +1816,7 @@ namespace TMPro
             m_isNonBreakingSpace = false;
             bool ignoreNonBreakingSpace = false;
             bool isLastBreakingChar = false;
+            float linebreakingWidth = 0;
             int wrappingIndex = 0;
 
             // Save character and line state before we begin layout.
@@ -1982,16 +1983,6 @@ namespace TMPro
                 #endregion
 
 
-                // Initial Implementation for RTL support.
-                if (m_isRightToLeft)
-                {
-                    m_xAdvance -= ((m_cached_TextElement.xAdvance * bold_xAdvance_multiplier + m_characterSpacing + m_wordSpacing + m_currentFontAsset.normalSpacingOffset) * currentElementScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
-
-                    if (char.IsWhiteSpace((char)charCode) || charCode == 0x200B)
-                        m_xAdvance -= m_wordSpacing * currentElementScale;
-                }
-
-
                 // Store some of the text object's information
                 m_textInfo.characterInfo[m_characterCount].character = (char)charCode;
                 m_textInfo.characterInfo[m_characterCount].pointSize = m_currentFontSize;
@@ -2006,18 +1997,42 @@ namespace TMPro
 
                 // Handle Kerning if Enabled.
                 #region Handle Kerning
-                if (m_enableKerning && m_characterCount >= 1)
+                GlyphValueRecord glyphAdjustments = new GlyphValueRecord();
+                if (m_enableKerning)
                 {
-                    int prev_charCode = m_textInfo.characterInfo[m_characterCount - 1].character;
-                    KerningPairKey keyValue = new KerningPairKey(prev_charCode, charCode);
+                    KerningPair adjustmentPair = null;
 
-                    KerningPair pair;
-
-                    m_currentFontAsset.kerningDictionary.TryGetValue(keyValue.key, out pair);
-                    if (pair != null)
+                    if (m_characterCount < totalCharacterCount - 1)
                     {
-                        m_xAdvance += pair.XadvanceOffset * currentElementScale;
+                        uint nextGlyph = m_textInfo.characterInfo[m_characterCount + 1].character;
+                        KerningPairKey keyValue = new KerningPairKey((uint)charCode, nextGlyph);
+
+                        m_currentFontAsset.kerningDictionary.TryGetValue((int)keyValue.key, out adjustmentPair);
+                        if (adjustmentPair != null)
+                            glyphAdjustments = adjustmentPair.firstGlyphAdjustments;
                     }
+
+                    if (m_characterCount >= 1)
+                    {
+                        uint previousGlyph = m_textInfo.characterInfo[m_characterCount - 1].character;
+                        KerningPairKey keyValue = new KerningPairKey(previousGlyph, (uint)charCode);
+
+                        m_currentFontAsset.kerningDictionary.TryGetValue((int)keyValue.key, out adjustmentPair);
+                        if (adjustmentPair != null)
+                            glyphAdjustments += adjustmentPair.secondGlyphAdjustments;
+                    }
+                }
+                #endregion
+
+
+                // Initial Implementation for RTL support.
+                #region Handle Right-to-Left
+                if (m_isRightToLeft)
+                {
+                    m_xAdvance -= ((m_cached_TextElement.xAdvance * bold_xAdvance_multiplier + m_characterSpacing + m_wordSpacing + m_currentFontAsset.normalSpacingOffset) * currentElementScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
+
+                    if (char.IsWhiteSpace((char)charCode) || charCode == 0x200B)
+                        m_xAdvance -= m_wordSpacing * currentElementScale;
                 }
                 #endregion
 
@@ -2077,8 +2092,8 @@ namespace TMPro
                 #endif
                 float fontBaseLineOffset = m_currentFontAsset.fontInfo.Baseline;
                 Vector3 top_left;
-                top_left.x = m_xAdvance + ((m_cached_TextElement.xOffset - padding - style_padding) * currentElementScale * (1 - m_charWidthAdjDelta));
-                top_left.y = (fontBaseLineOffset + m_cached_TextElement.yOffset + padding) * currentElementScale - m_lineOffset + m_baselineOffset;
+                top_left.x = m_xAdvance + ((m_cached_TextElement.xOffset - padding - style_padding + glyphAdjustments.xPlacement) * currentElementScale * (1 - m_charWidthAdjDelta));
+                top_left.y = (fontBaseLineOffset + m_cached_TextElement.yOffset + padding + glyphAdjustments.yPlacement) * currentElementScale - m_lineOffset + m_baselineOffset;
                 top_left.z = 0;
 
                 Vector3 bottom_left;
@@ -2096,11 +2111,6 @@ namespace TMPro
                 bottom_right.y = bottom_left.y;
                 bottom_right.z = 0;
 
-
-                //Vector3 top_left = new Vector3(0 + m_xAdvance + ((m_cached_TextElement.xOffset - padding - style_padding) * currentElementScale * (1 - m_charWidthAdjDelta)), (fontBaseLineOffset + m_cached_TextElement.yOffset + padding) * currentElementScale - m_lineOffset + m_baselineOffset, 0);
-                //Vector3 bottom_left = new Vector3(top_left.x, top_left.y - ((m_cached_TextElement.height + padding * 2) * currentElementScale), 0);
-                //Vector3 top_right = new Vector3(bottom_left.x + ((m_cached_TextElement.width + padding * 2 + style_padding * 2) * currentElementScale * (1 - m_charWidthAdjDelta)), top_left.y, 0);
-                //Vector3 bottom_right = new Vector3(top_right.x, bottom_left.y, 0);
                 #if PROFILE_ON
                 Profiler.EndSample();
                 #endif
@@ -2128,6 +2138,15 @@ namespace TMPro
                 #region Handle Character Rotation
                 if (m_isFXMatrixSet)
                 {
+                    // Apply scale matrix when simulating Condensed text.
+                    if (m_FXMatrix.m00 != 1)
+                    {
+                        //top_left = m_FXMatrix.MultiplyPoint3x4(top_left);
+                        //bottom_left = m_FXMatrix.MultiplyPoint3x4(bottom_left);
+                        //top_right = m_FXMatrix.MultiplyPoint3x4(top_right);
+                        //bottom_right = m_FXMatrix.MultiplyPoint3x4(bottom_right);
+                    }
+
                     Vector3 positionOffset = (top_right + bottom_left) / 2;
 
                     top_left = m_FXMatrix.MultiplyPoint3x4(top_left - positionOffset) + positionOffset;
@@ -2231,9 +2250,12 @@ namespace TMPro
 
                     bool isJustifiedOrFlush = ((_HorizontalAlignmentOptions)m_lineJustification & _HorizontalAlignmentOptions.Flush) == _HorizontalAlignmentOptions.Flush || ((_HorizontalAlignmentOptions)m_lineJustification & _HorizontalAlignmentOptions.Justified) == _HorizontalAlignmentOptions.Justified;
 
+                    // Calculate the line breaking width of the text.
+                    linebreakingWidth = Mathf.Abs(m_xAdvance) + (!m_isRightToLeft ? m_cached_TextElement.xAdvance : 0) * (1 - m_charWidthAdjDelta) * (charCode != 0xAD ? currentElementScale : old_scale);
+
                     // Check if Character exceeds the width of the Text Container
                     #region Handle Line Breaking, Text Auto-Sizing and Horizontal Overflow
-                    if (Mathf.Abs(m_xAdvance) + (!m_isRightToLeft ? m_cached_TextElement.xAdvance : 0) * (1 - m_charWidthAdjDelta) * (charCode != 0xAD ? currentElementScale : old_scale) > width * (isJustifiedOrFlush ? 1.05f : 1.0f))
+                    if (linebreakingWidth > width * (isJustifiedOrFlush ? 1.05f : 1.0f))
                     {
                         ellipsisIndex = m_characterCount - 1; // Last safely rendered character
 
@@ -2723,7 +2745,7 @@ namespace TMPro
                         case TextOverflowModes.Linked:
                             if (m_linkedTextComponent != null)
                             {
-                                m_linkedTextComponent.text = text; // SetText(text, false);
+                                m_linkedTextComponent.text = text;
                                 m_linkedTextComponent.firstVisibleCharacter = m_characterCount;
                                 m_linkedTextComponent.ForceMeshUpdate();
                             }
@@ -2772,10 +2794,17 @@ namespace TMPro
                 }
                 else if (!m_isRightToLeft)
                 {
-                    m_xAdvance += ((m_cached_TextElement.xAdvance * bold_xAdvance_multiplier + m_characterSpacing + m_currentFontAsset.normalSpacingOffset) * currentElementScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
+                    float scaleFXMultiplier = 1;
+                    if (m_isFXMatrixSet) scaleFXMultiplier = m_FXMatrix.m00;
+
+                    m_xAdvance += ((m_cached_TextElement.xAdvance * scaleFXMultiplier * bold_xAdvance_multiplier + m_characterSpacing + m_currentFontAsset.normalSpacingOffset + glyphAdjustments.xAdvance) * currentElementScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
 
                     if (char.IsWhiteSpace((char)charCode) || charCode == 0x200B)
                         m_xAdvance += m_wordSpacing * currentElementScale;
+                }
+                else
+                {
+                    m_xAdvance -= glyphAdjustments.xAdvance * currentElementScale;
                 }
 
 

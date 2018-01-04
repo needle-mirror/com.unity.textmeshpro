@@ -1,8 +1,3 @@
-// Copyright (C) 2014 - 2016 Stephan Bouchard - All Rights Reserved
-// This code can only be used under the standard Unity Asset Store End User License Agreement
-// A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
-
-
 using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
@@ -60,10 +55,11 @@ namespace TMPro.EditorUtilities
             public double expirationTime;
         }
 
-        private int m_GlyphPage = 0;
-        private int m_KerningPage = 0;
+        private int m_CurrentGlyphPage = 0;
+        private int m_CurrentKerningPage = 0;
 
-        private int m_selectedElement = -1;
+        private int m_SelectedGlyphRecord = -1;
+        private int m_SelectedAdjustmentRecord = -1;
 
         private string m_dstGlyphID;
         private const string k_placeholderUnicodeHex = "<i>Unicode Hex ID</i>";
@@ -72,8 +68,12 @@ namespace TMPro.EditorUtilities
         private Warning m_AddGlyphWarning;
 
 
-        private string m_searchPattern;
-        private List<int> m_searchList;
+        private string m_GlyphSearchPattern;
+        private List<int> m_GlyphSearchList;
+
+        private string m_KerningTableSearchPattern;
+        private List<int> m_KerningTableSearchList;
+        
         private bool m_isSearchDirty;
 
         private const string k_UndoRedo = "UndoRedoPerformed";
@@ -100,6 +100,7 @@ namespace TMPro.EditorUtilities
 
         private SerializedProperty m_kerningInfo_prop;
         private KerningTable m_kerningTable;
+        private SerializedProperty m_kerningPairs_prop;
 
         private SerializedProperty m_kerningPair_prop;
 
@@ -149,6 +150,7 @@ namespace TMPro.EditorUtilities
             m_glyphInfoList_prop = serializedObject.FindProperty("m_glyphInfoList");
             m_kerningInfo_prop = serializedObject.FindProperty("m_kerningInfo");
             m_kerningPair_prop = serializedObject.FindProperty("m_kerningPair");
+            m_kerningPairs_prop = m_kerningInfo_prop.FindPropertyRelative("kerningPairs");
 
             m_fontAsset = target as TMP_FontAsset;
             m_kerningTable = m_fontAsset.kerningInfo;
@@ -158,7 +160,8 @@ namespace TMPro.EditorUtilities
             // Get the UI Skin and Styles for the various Editors
             TMP_UIStyleManager.GetUIStyles();
 
-            m_searchList = new List<int>();
+            m_GlyphSearchList = new List<int>();
+            m_KerningTableSearchList = new List<int>();
         }
 
 
@@ -338,14 +341,14 @@ namespace TMPro.EditorUtilities
 
 
             // GLYPH INFO TABLE
+            #region Glyph Table
             EditorGUIUtility.labelWidth = labelWidth;
             EditorGUIUtility.fieldWidth = fieldWidth;
             GUILayout.Space(5);
             EditorGUI.indentLevel = 0;
 
-            if (GUILayout.Button("Glyph Info\t" + (UI_PanelState.glyphInfoPanel ? uiStateLabel[1] : uiStateLabel[0]), TMP_UIStyleManager.Section_Label))
+            if (GUILayout.Button("Glyph Table\t" + (UI_PanelState.glyphInfoPanel ? uiStateLabel[1] : uiStateLabel[0]), TMP_UIStyleManager.Section_Label))
                 UI_PanelState.glyphInfoPanel = !UI_PanelState.glyphInfoPanel;
-
 
             if (UI_PanelState.glyphInfoPanel)
             {
@@ -359,58 +362,59 @@ namespace TMPro.EditorUtilities
                     #region DISPLAY SEARCH BAR
                     EditorGUILayout.BeginHorizontal();
                     {
-                        EditorGUIUtility.labelWidth = 110f;
+                        EditorGUIUtility.labelWidth = 130f;
                         EditorGUI.BeginChangeCheck();
-                        string searchPattern = EditorGUILayout.TextField("Glyph Search", m_searchPattern, "SearchTextField");
+                        string searchPattern = EditorGUILayout.TextField("Glyph Search", m_GlyphSearchPattern, "SearchTextField");
                         if (EditorGUI.EndChangeCheck() || m_isSearchDirty)
                         {
                             if (string.IsNullOrEmpty(searchPattern) == false)
                             {
-                                //GUIUtility.keyboardControl = 0;
-                                m_searchPattern = searchPattern; //.ToLower(System.Globalization.CultureInfo.InvariantCulture).Trim();
-                                
+                                m_GlyphSearchPattern = searchPattern;
+
                                 // Search Glyph Table for potential matches
-                                SearchGlyphTable(m_searchPattern, ref m_searchList);
+                                SearchGlyphTable(m_GlyphSearchPattern, ref m_GlyphSearchList);
                             }
+                            else
+                                m_GlyphSearchPattern = null;
 
                             m_isSearchDirty = false;
                         }
 
-                        string styleName = string.IsNullOrEmpty(m_searchPattern) ? "SearchCancelButtonEmpty" : "SearchCancelButton";
+                        string styleName = string.IsNullOrEmpty(m_GlyphSearchPattern) ? "SearchCancelButtonEmpty" : "SearchCancelButton";
                         if (GUILayout.Button(GUIContent.none, styleName))
                         {
                             GUIUtility.keyboardControl = 0;
-                            m_searchPattern = string.Empty;
+                            m_GlyphSearchPattern = string.Empty;
                         }
                     }
                     EditorGUILayout.EndHorizontal();
                     #endregion
 
                     // Display Page Navigation
-                    if (!string.IsNullOrEmpty(m_searchPattern))
-                        arraySize = m_searchList.Count;
+                    if (!string.IsNullOrEmpty(m_GlyphSearchPattern))
+                        arraySize = m_GlyphSearchList.Count;
 
-                    DisplayGlyphPageNavigation(arraySize, itemsPerPage);
+                    DisplayPageNavigation(ref m_CurrentGlyphPage, arraySize, itemsPerPage);
                 }
                 EditorGUILayout.EndVertical();
 
                 // Display Glyph Table Elements
-                #region Glyph Table
+                
                 if (arraySize > 0)
                 {
                     // Display each GlyphInfo entry using the GlyphInfo property drawer.
-                    for (int i = itemsPerPage * m_GlyphPage; i < arraySize && i < itemsPerPage * (m_GlyphPage + 1); i++)
+                    for (int i = itemsPerPage * m_CurrentGlyphPage; i < arraySize && i < itemsPerPage * (m_CurrentGlyphPage + 1); i++)
                     {
                         // Define the start of the selection region of the element.
                         Rect elementStartRegion = GUILayoutUtility.GetRect(0f, 0f, GUILayout.ExpandWidth(true));
 
                         int elementIndex = i;
-                        if (!string.IsNullOrEmpty(m_searchPattern))
-                            elementIndex = m_searchList[i];
+                        if (!string.IsNullOrEmpty(m_GlyphSearchPattern))
+                            elementIndex = m_GlyphSearchList[i];
                             
                         SerializedProperty glyphInfo = m_glyphInfoList_prop.GetArrayElementAtIndex(elementIndex);
 
-                        EditorGUI.BeginDisabledGroup(i != m_selectedElement);
+                        EditorGUI.BeginDisabledGroup(i != m_SelectedGlyphRecord);
                         {
                             EditorGUILayout.BeginVertical(TMP_UIStyleManager.Group_Label);
 
@@ -427,15 +431,19 @@ namespace TMPro.EditorUtilities
                         Rect selectionArea = new Rect(elementStartRegion.x, elementStartRegion.y, elementEndRegion.width, elementEndRegion.y - elementStartRegion.y);
                         if (DoSelectionCheck(selectionArea))
                         {
-                            m_selectedElement = i;
-                            m_AddGlyphWarning.isEnabled = false;
-                            m_unicodeHexLabel = k_placeholderUnicodeHex;
-                            GUIUtility.keyboardControl = 0;
+                            if (m_SelectedGlyphRecord == i)
+                                m_SelectedGlyphRecord = -1;
+                            else
+                            {
+                                m_SelectedGlyphRecord = i;
+                                m_AddGlyphWarning.isEnabled = false;
+                                m_unicodeHexLabel = k_placeholderUnicodeHex;
+                                GUIUtility.keyboardControl = 0;
+                            }
                         }
 
-
                         // Draw Selection Highlight and Glyph Options
-                        if (m_selectedElement == i)
+                        if (m_SelectedGlyphRecord == i)
                         {
                             TMP_EditorUtility.DrawBox(selectionArea, 2f, new Color32(40, 192, 255, 255));
 
@@ -502,12 +510,10 @@ namespace TMPro.EditorUtilities
 
                                 RemoveGlyphFromList(elementIndex);
 
-                                m_selectedElement = -1;
+                                isAssetDirty = true;
+                                m_SelectedGlyphRecord = -1;
                                 m_isSearchDirty = true;
-
-                                TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, m_fontAsset);
-
-                                return;
+                                break;
                             }
 
                             if (m_AddGlyphWarning.isEnabled && EditorApplication.timeSinceStartup < m_AddGlyphWarning.expirationTime)
@@ -519,128 +525,191 @@ namespace TMPro.EditorUtilities
                     }
                 }
 
-                DisplayGlyphPageNavigation(arraySize, itemsPerPage);
+                DisplayPageNavigation(ref m_CurrentGlyphPage, arraySize, itemsPerPage);
             }
             #endregion
 
 
             // KERNING TABLE PANEL
             #region Kerning Table
+            EditorGUIUtility.labelWidth = labelWidth;
+            EditorGUIUtility.fieldWidth = fieldWidth;
             GUILayout.Space(5);
-            if (GUILayout.Button("Kerning Table Info\t" + (UI_PanelState.kerningInfoPanel ? uiStateLabel[1] : uiStateLabel[0]), TMP_UIStyleManager.Section_Label))
+            EditorGUI.indentLevel = 0;
+
+            if (GUILayout.Button("Glyph Adjustment Table\t" + (UI_PanelState.kerningInfoPanel ? uiStateLabel[1] : uiStateLabel[0]), TMP_UIStyleManager.Section_Label))
                 UI_PanelState.kerningInfoPanel = !UI_PanelState.kerningInfoPanel;
 
 
             if (UI_PanelState.kerningInfoPanel)
             {
-                
-                Rect pos;
+                int arraySize = m_kerningPairs_prop.arraySize;
+                int itemsPerPage = 20;
 
-                SerializedProperty kerningPairs_prop = m_kerningInfo_prop.FindPropertyRelative("kerningPairs");
+                // Display Kerning Pair Management Tools
+                EditorGUILayout.BeginVertical(TMP_UIStyleManager.Group_Label, GUILayout.ExpandWidth(true));
+                {
+                    // Search Bar implementation
+                    #region DISPLAY SEARCH BAR
+                    EditorGUILayout.BeginHorizontal();
+                    {
+                        EditorGUIUtility.labelWidth = 150f;
+                        EditorGUI.BeginChangeCheck();
+                        string searchPattern = EditorGUILayout.TextField("Adjustment Pair Search", m_KerningTableSearchPattern, "SearchTextField");
+                        if (EditorGUI.EndChangeCheck() || m_isSearchDirty)
+                        {
+                            if (string.IsNullOrEmpty(searchPattern) == false)
+                            {
+                                m_KerningTableSearchPattern = searchPattern;
 
-                EditorGUILayout.BeginHorizontal();
-                GUILayout.Label("Left Char", TMP_UIStyleManager.TMP_GUISkin.label);
-                GUILayout.Label("Right Char", TMP_UIStyleManager.TMP_GUISkin.label);
-                GUILayout.Label("Offset Value", TMP_UIStyleManager.TMP_GUISkin.label);
-                GUILayout.Label(GUIContent.none, GUILayout.Width(20));
-                EditorGUILayout.EndHorizontal();
+                                // Search Glyph Table for potential matches
+                                SearchKerningTable(m_KerningTableSearchPattern, ref m_KerningTableSearchList);
+                            }
+                            else
+                                m_KerningTableSearchPattern = null;
 
-                GUILayout.BeginVertical(TMP_UIStyleManager.TMP_GUISkin.label);
+                            m_isSearchDirty = false;
+                        }
 
-                int arraySize = kerningPairs_prop.arraySize;
-                int itemsPerPage = 25;
+                        string styleName = string.IsNullOrEmpty(m_KerningTableSearchPattern) ? "SearchCancelButtonEmpty" : "SearchCancelButton";
+                        if (GUILayout.Button(GUIContent.none, styleName))
+                        {
+                            GUIUtility.keyboardControl = 0;
+                            m_KerningTableSearchPattern = string.Empty;
+                        }
+                    }
+                    EditorGUILayout.EndHorizontal();
+                    #endregion
+
+                    // Display Page Navigation
+                    if (!string.IsNullOrEmpty(m_KerningTableSearchPattern))
+                        arraySize = m_KerningTableSearchList.Count;
+
+                    DisplayPageNavigation(ref m_CurrentKerningPage, arraySize, itemsPerPage);
+                }
+                EditorGUILayout.EndVertical();
+
+
+                //Rect pos;
+                //pos = EditorGUILayout.GetControlRect(false, 20);
+
+                //pos.x += 5;
+                //EditorGUI.LabelField(pos, "First Glyph", TMP_UIStyleManager.TMP_GUISkin.label);
+                //pos.x += 100;
+                //EditorGUI.LabelField(pos, "Adjustment Values", TMP_UIStyleManager.TMP_GUISkin.label);
+
+                //pos.x = pos.width / 2 + 5;
+                //EditorGUI.LabelField(pos, "Second Glyph", TMP_UIStyleManager.TMP_GUISkin.label);
+                //pos.x += 100;
+                //EditorGUI.LabelField(pos, "Adjustment Values", TMP_UIStyleManager.TMP_GUISkin.label);
 
                 if (arraySize > 0)
                 {
                     // Display each GlyphInfo entry using the GlyphInfo property drawer.
-                    for (int i = itemsPerPage * m_KerningPage; i < arraySize && i < itemsPerPage * (m_KerningPage + 1); i++)
+                    for (int i = itemsPerPage * m_CurrentKerningPage; i < arraySize && i < itemsPerPage * (m_CurrentKerningPage + 1); i++)
                     {
-                        SerializedProperty kerningPair_prop = kerningPairs_prop.GetArrayElementAtIndex(i);
+                        // Define the start of the selection region of the element.
+                        Rect elementStartRegion = GUILayoutUtility.GetRect(0f, 0f, GUILayout.ExpandWidth(true));
 
-                        pos = EditorGUILayout.BeginHorizontal();
+                        int elementIndex = i;
+                        if (!string.IsNullOrEmpty(m_KerningTableSearchPattern))
+                            elementIndex = m_KerningTableSearchList[i];
 
-                        EditorGUI.PropertyField(new Rect(pos.x, pos.y, pos.width - 20f, pos.height), kerningPair_prop, GUIContent.none);
+                        SerializedProperty kerningInfo = m_kerningPairs_prop.GetArrayElementAtIndex(elementIndex);
 
-                        // Button to Delete Kerning Pair
-                        if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
+                        EditorGUI.BeginDisabledGroup(i != m_SelectedAdjustmentRecord);
                         {
-                            m_kerningTable.RemoveKerningPair(i);
-                            m_fontAsset.ReadFontDefinition(); // Reload Font Definition.
-                            serializedObject.Update(); // Get an updated version of the SerializedObject.
-                            isAssetDirty = true;
-                            break;
+                            EditorGUILayout.BeginVertical(TMP_UIStyleManager.Group_Label);
+
+                            EditorGUILayout.PropertyField(kerningInfo, new GUIContent("Selectable"));
+
+                            EditorGUILayout.EndVertical();
+                        }
+                        EditorGUI.EndDisabledGroup();
+
+                        // Define the end of the selection region of the element.
+                        Rect elementEndRegion = GUILayoutUtility.GetRect(0f, 0f, GUILayout.ExpandWidth(true));
+
+                        // Check for Item selection
+                        Rect selectionArea = new Rect(elementStartRegion.x, elementStartRegion.y, elementEndRegion.width, elementEndRegion.y - elementStartRegion.y);
+                        if (DoSelectionCheck(selectionArea))
+                        {
+                            if (m_SelectedAdjustmentRecord == i)
+                                m_SelectedAdjustmentRecord = -1;
+                            else
+                            {
+                                m_SelectedAdjustmentRecord = i;
+                                GUIUtility.keyboardControl = 0;
+                            }
                         }
 
-                        EditorGUILayout.EndHorizontal();
+                        // Draw Selection Highlight and Kerning Pair Options
+                        if (m_SelectedAdjustmentRecord == i)
+                        {
+                            TMP_EditorUtility.DrawBox(selectionArea, 2f, new Color32(40, 192, 255, 255));
+
+                            // Draw Glyph management options
+                            Rect controlRect = EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight * 1f);
+                            float optionAreaWidth = controlRect.width;
+                            float btnWidth = optionAreaWidth / 4;
+
+                            Rect position = new Rect(controlRect.x + controlRect.width - btnWidth, controlRect.y, btnWidth, controlRect.height);
+
+                            // Remove Kerning pair
+                            GUI.enabled = true;
+                            if (GUI.Button(position, "Remove"))
+                            {
+                                GUIUtility.keyboardControl = 0;
+
+                                m_kerningTable.RemoveKerningPair(i);
+                                m_fontAsset.ReadFontDefinition();
+
+                                isAssetDirty = true;
+                                m_SelectedAdjustmentRecord = -1;
+                                m_isSearchDirty = true;
+                                break;
+                            }
+                        }
                     }
                 }
 
-                Rect pagePos = EditorGUILayout.GetControlRect(false, 20);
-                pagePos.width /= 3;
-
-                int shiftMultiplier = currentEvent.shift ? 10 : 1;
-
-                // Previous Page
-                if (m_KerningPage > 0) GUI.enabled = true;
-                else GUI.enabled = false;
-
-                if (GUI.Button(pagePos, "Previous Page"))
-                    m_KerningPage -= 1 * shiftMultiplier;
-
-                // Page Counter
-                GUI.enabled = true;
-                pagePos.x += pagePos.width;
-                int totalPages = (int)(arraySize / (float)itemsPerPage + 0.999f);
-                GUI.Label(pagePos, "Page " + (m_KerningPage + 1) + " / " + totalPages, GUI.skin.button);
-
-                // Next Page
-                pagePos.x += pagePos.width;
-                if (itemsPerPage * (m_GlyphPage + 1) < arraySize) GUI.enabled = true;
-                else GUI.enabled = false;
-
-                if (GUI.Button(pagePos, "Next Page"))
-                    m_KerningPage += 1 * shiftMultiplier;
-
-                m_KerningPage = Mathf.Clamp(m_KerningPage, 0, arraySize / itemsPerPage);
-
-                GUILayout.EndVertical();
-
-                GUILayout.Space(10);
-
-
-                // Add New Kerning Pair Section
-                GUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
-
-                pos = EditorGUILayout.BeginHorizontal();
-
-                // Draw Empty Kerning Pair 
-                EditorGUI.PropertyField(new Rect(pos.x, pos.y, pos.width - 20f, pos.height), m_kerningPair_prop);
-                GUILayout.Label(GUIContent.none, GUILayout.Height(19));
-
-                EditorGUILayout.EndHorizontal();
+                DisplayPageNavigation(ref m_CurrentKerningPage, arraySize, itemsPerPage);
 
                 GUILayout.Space(5);
 
+                // Add new kerning pair
+                EditorGUILayout.BeginVertical(TMP_UIStyleManager.Group_Label);
+                {
+                    EditorGUILayout.PropertyField(m_kerningPair_prop);
+                }
+                EditorGUILayout.EndVertical();
+
                 if (GUILayout.Button("Add New Kerning Pair"))
                 {
-                    int asci_left = m_kerningPair_prop.FindPropertyRelative("AscII_Left").intValue;
-                    int asci_right = m_kerningPair_prop.FindPropertyRelative("AscII_Right").intValue;
-                    float xOffset = m_kerningPair_prop.FindPropertyRelative("XadvanceOffset").floatValue;
+                    int firstGlyph = m_kerningPair_prop.FindPropertyRelative("m_FirstGlyph").intValue;
+                    int secondGlyph = m_kerningPair_prop.FindPropertyRelative("m_SecondGlyph").intValue;
 
-                    errorCode = m_kerningTable.AddKerningPair(asci_left, asci_right, xOffset);
+                    GlyphValueRecord firstGlyphAdjustments = GetGlyphAdjustments(m_kerningPair_prop.FindPropertyRelative("m_FirstGlyphAdjustments"));
+                    GlyphValueRecord secondGlyphAdjustments = GetGlyphAdjustments(m_kerningPair_prop.FindPropertyRelative("m_SecondGlyphAdjustments"));
+
+                    errorCode = m_kerningTable.AddGlyphPairAdjustmentRecord((uint)firstGlyph, firstGlyphAdjustments, (uint)secondGlyph, secondGlyphAdjustments);
 
                     // Sort Kerning Pairs & Reload Font Asset if new kerning pair was added.
                     if (errorCode != -1)
                     {
                         m_kerningTable.SortKerningPairs();
-                        m_fontAsset.ReadFontDefinition(); // Reload Font Definition.
-                        serializedObject.Update(); // Get an updated version of the SerializedObject.
+                        m_fontAsset.ReadFontDefinition();
+                        serializedObject.ApplyModifiedProperties();
                         isAssetDirty = true;
+                        m_isSearchDirty = true;
                     }
                     else
                     {
                         timeStamp = System.DateTime.Now.AddSeconds(5);
                     }
+
+                    // Clear Add Kerning Pair Panel
+                    // TODO
                 }
 
                 if (errorCode == -1)
@@ -654,37 +723,29 @@ namespace TMPro.EditorUtilities
                     if (System.DateTime.Now > timeStamp)
                         errorCode = 0;
                 }
-
-                GUILayout.EndVertical();
             }
             #endregion
 
 
             if (serializedObject.ApplyModifiedProperties() || evt_cmd == k_UndoRedo || isAssetDirty)
             {
-                //Debug.Log("Serialized properties have changed.");
                 TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, m_fontAsset);
 
                 isAssetDirty = false;
                 EditorUtility.SetDirty(target);
-                //TMPro_EditorUtility.RepaintAll(); // Consider SetDirty
             }
 
 
             // Clear selection if mouse event was not consumed. 
             GUI.enabled = true;
             if (currentEvent.type == EventType.MouseDown && currentEvent.button == 0)
-                m_selectedElement = -1;
+                m_SelectedAdjustmentRecord = -1;
 
         }
 
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="arraySize"></param>
-        /// <param name="itemsPerPage"></param>
-        void DisplayGlyphPageNavigation(int arraySize, int itemsPerPage)
+
+        void DisplayPageNavigation(ref int currentPage, int arraySize, int itemsPerPage)
         {
             Rect pagePos = EditorGUILayout.GetControlRect(false, 20);
             pagePos.width /= 3;
@@ -692,33 +753,28 @@ namespace TMPro.EditorUtilities
             int shiftMultiplier = Event.current.shift ? 10 : 1; // Page + Shift goes 10 page forward
 
             // Previous Page
-            GUI.enabled = m_GlyphPage > 0;
+            GUI.enabled = currentPage > 0;
 
             if (GUI.Button(pagePos, "Previous Page"))
-            {
-                m_GlyphPage -= 1 * shiftMultiplier;
-                //m_isNewPage = true;
-            }
+                currentPage -= 1 * shiftMultiplier;
+
 
             // Page Counter
             var pageStyle = new GUIStyle(GUI.skin.button) { normal = { background = null } };
             GUI.enabled = true;
             pagePos.x += pagePos.width;
             int totalPages = (int)(arraySize / (float)itemsPerPage + 0.999f);
-            GUI.Button(pagePos, "Page " + (m_GlyphPage + 1) + " / " + totalPages, pageStyle);
+            GUI.Button(pagePos, "Page " + (currentPage + 1) + " / " + totalPages, pageStyle);
 
             // Next Page
             pagePos.x += pagePos.width;
-            GUI.enabled = itemsPerPage * (m_GlyphPage + 1) < arraySize;
+            GUI.enabled = itemsPerPage * (currentPage + 1) < arraySize;
 
             if (GUI.Button(pagePos, "Next Page"))
-            {
-                m_GlyphPage += 1 * shiftMultiplier;
-                //m_isNewPage = true;
-            }
+                currentPage += 1 * shiftMultiplier;
 
             // Clamp page range
-            m_GlyphPage = Mathf.Clamp(m_GlyphPage, 0, arraySize / itemsPerPage);
+            currentPage = Mathf.Clamp(currentPage, 0, arraySize / itemsPerPage);
 
             GUI.enabled = true;
         }
@@ -797,6 +853,17 @@ namespace TMPro.EditorUtilities
             return false;
         }
 
+        GlyphValueRecord GetGlyphAdjustments (SerializedProperty property)
+        {
+            GlyphValueRecord record;
+            record.xPlacement = property.FindPropertyRelative("xPlacement").floatValue;
+            record.yPlacement = property.FindPropertyRelative("yPlacement").floatValue;
+            record.xAdvance = property.FindPropertyRelative("xAdvance").floatValue;
+            record.yAdvance = property.FindPropertyRelative("yAdvance").floatValue;
+
+            return record;
+        }
+
 
         /// <summary>
         /// 
@@ -850,6 +917,83 @@ namespace TMPro.EditorUtilities
 
                 if (id.ToString("X").Contains(searchPattern))
                     searchResults.Add(i);
+            }
+        }
+
+        void SearchKerningTable(string searchPattern, ref List<int> searchResults)
+        {
+            if (searchResults == null) searchResults = new List<int>();
+
+            searchResults.Clear();
+
+            int arraySize = m_kerningPairs_prop.arraySize;
+
+            for (int i = 0; i < arraySize; i++)
+            {
+                SerializedProperty sourceGlyph = m_kerningPairs_prop.GetArrayElementAtIndex(i);
+
+                int firstGlyph = sourceGlyph.FindPropertyRelative("m_FirstGlyph").intValue;
+                int secondGlyph = sourceGlyph.FindPropertyRelative("m_SecondGlyph").intValue;
+
+                if (searchPattern.Length == 1)
+                {
+                    if (firstGlyph == searchPattern[0])
+                    {
+                        searchResults.Add(i);
+                        continue;
+                    }
+
+                    if (secondGlyph == searchPattern[0])
+                    {
+                        searchResults.Add(i);
+                        continue;
+                    }
+                }
+
+                if (searchPattern.Length == 2)
+                {
+                    if (firstGlyph == searchPattern[0] && secondGlyph == searchPattern[1])
+                    {
+                        searchResults.Add(i);
+                        continue;
+                    }
+                }
+
+                if (firstGlyph.ToString().Contains(searchPattern))
+                {
+                    searchResults.Add(i);
+                    continue;
+                }
+
+                //if (firstGlyph.ToString("x").Contains(searchPattern))
+                //{
+                //    searchResults.Add(i);
+                //    continue;
+                //}
+
+                //if (firstGlyph.ToString("X").Contains(searchPattern))
+                //{
+                //    searchResults.Add(i);
+                //    continue;
+                //}
+
+                if (secondGlyph.ToString().Contains(searchPattern))
+                {
+                    searchResults.Add(i);
+                    continue;
+                }
+
+                //if (secondGlyph.ToString("x").Contains(searchPattern))
+                //{
+                //    searchResults.Add(i);
+                //    continue;
+                //}
+
+                //if (secondGlyph.ToString("X").Contains(searchPattern))
+                //{
+                //    searchResults.Add(i);
+                //    continue;
+                //}
             }
         }
     }

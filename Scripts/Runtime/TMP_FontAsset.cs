@@ -1,8 +1,3 @@
-// Copyright (C) 2014 - 2016 Stephan Bouchard - All Rights Reserved
-// This code can only be used under the standard Unity Asset Store End User License Agreement
-// A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
-
-
 using System;
 using UnityEngine;
 using System.Collections;
@@ -80,14 +75,22 @@ namespace TMPro
         private Dictionary<int, TMP_Glyph> m_characterDictionary;
 
 
-        // Kerning 
+        /// <summary>
+        /// Dictionary containing the kerning data
+        /// </summary>
         public Dictionary<int, KerningPair> kerningDictionary
-        { get { return m_kerningDictionary; } }
-
+        {
+            get { return m_kerningDictionary; }
+        }
         private Dictionary<int, KerningPair> m_kerningDictionary;
 
+        /// <summary>
+        /// 
+        /// </summary>
         public KerningTable kerningInfo
-        { get { return m_kerningInfo; } }
+        {
+            get { return m_kerningInfo; }
+        }
 
         [SerializeField]
         private KerningTable m_kerningInfo;
@@ -365,10 +368,17 @@ namespace TMPro
             for (int i = 0; i < pairs.Count; i++)
             {
                 KerningPair pair = pairs[i];
-                KerningPairKey uniqueKey = new KerningPairKey(pair.AscII_Left, pair.AscII_Right);
 
-                if (m_kerningDictionary.ContainsKey(uniqueKey.key) == false)
-                    m_kerningDictionary.Add(uniqueKey.key, pair);
+                // Convert legacy kerning data
+                if (pair.xOffset != 0)
+                    pairs[i].ConvertLegacyKerningData();
+
+                KerningPairKey uniqueKey = new KerningPairKey(pair.firstGlyph, pair.secondGlyph);
+
+                if (m_kerningDictionary.ContainsKey((int)uniqueKey.key) == false)
+                {
+                    m_kerningDictionary.Add((int)uniqueKey.key, pair);
+                }
                 else
                 {
                     if (!TMP_Settings.warningsDisabled)

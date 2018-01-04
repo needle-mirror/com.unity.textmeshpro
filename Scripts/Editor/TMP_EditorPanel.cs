@@ -1,8 +1,3 @@
-// Copyright (C) 2014 - 2016 Stephan Bouchard - All Rights Reserved
-// This code can only be used under the standard Unity Asset Store End User License Agreement
-// A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
-
-
 using UnityEngine;
 using UnityEditor;
 using System.IO;
@@ -16,7 +11,8 @@ namespace TMPro.EditorUtilities
     public class TMP_EditorPanel : Editor
     {
         private struct m_foldout
-        { // Track Inspector foldout panel states, globally.
+        {
+            // Track Inspector foldout panel states, globally.
             public static bool textInput = true;
             public static bool fontSettings = true;
             public static bool extraSettings = false;

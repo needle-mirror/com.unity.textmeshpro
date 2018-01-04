@@ -21,7 +21,7 @@ namespace TMPro
             get { return instance.m_version; }
         }
         [SerializeField]
-        private string m_version = "1.0.56.0b2";
+        private string m_version = "1.0.56.0b3";
 
         /// <summary>
         /// Controls if Word Wrapping will be enabled on newly created text objects by default.
