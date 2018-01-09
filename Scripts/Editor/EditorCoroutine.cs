@@ -12,7 +12,7 @@ namespace TMPro.EditorUtilities
     /// </summary>
     public class EditorCoroutine
     {
-        private static Dictionary<int, EditorCoroutine> s_ActiveCoroutines;
+        //private static Dictionary<int, EditorCoroutine> s_ActiveCoroutines;
 
         readonly IEnumerator coroutine;
 

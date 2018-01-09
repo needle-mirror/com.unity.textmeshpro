@@ -328,9 +328,8 @@ namespace TMPro
                 {
                     case RuntimePlatform.Android:
                     case RuntimePlatform.IPhonePlayer:
-                    case RuntimePlatform.TizenPlayer:
                     case RuntimePlatform.tvOS:
-                    return m_HideMobileInput;
+                        return m_HideMobileInput;
                 }
 
                 return true;

@@ -1,7 +1,11 @@
 # Changelog
-This is the release of the TextMesh Pro UPM package. The initial release of this package which is version v1.0.25 which is based on release 1.0.56.xx.0b2 of TextMesh Pro.
+This is the release of the TextMesh Pro UPM package. This release is the equivalent of release 1.0.56.xx.0b3 of TextMesh Pro.
 
 See the following link for the Release Notes for version 1.0.56.xx.0b2 of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
+
+## [1.0.26] - 2018-01-10
+### Added
+- Removed Tizen player references in the TMP_InputField as the Tizen player is no longer supported as of Unity 2018.1.
 
 ## [1.0.25] - 2018-01-05
 ### Added

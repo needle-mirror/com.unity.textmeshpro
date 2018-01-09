@@ -57,10 +57,6 @@ namespace TMPro
         private static float m_ProgressPercentage = 0;
         private static List<AssetModificationRecord> m_ModifiedAssetList = new List<AssetModificationRecord>();
 
-        private static SerializationMode m_ProjectAssetSerializationMode;
-        private static string m_ProjectExternalVersionControl;
-
-
 
         void OnEnable()
         {
