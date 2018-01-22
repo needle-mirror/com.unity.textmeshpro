@@ -309,7 +309,7 @@ namespace TMPro
         void ON_DRAG_AND_DROP_MATERIAL(GameObject obj, Material currentMaterial, Material newMaterial)
         {
             // Check if event applies to this current object
-            if (obj == gameObject || UnityEditor.PrefabUtility.GetPrefabParent(gameObject) == obj)
+            if (obj == gameObject || UnityEditor.PrefabUtility.GetCorrespondingObjectFromSource(gameObject) == obj)
             {
                 if (!m_isDefaultMaterial) return;
 

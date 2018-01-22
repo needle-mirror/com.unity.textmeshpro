@@ -612,7 +612,7 @@ namespace TMPro
         private IEnumerator DelayedDestroyDropdownList(float delay)
         {
 
-            yield return new WaitForSecondsRealtime(delay); // Unity 5.4
+                yield return new WaitForSecondsRealtime(delay);
 
             for (int i = 0; i < m_Items.Count; i++)
             {

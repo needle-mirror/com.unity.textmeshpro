@@ -352,6 +352,8 @@ namespace TMPro
                 if (this.text == value)
                     return;
 
+                if (value == null) value = string.Empty;
+
                 m_Text = value;
 
                 //if (m_LineType == LineType.SingleLine)

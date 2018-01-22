@@ -711,7 +711,7 @@ namespace TMPro.EditorUtilities
                 {
                     // Change needs to propagate to the child sub objects.
                     Graphic[] graphicComponents = m_textComponent.GetComponentsInChildren<Graphic>();
-                    for (int i = 0; i < graphicComponents.Length; i++)
+                    for (int i = 1; i < graphicComponents.Length; i++)
                         graphicComponents[i].raycastTarget = raycastTarget_prop.boolValue;
 
                     havePropertiesChanged = true;
