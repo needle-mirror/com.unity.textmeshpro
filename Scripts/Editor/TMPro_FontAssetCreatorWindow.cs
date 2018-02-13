@@ -339,6 +339,9 @@ namespace TMPro.EditorUtilities
             EditorGUIUtility.labelWidth = 120f;
             EditorGUIUtility.fieldWidth = 160f;
 
+            // Disable Options if already generating a font atlas texture.
+            GUI.enabled = isProcessing ? false : true;
+
             // FONT TTF SELECTION
             EditorGUI.BeginChangeCheck();
             font_TTF = EditorGUILayout.ObjectField("Font Source", font_TTF, typeof(Font), false, GUILayout.Width(290)) as Font;
@@ -367,7 +370,6 @@ namespace TMPro.EditorUtilities
             EditorGUIUtility.labelWidth = 120f;
             EditorGUIUtility.fieldWidth = 160f;
 
-            
             // FONT PADDING
             font_padding = EditorGUILayout.IntField("Font Padding", font_padding, GUILayout.Width(290));
             font_padding = (int)Mathf.Clamp(font_padding, 0f, 64f);
@@ -543,7 +545,7 @@ namespace TMPro.EditorUtilities
 
             GUILayout.Space(20);
 
-            GUI.enabled = font_TTF == null || isProcessing ? false : true;    // Enable Preview if we are not already rendering a font.
+            bool isEnabled = GUI.enabled = font_TTF == null || isProcessing ? false : true;    // Enable Preview if we are not already rendering a font.
             if (GUILayout.Button("Generate Font Atlas", GUILayout.Width(290)) && characterSequence.Length != 0 && GUI.enabled)
             {
                 if (font_TTF != null)
@@ -655,12 +657,11 @@ namespace TMPro.EditorUtilities
 
             // FONT RENDERING PROGRESS BAR
             GUILayout.Space(1);
-            progressRect = GUILayoutUtility.GetRect(288, 20, TMP_UIStyleManager.TextAreaBoxWindow, GUILayout.Width(288), GUILayout.Height(20));
+            progressRect = GUILayoutUtility.GetRect(0, 20, GUILayout.Width(289));
 
-            GUI.BeginGroup(progressRect);
-            GUI.DrawTextureWithTexCoords(new Rect(2, 0, 288, 20), TMP_UIStyleManager.progressTexture, new Rect(1 - m_renderingProgress, 0, 1, 1));
-            GUI.EndGroup();
-
+            GUI.enabled = true;
+            EditorGUI.ProgressBar(progressRect, Mathf.Max(0.01f, m_renderingProgress), "Generation Progress");
+            GUI.enabled = isEnabled;
 
             // FONT STATUS & INFORMATION
             GUISkin skin = GUI.skin;

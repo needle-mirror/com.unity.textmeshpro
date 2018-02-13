@@ -6,7 +6,6 @@ using System.IO;
 using System.Collections;
 
 
-
 namespace TMPro
 {
     [Category("Text Parsing & Layout")]
@@ -61,6 +60,14 @@ namespace TMPro
         [OneTimeSetUp]
         public void Setup()
         {
+            if (Directory.Exists(Path.GetFullPath("Assets/TextMesh Pro")) == false)
+            {
+                Debug.Log("Skipping over Editor tests as TMP Essential Resources are missing from the current test project.");
+                Assert.Ignore();
+
+                return;
+            }
+
             GameObject textObject = new GameObject("Text Object");
             m_TextComponent = textObject.AddComponent<TextMeshPro>();
 
@@ -184,10 +191,14 @@ namespace TMPro
         //[OneTimeTearDown]
         //public void Cleanup()
         //{
-        //    // Remove TMP Essential Resources which were imported in the project.
-        //    if (Directory.Exists(Path.GetFullPath("Assets/TextMesh Pro")))
+        //    // Remove TMP Essential Resources if they were imported in the project as a result of running tests.
+        //    if (TMPro_EventManager.temporaryResourcesImported == true)
         //    {
-        //        AssetDatabase.DeleteAsset("Assets/TextMesh Pro");
+        //        if (Directory.Exists(Path.GetFullPath("Assets/TextMesh Pro")))
+        //        {
+        //            AssetDatabase.DeleteAsset("Assets/TextMesh Pro");
+        //            TMPro_EventManager.temporaryResourcesImported = false;
+        //        }
         //    }
         //}
 

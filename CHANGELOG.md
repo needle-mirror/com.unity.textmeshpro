@@ -1,11 +1,25 @@
 # Changelog
 This is the release of the TextMesh Pro UPM package. This release is the equivalent of release 1.0.56.xx.0b3 of TextMesh Pro.
 
-See the following link for the Release Notes for version 1.0.56.xx.0b2 of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
+See the following link for the Release Notes for version 1.0.56.xx.0b3 of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
+
+## [1.2.1] - 2018-02-14
+### Changes
+- Package is now backwards compatible with Unity 2018.1.
+- Renamed Assembly Definitions (.asmdef) to new UPM package conventions.
+- Added DisplayName for TMP UPM package.
+- Revised Editor and Playmode tests to ignore / skip over the tests if the required resources are not present in the project.
+- Revised implementation of Font Asset Creator progress bar to use Unity's EditorGUI.ProgressBar instead of custom texture.
+- Fixed an issue where using the material tag in conjunction with fallback font assets was not handled correctly.
+- Fixed an issue where changing the fontStyle property in conjunction with using alternative typefaces / font weights would not correctly trigger a regeneration of the text object.
 
 ## [1.2.0] - 2018-01-23
 ### Changes
-- Package version # increased to 1.2.0 which is the first release for Unity 2018.2. 
+- Package version # increased to 1.2.0 which is the first release for Unity 2018.2.
+
+## [1.1.0] - 2018-01-23
+### Changes
+- Package version # increased to 1.1.0 which is the first release for Unity 2018.1. 
 
 ## [1.0.27] - 2018-01-16
 ### Changes

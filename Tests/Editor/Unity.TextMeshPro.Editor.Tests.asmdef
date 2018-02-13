@@ -1,8 +1,8 @@
 {
-    "name": "com.unity.textmeshpro.EditorTests",
+    "name": "Unity.TextMeshPro.Editor.Tests",
     "references": [
-        "com.unity.textmeshpro.Runtime",
-        "com.unity.textmeshpro.Editor"
+        "Unity.TextMeshPro",
+        "Unity.TextMeshPro.Editor"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

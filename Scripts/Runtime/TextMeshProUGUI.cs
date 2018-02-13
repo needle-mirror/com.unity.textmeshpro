@@ -141,7 +141,6 @@ namespace TMPro
         /// </summary>
         public override void SetLayoutDirty()
         {
-            //Debug.Log("SetLayoutDirty() called at frame:" + Time.frameCount + ".");
             m_isPreferredWidthDirty = true;
             m_isPreferredHeightDirty = true;
 

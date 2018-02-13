@@ -411,7 +411,7 @@ namespace TMPro
         public int fontWeight
         {
             get { return m_fontWeight; }
-            set { if (m_fontWeight == value) return; m_fontWeight = value; m_isCalculateSizeRequired = true; SetVerticesDirty(); SetLayoutDirty(); }
+            set { if (m_fontWeight == value) return; m_fontWeight = value; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; m_isInputParsingRequired = true; SetVerticesDirty(); SetLayoutDirty(); }
         }
         [SerializeField]
         protected int m_fontWeight = 400;
@@ -483,7 +483,7 @@ namespace TMPro
         public FontStyles fontStyle
         {
             get { return m_fontStyle; }
-            set { if (m_fontStyle == value) return; m_fontStyle = value; m_havePropertiesChanged = true; checkPaddingRequired = true; SetVerticesDirty(); SetLayoutDirty(); }
+            set { if (m_fontStyle == value) return; m_fontStyle = value; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; m_isInputParsingRequired = true; SetVerticesDirty(); SetLayoutDirty(); }
         }
         [SerializeField]
         protected FontStyles m_fontStyle = FontStyles.Normal;
@@ -6591,7 +6591,7 @@ namespace TMPro
                         if (materialHashCode == 764638571 || materialHashCode == 523367755)
                         {
                             // Check if material font atlas texture matches that of the current font asset.
-                            if (m_currentFontAsset.atlas.GetInstanceID() != m_currentMaterial.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID()) return false;
+                            //if (m_currentFontAsset.atlas.GetInstanceID() != m_currentMaterial.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID()) return false;
 
                             m_currentMaterial = m_materialReferences[0].material;
                             m_currentMaterialIndex = 0;
@@ -6606,7 +6606,7 @@ namespace TMPro
                         if (MaterialReferenceManager.TryGetMaterial(materialHashCode, out tempMaterial))
                         {
                             // Check if material font atlas texture matches that of the current font asset.
-                            if (m_currentFontAsset.atlas.GetInstanceID() != tempMaterial.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID()) return false;
+                            //if (m_currentFontAsset.atlas.GetInstanceID() != tempMaterial.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID()) return false;
 
                             m_currentMaterial = tempMaterial;
 
@@ -6623,7 +6623,7 @@ namespace TMPro
                                 return false;
 
                             // Check if material font atlas texture matches that of the current font asset.
-                            if (m_currentFontAsset.atlas.GetInstanceID() != tempMaterial.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID()) return false;
+                            //if (m_currentFontAsset.atlas.GetInstanceID() != tempMaterial.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID()) return false;
 
                             // Add new reference to this material in the MaterialReferenceManager
                             MaterialReferenceManager.AddFontMaterial(materialHashCode, tempMaterial);

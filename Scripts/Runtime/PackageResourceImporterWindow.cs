@@ -216,7 +216,7 @@ namespace TMPro
         {
             for (int i = 0; i < paths.Length; i++)
             {
-                // Check if any of the matching directories contain a GUISkins directory.
+                // Check if the Editor Resources folder exists.
                 if (Directory.Exists(paths[i] + "/Editor Resources"))
                 {
                     string folderPath = paths[i].Replace(projectPath, "");

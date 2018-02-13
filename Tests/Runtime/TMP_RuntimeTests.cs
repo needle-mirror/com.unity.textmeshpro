@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.TestTools;
 using NUnit.Framework;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -57,6 +58,14 @@ namespace TMPro
         [OneTimeSetUp]
         public void Setup()
         {
+            if (Directory.Exists(Path.GetFullPath("Assets/TextMesh Pro")) == false)
+            {
+                Debug.Log("Skipping over PlayMode tests as TMP Essential Resources are missing from the current test project.");
+                Assert.Ignore();
+
+                return;
+            }
+
             GameObject textObject = new GameObject("Text Object");
             m_TextComponent = textObject.AddComponent<TextMeshPro>();
 
@@ -172,5 +181,25 @@ namespace TMPro
             Assert.AreEqual(m_TextComponent.textInfo.wordCount, wordCount);
             Assert.AreEqual(m_TextComponent.textInfo.lineCount, lineCount);
         }
+
+
+        //[OneTimeTearDown]
+        //public void Cleanup()
+        //{
+        //    // Remove TMP Essential Resources if they were imported in the project as a result of running tests.
+        //    if (TMPro_EventManager.temporaryResourcesImported == true)
+        //    {
+        //        string testResourceFolderPath = Path.GetFullPath("Assets/TextMesh Pro");
+
+        //        if (Directory.Exists(testResourceFolderPath))
+        //        {
+        //            Directory.Delete(testResourceFolderPath);
+        //            File.Delete(Path.GetFullPath("Assets/TextMesh Pro.meta"));
+        //        }
+
+        //        TMPro_EventManager.temporaryResourcesImported = false;
+        //    }
+        //}
+
     }
 }

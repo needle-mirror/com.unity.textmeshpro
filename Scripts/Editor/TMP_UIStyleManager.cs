@@ -40,7 +40,7 @@ namespace TMPro.EditorUtilities
         public static Texture2D alignMidline;
         public static Texture2D alignCapline;
 
-        public static Texture2D progressTexture;
+        //public static Texture2D progressTexture;
         public static Texture2D selectionBox;
 
         public static GUIContent[] alignContent_A;
@@ -76,7 +76,7 @@ namespace TMPro.EditorUtilities
                 alignMidline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignMidLine.psd", typeof(Texture2D)) as Texture2D;
                 alignCapline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignCapLine.psd", typeof(Texture2D)) as Texture2D;
 
-                progressTexture = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/Progress Bar.psd", typeof(Texture2D)) as Texture2D;
+                //progressTexture = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/Progress Bar.psd", typeof(Texture2D)) as Texture2D;
                 //selectionBox = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/SelectionBox.psd", typeof(Texture2D)) as Texture2D;
                 //strikethroughIcon = new GUIContent(AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/icon_strikethrough.psd", typeof(Texture2D)) as Texture2D);
                 selectionBox = EditorGUIUtility.Load("IN thumbnailshadow On@2x") as Texture2D;
@@ -100,7 +100,7 @@ namespace TMPro.EditorUtilities
                 alignMidline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignMidLine_Light.psd", typeof(Texture2D)) as Texture2D;
                 alignCapline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignCapLine_Light.psd", typeof(Texture2D)) as Texture2D;
 
-                progressTexture = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/Progress Bar (Light).psd", typeof(Texture2D)) as Texture2D;
+                //progressTexture = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/Progress Bar (Light).psd", typeof(Texture2D)) as Texture2D;
                 selectionBox = EditorGUIUtility.Load("IN thumbnailshadow On@2x") as Texture2D;
             }
 

@@ -19,7 +19,6 @@ namespace TMPro.EditorUtilities
         //private string[] uiStateLabel = new string[] { "<i>(Click to expand)</i>", "<i>(Click to collapse)</i>" };
         //private GUIStyle _Label;
 
-
         private SerializedProperty prop_FontAsset;
         private SerializedProperty prop_DefaultFontAssetPath;
         private SerializedProperty prop_DefaultFontSize;
@@ -107,7 +106,7 @@ namespace TMPro.EditorUtilities
 
             serializedObject.Update();
 
-            GUILayout.Label("<b>TEXTMESH PRO - SETTINGS</b>", TMP_UIStyleManager.Section_Label);
+            GUILayout.Label("<b>TEXTMESH PRO - SETTINGS</b>     (Version - " + TMP_Settings.version + ")", TMP_UIStyleManager.Section_Label);
 
             // TextMeshPro Font Info Panel
             EditorGUI.indentLevel = 0;

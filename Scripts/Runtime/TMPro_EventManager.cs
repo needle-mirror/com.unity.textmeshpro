@@ -9,7 +9,6 @@ namespace TMPro
 
     public static class TMPro_EventManager
     {
-
         public static readonly FastAction<object, Compute_DT_EventArgs> COMPUTE_DT_EVENT = new FastAction<object, Compute_DT_EventArgs>();
 
         // Event & Delegate used to notify TextMesh Pro objects that Material properties have been changed.

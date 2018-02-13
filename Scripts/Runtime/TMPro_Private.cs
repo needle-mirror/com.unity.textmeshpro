@@ -376,7 +376,11 @@ namespace TMPro
             //Debug.Log("Drag-n-Drop Event - Receiving Object ID " + GetInstanceID()); // + ". Target Object ID " + obj.GetInstanceID() + ".  New Material is " + mat.name + " with ID " + mat.GetInstanceID() + ". Base Material is " + m_baseMaterial.name + " with ID " + m_baseMaterial.GetInstanceID());
 
             // Check if event applies to this current object
+            #if UNITY_2018_2_OR_NEWER
             if (obj == gameObject || UnityEditor.PrefabUtility.GetCorrespondingObjectFromSource(gameObject) == obj)
+            #else
+            if (obj == gameObject || UnityEditor.PrefabUtility.GetPrefabParent(gameObject) == obj)
+            #endif
             {
                 UnityEditor.Undo.RecordObject(this, "Material Assignment");
                 UnityEditor.Undo.RecordObject(m_renderer, "Material Assignment");
@@ -424,10 +428,10 @@ namespace TMPro
             m_isInputParsingRequired = true;
             SetAllDirty();
         }
-        #endif
+#endif
 
 
-        // Function which loads either the default font or a newly assigned font asset. This function also assigned the appropriate material to the renderer.
+            // Function which loads either the default font or a newly assigned font asset. This function also assigned the appropriate material to the renderer.
         protected override void LoadFontAsset()
         {
             //Debug.Log("TextMeshPro LoadFontAsset() has been called."); // Current Font Asset is " + (font != null ? font.name: "Null") );

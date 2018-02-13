@@ -1,5 +1,5 @@
 {
-    "name": "com.unity.textmeshpro.Runtime",
+    "name": "Unity.TextMeshPro",
     "references": [],
     "optionalUnityReferences": [],
     "includePlatforms": [],
