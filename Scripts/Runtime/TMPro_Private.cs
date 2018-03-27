@@ -443,7 +443,7 @@ namespace TMPro
                 if (TMP_Settings.defaultFontAsset != null)
                     m_fontAsset =TMP_Settings.defaultFontAsset;
                 else
-                    m_fontAsset = Resources.Load("Fonts & Materials/LiberationSans SDF", typeof(TMP_FontAsset)) as TMP_FontAsset;
+                    m_fontAsset = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
 
                 if (m_fontAsset == null)
                 {
@@ -1109,7 +1109,7 @@ namespace TMPro
                         int spriteIndex = -1;
 
                         // Check Default Sprite Asset and its Fallbacks
-                        spriteAsset = TMP_SpriteAsset.SearchFallbackForSprite(spriteAsset, c, out spriteIndex);
+                        spriteAsset = TMP_SpriteAsset.SearchForSpriteByUnicode(spriteAsset, c, true, out spriteIndex);
 
                         if (spriteIndex != -1)
                         {
@@ -1162,7 +1162,7 @@ namespace TMPro
                         int spriteIndex = -1;
 
                         // Check Default Sprite Asset and its Fallbacks
-                        spriteAsset = TMP_SpriteAsset.SearchFallbackForSprite(spriteAsset, c, out spriteIndex);
+                        spriteAsset = TMP_SpriteAsset.SearchForSpriteByUnicode(spriteAsset, c, true, out spriteIndex);
 
                         if (spriteIndex != -1)
                         {
@@ -2084,7 +2084,7 @@ namespace TMPro
 
                 // Setup Mesh for visible text elements. ie. not a SPACE / LINEFEED / CARRIAGE RETURN.
                 #region Handle Visible Characters
-                if (charCode == 9 || (!char.IsWhiteSpace((char)charCode) && charCode != 0x200B) || m_textElementType == TMP_TextElementType.Sprite)
+                if (charCode == 9 || charCode == 0xA0 || charCode == 0x2007 || (!char.IsWhiteSpace((char)charCode) && charCode != 0x200B) || m_textElementType == TMP_TextElementType.Sprite)
                 {
                     m_textInfo.characterInfo[m_characterCount].isVisible = true;
 
@@ -2262,6 +2262,7 @@ namespace TMPro
 
                             m_lineNumber += 1;
                             isStartOfNewLine = true;
+                            isFirstWord = true;
 
                             // Check to make sure Array is large enough to hold a new line.
                             if (m_lineNumber >= m_textInfo.lineInfo.Length)
@@ -2390,7 +2391,16 @@ namespace TMPro
                     }
                     #endregion End Check for Characters Exceeding Width of Text Container
 
-                    if (charCode != 9)
+
+                    // Special handling of characters that are not ignored at the end of a line.
+                    if (charCode == 9 || charCode == 0xA0 || charCode == 0x2007)
+                    {
+                        m_textInfo.characterInfo[m_characterCount].isVisible = false;
+                        m_lastVisibleCharacterOfLine = m_characterCount;
+                        m_textInfo.lineInfo[m_lineNumber].spaceCount += 1;
+                        m_textInfo.spaceCount += 1;
+                    }
+                    else
                     {
                         // Determine Vertex Color
                         if (m_overrideHtmlColors)
@@ -2409,13 +2419,7 @@ namespace TMPro
                             SaveSpriteVertexInfo(vertexColor);
                         }
                     }
-                    else // If character is Tab
-                    {
-                        m_textInfo.characterInfo[m_characterCount].isVisible = false;
-                        m_lastVisibleCharacterOfLine = m_characterCount;
-                        m_textInfo.lineInfo[m_lineNumber].spaceCount += 1;
-                        m_textInfo.spaceCount += 1;
-                    }
+
 
                     // Increase visible count for Characters.
                     if (m_textInfo.characterInfo[m_characterCount].isVisible && charCode != 0xAD)
@@ -2434,6 +2438,8 @@ namespace TMPro
                     {
                         m_textInfo.lineInfo[m_lineNumber].spaceCount += 1;
                         m_textInfo.spaceCount += 1;
+
+                        if (charCode == 0xA0) m_textInfo.lineInfo[m_lineNumber].controlCharacterCount = +1;
                     }
                 }
                 #endregion Handle Visible Characters
@@ -2753,6 +2759,7 @@ namespace TMPro
                         m_lineNumber += 1;
                         isStartOfNewLine = true;
                         ignoreNonBreakingSpace = false;
+                        isFirstWord = true;
 
                         // Check to make sure Array is large enough to hold a new line.
                         if (m_lineNumber >= m_textInfo.lineInfo.Length)
@@ -2825,7 +2832,7 @@ namespace TMPro
                 #region Save Word Wrapping State
                 if (m_enableWordWrapping || m_overflowMode == TextOverflowModes.Truncate || m_overflowMode == TextOverflowModes.Ellipsis)
                 {
-                    if ((char.IsWhiteSpace((char)charCode) || charCode == 0x200B || charCode == 0x2D || charCode == 0xAD) && (!m_isNonBreakingSpace || ignoreNonBreakingSpace) && charCode != 0xA0 && charCode != 0x2011 && charCode != 0x202F && charCode != 0x2060)
+                    if ((char.IsWhiteSpace((char)charCode) || charCode == 0x200B || charCode == 0x2D || charCode == 0xAD) && (!m_isNonBreakingSpace || ignoreNonBreakingSpace) && charCode != 0xA0 && charCode != 0x2007 && charCode != 0x2011 && charCode != 0x202F && charCode != 0x2060)
                     {
                         // We store the state of numerous variables for the most recent Space, LineFeed or Carriage Return to enable them to be restored 
                         // for Word Wrapping.
@@ -3113,10 +3120,10 @@ namespace TMPro
                             {
                                 float gap = !m_isRightToLeft ? lineInfo.width - lineInfo.maxAdvance : lineInfo.width + lineInfo.maxAdvance;
 
-                                int visibleCount = lineInfo.visibleCharacterCount - 1;
+                                int visibleCount = lineInfo.visibleCharacterCount - 1 + lineInfo.controlCharacterCount;
 
                                 // Get the number of spaces for each line ignoring the last character if it is not visible (ie. a space or linefeed).
-                                int spaces = characterInfos[lineInfo.lastCharacterIndex].isVisible ? lineInfo.spaceCount : lineInfo.spaceCount - 1;
+                                int spaces = (characterInfos[lineInfo.lastCharacterIndex].isVisible ? lineInfo.spaceCount : lineInfo.spaceCount - 1) - lineInfo.controlCharacterCount;
 
                                 if (isFirstSeperator) { spaces -= 1; visibleCount += 1; }
 
@@ -3124,7 +3131,7 @@ namespace TMPro
 
                                 if (spaces < 1) spaces = 1;
 
-                                if (currentCharacter == 9 || char.IsSeparator((char)currentCharacter))
+                                if (currentCharacter != 0xA0 && (currentCharacter == 9 || char.IsSeparator((char)currentCharacter)))
                                 {
                                     if (!m_isRightToLeft)
                                         justificationOffset += new Vector3(gap * (1 - ratio) / spaces, 0, 0);

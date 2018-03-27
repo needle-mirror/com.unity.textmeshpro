@@ -214,6 +214,8 @@ namespace TMPro
         /// </summary>
         public override void SetAllDirty()
         {
+            m_isInputParsingRequired = true;
+
             SetLayoutDirty();
             SetVerticesDirty();
             SetMaterialDirty();

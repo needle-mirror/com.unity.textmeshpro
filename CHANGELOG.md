@@ -1,7 +1,26 @@
 # Changelog
-This is the release of the TextMesh Pro UPM package. This release is the equivalent of release 1.0.56.xx.0b3 of TextMesh Pro.
+These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
-See the following link for the Release Notes for version 1.0.56.xx.0b3 of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
+## [1.2.2] - 2018-03-28
+### Changes
+- Calling SetAllDirty() on a TMP text component will now force a regeneration of the text object including re-parsing of the text.
+- Fixed potential Null Reference Exception that could occur when assigning a new fallback font asset.
+- Removed public from test classes.
+- Fixed an issue where using nested links (which doesn't make sense conceptually) would result in an error. Should accidental use of nested links occurs, the last / most nested ends up being used.
+- Fixed a potential text alignment issue where an hyphen at the end of a line followed by a new line containing a single word too long to fit the text container would result in miss alignment of the hyphen.
+- Updated package license.
+- Non-Breaking Space character (0xA0) will now be excluded from word spacing adjustments when using Justified or Flush text alignment.
+- Improved handling of Underline, Strikethrough and Mark tag with regards to vertex color and Color tag alpha.
+- Improved TMP_FontAsset.HasCharacter(char character, bool searchFallbacks) to include a recursive search of fallbacks as well as TMP Settings fallback list and default font asset.
+- The &ltgradient&gt tag will now also apply to sprites provided the sprite tint attribute is set to a value of 1. Ex. &ltsprite="Sprite Asset" index=0 tint=1&gt.
+- Updated Font Asset Creator Plugin to allow for cancellation of the font asset generation process.
+- Added callback to support the Scriptable Render Pipeline (SRP) with the normal TextMeshPro component.
+- Improved handling of some non-breaking space characters which should not be ignored at the end of a line.
+- Sprite Asset fallbacks will now be searched when using the &ltsprite&gt tag and referencing a sprite by Unicode or by Name.
+- Updated EmojiOne samples from https://www.emojione.com/ and added attribution.
+- Removed the 32bit versions of the TMP Plugins used by the Font Asset Creator since the Unity Editor is now only available as 64bit.
+- The isTextTruncated property is now serialized.
+- Added new event handler to the TMP_TextEventHandler.cs script included in Example 12a to allow tracking of interactions with Sprites.
 
 ## [1.2.1] - 2018-02-14
 ### Changes

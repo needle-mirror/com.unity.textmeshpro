@@ -9,7 +9,7 @@ using System.Collections;
 namespace TMPro
 {
     [Category("Text Parsing & Layout")]
-    public class TMP_EditorTests
+    class TMP_EditorTests
     {
         private TextMeshPro m_TextComponent;
 
@@ -86,6 +86,7 @@ namespace TMPro
 
             Assert.AreEqual(AssetDatabase.AssetPathToGUID(packageRelativePath + filePath), guid);
             Assert.IsTrue(System.IO.File.Exists(packageFullPath + filePath));
+
         }
 
 

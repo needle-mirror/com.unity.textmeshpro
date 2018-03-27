@@ -1,7 +1,10 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
 using System.Collections.Generic;
+
+#if UNITY_2018_1_OR_NEWER
+using UnityEngine.Experimental.Rendering;
+#endif
 
 
 namespace TMPro
@@ -35,11 +38,15 @@ namespace TMPro
 
 
         /// <summary>
-        /// Register to receive callback from the Canvas System.
+        /// Register to receive rendering callbacks.
         /// </summary>
         protected TMP_UpdateManager()
         {
-            Camera.onPreCull += new Camera.CameraCallback(this.OnCameraPreCull);
+            Camera.onPreCull += OnCameraPreCull;
+
+            #if UNITY_2018_1_OR_NEWER
+            RenderPipeline.beginFrameRendering += OnBeginFrameRendering;
+            #endif
         }
 
 
@@ -88,6 +95,19 @@ namespace TMPro
             return true;
         }
 
+        /// <summary>
+        /// Callback which occurs just before the Scriptable Render Pipeline (SRP) begins rendering.
+        /// </summary>
+        /// <param name="cameras"></param>
+        void OnBeginFrameRendering(Camera[] cameras)
+        {
+            // Exclude the PreRenderCamera
+            #if UNITY_EDITOR
+                if (cameras.Length == 1 && cameras[0].cameraType == CameraType.Preview) 
+                    return;
+            #endif
+            DoRebuilds();
+        }
 
         /// <summary>
         /// Callback which occurs just before the cam is rendered.
@@ -97,9 +117,17 @@ namespace TMPro
         {
             // Exclude the PreRenderCamera
             #if UNITY_EDITOR
-                if (cam.cameraType == CameraType.Preview) return;
+                if (cam.cameraType == CameraType.Preview) 
+                    return;
             #endif
-
+            DoRebuilds();
+        }
+        
+        /// <summary>
+        /// Process the rebuild requests in the rebuild queues.
+        /// </summary>
+        void DoRebuilds()
+        {
             // Handle Layout Rebuild Phase
             for (int i = 0; i < m_LayoutRebuildQueue.Count; i++)
             {

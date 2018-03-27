@@ -346,7 +346,7 @@ namespace TMPro
         // Event received when font asset properties are changed in Font Inspector
         void ON_FONT_PROPERTY_CHANGED(bool isChanged, TMP_FontAsset font)
         {
-            if (font.GetInstanceID() == m_fontAsset.GetInstanceID())
+            if (m_fontAsset != null && font.GetInstanceID() == m_fontAsset.GetInstanceID())
             {
                 // Copy Normal and Bold Weight
                 if (m_fallbackMaterial != null)

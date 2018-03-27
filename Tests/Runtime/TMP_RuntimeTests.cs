@@ -8,7 +8,7 @@ using System.Collections.Generic;
 namespace TMPro
 {
     [Category("Text Parsing & Layout")]
-    public class TMP_RuntimeTests
+    class TMP_RuntimeTests
     {
         private TextMeshPro m_TextComponent;
 

@@ -143,7 +143,8 @@ namespace TMPro
             {
                 this.lineInfo[i].characterCount = 0;
                 this.lineInfo[i].spaceCount = 0;
-                //this.lineInfo[i].wordCount = 0;
+                this.lineInfo[i].wordCount = 0;
+                this.lineInfo[i].controlCharacterCount = 0;
                 this.lineInfo[i].width = 0;
 
                 this.lineInfo[i].ascender = k_InfinityVectorNegative.x;

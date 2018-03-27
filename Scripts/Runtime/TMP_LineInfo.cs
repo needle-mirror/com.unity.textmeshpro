@@ -6,6 +6,8 @@
     /// </summary>
     public struct TMP_LineInfo
     {
+        internal int controlCharacterCount;
+
         public int characterCount;
         public int visibleCharacterCount;
         public int spaceCount;

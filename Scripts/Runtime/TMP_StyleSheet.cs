@@ -28,7 +28,7 @@ namespace TMPro
                     s_Instance = TMP_Settings.defaultStyleSheet;
 
                     if (s_Instance == null)
-                        s_Instance = Resources.Load("Style Sheets/TMP Default Style Sheet") as TMP_StyleSheet;
+                        s_Instance = Resources.Load<TMP_StyleSheet>("Style Sheets/TMP Default Style Sheet");
 
                     if (s_Instance == null) return null;
 

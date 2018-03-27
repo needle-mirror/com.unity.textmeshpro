@@ -449,29 +449,34 @@ namespace TMPro
 
 
         /// <summary>
-        /// Function to check if a character is contained in a font asset with the option to also check through fallback font assets.
+        /// Function to check if a character is contained in the font asset with the option to also check through fallback font assets.
         /// </summary>
         /// <param name="character"></param>
         /// <param name="searchFallbacks"></param>
         /// <returns></returns>
         public bool HasCharacter(char character, bool searchFallbacks)
         {
+            // Read font asset definition if it hasn't already been done.
             if (m_characterDictionary == null)
-                return false;
+            {
+                ReadFontDefinition();
+
+                if (m_characterDictionary == null)
+                    return false;
+            }
 
             // Check font asset
             if (m_characterDictionary.ContainsKey(character))
                 return true;
 
-            
             if (searchFallbacks)
             {
-                // Check Font Asset Fallback fonts.
+                // Check font asset fallbacks
                 if (fallbackFontAssets != null && fallbackFontAssets.Count > 0)
                 {
                     for (int i = 0; i < fallbackFontAssets.Count && fallbackFontAssets[i] != null; i++)
                     {
-                        if (fallbackFontAssets[i].characterDictionary != null && fallbackFontAssets[i].characterDictionary.ContainsKey(character))
+                        if (fallbackFontAssets[i].HasCharacter_Internal(character, searchFallbacks))
                             return true;
                     }
                 }
@@ -481,7 +486,59 @@ namespace TMPro
                 {
                     for (int i = 0; i < TMP_Settings.fallbackFontAssets.Count && TMP_Settings.fallbackFontAssets[i] != null; i++)
                     {
-                        if (TMP_Settings.fallbackFontAssets[i].characterDictionary != null && TMP_Settings.fallbackFontAssets[i].characterDictionary.ContainsKey(character))
+                        if (TMP_Settings.fallbackFontAssets[i].characterDictionary == null)
+                            TMP_Settings.fallbackFontAssets[i].ReadFontDefinition();
+
+                        if (TMP_Settings.fallbackFontAssets[i].characterDictionary != null && TMP_Settings.fallbackFontAssets[i].HasCharacter_Internal(character, searchFallbacks))
+                            return true;
+                    }
+                }
+
+                // Check TMP Settings Default Font Asset
+                if (TMP_Settings.defaultFontAsset != null)
+                {
+                    if (TMP_Settings.defaultFontAsset.characterDictionary == null)
+                        TMP_Settings.defaultFontAsset.ReadFontDefinition();
+
+                    if (TMP_Settings.defaultFontAsset.characterDictionary != null && TMP_Settings.defaultFontAsset.HasCharacter_Internal(character, searchFallbacks))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+
+        /// <summary>
+        /// Function to check if a character is contained in a font asset with the option to also check through fallback font assets.
+        /// This private implementation does not search the fallback font asset in the TMP Settings file.
+        /// </summary>
+        /// <param name="character"></param>
+        /// <param name="searchFallbacks"></param>
+        /// <returns></returns>
+        bool HasCharacter_Internal(char character, bool searchFallbacks)
+        {
+            // Read font asset definition if it hasn't already been done.
+            if (m_characterDictionary == null)
+            {
+                ReadFontDefinition();
+
+                if (m_characterDictionary == null)
+                    return false;
+            }
+
+            // Check font asset
+            if (m_characterDictionary.ContainsKey(character))
+                return true;
+
+            if (searchFallbacks)
+            {
+                // Check Font Asset Fallback fonts.
+                if (fallbackFontAssets != null && fallbackFontAssets.Count > 0)
+                {
+                    for (int i = 0; i < fallbackFontAssets.Count && fallbackFontAssets[i] != null; i++)
+                    {
+                        if (fallbackFontAssets[i].HasCharacter_Internal(character, searchFallbacks))
                             return true;
                     }
                 }

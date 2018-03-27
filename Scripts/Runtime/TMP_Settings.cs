@@ -18,9 +18,8 @@ namespace TMPro
         /// </summary>
         public static string version
         {
-            get { return "1.2.1"; }
+            get { return "1.2.2"; }
         }
-
 
         /// <summary>
         /// Controls if Word Wrapping will be enabled on newly created text objects by default.
@@ -288,7 +287,7 @@ namespace TMPro
             {
                 if (TMP_Settings.s_Instance == null)
                 {
-                    TMP_Settings.s_Instance = Resources.Load("TMP Settings") as TMP_Settings;
+                    TMP_Settings.s_Instance = Resources.Load<TMP_Settings>("TMP Settings");
 
                     #if UNITY_EDITOR
                     // Make sure TextMesh Pro UPM packages resources have been added to the user project
@@ -314,7 +313,7 @@ namespace TMPro
             if (s_Instance == null)
             {
                 // Load settings from TMP_Settings file
-                TMP_Settings settings = Resources.Load("TMP Settings") as TMP_Settings;
+                TMP_Settings settings = Resources.Load<TMP_Settings>("TMP Settings");
                 if (settings != null)
                     s_Instance = settings;
             }

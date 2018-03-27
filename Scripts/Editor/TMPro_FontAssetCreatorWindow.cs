@@ -73,6 +73,7 @@ namespace TMPro.EditorUtilities
         private float m_renderingProgress;
         private bool isRenderingDone = false;
         private bool isProcessing = false;
+        private bool isGenerationCancelled = false;
 
         private Object font_TTF;
         private TMP_FontAsset m_fontAssetSelection;
@@ -123,7 +124,6 @@ namespace TMPro.EditorUtilities
             m_editorWindow = this;
             UpdateEditorWindowSize(768, 768);
 
-
             // Get the UI Skin and Styles for the various Editors
             TMP_UIStyleManager.GetUIStyles();
 
@@ -147,11 +147,11 @@ namespace TMPro.EditorUtilities
 
             TMPro_EventManager.COMPUTE_DT_EVENT.Remove(ON_COMPUTE_DT_EVENT);
 
+            // Cancel font asset generation just in case one is in progress.
+            TMPro_FontPlugin.SendCancellationRequest(CancellationRequestType.WindowClosed);
+
             // Destroy Engine only if it has been initialized already
-            if (TMPro_FontPlugin.Initialize_FontEngine() == 99)
-            {
-                TMPro_FontPlugin.Destroy_FontEngine();
-            }
+            TMPro_FontPlugin.Destroy_FontEngine();
 
             // Cleaning up allocated Texture2D
             if (m_destination_Atlas != null && EditorUtility.IsPersistent(m_destination_Atlas) == false)
@@ -249,8 +249,12 @@ namespace TMPro.EditorUtilities
             {
                 isProcessing = false;
                 isRenderingDone = false;
-                UpdateRenderFeedbackWindow();
-                CreateFontTexture();
+
+                if (isGenerationCancelled == false)
+                {
+                    UpdateRenderFeedbackWindow();
+                    CreateFontTexture();
+                }
             }
         }
 
@@ -548,14 +552,15 @@ namespace TMPro.EditorUtilities
             bool isEnabled = GUI.enabled = font_TTF == null || isProcessing ? false : true;    // Enable Preview if we are not already rendering a font.
             if (GUILayout.Button("Generate Font Atlas", GUILayout.Width(290)) && characterSequence.Length != 0 && GUI.enabled)
             {
-                if (font_TTF != null)
+                if (isProcessing == false && font_TTF != null)
                 {
                     int error_Code;
+                    m_font_Atlas = null;
 
                     error_Code = TMPro_FontPlugin.Initialize_FontEngine(); // Initialize Font Engine
                     if (error_Code != 0)
                     {
-                        if (error_Code == 99)
+                        if (error_Code == 0xF0)
                         {
                             //Debug.Log("Font Library was already initialized!");
                             error_Code = 0;
@@ -572,7 +577,7 @@ namespace TMPro.EditorUtilities
 
                         if (error_Code != 0)
                         {
-                            if (error_Code == 99)
+                            if (error_Code == 0xF1)
                             {
                                 //Debug.Log("Font was already loaded!");
                                 error_Code = 0;
@@ -638,6 +643,7 @@ namespace TMPro.EditorUtilities
                         if (font_renderMode == RenderModes.DistanceField32) strokeSize = font_style_mod * 32;
                         
                         isProcessing = true;
+                        isGenerationCancelled = false;
                         
                         ThreadPool.QueueUserWorkItem(SomeTask =>
                         {
@@ -649,7 +655,6 @@ namespace TMPro.EditorUtilities
                         });
                         
                         previewSelection = PreviewSelectionTypes.PreviewFont;
-                        
                     }
                 }
             }
@@ -657,10 +662,22 @@ namespace TMPro.EditorUtilities
 
             // FONT RENDERING PROGRESS BAR
             GUILayout.Space(1);
-            progressRect = GUILayoutUtility.GetRect(0, 20, GUILayout.Width(289));
+            progressRect = GUILayoutUtility.GetRect(0, 20, GUILayout.Width(288));
 
             GUI.enabled = true;
             EditorGUI.ProgressBar(progressRect, Mathf.Max(0.01f, m_renderingProgress), "Generation Progress");
+            progressRect.x += 266;
+            progressRect.y += 1;
+            progressRect.width = 20;
+            progressRect.height = 16;
+            GUI.enabled = isProcessing ? true : false;
+            if (GUI.Button(progressRect, "X"))
+            {
+                TMPro_FontPlugin.SendCancellationRequest(CancellationRequestType.CancelInProgess);
+                m_renderingProgress = 0;
+                isProcessing = false;
+                isGenerationCancelled = true;
+            }
             GUI.enabled = isEnabled;
 
             // FONT STATUS & INFORMATION
@@ -668,7 +685,7 @@ namespace TMPro.EditorUtilities
             GUI.skin = TMP_UIStyleManager.TMP_GUISkin;
 
             GUILayout.Space(5);
-            GUILayout.BeginVertical(TMP_UIStyleManager.TextAreaBoxWindow);
+            GUILayout.BeginVertical(TMP_UIStyleManager.TextAreaBoxWindow, GUILayout.Width(290));
             output_ScrollPosition = EditorGUILayout.BeginScrollView(output_ScrollPosition, GUILayout.Height(145));
             EditorGUILayout.LabelField(output_feedback, TMP_UIStyleManager.Label);
             EditorGUILayout.EndScrollView();

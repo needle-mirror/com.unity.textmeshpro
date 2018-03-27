@@ -735,6 +735,7 @@ namespace TMPro
         /// Property indicating whether the text is Truncated or using Ellipsis.
         /// </summary>
         public bool isTextTruncated { get { return m_isTextTruncated; } }
+        [SerializeField]
         protected bool m_isTextTruncated;
 
 
@@ -2275,7 +2276,7 @@ namespace TMPro
                             {
                                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                                charBuffer[writeIndex] = GetUTF32(i + 2);
+                                charBuffer[writeIndex] = GetUTF32(sourceText, i + 2);
                                 i += 9;
                                 writeIndex += 1;
                                 continue;
@@ -2325,7 +2326,7 @@ namespace TMPro
                             {
                                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                                charBuffer[writeIndex] = (char)GetUTF16(i + 2);
+                                charBuffer[writeIndex] = (char)GetUTF16(sourceText, i + 2);
                                 i += 5;
                                 writeIndex += 1;
                                 continue;
@@ -2425,7 +2426,7 @@ namespace TMPro
                             {
                                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                                charBuffer[writeIndex] = GetUTF32(i + 2);
+                                charBuffer[writeIndex] = GetUTF32(sourceText, i + 2);
                                 i += 9;
                                 writeIndex += 1;
                                 continue;
@@ -2467,7 +2468,7 @@ namespace TMPro
                             {
                                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                                charBuffer[writeIndex] = (char)GetUTF16(i + 2);
+                                charBuffer[writeIndex] = (char)GetUTF16(sourceText, i + 2);
                                 i += 5;
                                 writeIndex += 1;
                                 continue;
@@ -4863,42 +4864,42 @@ namespace TMPro
             Color32 spriteColor = m_tintSprite ? m_spriteColor.Multiply(vertexColor) : m_spriteColor;
             spriteColor.a = spriteColor.a < m_fontColor32.a ? spriteColor.a = spriteColor.a < vertexColor.a ? spriteColor.a : vertexColor.a : m_fontColor32.a;
 
-            // Handle Vertex Colors & Vertex Color Gradient
-            if (!m_enableVertexGradient)
+            Color32 c0 = spriteColor;
+            Color32 c1 = spriteColor;
+            Color32 c2 = spriteColor;
+            Color32 c3 = spriteColor;
+
+            if (m_enableVertexGradient)
             {
-                m_textInfo.characterInfo[m_characterCount].vertex_BL.color = spriteColor;
-                m_textInfo.characterInfo[m_characterCount].vertex_TL.color = spriteColor;
-                m_textInfo.characterInfo[m_characterCount].vertex_TR.color = spriteColor;
-                m_textInfo.characterInfo[m_characterCount].vertex_BR.color = spriteColor;
-            }
-            else
-            {
-                if (!m_overrideHtmlColors && m_colorStack.index > 1)
+                if (m_fontColorGradientPreset != null)
                 {
-                    m_textInfo.characterInfo[m_characterCount].vertex_BL.color = spriteColor;
-                    m_textInfo.characterInfo[m_characterCount].vertex_TL.color = spriteColor;
-                    m_textInfo.characterInfo[m_characterCount].vertex_TR.color = spriteColor;
-                    m_textInfo.characterInfo[m_characterCount].vertex_BR.color = spriteColor;
+                    c0 = m_tintSprite ? c0.Multiply(m_fontColorGradientPreset.bottomLeft) : c0;
+                    c1 = m_tintSprite ? c1.Multiply(m_fontColorGradientPreset.topLeft) : c1;
+                    c2 = m_tintSprite ? c2.Multiply(m_fontColorGradientPreset.topRight) : c2;
+                    c3 = m_tintSprite ? c3.Multiply(m_fontColorGradientPreset.bottomRight) : c3;
                 }
-                else // Handle Vertex Color Gradient
+                else
                 {
-                    // Use Vertex Color Gradient Preset (if one is assigned)
-                    if (m_fontColorGradientPreset != null)
-                    {
-                        m_textInfo.characterInfo[m_characterCount].vertex_BL.color = m_tintSprite ? spriteColor.Multiply(m_fontColorGradientPreset.bottomLeft) : spriteColor;
-                        m_textInfo.characterInfo[m_characterCount].vertex_TL.color = m_tintSprite ? spriteColor.Multiply(m_fontColorGradientPreset.topLeft) : spriteColor;
-                        m_textInfo.characterInfo[m_characterCount].vertex_TR.color = m_tintSprite ? spriteColor.Multiply(m_fontColorGradientPreset.topRight) : spriteColor;
-                        m_textInfo.characterInfo[m_characterCount].vertex_BR.color = m_tintSprite ? spriteColor.Multiply(m_fontColorGradientPreset.bottomRight) : spriteColor;
-                    }
-                    else
-                    {
-                        m_textInfo.characterInfo[m_characterCount].vertex_BL.color = m_tintSprite ? spriteColor.Multiply(m_fontColorGradient.bottomLeft) : spriteColor;
-                        m_textInfo.characterInfo[m_characterCount].vertex_TL.color = m_tintSprite ? spriteColor.Multiply(m_fontColorGradient.topLeft) : spriteColor;
-                        m_textInfo.characterInfo[m_characterCount].vertex_TR.color = m_tintSprite ? spriteColor.Multiply(m_fontColorGradient.topRight) : spriteColor;
-                        m_textInfo.characterInfo[m_characterCount].vertex_BR.color = m_tintSprite ? spriteColor.Multiply(m_fontColorGradient.bottomRight) : spriteColor;
-                    }
+                    c0 = m_tintSprite ? c0.Multiply(m_fontColorGradient.bottomLeft) : c0;
+                    c1 = m_tintSprite ? c1.Multiply(m_fontColorGradient.topLeft) : c1;
+                    c2 = m_tintSprite ? c2.Multiply(m_fontColorGradient.topRight) : c2;
+                    c3 = m_tintSprite ? c3.Multiply(m_fontColorGradient.bottomRight) : c3;
                 }
             }
+
+            if (m_colorGradientPreset != null)
+            {
+                c0 = m_tintSprite ? c0.Multiply(m_colorGradientPreset.bottomLeft) : c0;
+                c1 = m_tintSprite ? c1.Multiply(m_colorGradientPreset.topLeft) : c1;
+                c2 = m_tintSprite ? c2.Multiply(m_colorGradientPreset.topRight) : c2;
+                c3 = m_tintSprite ? c3.Multiply(m_colorGradientPreset.bottomRight) : c3;
+            }
+
+            m_textInfo.characterInfo[m_characterCount].vertex_BL.color = c0;
+            m_textInfo.characterInfo[m_characterCount].vertex_TL.color = c1;
+            m_textInfo.characterInfo[m_characterCount].vertex_TR.color = c2;
+            m_textInfo.characterInfo[m_characterCount].vertex_BR.color = c3;
+
 
             // Setup UVs for the Character
             #region Setup UVs
@@ -5252,9 +5253,10 @@ namespace TMPro
 
             // UNDERLINE VERTEX COLORS
             #region
-            //underlineColor.a /= 2; // Alpha value needs to be adjusted since bold is encoded in it.
-            Color32[] colors32 = m_textInfo.meshInfo[0].colors32;
+            // Alpha is the lower of the vertex color or tag color alpha used.
+            underlineColor.a = m_fontColor32.a < underlineColor.a ? (byte)(m_fontColor32.a) : (byte)(underlineColor.a);
 
+            Color32[] colors32 = m_textInfo.meshInfo[0].colors32;
             colors32[0 + index] = underlineColor;
             colors32[1 + index] = underlineColor;
             colors32[2 + index] = underlineColor;
@@ -5338,8 +5340,10 @@ namespace TMPro
 
             // HIGHLIGHT VERTEX COLORS
             #region
+            // Alpha is the lower of the vertex color or tag color alpha used.
+            highlightColor.a = m_fontColor32.a < highlightColor.a ? m_fontColor32.a : highlightColor.a;
+
             Color32[] colors32 = m_textInfo.meshInfo[0].colors32;
-            highlightColor.a = m_htmlColor.a < highlightColor.a ? m_htmlColor.a : highlightColor.a;
             colors32[0 + index] = highlightColor;
             colors32[1 + index] = highlightColor;
             colors32[2 + index] = highlightColor;
@@ -5642,12 +5646,28 @@ namespace TMPro
         /// </summary>
         /// <returns>The Unicode hex.</returns>
         /// <param name="i">The index.</param>
-        protected int GetUTF16(int i)
+        protected int GetUTF16(string text, int i)
         {
-            int unicode = HexToInt(m_text[i]) << 12;
-            unicode += HexToInt(m_text[i + 1]) << 8;
-            unicode += HexToInt(m_text[i + 2]) << 4;
-            unicode += HexToInt(m_text[i + 3]);
+            int unicode = 0;
+            unicode += HexToInt(text[i]) << 12;
+            unicode += HexToInt(text[i + 1]) << 8;
+            unicode += HexToInt(text[i + 2]) << 4;
+            unicode += HexToInt(text[i + 3]);
+            return unicode;
+        }
+
+        /// <summary>
+        /// Convert UTF-16 Hex to Char
+        /// </summary>
+        /// <returns>The Unicode hex.</returns>
+        /// <param name="i">The index.</param>
+        protected int GetUTF16(StringBuilder text, int i)
+        {
+            int unicode = 0;
+            unicode += HexToInt(text[i]) << 12;
+            unicode += HexToInt(text[i + 1]) << 8;
+            unicode += HexToInt(text[i + 2]) << 4;
+            unicode += HexToInt(text[i + 3]);
             return unicode;
         }
 
@@ -5657,17 +5677,36 @@ namespace TMPro
         /// </summary>
         /// <returns>The Unicode hex.</returns>
         /// <param name="i">The index.</param>
-        protected int GetUTF32(int i)
+        protected int GetUTF32(string text, int i)
         {
             int unicode = 0;
-            unicode += HexToInt(m_text[i]) << 30;
-            unicode += HexToInt(m_text[i + 1]) << 24;
-            unicode += HexToInt(m_text[i + 2]) << 20;
-            unicode += HexToInt(m_text[i + 3]) << 16;
-            unicode += HexToInt(m_text[i + 4]) << 12;
-            unicode += HexToInt(m_text[i + 5]) << 8;
-            unicode += HexToInt(m_text[i + 6]) << 4;
-            unicode += HexToInt(m_text[i + 7]);
+            unicode += HexToInt(text[i]) << 30;
+            unicode += HexToInt(text[i + 1]) << 24;
+            unicode += HexToInt(text[i + 2]) << 20;
+            unicode += HexToInt(text[i + 3]) << 16;
+            unicode += HexToInt(text[i + 4]) << 12;
+            unicode += HexToInt(text[i + 5]) << 8;
+            unicode += HexToInt(text[i + 6]) << 4;
+            unicode += HexToInt(text[i + 7]);
+            return unicode;
+        }
+
+        /// <summary>
+        /// Convert UTF-32 Hex to Char
+        /// </summary>
+        /// <returns>The Unicode hex.</returns>
+        /// <param name="i">The index.</param>
+        protected int GetUTF32(StringBuilder text, int i)
+        {
+            int unicode = 0;
+            unicode += HexToInt(text[i]) << 30;
+            unicode += HexToInt(text[i + 1]) << 24;
+            unicode += HexToInt(text[i + 2]) << 20;
+            unicode += HexToInt(text[i + 3]) << 16;
+            unicode += HexToInt(text[i + 4]) << 12;
+            unicode += HexToInt(text[i + 5]) << 8;
+            unicode += HexToInt(text[i + 6]) << 4;
+            unicode += HexToInt(text[i + 7]);
             return unicode;
         }
 
@@ -6160,7 +6199,10 @@ namespace TMPro
                         m_fontStyleStack.Add(FontStyles.Strikethrough);
 
                         if (m_xmlAttribute[1].nameHashCode == 281955 || m_xmlAttribute[1].nameHashCode == 192323)
+                        {
                             m_strikethroughColor = HexCharsToColor(m_htmlTag, m_xmlAttribute[1].valueStartIndex, m_xmlAttribute[1].valueLength);
+                            m_strikethroughColor.a = m_htmlColor.a < m_strikethroughColor.a ? (byte)(m_htmlColor.a) : (byte)(m_strikethroughColor .a);
+                        }
                         else
                             m_strikethroughColor = m_htmlColor;
 
@@ -6181,7 +6223,10 @@ namespace TMPro
                         m_fontStyleStack.Add(FontStyles.Underline);
 
                         if (m_xmlAttribute[1].nameHashCode == 281955 || m_xmlAttribute[1].nameHashCode == 192323)
+                        {
                             m_underlineColor = HexCharsToColor(m_htmlTag, m_xmlAttribute[1].valueStartIndex, m_xmlAttribute[1].valueLength);
+                            m_underlineColor.a = m_htmlColor.a < m_underlineColor.a ? (byte)(m_htmlColor.a) : (byte)(m_underlineColor.a);
+                        }
                         else
                             m_underlineColor = m_htmlColor;
 
@@ -6204,6 +6249,7 @@ namespace TMPro
                         m_fontStyleStack.Add(FontStyles.Highlight);
 
                         m_highlightColor = HexCharsToColor(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
+                        m_highlightColor.a = m_htmlColor.a < m_highlightColor.a ? (byte)(m_htmlColor.a) : (byte)(m_highlightColor.a);
                         m_highlightColorStack.Add(m_highlightColor);
                         return true;
                     case 155892: // </mark>
@@ -6699,9 +6745,12 @@ namespace TMPro
                     case 143113: // </LINK>
                         if (m_isParsingText && !m_isCalculatingPreferredValues)
                         {
-                            m_textInfo.linkInfo[m_textInfo.linkCount].linkTextLength = m_characterCount - m_textInfo.linkInfo[m_textInfo.linkCount].linkTextfirstCharacterIndex;
+                            if (m_textInfo.linkCount < m_textInfo.linkInfo.Length)
+                            {
+                                m_textInfo.linkInfo[m_textInfo.linkCount].linkTextLength = m_characterCount - m_textInfo.linkInfo[m_textInfo.linkCount].linkTextfirstCharacterIndex;
 
-                            m_textInfo.linkCount += 1;
+                                m_textInfo.linkCount += 1;
+                            }
                         }
                         return true;
                     case 275917: // <align=>
@@ -7092,7 +7141,7 @@ namespace TMPro
                             {
                                 case 43347: // <sprite name="">
                                 case 30547: // <SPRITE NAME="">
-                                    index = m_currentSpriteAsset.GetSpriteIndexFromHashcode(m_xmlAttribute[i].valueHashCode);
+                                    m_currentSpriteAsset = TMP_SpriteAsset.SearchForSpriteByHashCode(m_currentSpriteAsset, m_xmlAttribute[i].valueHashCode, true, out index);
                                     if (index == -1) return false;
 
                                     m_spriteIndex = index;
