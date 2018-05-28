@@ -44,6 +44,12 @@ namespace TMPro.EditorUtilities
             DoTexture2D("_MainTex", "Font Atlas");
             if (material.HasProperty(ShaderUtilities.ID_VertexOffsetX))
             {
+                if (material.HasProperty(ShaderUtilities.ID_Padding))
+                {
+                    DoEmptyLine();
+                    DoFloat("_Padding", "Padding");
+                }
+
                 DoEmptyLine();
                 DoFloat("_VertexOffsetX", "Offset X");
                 DoFloat("_VertexOffsetY", "Offset Y");

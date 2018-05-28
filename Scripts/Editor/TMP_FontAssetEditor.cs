@@ -175,7 +175,19 @@ namespace TMPro.EditorUtilities
 
             serializedObject.Update();
 
-            GUILayout.Label("<b>TextMesh Pro! Font Asset</b>", TMP_UIStyleManager.Section_Label);
+            // TextMeshPro Font Info Panel
+            Rect rect = EditorGUILayout.GetControlRect(true, 26f);
+            GUI.Label(rect, "<b>TextMesh Pro! Font Asset</b>", TMP_UIStyleManager.Section_Label);
+
+            rect.x = rect.width - 125;
+            rect.y += 2;
+            rect.width = 130f;
+            rect.height = 20f;
+
+            if (GUI.Button(rect, "Update Atlas Texture"))
+            {
+                TMPro_FontAssetCreatorWindow.ShowFontAtlasCreatorWindow(target as TMP_FontAsset);
+            }
 
             // TextMeshPro Font Info Panel
             GUILayout.Label("Face Info", TMP_UIStyleManager.Section_Label);

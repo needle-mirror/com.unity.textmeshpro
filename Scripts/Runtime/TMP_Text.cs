@@ -3754,12 +3754,6 @@ namespace TMPro
             for (int i = 0; m_char_buffer[i] != 0; i++)
             {
                 charCode = m_char_buffer[i];
-                m_textElementType = m_textInfo.characterInfo[m_characterCount].elementType;
-
-                m_currentMaterialIndex = m_textInfo.characterInfo[m_characterCount].materialReferenceIndex;
-                m_currentFontAsset = m_materialReferences[m_currentMaterialIndex].fontAsset;
-
-                int prev_MaterialIndex = m_currentMaterialIndex;
 
                 // Parse Rich Text Tag
                 #region Parse Rich Text Tag
@@ -3778,11 +3772,18 @@ namespace TMPro
                             continue;
                     }
                 }
+                else
+                {
+                    m_textElementType = m_textInfo.characterInfo[m_characterCount].elementType;
+                    m_currentMaterialIndex = m_textInfo.characterInfo[m_characterCount].materialReferenceIndex;
+                    m_currentFontAsset = m_textInfo.characterInfo[m_characterCount].fontAsset;
+                }
                 #endregion End Parse Rich Text Tag
 
-                m_isParsingText = false;
-
+                int prev_MaterialIndex = m_currentMaterialIndex;
                 bool isUsingAltTypeface = m_textInfo.characterInfo[m_characterCount].isUsingAlternateTypeface;
+
+                m_isParsingText = false;
 
                 // Handle Font Styles like LowerCase, UpperCase and SmallCaps.
                 #region Handling of LowerCase, UpperCase and SmallCaps Font Styles

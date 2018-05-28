@@ -1,4 +1,4 @@
-﻿//#define DEBUG_MODE
+﻿//#define TMP_DEBUG_MODE
 
 using System;
 using System.Collections;
@@ -1699,7 +1699,7 @@ namespace TMPro
                 stringPositionInternal = stringSelectPositionInternal = Mathf.Max(stringPositionInternal, stringSelectPositionInternal);
                 caretPositionInternal = caretSelectPositionInternal = GetCaretPositionFromStringIndex(stringSelectPositionInternal);
 
-                #if DEBUG_MODE
+                #if TMP_DEBUG_MODE
                 Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal);
                 #endif
                 return;
@@ -1728,7 +1728,7 @@ namespace TMPro
                 caretSelectPositionInternal = caretPositionInternal = GetCaretPositionFromStringIndex(stringSelectPositionInternal);
             }
 
-            #if DEBUG_MODE
+            #if TMP_DEBUG_MODE
             Debug.Log("Caret Position: " + caretPositionInternal + "  Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + "  String Select Position: " + stringSelectPositionInternal);
             #endif
         }
@@ -1757,7 +1757,7 @@ namespace TMPro
                 stringPositionInternal = stringSelectPositionInternal = Mathf.Min(stringPositionInternal, stringSelectPositionInternal);
                 caretPositionInternal = caretSelectPositionInternal = GetCaretPositionFromStringIndex(stringSelectPositionInternal);
 
-                #if DEBUG_MODE
+                #if TMP_DEBUG_MODE
                 Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal);
                 #endif
                 return;
@@ -1786,7 +1786,7 @@ namespace TMPro
                 caretSelectPositionInternal = caretPositionInternal = GetCaretPositionFromStringIndex(stringSelectPositionInternal);
             }
 
-            #if DEBUG_MODE
+            #if TMP_DEBUG_MODE
             Debug.Log("Caret Position: " + caretPositionInternal + "  Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + "  String Select Position: " + stringSelectPositionInternal);
             #endif
         }
@@ -2056,7 +2056,7 @@ namespace TMPro
                 stringSelectPositionInternal = stringPositionInternal = GetStringIndexFromCaretPosition(caretSelectPositionInternal);
             }
 
-            #if DEBUG_MODE
+            #if TMP_DEBUG_MODE
             Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal);
             #endif
         }
@@ -2089,7 +2089,7 @@ namespace TMPro
                 stringSelectPositionInternal = stringPositionInternal = GetStringIndexFromCaretPosition(caretSelectPositionInternal);
             }
 
-            #if DEBUG_MODE
+            #if TMP_DEBUG_MODE
             Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal);
             #endif
         }
@@ -2142,8 +2142,8 @@ namespace TMPro
                 m_IsScrollbarUpdateRequired = true;
             }
 
-            #if DEBUG_MODE
-            Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal + " Line: " + currentLine);
+            #if TMP_DEBUG_MODE
+            Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal);
             #endif
 
         }
@@ -2195,8 +2195,8 @@ namespace TMPro
                 m_IsScrollbarUpdateRequired = true;
             }
 
-            #if DEBUG_MODE
-            Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal + " Line: " + currentLine);
+            #if TMP_DEBUG_MODE
+            Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal);
             #endif
 
         }
@@ -2248,7 +2248,7 @@ namespace TMPro
                 }
             }
 
-            #if DEBUG_MODE
+            #if TMP_DEBUG_MODE
             Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal);
             #endif
         }
@@ -2289,7 +2289,7 @@ namespace TMPro
                 }
             }
 
-            #if DEBUG_MODE
+            #if TMP_DEBUG_MODE
             Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal);
             #endif
         }
@@ -2337,7 +2337,7 @@ namespace TMPro
 
             }
 
-            #if DEBUG_MODE
+            #if TMP_DEBUG_MODE
             Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal);
             #endif
         }
@@ -2419,7 +2419,7 @@ namespace TMPro
 
             SendOnValueChanged();
 
-            #if DEBUG_MODE
+            #if TMP_DEBUG_MODE
             Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal);
             #endif
         }

@@ -73,6 +73,8 @@ namespace TMPro
 
                     GUILayout.Space(10);
 
+                    GUI.enabled = m_JsonFile != null && m_SpriteAtlas != null && m_SpriteDataFormat == SpriteAssetImportFormats.TexturePacker;
+
                     // Create Sprite Asset
                     if (GUILayout.Button("Create Sprite Asset"))
                     {
@@ -98,6 +100,8 @@ namespace TMPro
 
                     }
 
+                    GUI.enabled = true;
+
                     // Creation Feedback
                     GUILayout.Space(5);
                     GUILayout.BeginVertical(TMP_UIStyleManager.TextAreaBoxWindow, GUILayout.Height(60));
@@ -107,7 +111,8 @@ namespace TMPro
                     GUILayout.EndVertical();
 
                     GUILayout.Space(5);
-                    GUI.enabled = m_SpriteInfoList != null ? true : false;    // Enable Save Button if font_Atlas is not Null.
+
+                    GUI.enabled = m_JsonFile != null && m_SpriteAtlas && m_SpriteInfoList != null && m_SpriteInfoList.Count > 0;    // Enable Save Button if font_Atlas is not Null.
                     if (GUILayout.Button("Save Sprite Asset"))
                     {
                         string filePath = string.Empty;

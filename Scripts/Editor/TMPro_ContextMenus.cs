@@ -240,7 +240,7 @@ namespace TMPro.EditorUtilities
 
         // Context Menus for TMPro Font Assets
         //This function is used for debugging and fixing potentially broken font atlas links.
-        [MenuItem("CONTEXT/TMP_FontAsset/Extract Atlas", false, 2000)]
+        [MenuItem("CONTEXT/TMP_FontAsset/Extract Atlas", false, 2100)]
         static void ExtractAtlas(MenuCommand command)
         {
             TMP_FontAsset font = command.context as TMP_FontAsset;
@@ -269,12 +269,36 @@ namespace TMPro.EditorUtilities
             DestroyImmediate(tex);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="command"></param>
+        [MenuItem("CONTEXT/TMP_FontAsset/Update Atlas Texture", false, 2000)]
+        static void RegenerateFontAsset(MenuCommand command)
+        {
+            TMP_FontAsset fontAsset = command.context as TMP_FontAsset;
 
-        //[MenuItem("CONTEXT/Asset Creator/Extra", false, 1000)]
-        //static void Extra(MenuCommand command)
-        //{
+            if (fontAsset != null && Selection.activeObject != fontAsset)
+            {
+                Selection.activeObject = fontAsset;
+            }
 
-        //}
+            TMPro_FontAssetCreatorWindow.ShowFontAtlasCreatorWindow(fontAsset);
+        }
 
+
+        [MenuItem("CONTEXT/TrueTypeFontImporter/Create TMP Font Asset", false, 200)]
+        static void CreateFontAsset(MenuCommand command)
+        {
+            TrueTypeFontImporter importer = command.context as TrueTypeFontImporter;
+
+            if (importer != null)
+            {
+                Font sourceFontFile = AssetDatabase.LoadAssetAtPath<Font>(importer.assetPath);
+
+                if (sourceFontFile)
+                    TMPro_FontAssetCreatorWindow.ShowFontAtlasCreatorWindow(sourceFontFile);
+            }
+        }
     }
 }

@@ -1,6 +1,23 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [1.2.3] - 2018-05-29
+### Changes
+- Added new bitmap shader with support for Custom Font Atlas texture. This shader also includes a new property "Padding" to provide control over the geometry padding to closely fit a modified / custom font atlas texture.
+- Fixed an issue with ForceMeshUpdate(bool ignoreActiveState) not being handled correctly.
+- Cleaned up memory allocations from repeated use of the Font Asset Creator.
+- Sprites are now scaled based on the current font instead of the primary font asset assigned to the text object.
+- It is now possible to recall the most recent settings used when creating a font asset in the Font Asset Creator.
+- Newly created font assets now contain the settings used when they were last created. This will make the process of updating / regenerating font assets much easier.
+- New context menu "Update Font Asset" was added to the Font Asset inspector which will open the Font Asset Creator with the most recently used settings for that font asset.
+- New Context Menu "Create Font Asset" was added to the Font inspector panel which will open the Font Asset Creator with this source font file already selected.
+- Fixed 3 compiler warnings that would appear when using .Net 4.x.
+- Modified the TMP Settings to place the Missing Glyph options in their own section.
+- Renamed a symbol used for internal debugging to avoid potential conflicts with other user project defines.
+- TMP Sprite Importer "Create Sprite Asset" and "Save Sprite Asset" options are disabled unless a Sprite Data Source, Import Format and Sprite Texture Atlas are provided.
+- Improved the performance of the Project Files GUID Remapping tool.
+- Users will now be prompted to import the TMP Essential Resources when using the Font Asset Creator if such resources have not already been imported. 
+
 ## [1.2.2] - 2018-03-28
 ### Changes
 - Calling SetAllDirty() on a TMP text component will now force a regeneration of the text object including re-parsing of the text.

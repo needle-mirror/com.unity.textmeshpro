@@ -8,10 +8,33 @@ using TMPro.EditorUtilities;
 
 namespace TMPro
 {
+    /// <summary>
+    /// Data structure containing the target and replacement fileIDs and GUIDs which will require remapping from previous version of TextMesh Pro to the new TextMesh Pro UPM package.
+    /// </summary>
+    [System.Serializable]
+    struct AssetConversionRecord
+    {
+        public string referencedResource;
+        public string target;
+        public string replacement;
+    }
+
+
+    /// <summary>
+    /// Data structure containing a list of target and replacement fileID and GUID requiring remapping from previous versions of TextMesh Pro to the new TextMesh Pro UPM package.
+    /// This data structure is populated with the data contained in the PackageConversionData.json file included in the package.
+    /// </summary>
+    [System.Serializable]
+    class AssetConversionData
+    {
+        public List<AssetConversionRecord> assetRecords;
+    }
+
+
     public class TMP_ProjectConversionUtility : EditorWindow
     {
         // Create Sprite Asset Editor Window
-        [MenuItem("Window/TextMeshPro/Project Files GUID Remapping Tool", false, 2055)]
+        [MenuItem("Window/TextMeshPro/Project Files GUID Remapping Tool", false, 2100)]
         static void ShowConverterWindow()
         {
             var window = GetWindow<TMP_ProjectConversionUtility>();
@@ -19,27 +42,6 @@ namespace TMPro
             window.Focus();
         }
 
-        /// <summary>
-        /// Data structure containing the target and replacement fileIDs and GUIDs which will require remapping from previous version of TextMesh Pro to the new TextMesh Pro UPM package.
-        /// </summary>
-        [System.Serializable]
-        private struct AssetConversionRecord
-        {
-            public string referencedResource;
-            public string target;
-            public string replacement;
-        }
-
-        /// <summary>
-        /// Data structure containing a list of target and replacement fileID and GUID requiring remapping from previous versions of TextMesh Pro to the new TextMesh Pro UPM package.
-        /// This data structure is populated with the data contained in the PackageConversionData.json file included in the package.
-        /// </summary>
-        [System.Serializable]
-        #pragma warning disable 0649
-        private class AssetConversionData
-        {
-            public List<AssetConversionRecord> assetRecords;
-        }
 
         /// <summary>
         /// 
@@ -55,6 +57,8 @@ namespace TMPro
         private static string m_ProjectScanResults = string.Empty;
         private static Vector2 m_ProjectScanResultScrollPosition;
         private static float m_ProgressPercentage = 0;
+        private static int m_ScanningTotalFiles;
+        private static int m_ScanningCurrentFileIndex;
         private static List<AssetModificationRecord> m_ModifiedAssetList = new List<AssetModificationRecord>();
 
 
@@ -100,7 +104,7 @@ namespace TMPro
 
                     // Display progress bar
                     Rect rect = GUILayoutUtility.GetRect(0f, 20f, GUILayout.ExpandWidth(true));
-                    EditorGUI.ProgressBar(rect, m_ProgressPercentage, "Scan Progress");
+                    EditorGUI.ProgressBar(rect, m_ProgressPercentage, "Scan Progress (" + m_ScanningCurrentFileIndex + "/" + m_ScanningTotalFiles + ")");
                     GUILayout.Space(5);
 
                     // Creation Feedback
@@ -168,21 +172,26 @@ namespace TMPro
 
             // Read Conversion Data from Json file.
             AssetConversionData conversionData = JsonUtility.FromJson<AssetConversionData>(File.ReadAllText(packageFullPath + "/PackageConversionData.json"));
+            AssetConversionData conversionData_Assets = JsonUtility.FromJson<AssetConversionData>(File.ReadAllText(packageFullPath + "/PackageConversionData_Assets.json"));
 
             // Get list of GUIDs for assets that might contain references to previous GUIDs that require updating.
             string[] projectGUIDs = AssetDatabase.FindAssets("t:Object");
+            m_ScanningTotalFiles = projectGUIDs.Length;
 
             // Iterate through projectGUIDs to search project assets of the types likely to reference GUIDs and FileIDs used by previous versions of TextMesh Pro. 
             for (int i = 0; i < projectGUIDs.Length; i++)
             {
-                // Could add a progress bar for this process
+                m_ScanningCurrentFileIndex = i + 1;
 
                 string guid = projectGUIDs[i];
                 string assetFilePath = AssetDatabase.GUIDToAssetPath(guid);
                 System.Type assetType = AssetDatabase.GetMainAssetTypeAtPath(assetFilePath);
 
                 // Filter out asset types that we can't read or have not interest in searching.
-                if (assetType == typeof(DefaultAsset) || assetType == typeof(MonoScript) || assetType == typeof(Texture2D) || assetType == typeof(TextAsset) || assetType == typeof(Shader))
+                if (assetType == typeof(DefaultAsset) || assetType == typeof(MonoScript) || assetType == typeof(Texture2D) || 
+                    assetType == typeof(TextAsset) || assetType == typeof(Shader) || assetType == typeof(Font) || assetType == typeof(UnityEditorInternal.AssemblyDefinitionAsset) ||
+                    assetType == typeof(GUISkin) || assetType == typeof(PhysicsMaterial2D) || assetType == typeof(UnityEngine.U2D.SpriteAtlas) || assetType == typeof(UnityEngine.Tilemaps.Tile) ||
+                    assetType == typeof(AudioClip) || assetType == typeof(ComputeShader) || assetType == typeof(UnityEditor.Animations.AnimatorController))
                     continue;
 
                 // Read the asset data file
@@ -201,15 +210,33 @@ namespace TMPro
 
                 bool hasFileChanged = false;
 
-                foreach (AssetConversionRecord record in conversionData.assetRecords)
+                // Special handling / optimization if assetType is null
+                if (assetType == null)
                 {
-                    if (assetDataFile.Contains(record.target))
+                    foreach (AssetConversionRecord record in conversionData_Assets.assetRecords)
                     {
-                        hasFileChanged = true;
+                        if (assetDataFile.Contains(record.target))
+                        {
+                            hasFileChanged = true;
 
-                        assetDataFile = assetDataFile.Replace(record.target, record.replacement);
+                            assetDataFile = assetDataFile.Replace(record.target, record.replacement);
 
-                        //Debug.Log("Replacing Reference to [" + record.referencedResource + "] using [" + record.target + "] with [" + record.replacement + "] in asset file: [" + assetFilePath + "].");
+                            //Debug.Log("Replacing Reference to [" + record.referencedResource + "] using [" + record.target + "] with [" + record.replacement + "] in asset file: [" + assetFilePath + "].");
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (AssetConversionRecord record in conversionData.assetRecords)
+                    {
+                        if (assetDataFile.Contains(record.target))
+                        {
+                            hasFileChanged = true;
+
+                            assetDataFile = assetDataFile.Replace(record.target, record.replacement);
+
+                            //Debug.Log("Replacing Reference to [" + record.referencedResource + "] using [" + record.target + "] with [" + record.replacement + "] in asset file: [" + assetFilePath + "].");
+                        }
                     }
                 }
 
@@ -785,25 +812,5 @@ namespace TMPro
                 EditorSettings.externalVersionControl = m_ProjectExternalVersionControl;
         }
 
-
-        /// <summary>
-        /// 
-        /// </summary>
-        [System.Serializable]
-        private struct AssetConversionRecord
-        {
-            public string referencedResource;
-            public string target;
-            public string replacement;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        [System.Serializable]
-        private class AssetConversionData
-        {
-            public List<AssetConversionRecord> assetRecords;
-        }
     }
 }

@@ -1587,7 +1587,7 @@ namespace TMPro
             //Debug.Log("*** OnPreRenderCanvas() *** Frame: " + Time.frameCount); 
 
             // Make sure object is active and that we have a valid Canvas.
-            if (!m_isAwake || !m_ignoreActiveState && !this.IsActive()) return;
+            if (!m_isAwake || (this.IsActive() == false && m_ignoreActiveState == false)) return;
 
             if (m_canvas == null) { m_canvas = this.canvas; if (m_canvas == null) return; }
 
@@ -1839,11 +1839,9 @@ namespace TMPro
             for (int i = 0; i < m_char_buffer.Length && m_char_buffer[i] != 0; i++)
             {
                 charCode = m_char_buffer[i];
-                m_textElementType = m_textInfo.characterInfo[m_characterCount].elementType;
-                m_currentMaterialIndex = m_textInfo.characterInfo[m_characterCount].materialReferenceIndex;
-                m_currentFontAsset = m_materialReferences[m_currentMaterialIndex].fontAsset;
+                
 
-                int prev_MaterialIndex = m_currentMaterialIndex;
+                
 
                 // Parse Rich Text Tag
                 #region Parse Rich Text Tag
@@ -1862,11 +1860,19 @@ namespace TMPro
                             continue;
                     }
                 }
+                else
+                {
+                    m_textElementType = m_textInfo.characterInfo[m_characterCount].elementType;
+                    m_currentMaterialIndex = m_textInfo.characterInfo[m_characterCount].materialReferenceIndex;
+                    m_currentFontAsset = m_textInfo.characterInfo[m_characterCount].fontAsset;
+                    //m_currentFontAsset = m_materialReferences[m_currentMaterialIndex].fontAsset;
+                }
                 #endregion End Parse Rich Text Tag
 
-                m_isParsingText = false;
-
+                int prev_MaterialIndex = m_currentMaterialIndex;
                 bool isUsingAltTypeface = m_textInfo.characterInfo[m_characterCount].isUsingAlternateTypeface;
+
+                m_isParsingText = false;
 
                 // When using Linked text, mark character as ignored and skip to next character.
                 if (m_characterCount < m_firstVisibleCharacter)
@@ -1934,11 +1940,9 @@ namespace TMPro
                     else
                         m_spriteColor = s_colorWhite;
 
-                    m_currentFontAsset = m_fontAsset;
-
                     // The sprite scale calculations are based on the font asset assigned to the text object.
-                    float spriteScale = (m_currentFontSize / m_fontAsset.fontInfo.PointSize * m_fontAsset.fontInfo.Scale);
-                    currentElementScale = m_fontAsset.fontInfo.Ascender / sprite.height * sprite.scale * spriteScale;
+                    float spriteScale = (m_currentFontSize / m_currentFontAsset.fontInfo.PointSize * m_currentFontAsset.fontInfo.Scale);
+                    currentElementScale = m_currentFontAsset.fontInfo.Ascender / sprite.height * sprite.scale * spriteScale;
 
                     m_cached_TextElement = sprite;
 
@@ -2094,10 +2098,10 @@ namespace TMPro
                 #if PROFILE_ON
                 Profiler.BeginSample("Calculate Vertices Position");
                 #endif
-                float fontBaseLineOffset = m_currentFontAsset.fontInfo.Baseline;
+                float fontBaseLineOffset = m_currentFontAsset.fontInfo.Baseline * m_fontScale * m_fontScaleMultiplier * m_currentFontAsset.fontInfo.Scale;
                 Vector3 top_left;
                 top_left.x = m_xAdvance + ((m_cached_TextElement.xOffset - padding - style_padding + glyphAdjustments.xPlacement) * currentElementScale * (1 - m_charWidthAdjDelta));
-                top_left.y = (fontBaseLineOffset + m_cached_TextElement.yOffset + padding + glyphAdjustments.yPlacement) * currentElementScale - m_lineOffset + m_baselineOffset;
+                top_left.y = fontBaseLineOffset + (m_cached_TextElement.yOffset + padding + glyphAdjustments.yPlacement) * currentElementScale - m_lineOffset + m_baselineOffset;
                 top_left.z = 0;
 
                 Vector3 bottom_left;
@@ -2168,7 +2172,7 @@ namespace TMPro
                 m_textInfo.characterInfo[m_characterCount].bottomRight = bottom_right;
 
                 m_textInfo.characterInfo[m_characterCount].origin = m_xAdvance;
-                m_textInfo.characterInfo[m_characterCount].baseLine = 0 - m_lineOffset + m_baselineOffset;
+                m_textInfo.characterInfo[m_characterCount].baseLine = fontBaseLineOffset - m_lineOffset + m_baselineOffset;
                 m_textInfo.characterInfo[m_characterCount].aspectRatio = (top_right.x - bottom_left.x) / (top_left.y - bottom_left.y);
 
 
@@ -4021,7 +4025,7 @@ namespace TMPro
             #if PROFILE_PHASES_ON
                 Profiler.BeginSample("TMP Generate Text - Phase III");
             #endif
-            if (m_renderMode == TextRenderFlags.Render)
+            if (m_renderMode == TextRenderFlags.Render && IsActive())
             {
                 // Clear unused vertices
                 //m_textInfo.meshInfo[0].ClearUnusedVertices();

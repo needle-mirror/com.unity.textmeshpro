@@ -101,15 +101,23 @@ namespace TMPro
 
 
         /// <summary>
-        /// List which contains the Fallback font assets for this font.
+        /// List containing the Fallback font assets for this font.
         /// </summary>
         [SerializeField]
         public List<TMP_FontAsset> fallbackFontAssets;
 
-
-        // TODO : Not implemented yet.
+        #if UNITY_EDITOR
+        /// <summary>
+        /// The settings used in the Font Asset Creator when this font asset was created or edited.
+        /// </summary>
+        public FontAssetCreationSettings creationSettings
+        {
+            get { return m_CreationSettings; }
+            set { m_CreationSettings = value; }
+        }
         [SerializeField]
-        public FontCreationSetting fontCreationSettings;
+        public FontAssetCreationSettings m_CreationSettings;
+        #endif
 
         // FONT WEIGHTS
         [SerializeField]
@@ -126,7 +134,6 @@ namespace TMPro
         public byte tabSize = 10;
 
         private byte m_oldTabSize;
-
 
         void OnEnable()
         {

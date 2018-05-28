@@ -18,7 +18,7 @@ namespace TMPro
         /// </summary>
         public static string version
         {
-            get { return "1.2.2"; }
+            get { return "1.2.3"; }
         }
 
         /// <summary>

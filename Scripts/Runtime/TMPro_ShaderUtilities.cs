@@ -28,7 +28,8 @@ namespace TMPro
         public static int ID_OutlineWidth; 
         public static int ID_OutlineSoftness;
         public static int ID_OutlineColor;
-        
+
+        public static int ID_Padding;
         public static int ID_GradientScale; 
         public static int ID_ScaleX; 
         public static int ID_ScaleY; 
@@ -126,6 +127,7 @@ namespace TMPro
                 ID_OutlineSoftness = Shader.PropertyToID("_OutlineSoftness");
                 ID_OutlineColor = Shader.PropertyToID("_OutlineColor");
 
+                ID_Padding = Shader.PropertyToID("_Padding");
                 ID_GradientScale = Shader.PropertyToID("_GradientScale");
                 ID_ScaleX = Shader.PropertyToID("_ScaleX");
                 ID_ScaleY = Shader.PropertyToID("_ScaleY");
@@ -290,8 +292,14 @@ namespace TMPro
 
             int extraPadding = enableExtraPadding ? 4 : 0;
 
-            if (!material.HasProperty(ID_GradientScale))
-                return extraPadding;   // We are using an non SDF Shader.
+            // Check if we are using a non Distance Field Shader
+            if (material.HasProperty(ID_GradientScale) == false)
+            {
+                if (material.HasProperty(ID_Padding))
+                    extraPadding += (int)material.GetFloat(ID_Padding);
+
+                return extraPadding;
+            }
 
             Vector4 padding = Vector4.zero;
             Vector4 maxPadding = Vector4.zero;
@@ -405,10 +413,11 @@ namespace TMPro
             // Return if Material is null
             if (materials == null) return 0;
             
-            int extraPadding = enableExtraPadding ? 4 : 0; 
+            int extraPadding = enableExtraPadding ? 4 : 0;
 
-            if (!materials[0].HasProperty(ShaderUtilities.ID_GradientScale))
-                return extraPadding;   // We are using an non SDF Shader.
+            // Check if we are using a Bitmap Shader
+            if (materials[0].HasProperty(ID_Padding))
+                return extraPadding + materials[0].GetFloat(ID_Padding);
 
             Vector4 padding = Vector4.zero;
             Vector4 maxPadding = Vector4.zero;

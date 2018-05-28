@@ -75,21 +75,26 @@ namespace TMPro
 
     // Structure which holds the font creation settings
     [Serializable]
-    public struct FontCreationSetting
+    public struct FontAssetCreationSettings
     {
-        public string fontSourcePath;
-        public int fontSizingMode;
-        public int fontSize;
-        public int fontPadding;
-        public int fontPackingMode;
-        public int fontAtlasWidth;
-        public int fontAtlasHeight;
-        public int fontCharacterSet;
+        public string sourceFontFileName;
+        public string sourceFontFileGUID;
+        public int pointSizeSamplingMode;
+        public int pointSize;
+        public int padding;
+        public int packingMode;
+        public int atlasWidth;
+        public int atlasHeight;
+        public int characterSetSelectionMode;
+        public string characterSequence;
+        public string referencedFontAssetGUID;
+        public string referencedTextAssetGUID;
         public int fontStyle;
-        public float fontStlyeModifier;
-        public int fontRenderMode;
-        public bool fontKerning;
+        public float fontStyleModifier;
+        public int renderMode;
+        public bool includeFontFeatures;
     }
+
 
     public struct KerningPairKey
     {

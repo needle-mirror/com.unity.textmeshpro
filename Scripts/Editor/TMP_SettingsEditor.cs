@@ -139,6 +139,19 @@ namespace TMPro.EditorUtilities
             EditorGUILayout.EndVertical();
 
 
+            // MISSING GLYPH
+            EditorGUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
+            EditorGUIUtility.labelWidth = 135;
+            GUILayout.Label("<b>Missing Glyph</b>", TMP_UIStyleManager.Label);
+            GUILayout.Label("Define which glyph will be displayed in the event a requested glyph is missing from the specified font asset.", TMP_UIStyleManager.Label);
+            GUILayout.Space(5f);
+            EditorGUILayout.PropertyField(prop_MissingGlyphCharacter, new GUIContent("Missing Glyph Repl."), GUILayout.Width(180));
+            GUILayout.Space(10f);
+            GUILayout.Label("<b>Disable warnings for missing glyphs on text objects.</b>", TMP_UIStyleManager.Label);
+            EditorGUILayout.PropertyField(prop_WarningsDisabled, new GUIContent("Disable warnings"));
+            EditorGUILayout.EndVertical();
+
+
             // TEXT OBJECT DEFAULT PROPERTIES
             EditorGUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
             GUILayout.Label("<b>New Text Object Default Settings</b>", TMP_UIStyleManager.Label);
@@ -170,25 +183,18 @@ namespace TMPro.EditorUtilities
             EditorGUIUtility.labelWidth = 150;
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.PropertyField(prop_WordWrapping); //, GUILayout.MaxWidth(200));
+            EditorGUILayout.PropertyField(prop_WordWrapping);
             EditorGUILayout.PropertyField(prop_Kerning);
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.PropertyField(prop_ExtraPadding); //, GUILayout.MaxWidth(200));
+            EditorGUILayout.PropertyField(prop_ExtraPadding);
             EditorGUILayout.PropertyField(prop_TintAllSprites);
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.PropertyField(prop_ParseEscapeCharacters, new GUIContent("Parse Escape Sequence")); //, GUILayout.MaxWidth(200));
-            EditorGUIUtility.fieldWidth = 10;
-            EditorGUILayout.PropertyField(prop_MissingGlyphCharacter, new GUIContent("Missing Glyph Repl."));
+            EditorGUILayout.PropertyField(prop_ParseEscapeCharacters, new GUIContent("Parse Escape Sequence"));
             EditorGUILayout.EndHorizontal();
-
-            EditorGUIUtility.labelWidth = 135;
-            GUILayout.Space(10f);
-            GUILayout.Label("<b>Disable warnings for missing glyphs on text objects.</b>", TMP_UIStyleManager.Label);
-            EditorGUILayout.PropertyField(prop_WarningsDisabled, new GUIContent("Disable warnings"));
             EditorGUILayout.EndVertical();
 
 
