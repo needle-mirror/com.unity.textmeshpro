@@ -19,7 +19,6 @@ namespace TMPro
     }
 
 
-
     [Serializable]
     public class TMP_FontAsset : TMP_Asset
     {
@@ -58,7 +57,6 @@ namespace TMPro
 
 
         // Glyph Info
-
         [SerializeField]
         private List<TMP_Glyph> m_glyphInfoList;
 
@@ -73,7 +71,6 @@ namespace TMPro
             }
         }
         private Dictionary<int, TMP_Glyph> m_characterDictionary;
-
 
         /// <summary>
         /// Dictionary containing the kerning data
@@ -99,14 +96,12 @@ namespace TMPro
         #pragma warning disable 0169 // Property is used to create an empty Kerning Pair in the editor.
         private KerningPair m_kerningPair;  // Used for creating a new kerning pair in Editor Panel.
 
-
         /// <summary>
         /// List containing the Fallback font assets for this font.
         /// </summary>
         [SerializeField]
         public List<TMP_FontAsset> fallbackFontAssets;
 
-        #if UNITY_EDITOR
         /// <summary>
         /// The settings used in the Font Asset Creator when this font asset was created or edited.
         /// </summary>
@@ -117,7 +112,6 @@ namespace TMPro
         }
         [SerializeField]
         public FontAssetCreationSettings m_CreationSettings;
-        #endif
 
         // FONT WEIGHTS
         [SerializeField]

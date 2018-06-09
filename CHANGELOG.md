@@ -1,6 +1,11 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [1.2.4] - 2018-06-10
+### Changes
+- Fixed a minor issue when using Justified and Flush alignment in conjunction with \u00A0.
+- The Font Asset creationSettings field is no longer an Editor only serialized field.
+
 ## [1.2.3] - 2018-05-29
 ### Changes
 - Added new bitmap shader with support for Custom Font Atlas texture. This shader also includes a new property "Padding" to provide control over the geometry padding to closely fit a modified / custom font atlas texture.

@@ -2399,6 +2399,9 @@ namespace TMPro
                         m_lastVisibleCharacterOfLine = m_characterCount;
                         m_textInfo.lineInfo[m_lineNumber].spaceCount += 1;
                         m_textInfo.spaceCount += 1;
+
+                        if (charCode == 0xA0)
+                            m_textInfo.lineInfo[m_lineNumber].controlCharacterCount += 1;
                     }
                     else
                     {
@@ -2438,8 +2441,6 @@ namespace TMPro
                     {
                         m_textInfo.lineInfo[m_lineNumber].spaceCount += 1;
                         m_textInfo.spaceCount += 1;
-
-                        if (charCode == 0xA0) m_textInfo.lineInfo[m_lineNumber].controlCharacterCount = +1;
                     }
                 }
                 #endregion Handle Visible Characters
