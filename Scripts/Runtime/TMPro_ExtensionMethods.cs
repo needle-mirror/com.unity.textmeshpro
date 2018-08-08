@@ -20,6 +20,31 @@ namespace TMPro
             return s;
         }
 
+        public static string IntToString(this int[] unicodes)
+        {
+            char[] chars = new char[unicodes.Length];
+
+            for (int i = 0; i < unicodes.Length; i++)
+            {
+                chars[i] = (char)unicodes[i];
+            }
+
+            return new string(chars);
+        }
+
+        public static string IntToString(this int[] unicodes, int start, int length)
+        {
+            char[] chars = new char[length];
+            int end = start + length;
+
+            for (int i = start; i < end && i < unicodes.Length; i++)
+            {
+                chars[i] = (char)unicodes[i];
+            }
+
+            return new string(chars, start, length);
+        }
+
 
         public static int FindInstanceID <T> (this List<T> list, T target) where T : Object
         {

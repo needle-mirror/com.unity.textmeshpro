@@ -166,34 +166,41 @@ namespace TMPro.EditorUtilities
                 mat = Selection.activeGameObject.GetComponent<CanvasRenderer>().GetMaterial();
             }
 
-
-            //Material mat = (Material)command.context;
             Undo.RecordObject(mat, "Reset Material");
-
-            Material tmp_mat = new Material(mat.shader);
 
             ShaderUtilities.GetShaderPropertyIDs(); // Make sure we have valid Property IDs
             if (mat.HasProperty(ShaderUtilities.ID_GradientScale))
             {
-                // Copy unique properties of the SDF Material over to the temp material.  
-                tmp_mat.SetTexture(ShaderUtilities.ID_MainTex, mat.GetTexture(ShaderUtilities.ID_MainTex));
-                tmp_mat.SetFloat(ShaderUtilities.ID_GradientScale, mat.GetFloat(ShaderUtilities.ID_GradientScale));
-                tmp_mat.SetFloat(ShaderUtilities.ID_TextureWidth, mat.GetFloat(ShaderUtilities.ID_TextureWidth));
-                tmp_mat.SetFloat(ShaderUtilities.ID_TextureHeight, mat.GetFloat(ShaderUtilities.ID_TextureHeight));
-                tmp_mat.SetFloat(ShaderUtilities.ID_StencilID, mat.GetFloat(ShaderUtilities.ID_StencilID));
-                tmp_mat.SetFloat(ShaderUtilities.ID_StencilComp, mat.GetFloat(ShaderUtilities.ID_StencilComp));
+                // Copy unique properties of the SDF Material
+                var texture = mat.GetTexture(ShaderUtilities.ID_MainTex);
+                var gradientScale = mat.GetFloat(ShaderUtilities.ID_GradientScale);
+                var texWidth = mat.GetFloat(ShaderUtilities.ID_TextureWidth);
+                var texHeight = mat.GetFloat(ShaderUtilities.ID_TextureHeight);
+                var stencilId = mat.GetFloat(ShaderUtilities.ID_StencilID);
+                var stencilComp = mat.GetFloat(ShaderUtilities.ID_StencilComp);
+                var normalWeight = mat.GetFloat(ShaderUtilities.ID_WeightNormal);
+                var boldWeight = mat.GetFloat(ShaderUtilities.ID_WeightBold);
 
-                mat.CopyPropertiesFromMaterial(tmp_mat);
+                // Reset the material
+                Unsupported.SmartReset(mat);
 
                 // Reset ShaderKeywords
                 mat.shaderKeywords = new string[0]; // { "BEVEL_OFF", "GLOW_OFF", "UNDERLAY_OFF" };
+
+                // Copy unique material properties back to the material.
+                mat.SetTexture(ShaderUtilities.ID_MainTex, texture);
+                mat.SetFloat(ShaderUtilities.ID_GradientScale, gradientScale);
+                mat.SetFloat(ShaderUtilities.ID_TextureWidth, texWidth);
+                mat.SetFloat(ShaderUtilities.ID_TextureHeight, texHeight);
+                mat.SetFloat(ShaderUtilities.ID_StencilID, stencilId);
+                mat.SetFloat(ShaderUtilities.ID_StencilComp, stencilComp);
+                mat.SetFloat(ShaderUtilities.ID_WeightNormal, normalWeight);
+                mat.SetFloat(ShaderUtilities.ID_WeightBold, boldWeight);
             }
             else
             {
-                mat.CopyPropertiesFromMaterial(tmp_mat);
+                Unsupported.SmartReset(mat);
             }
-
-            DestroyImmediate(tmp_mat);
 
             TMPro_EventManager.ON_MATERIAL_PROPERTY_CHANGED(true, mat);
         }

@@ -1,5 +1,5 @@
-//#define PROFILE_ON
-//#define PROFILE_PHASES_ON
+//#define TMP_PROFILE_ON
+//#define TMP_PROFILE_PHASES_ON
 
 
 using UnityEngine;
@@ -1027,7 +1027,7 @@ namespace TMPro
         protected override int SetArraySizes(int[] chars)
         {
             //Debug.Log("*** SetArraySizes() on Instance ID (" + GetInstanceID() + ") ***");
-            #if PROFILE_ON
+            #if TMP_PROFILE_ON
             Profiler.BeginSample("SetArraySizes");
             #endif
 
@@ -1470,7 +1470,7 @@ namespace TMPro
                 }
             }
 
-            #if PROFILE_ON
+            #if TMP_PROFILE_ON
             Profiler.EndSample();
             #endif
 
@@ -1831,7 +1831,7 @@ namespace TMPro
             loopCountA += 1;
             //Profiler.EndSample();
 
-            #if PROFILE_PHASES_ON
+            #if TMP_PROFILE_PHASES_ON
             Profiler.BeginSample("TMP Generate Text - Phase I");
             #endif
 
@@ -1886,7 +1886,7 @@ namespace TMPro
 
                 // Handle Font Styles like LowerCase, UpperCase and SmallCaps.
                 #region Handling of LowerCase, UpperCase and SmallCaps Font Styles
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.BeginSample("Handle Font Style");
                 #endif
                 float smallCapsMultiplier = 1.0f;
@@ -1915,7 +1915,7 @@ namespace TMPro
                         }
                     }
                 }
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.EndSample();
                 #endif
                 #endregion
@@ -1923,7 +1923,7 @@ namespace TMPro
 
                 // Look up Character Data from Dictionary and cache it.
                 #region Look up Character Data
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.BeginSample("Lookup Character Data");
                 #endif
                 if (m_textElementType == TMP_TextElementType.Sprite)
@@ -1976,7 +1976,7 @@ namespace TMPro
 
                     padding = m_currentMaterialIndex == 0 ? m_padding : m_subTextObjects[m_currentMaterialIndex].padding;
                 }
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.EndSample();
                 #endif
                 #endregion
@@ -2096,7 +2096,7 @@ namespace TMPro
 
                 // Determine the position of the vertices of the Character or Sprite.
                 #region Calculate Vertices Position
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.BeginSample("Calculate Vertices Position");
                 #endif
                 float fontBaseLineOffset = m_currentFontAsset.fontInfo.Baseline * m_fontScale * m_fontScaleMultiplier * m_currentFontAsset.fontInfo.Scale;
@@ -2120,7 +2120,7 @@ namespace TMPro
                 bottom_right.y = bottom_left.y;
                 bottom_right.z = 0;
 
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.EndSample();
                 #endif
                 #endregion
@@ -2212,7 +2212,7 @@ namespace TMPro
 
                 // Setup Mesh for visible text elements. ie. not a SPACE / LINEFEED / CARRIAGE RETURN.
                 #region Handle Visible Characters
-                //#if PROFILE_ON
+                //#if TMP_PROFILE_ON
                 //Profiler.BeginSample("Handle Visible Characters");
                 //#endif
                 if (charCode == 9 || charCode == 0xA0 || charCode == 0x2007 || (!char.IsWhiteSpace((char)charCode) && charCode != 0x200B) || m_textElementType == TMP_TextElementType.Sprite)
@@ -2530,6 +2530,9 @@ namespace TMPro
                         m_lastVisibleCharacterOfLine = m_characterCount;
                         m_textInfo.lineInfo[m_lineNumber].spaceCount += 1;
                         m_textInfo.spaceCount += 1;
+
+                        if (charCode == 0xA0)
+                            m_textInfo.lineInfo[m_lineNumber].controlCharacterCount += 1;
                     }
                     else
                     {
@@ -2569,11 +2572,9 @@ namespace TMPro
                     {
                         m_textInfo.lineInfo[m_lineNumber].spaceCount += 1;
                         m_textInfo.spaceCount += 1;
-
-                        if (charCode == 0xA0) m_textInfo.lineInfo[m_lineNumber].controlCharacterCount = +1;
                     }
                 }
-                //#if PROFILE_ON
+                //#if TMP_PROFILE_ON
                 //Profiler.EndSample();
                 //#endif
                 #endregion Handle Visible Characters
@@ -2581,7 +2582,7 @@ namespace TMPro
 
                 // Check if Line Spacing of previous line needs to be adjusted.
                 #region Adjust Line Spacing
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.BeginSample("Adjust Line Spacing");
                 #endif
                 if (m_lineNumber > 0 && !TMP_Math.Approximately(m_maxLineAscender, m_startOfLineAscender) && m_lineHeight == TMP_Math.FLOAT_UNSET && !m_isNewPage)
@@ -2598,7 +2599,7 @@ namespace TMPro
                     m_SavedWordWrapState.lineOffset = m_lineOffset;
                     m_SavedWordWrapState.previousLineAscender = m_startOfLineAscender;
                 }
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.EndSample();
                 #endif
                 #endregion
@@ -2616,7 +2617,7 @@ namespace TMPro
 
                 // Check if text Exceeds the vertical bounds of the margin area.
                 #region Check Vertical Bounds & Auto-Sizing
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.BeginSample("Check Vertical Bounds");
                 #endif
                 if (m_maxAscender - elementDescenderII > marginHeight + 0.0001f)
@@ -2786,7 +2787,7 @@ namespace TMPro
                     #endregion End Text Overflow
 
                 }
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.EndSample();
                 #endif
                 #endregion Check Vertical Bounds
@@ -2840,7 +2841,7 @@ namespace TMPro
 
                 // Handle Line Spacing Adjustments + Word Wrapping & special case for last line.
                 #region Check for Line Feed and Last Character
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.BeginSample("Process Linefeed");
                 #endif
                 if (charCode == 10 || m_characterCount == totalCharacterCount - 1)
@@ -2935,7 +2936,7 @@ namespace TMPro
                         continue;
                     }
                 }
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.EndSample();
                 #endif
                 #endregion Check for Linefeed or Last Character
@@ -2943,7 +2944,7 @@ namespace TMPro
 
                 // Store Rectangle positions for each Character.
                 #region Save CharacterInfo for the current character.
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.BeginSample("Save CharacterInfo & Extents");
                 #endif
                 // Determine the bounds of the Mesh.
@@ -2980,7 +2981,7 @@ namespace TMPro
                     else if (m_characterCount == totalCharacterCount - 1)
                         m_textInfo.pageInfo[m_pageNumber].lastCharacterIndex = m_characterCount;
                 }
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.EndSample();
                 #endif
                 #endregion Saving CharacterInfo
@@ -2988,7 +2989,7 @@ namespace TMPro
 
                 // Save State of Mesh Creation for handling of Word Wrapping
                 #region Save Word Wrapping State
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.BeginSample("Save Word Wrapping State");
                 #endif
                 if (m_enableWordWrapping || m_overflowMode == TextOverflowModes.Truncate || m_overflowMode == TextOverflowModes.Ellipsis)
@@ -3024,7 +3025,7 @@ namespace TMPro
                         SaveWordWrappingState(ref m_SavedWordWrapState, i, m_characterCount);
 
                 }
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.EndSample();
                 #endif
                 #endregion Save Word Wrapping State
@@ -3052,14 +3053,14 @@ namespace TMPro
 
             m_isCharacterWrappingEnabled = false;
 
-            #if PROFILE_PHASES_ON
+            #if TMP_PROFILE_PHASES_ON
                 Profiler.EndSample();
             #endif
 
             //Debug.Log("Iteration Count: " + loopCountA + ". Final Point Size: " + m_fontSize); // + "  B: " + loopCountB + "  C: " + loopCountC + "  D: " + loopCountD);
 
             // *** PHASE II of Text Generation ***
-            #if PROFILE_PHASES_ON
+            #if TMP_PROFILE_PHASES_ON
                 Profiler.BeginSample("TMP Generate Text - Phase II");
             #endif
 
@@ -3082,7 +3083,7 @@ namespace TMPro
 
             // Handle Text Alignment
             #region Text Vertical Alignment
-            #if PROFILE_ON
+            #if TMP_PROFILE_ON
             Profiler.BeginSample("Vertical Text Alignment");
             #endif
             Vector3 anchorOffset = Vector3.zero;
@@ -3159,7 +3160,7 @@ namespace TMPro
                     anchorOffset = (corners[0] + corners[1]) / 2 + new Vector3(0 + margins.x, 0 - (m_maxCapHeight - margins.y - margins.w) / 2, 0);
                     break;
             }
-            #if PROFILE_ON
+            #if TMP_PROFILE_ON
             Profiler.EndSample();
             #endif
             #endregion
@@ -3219,7 +3220,7 @@ namespace TMPro
 
                 // Process Line Justification
                 #region Handle Line Justification
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.BeginSample("Horizontal Text Alignment");
                 #endif 
                 //if (!characterInfos[i].isIgnoringAlignment)
@@ -3345,7 +3346,7 @@ namespace TMPro
                         break;
                 }
                 //}
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.EndSample();
                 #endif
                 #endregion End Text Justification
@@ -3367,7 +3368,7 @@ namespace TMPro
 
                             // Setup UV2 based on Character Mapping Options Selected
                             #region Handle UV Mapping Options
-                            #if PROFILE_ON
+                            #if TMP_PROFILE_ON
                             Profiler.BeginSample("UV MAPPING");
                             #endif
                             switch (m_horizontalMapping)
@@ -3476,14 +3477,14 @@ namespace TMPro
                                     characterInfos[i].vertex_TR.uv2.y = characterInfos[i].vertex_TL.uv2.y;
                                     break;
                             }
-                            #if PROFILE_ON
+                            #if TMP_PROFILE_ON
                             Profiler.EndSample();
                             #endif
                             #endregion End UV Mapping Options
 
                             // Pack UV's so that we can pass Xscale needed for Shader to maintain 1:1 ratio.
                             #region Pack Scale into UV2
-                            #if PROFILE_ON
+                            #if TMP_PROFILE_ON
                             Profiler.BeginSample("Pack UV");
                             #endif
                             xScale = characterInfos[i].scale * (1 - m_charWidthAdjDelta);
@@ -3527,7 +3528,7 @@ namespace TMPro
                             characterInfos[i].vertex_TL.uv2.x = PackUV(x0, y1); characterInfos[i].vertex_TL.uv2.y = xScale;
                             characterInfos[i].vertex_TR.uv2.x = PackUV(x1, y1); characterInfos[i].vertex_TR.uv2.y = xScale;
                             characterInfos[i].vertex_BR.uv2.x = PackUV(x1, y0); characterInfos[i].vertex_BR.uv2.y = xScale;
-                            #if PROFILE_ON
+                            #if TMP_PROFILE_ON
                                 Profiler.EndSample();
                             #endif
                             #endregion
@@ -3541,7 +3542,7 @@ namespace TMPro
 
                     // Handle maxVisibleCharacters, maxVisibleLines and Overflow Page Mode.
                     #region Handle maxVisibleCharacters / maxVisibleLines / Page Mode
-                    #if PROFILE_ON
+                    #if TMP_PROFILE_ON
                     Profiler.BeginSample("Process MaxVisible Characters & Lines");
                     #endif
                     if (i < m_maxVisibleCharacters && wordCount < m_maxVisibleWords && currentLine < m_maxVisibleLines && m_overflowMode != TextOverflowModes.Page)
@@ -3566,7 +3567,7 @@ namespace TMPro
                         characterInfos[i].vertex_BR.position = Vector3.zero;
                         characterInfos[i].isVisible = false;
                     }
-                    #if PROFILE_ON
+                    #if TMP_PROFILE_ON
                     Profiler.EndSample();
                     #endif
                     #endregion
@@ -3606,7 +3607,7 @@ namespace TMPro
 
                 // Need to recompute lineExtent to account for the offset from justification.
                 #region Adjust lineExtents resulting from alignment offset
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                     Profiler.BeginSample("Adjust LineExtents");
                 #endif
                 if (currentLine != lastLine || i == m_characterCount - 1)
@@ -3633,7 +3634,7 @@ namespace TMPro
                         m_textInfo.lineInfo[currentLine].lineExtents.max = new Vector2(m_textInfo.characterInfo[m_textInfo.lineInfo[currentLine].lastVisibleCharacterIndex].topRight.x, m_textInfo.lineInfo[currentLine].ascender);
                     }
                 }
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.EndSample();
                 #endif
                 #endregion
@@ -3641,7 +3642,7 @@ namespace TMPro
 
                 // Track Word Count per line and for the object
                 #region Track Word Count
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.BeginSample("Track Word Count");
                 #endif
                 if (char.IsLetterOrDigit(currentCharacter) || currentCharacter == 0x2D || currentCharacter == 0xAD || currentCharacter == 0x2010 || currentCharacter == 0x2011)
@@ -3700,7 +3701,7 @@ namespace TMPro
                         m_textInfo.lineInfo[currentLine].wordCount += 1;
                     }
                 }
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.EndSample();
                 #endif
                 #endregion
@@ -3708,7 +3709,7 @@ namespace TMPro
 
                 // Setup & Handle Underline
                 #region Underline
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.BeginSample("Process Underline & Strikethrough");
                 #endif
                 // NOTE: Need to figure out how underline will be handled with multiple fonts and which font will be used for the underline.
@@ -4000,7 +4001,7 @@ namespace TMPro
                     }
                 }
                 #endregion
-                #if PROFILE_ON
+                #if TMP_PROFILE_ON
                 Profiler.EndSample();
                 #endif
                 #endregion
@@ -4017,13 +4018,13 @@ namespace TMPro
             m_textInfo.wordCount = wordCount != 0 && m_characterCount > 0 ? wordCount : 1;
             m_textInfo.pageCount = m_pageNumber + 1;
 
-            #if PROFILE_PHASES_ON
+            #if TMP_PROFILE_PHASES_ON
                 Profiler.EndSample();
             #endif
 
 
             // *** UPLOAD MESH DATA ***
-            #if PROFILE_PHASES_ON
+            #if TMP_PROFILE_PHASES_ON
                 Profiler.BeginSample("TMP Generate Text - Phase III");
             #endif
             if (m_renderMode == TextRenderFlags.Render && IsActive())
@@ -4087,7 +4088,7 @@ namespace TMPro
             TMPro_EventManager.ON_TEXT_CHANGED(this);
             //SendOnTextChanged();
 
-            #if PROFILE_PHASES_ON
+            #if TMP_PROFILE_PHASES_ON
                 Profiler.EndSample();
             #endif
 

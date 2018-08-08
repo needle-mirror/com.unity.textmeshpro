@@ -9,10 +9,8 @@ namespace TMPro.EditorUtilities
     [CustomEditor(typeof(TMP_Settings))]
     public class TMP_SettingsEditor : Editor
     {
-        static class Styles
+        class Styles
         {
-            static Styles() { }
-
             public static readonly GUIContent defaultFontAssetLabel = new GUIContent("Default Font Asset", "The Font Asset that will be assigned by default to newly created text objects when no Font Asset is specified.");
             public static readonly GUIContent defaultFontAssetPathLabel = new GUIContent("Path:        Resources/", "The relative path to a Resources folder where the Font Assets and Material Presets are located.\nExample \"Fonts & Materials/\"");
 
@@ -88,6 +86,9 @@ namespace TMPro.EditorUtilities
 
         public void OnEnable()
         {
+            if (target == null)
+                return;
+
             m_PropFontAsset = serializedObject.FindProperty("m_defaultFontAsset");
             m_PropDefaultFontAssetPath = serializedObject.FindProperty("m_defaultFontAssetPath");
             m_PropDefaultFontSize = serializedObject.FindProperty("m_defaultFontSize");
@@ -109,7 +110,7 @@ namespace TMPro.EditorUtilities
             {
                 var element = m_List.serializedProperty.GetArrayElementAtIndex(index);
                 rect.y += 2;
-                EditorGUI.PropertyField( new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), element, GUIContent.none);
+                EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), element, GUIContent.none);
             };
 
             m_List.drawHeaderCallback = rect =>
@@ -136,6 +137,9 @@ namespace TMPro.EditorUtilities
         {
             serializedObject.Update();
 
+            float labelWidth = EditorGUIUtility.labelWidth;
+            float fieldWidth = EditorGUIUtility.fieldWidth;
+            
             // TextMeshPro Font Info Panel
             EditorGUI.indentLevel = 0;
 
@@ -203,8 +207,8 @@ namespace TMPro.EditorUtilities
             }
             EditorGUILayout.EndHorizontal();
             
-            EditorGUIUtility.labelWidth = 0;
-            EditorGUIUtility.fieldWidth = 0;
+            EditorGUIUtility.labelWidth = labelWidth;
+            EditorGUIUtility.fieldWidth = fieldWidth;
             
             EditorGUILayout.PropertyField(m_PropWordWrapping, Styles.wordWrappingLabel);
             EditorGUILayout.PropertyField(m_PropKerning, Styles.kerningLabel);
@@ -214,7 +218,6 @@ namespace TMPro.EditorUtilities
             
             EditorGUILayout.PropertyField(m_PropParseEscapeCharacters, Styles.parseEscapeCharactersLabel);
 
-            EditorGUIUtility.labelWidth = 0;
             EditorGUI.indentLevel = 0;
 
             EditorGUILayout.Space();
@@ -236,7 +239,13 @@ namespace TMPro.EditorUtilities
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             GUILayout.Label(Styles.defaultStyleSheetLabel, EditorStyles.boldLabel);
             EditorGUI.indentLevel = 1;
+            EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(m_PropStyleSheet, Styles.defaultStyleSheetLabel);
+            if (EditorGUI.EndChangeCheck())
+            {
+                serializedObject.ApplyModifiedProperties();
+                TMP_StyleSheet.UpdateStyleSheet();
+            }
             EditorGUI.indentLevel = 0;
 
             EditorGUILayout.Space();
@@ -270,5 +279,15 @@ namespace TMPro.EditorUtilities
             }
 
         }
+
+        #if UNITY_2018_3_OR_NEWER
+        [SettingsProvider]
+        static SettingsProvider CreateTMPSettingsProvider()
+        {
+            var provider = new AssetSettingsProvider("Project/TextMesh Pro", () => TMP_Settings.instance);
+            provider.PopulateSearchKeywordsFromGUIContentProperties<Styles>();
+            return provider;
+        }
+        #endif
     }
 }

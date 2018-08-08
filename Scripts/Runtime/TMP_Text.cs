@@ -1881,17 +1881,23 @@ namespace TMPro
         /// <param name="sourceText"></param>
         public void SetCharArray(char[] sourceText)
         {
-            if (sourceText == null || sourceText.Length == 0)
-                return;
-
+            // Initialize internal character buffer if necessary
             if (m_char_buffer == null) m_char_buffer = new int[8];
+
+            #if UNITY_EDITOR
+            // Create new string to be displayed in the Input Text Box of the Editor Panel.
+            if (sourceText == null || sourceText.Length == 0)
+                m_text = string.Empty;
+            else
+                m_text = new string(sourceText);
+            #endif
 
             // Clear the Style stack.
             m_styleStack.Clear();
 
             int writeIndex = 0;
 
-            for (int i = 0; i < sourceText.Length; i++)
+            for (int i = 0; sourceText != null && i < sourceText.Length; i++)
             {
                 if (sourceText[i] == 92 && i < sourceText.Length - 1)
                 {
@@ -1979,10 +1985,23 @@ namespace TMPro
         /// <param name="sourceText"></param>
         public void SetCharArray(char[] sourceText, int start, int length)
         {
-            if (sourceText == null || sourceText.Length == 0 || length == 0)
-                return;
-
+            // Initialize internal character buffer if necessary
             if (m_char_buffer == null) m_char_buffer = new int[8];
+
+            #if UNITY_EDITOR
+            // Create new string to be displayed in the Input Text Box of the Editor Panel.
+            if (sourceText == null || sourceText.Length == 0 || length == 0)
+            {
+                m_text = string.Empty;
+                start = 0;
+                length = 0;
+            }
+            else
+            {
+                // TODO: Add potential range check on start + length relative to array size.
+                m_text = new string(sourceText, start, length);
+            }
+            #endif
 
             // Clear the Style stack.
             m_styleStack.Clear();
@@ -2079,19 +2098,30 @@ namespace TMPro
         /// <param name="sourceText"></param>
         public void SetCharArray(int[] sourceText, int start, int length)
         {
-            if (sourceText == null || sourceText.Length == 0 || length == 0)
-                return;
-
+            // Initialize internal character buffer if necessary
             if (m_char_buffer == null) m_char_buffer = new int[8];
+
+            #if UNITY_EDITOR
+            // Create new string to be displayed in the Input Text Box of the Editor Panel.
+            if (sourceText == null || sourceText.Length == 0 || length == 0)
+            {
+                m_text = string.Empty;
+                start = 0;
+                length = 0;
+            }
+            else
+            {
+                m_text = sourceText.IntToString(start, length);
+            }
+            #endif
 
             // Clear the Style stack.
             m_styleStack.Clear();
 
             int writeIndex = 0;
 
-            int i = start;
             int end = start + length;
-            for (; i < end; i++)
+            for (int i = start; i < end; i++)
             {
                 if (sourceText[i] == 92 && i < length - 1)
                 {
@@ -3984,7 +4014,7 @@ namespace TMPro
 
                 // Setup Mesh for visible text elements. ie. not a SPACE / LINEFEED / CARRIAGE RETURN.
                 #region Handle Visible Characters
-                if (charCode == 9 || (!char.IsWhiteSpace((char)charCode) && charCode != 0x200B) || m_textElementType == TMP_TextElementType.Sprite)
+                if (charCode == 9 || charCode == 0xA0 || charCode == 0x2007 || (!char.IsWhiteSpace((char)charCode) && charCode != 0x200B) || m_textElementType == TMP_TextElementType.Sprite)
                 {
                     // Check if Character exceeds the width of the Text Container
                     #region Handle Line Breaking, Text Auto-Sizing and Horizontal Overflow

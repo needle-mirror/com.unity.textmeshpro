@@ -52,13 +52,16 @@ namespace TMPro
             public string assetDataFile;
         }
 
+        private static string m_ProjectFolderToScan;
         private static bool m_IsAlreadyScanningProject;
+        private static bool m_CancelScanProcess;
         private static string k_ProjectScanReportDefaultText = "<color=#FFFF80><b>Project Scan Results</b></color>\n";
         private static string m_ProjectScanResults = string.Empty;
         private static Vector2 m_ProjectScanResultScrollPosition;
         private static float m_ProgressPercentage = 0;
         private static int m_ScanningTotalFiles;
         private static int m_ScanningCurrentFileIndex;
+        private static string m_ScanningCurrentFileName;
         private static List<AssetModificationRecord> m_ModifiedAssetList = new List<AssetModificationRecord>();
 
 
@@ -79,12 +82,17 @@ namespace TMPro
                 GUILayout.BeginVertical(EditorStyles.helpBox);
                 {
                     GUILayout.Label("Scan Project Files", EditorStyles.boldLabel);
-                    GUILayout.Label("Press the <i>Scan Project Files</i> button to begin scanning your project for files & resources that were created with a previous version of TextMesh Pro", TMP_UIStyleManager.label);
+                    GUILayout.Label("Press the <i>Scan Project Files</i> button to begin scanning your project for files & resources that were created with a previous version of TextMesh Pro.", TMP_UIStyleManager.label);
+                    GUILayout.Space(10f);
+                    GUILayout.Label("Project folder to be scanned. Example \"Assets/TextMesh Pro\"");
+                    m_ProjectFolderToScan = EditorGUILayout.TextField("Folder Path:      Assets/", m_ProjectFolderToScan);
                     GUILayout.Space(5f);
 
                     GUI.enabled = m_IsAlreadyScanningProject == false ? true : false;
                     if (GUILayout.Button("Scan Project Files"))
                     {
+                        m_CancelScanProcess = false;
+
                         // Make sure Asset Serialization mode is set to ForceText and Version Control mode to Visible Meta Files.
                         if (CheckProjectSerializationAndSourceControlModes() == true)
                         {
@@ -100,6 +108,20 @@ namespace TMPro
                     // Display progress bar
                     Rect rect = GUILayoutUtility.GetRect(0f, 20f, GUILayout.ExpandWidth(true));
                     EditorGUI.ProgressBar(rect, m_ProgressPercentage, "Scan Progress (" + m_ScanningCurrentFileIndex + "/" + m_ScanningTotalFiles + ")");
+
+                    // Display cancel button and name of file currently being scanned.
+                    if (m_IsAlreadyScanningProject)
+                    {
+                        Rect cancelRect = new Rect(rect.width - 20, rect.y + 2, 20, 16);
+                        if (GUI.Button(cancelRect, "X"))
+                        {
+                            m_CancelScanProcess = true;
+                        }
+                        GUILayout.Label("Scanning: " + m_ScanningCurrentFileName);
+                    }
+                    else
+                        GUILayout.Label(string.Empty);
+
                     GUILayout.Space(5);
 
                     // Creation Feedback
@@ -170,24 +192,45 @@ namespace TMPro
             AssetConversionData conversionData_Assets = JsonUtility.FromJson<AssetConversionData>(File.ReadAllText(packageFullPath + "/PackageConversionData_Assets.json"));
 
             // Get list of GUIDs for assets that might contain references to previous GUIDs that require updating.
-            string[] projectGUIDs = AssetDatabase.FindAssets("t:Object");
+            string searchFolder = string.IsNullOrEmpty(m_ProjectFolderToScan) ? "Assets" : ("Assets/" + m_ProjectFolderToScan);
+            string[] projectGUIDs = AssetDatabase.FindAssets("t:Object", new string[] { searchFolder });
             m_ScanningTotalFiles = projectGUIDs.Length;
 
+            bool cancelScanning = false;
+
             // Iterate through projectGUIDs to search project assets of the types likely to reference GUIDs and FileIDs used by previous versions of TextMesh Pro. 
-            for (int i = 0; i < projectGUIDs.Length; i++)
+            for (int i = 0; i < projectGUIDs.Length && cancelScanning == false; i++)
             {
+                if (m_CancelScanProcess)
+                {
+                    cancelScanning = true;
+                    ResetScanProcess();
+
+                    continue;
+                }
+
                 m_ScanningCurrentFileIndex = i + 1;
 
                 string guid = projectGUIDs[i];
                 string assetFilePath = AssetDatabase.GUIDToAssetPath(guid);
+                string assetFileExtension = Path.GetExtension(assetFilePath);
                 System.Type assetType = AssetDatabase.GetMainAssetTypeAtPath(assetFilePath);
 
                 // Filter out asset types that we can't read or have not interest in searching.
-                if (assetType == typeof(DefaultAsset) || assetType == typeof(MonoScript) || assetType == typeof(Texture2D) || 
+                if (assetType == typeof(DefaultAsset) || assetType == typeof(MonoScript) || assetType == typeof(Texture2D) || assetType == typeof(Texture3D) || assetType == typeof(Cubemap) ||
                     assetType == typeof(TextAsset) || assetType == typeof(Shader) || assetType == typeof(Font) || assetType == typeof(UnityEditorInternal.AssemblyDefinitionAsset) ||
-                    assetType == typeof(GUISkin) || assetType == typeof(PhysicsMaterial2D) || assetType == typeof(UnityEngine.U2D.SpriteAtlas) || assetType == typeof(UnityEngine.Tilemaps.Tile) ||
-                    assetType == typeof(AudioClip) || assetType == typeof(ComputeShader) || assetType == typeof(UnityEditor.Animations.AnimatorController))
+                    assetType == typeof(GUISkin) || assetType == typeof(PhysicsMaterial2D) || assetType == typeof(PhysicMaterial) || assetType == typeof(UnityEngine.U2D.SpriteAtlas) || assetType == typeof(UnityEngine.Tilemaps.Tile) ||
+                    assetType == typeof(AudioClip) || assetType == typeof(ComputeShader) || assetType == typeof(UnityEditor.Animations.AnimatorController) || assetType == typeof(UnityEngine.AI.NavMeshData) ||
+                    assetType == typeof(Mesh) || assetType == typeof(RenderTexture) || assetType == typeof(Texture2DArray) || assetType == typeof(LightingDataAsset) || assetType == typeof(AvatarMask) ||
+                    assetType == typeof(AnimatorOverrideController) || assetType == typeof(TerrainData) || assetType == typeof(HumanTemplate) || assetType == typeof(Flare) || assetType == typeof(UnityEngine.Video.VideoClip))
                     continue;
+
+                // Exclude FBX
+                if (assetType == typeof(GameObject) && (assetFileExtension == ".FBX" || assetFileExtension == ".fbx"))
+                    continue;
+
+                m_ScanningCurrentFileName = assetFilePath;
+                //Debug.Log("Searching Asset: [" + assetFilePath + "] with file extension [" + assetFileExtension + "] of type [" + assetType + "]");
 
                 // Read the asset data file
                 string assetDataFile = string.Empty;
@@ -200,8 +243,6 @@ namespace TMPro
                     // Continue to the next asset if we can't read the current one.
                     continue;
                 }
-
-                //Debug.Log("Searching Asset: [" + assetFilePath + "] of type: " + assetType);
 
                 bool hasFileChanged = false;
 
@@ -255,8 +296,16 @@ namespace TMPro
             }
 
             // Iterate through projectGUIDs (again) to search project meta files which reference GUIDs used by previous versions of TextMesh Pro. 
-            for (int i = 0; i < projectGUIDs.Length; i++)
+            for (int i = 0; i < projectGUIDs.Length && cancelScanning == false; i++)
             {
+                if (m_CancelScanProcess)
+                {
+                    cancelScanning = true;
+                    ResetScanProcess();
+
+                    continue;
+                }
+
                 string guid = projectGUIDs[i];
                 string assetFilePath = AssetDatabase.GUIDToAssetPath(guid);
                 string assetMetaFilePath = AssetDatabase.GetTextMetaFilePathFromAssetPath(assetFilePath);
@@ -265,6 +314,8 @@ namespace TMPro
                 string assetMetaFile = File.ReadAllText(projectPath + "/" + assetMetaFilePath);
 
                 bool hasFileChanged = false;
+
+                m_ScanningCurrentFileName = assetMetaFilePath;
 
                 foreach (AssetConversionRecord record in conversionData.assetRecords)
                 {
@@ -298,6 +349,20 @@ namespace TMPro
             }
 
             m_IsAlreadyScanningProject = false;
+            m_ScanningCurrentFileName = string.Empty;
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private static void ResetScanProcess()
+        {
+            m_IsAlreadyScanningProject = false;
+            m_ScanningCurrentFileName = string.Empty;
+            m_ProgressPercentage = 0;
+            m_ScanningCurrentFileIndex = 0;
+            m_ScanningTotalFiles = 0;
         }
 
 

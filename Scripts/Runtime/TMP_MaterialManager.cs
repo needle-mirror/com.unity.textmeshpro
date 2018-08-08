@@ -1,4 +1,4 @@
-﻿//#define DEBUG_ON
+﻿//#define TMP_DEBUG_MODE
 
 using UnityEngine;
 using System.Collections.Generic;
@@ -70,7 +70,7 @@ namespace TMPro
                 {
                     m_materialList[i].count += 1;
 
-                    #if DEBUG_ON
+                    #if TMP_DEBUG_MODE
                     ListMaterials();
                     #endif
 
@@ -108,7 +108,7 @@ namespace TMPro
 
             m_materialList.Add(temp);
 
-            #if DEBUG_ON
+            #if TMP_DEBUG_MODE
             ListMaterials();
             #endif
 
@@ -142,7 +142,7 @@ namespace TMPro
             }
 
 
-            #if DEBUG_ON
+            #if TMP_DEBUG_MODE
             ListMaterials();
             #endif
         }
@@ -215,7 +215,7 @@ namespace TMPro
                 m_materialList.RemoveAt(index);
             }
 
-            #if DEBUG_ON
+            #if TMP_DEBUG_MODE
             ListMaterials();
             #endif
         }
@@ -246,7 +246,7 @@ namespace TMPro
                 }
             }
 
-            #if DEBUG_ON
+            #if TMP_DEBUG_MODE
             ListMaterials();
             #endif
         }
@@ -407,8 +407,8 @@ namespace TMPro
             m_fallbackMaterials.Add(key, fallback);
             m_fallbackMaterialLookup.Add(fallbackMaterial.GetInstanceID(), key);
 
-            #if DEBUG_ON
-                ListFallbackMaterials();
+            #if TMP_DEBUG_MODE
+            ListFallbackMaterials();
             #endif
 
             return fallbackMaterial;
@@ -520,8 +520,8 @@ namespace TMPro
 
             isFallbackListDirty = true;
 
-            #if DEBUG_ON
-                ListFallbackMaterials();
+            #if TMP_DEBUG_MODE
+            ListFallbackMaterials();
             #endif
         }
 
@@ -579,7 +579,7 @@ namespace TMPro
         }
 
 
-#if DEBUG_ON
+        #if TMP_DEBUG_MODE
         /// <summary>
         /// 
         /// </summary>
@@ -626,7 +626,7 @@ namespace TMPro
                 Debug.Log("Item #" + (i + 1) + " - Base Material is [" + baseMaterial.name + "] with ID " + baseMaterial.GetInstanceID() + " is associated with [" + (fallbackMaterial != null ? fallbackMaterial.name : "Null") + "] with ID " + (fallbackMaterial != null ? fallbackMaterial.GetInstanceID() : 0) + " and is referenced " + m_fallbackMaterialList[i].count + " time(s).");
             }
         }
-#endif
+        #endif
     }
 
 }

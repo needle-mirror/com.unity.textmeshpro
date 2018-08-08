@@ -1,8 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿#if !UNITY_2018_3_OR_NEWER
 using UnityEditor;
-
 
 namespace TMPro
 {
@@ -43,3 +40,4 @@ namespace TMPro
         }
     }
 }
+#endif

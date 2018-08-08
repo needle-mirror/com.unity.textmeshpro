@@ -135,6 +135,10 @@ namespace TMPro
             {
                 k_EssentialResourcesImported = true;
                 TMPro_EventManager.ON_RESOURCES_LOADED();
+
+                #if UNITY_2018_3_OR_NEWER
+                SettingsService.NotifySettingsProviderChanged();
+                #endif
             }
             else if (packageName == "TMP Examples & Extras")
             {

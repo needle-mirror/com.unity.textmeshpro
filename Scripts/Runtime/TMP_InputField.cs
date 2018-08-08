@@ -791,19 +791,15 @@ namespace TMPro
             {
                 m_TextComponent.RegisterDirtyVerticesCallback(MarkGeometryAsDirty);
                 m_TextComponent.RegisterDirtyVerticesCallback(UpdateLabel);
-                m_TextComponent.ignoreRectMaskCulling = true;
+                //m_TextComponent.ignoreRectMaskCulling = multiLine;
 
                 m_DefaultTransformPosition = m_TextComponent.rectTransform.localPosition;
 
                 // Cache reference to Vertical Scrollbar RectTransform and add listener.
                 if (m_VerticalScrollbar != null)
                 {
+                    m_TextComponent.ignoreRectMaskCulling = true;
                     m_VerticalScrollbar.onValueChanged.AddListener(OnScrollbarValueChange);
-                    //m_VerticalScrollbar.onSelect.AddListener(SetTextScrollPosition);
-
-                    //if (m_VerticalScrollbarEventHandler == null)
-                    //    m_VerticalScrollbarEventHandler = m_VerticalScrollbar.gameObject.AddComponent<TMP_ScrollbarEventHandler>();
-
                 }
 
                 UpdateLabel();
@@ -2656,8 +2652,13 @@ namespace TMPro
         private void MarkGeometryAsDirty()
         {
 #if UNITY_EDITOR
+    #if UNITY_2018_3_OR_NEWER
+            if (!Application.isPlaying || UnityEditor.PrefabUtility.IsPartOfPrefabAsset(this))
+                return;
+    #else
             if (!Application.isPlaying || UnityEditor.PrefabUtility.GetPrefabObject(gameObject) != null)
                 return;
+    #endif
 #endif
 
             CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(this);

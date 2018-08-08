@@ -15,7 +15,7 @@ namespace TMPro.EditorUtilities
         public static void ShowFontAtlasCreatorWindow()
         {
             var window = GetWindow<TMPro_FontAssetCreatorWindow>();
-            window.titleContent = new GUIContent("Font Creator");
+            window.titleContent = new GUIContent("Font Asset Creator");
             window.Focus();
 
             // Make sure TMP Essential Resources have been imported.
@@ -27,7 +27,7 @@ namespace TMPro.EditorUtilities
         {
             var window = GetWindow<TMPro_FontAssetCreatorWindow>();
 
-            window.titleContent = new GUIContent("Font Creator");
+            window.titleContent = new GUIContent("Font Asset Creator");
             window.Focus();
 
             // Override selected font asset

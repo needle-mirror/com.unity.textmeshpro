@@ -1,9 +1,23 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
-## [1.3.0] - 2018-05-30
+## [1.3.0] - 2018-08-09
 ### Changes
 - Revamped UI to conform to Unity Human Interface Guidelines.
+- Updated the title text on the Font Asset Creator window tab to "Font Asset Creator".
+- Using TMP_Text.SetCharArray() with an empty char[] array will now clear the text.
+- Made a small improvement to the TMP Input Field when using nested 2d RectMasks.
+- Renamed symbol defines used by TMP to append TMP_ in front of the define to avoid potential conflicts with user defines.
+- Improved the Project Files GUID Remapping tool to allow specifying a target folder to scan.
+- Added the ability to cancel the scanning process used by the Project Files GUID Remapping tool.
+- Moved TMP Settings to universal settings window in 2018.3 and above.
+- Changing style sheet in the TMP Settings will now be reflected automatically on existing text objects in the editor.
+- Added new function TMP_StyleSheet.UpdateStyleSheet() to update the internal reference to which style sheet text objects should be using in conjunction with the style tag.
+
+## [1.2.4] - 2018-06-10
+### Changes
+- Fixed a minor issue when using Justified and Flush alignment in conjunction with \u00A0.
+- The Font Asset creationSettings field is no longer an Editor only serialized field.
 
 ## [1.2.3] - 2018-05-29
 ### Changes

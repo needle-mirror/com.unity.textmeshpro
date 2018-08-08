@@ -79,7 +79,6 @@ namespace TMPro
         }
 
 
-
         public void UpdateStyleDictionaryKey(int old_key, int new_key)
         {
             if (m_StyleDictionary.ContainsKey(old_key))
@@ -88,6 +87,18 @@ namespace TMPro
                 m_StyleDictionary.Add(new_key, style);
                 m_StyleDictionary.Remove(old_key);
             }
+        }
+
+
+        /// <summary>
+        /// Function to update the internal reference to a newly assigned style sheet in the TMP Settings.
+        /// </summary>
+        public static void UpdateStyleSheet()
+        {
+            // Reset instance
+            s_Instance = null;
+
+            RefreshStyles();
         }
 
 

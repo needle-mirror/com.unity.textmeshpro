@@ -181,26 +181,26 @@ namespace TMPro
         /// <summary>
         /// 
         /// </summary>
-        public BoxCollider boxCollider
-        {
-            get
-            {
-                if (m_boxCollider == null)
-                {
-                    //
-                    m_boxCollider = GetComponent<BoxCollider>();
-                    if (m_boxCollider == null)
-                    {
-                        m_boxCollider = gameObject.AddComponent<BoxCollider>();
-                        gameObject.AddComponent<Rigidbody>();
-                    }
-                }
+        //public BoxCollider boxCollider
+        //{
+        //    get
+        //    {
+        //        if (m_boxCollider == null)
+        //        {
+        //            //
+        //            m_boxCollider = GetComponent<BoxCollider>();
+        //            if (m_boxCollider == null)
+        //            {
+        //                m_boxCollider = gameObject.AddComponent<BoxCollider>();
+        //                gameObject.AddComponent<Rigidbody>();
+        //            }
+        //        }
 
-                return m_boxCollider;
-            }
-        }
-        [SerializeField]
-        private BoxCollider m_boxCollider;
+        //        return m_boxCollider;
+        //    }
+        //}
+        //[SerializeField]
+        //private BoxCollider m_boxCollider;
 
         [SerializeField]
         private TextMeshPro m_TextComponent;
@@ -555,28 +555,27 @@ namespace TMPro
         /// <summary>
         /// 
         /// </summary>
-        public void UpdateColliders(int vertexCount)
-        {
-            if (this.boxCollider == null) return;
+        //public void UpdateColliders(int vertexCount)
+        //{
+        //    if (this.boxCollider == null) return;
 
-            Vector2 bl = TMP_Math.MAX_16BIT;
-            Vector2 tr = TMP_Math.MIN_16BIT;
-            // Compute the bounds of the sub text object mesh (excluding the transform position).
-            for (int i = 0; i < vertexCount; i++)
-            {
-                bl.x = Mathf.Min(bl.x, m_mesh.vertices[i].x);
-                bl.y = Mathf.Min(bl.y, m_mesh.vertices[i].y);
+        //    Vector2 bl = TMP_Math.MAX_16BIT;
+        //    Vector2 tr = TMP_Math.MIN_16BIT;
+        //    // Compute the bounds of the sub text object mesh (excluding the transform position).
+        //    for (int i = 0; i < vertexCount; i++)
+        //    {
+        //        bl.x = Mathf.Min(bl.x, m_mesh.vertices[i].x);
+        //        bl.y = Mathf.Min(bl.y, m_mesh.vertices[i].y);
 
-                tr.x = Mathf.Max(tr.x, m_mesh.vertices[i].x);
-                tr.y = Mathf.Max(tr.y, m_mesh.vertices[i].y);
-            }
+        //        tr.x = Mathf.Max(tr.x, m_mesh.vertices[i].x);
+        //        tr.y = Mathf.Max(tr.y, m_mesh.vertices[i].y);
+        //    }
 
-            Vector3 center = (bl + tr) / 2;
-            Vector3 size = tr - bl;
-            size.z = .1f;
-            this.boxCollider.center = center;
-            this.boxCollider.size = size;
-
-        }
+        //    Vector3 center = (bl + tr) / 2;
+        //    Vector3 size = tr - bl;
+        //    size.z = .1f;
+        //    this.boxCollider.center = center;
+        //    this.boxCollider.size = size;
+        //}
     }
 }
