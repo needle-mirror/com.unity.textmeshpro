@@ -97,7 +97,7 @@ namespace TMPro
                         // Make sure Asset Serialization mode is set to ForceText and Version Control mode to Visible Meta Files.
                         if (CheckProjectSerializationAndSourceControlModes() == true)
                         {
-                            EditorCoroutine.StartCoroutine(ScanProjectFiles());
+                            TMP_EditorCoroutine.StartCoroutine(ScanProjectFiles());
                         }
                         else
                         {

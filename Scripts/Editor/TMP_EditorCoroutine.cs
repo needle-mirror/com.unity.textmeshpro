@@ -10,7 +10,7 @@ namespace TMPro.EditorUtilities
     /// <summary>
     /// Simple implementation of coroutine working in the Unity Editor.
     /// </summary>
-    public class EditorCoroutine
+    public class TMP_EditorCoroutine
     {
         //private static Dictionary<int, EditorCoroutine> s_ActiveCoroutines;
 
@@ -20,7 +20,7 @@ namespace TMPro.EditorUtilities
         /// Constructor
         /// </summary>
         /// <param name="routine"></param>
-        EditorCoroutine(IEnumerator routine)
+        TMP_EditorCoroutine(IEnumerator routine)
         {
             this.coroutine = routine;
         }
@@ -31,9 +31,9 @@ namespace TMPro.EditorUtilities
         /// </summary>
         /// <param name="newCoroutine">Coroutine</param>
         /// <returns>new EditorCoroutine</returns>
-        public static EditorCoroutine StartCoroutine(IEnumerator routine)
+        public static TMP_EditorCoroutine StartCoroutine(IEnumerator routine)
         {
-            EditorCoroutine coroutine = new EditorCoroutine(routine);
+            TMP_EditorCoroutine coroutine = new TMP_EditorCoroutine(routine);
             coroutine.Start();
 
             // Add coroutine to tracking list

@@ -449,10 +449,11 @@ namespace TMPro
             Array.Clear(this.vertices, 0, this.vertices.Length);
             this.vertexCount = 0;
 
-            this.mesh.bounds = s_DefaultBounds;
-
             if (uploadChanges && this.mesh != null)
                 this.mesh.vertices = this.vertices;
+
+            if (this.mesh != null)
+                this.mesh.bounds = s_DefaultBounds;
         }
 
 

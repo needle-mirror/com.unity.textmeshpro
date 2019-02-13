@@ -81,6 +81,16 @@ namespace TMPro
         private bool m_EnableRaycastTarget = true;
 
         /// <summary>
+        /// Determines if OpenType Font Features should be retrieved at runtime from the source font file.
+        /// </summary>
+        public static bool getFontFeaturesAtRuntime
+        {
+            get { return instance.m_GetFontFeaturesAtRuntime; }
+        }
+        [SerializeField]
+        private bool m_GetFontFeaturesAtRuntime = true;
+
+        /// <summary>
         /// The character that will be used as a replacement for missing glyphs in a font asset.
         /// </summary>
         public static int missingGlyphCharacter

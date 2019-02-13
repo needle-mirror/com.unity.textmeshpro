@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
+using UnityEngine.Profiling;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -273,33 +274,24 @@ namespace TMPro
         [SerializeField]
         private GlyphRenderMode m_AtlasRenderMode;
 
-        // Glyph Info
+        // Legacy field that will be removed.
         [SerializeField]
         internal List<TMP_Glyph> m_glyphInfoList;
 
-        /// <summary>
-        /// Dictionary containing the kerning data
-        /// </summary>
-        public Dictionary<int, KerningPair> kerningLookupDictionary
-        {
-            get { return m_KerningLookupDictionary; }
-        }
-        private Dictionary<int, KerningPair> m_KerningLookupDictionary;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public KerningTable kerningTable
-        {
-            get { return m_KerningTable; }
-            internal set { m_KerningTable = value; }
-        }
-
         [SerializeField]
         [FormerlySerializedAs("m_kerningInfo")]
-        private KerningTable m_KerningTable = new KerningTable();
+        internal KerningTable m_KerningTable = new KerningTable();
 
-        private GlyphPairAdjustmentRecord[] m_GlyphPairAdjustmentRecords;
+        /// <summary>
+        /// Table containing the various font features of this font asset. 
+        /// </summary>
+        public TMP_FontFeatureTable fontFeatureTable
+        {
+            get { return m_FontFeatureTable; }
+            internal set { m_FontFeatureTable = value; }
+        }
+        [SerializeField]
+        private TMP_FontFeatureTable m_FontFeatureTable = new TMP_FontFeatureTable();
 
         /// <summary>
         /// List containing the Fallback font assets for this font.
@@ -398,6 +390,8 @@ namespace TMPro
         public static TMP_FontAsset CreateFontAsset(Font font, int samplingPointSize, int atlasPadding, GlyphRenderMode renderMode, int atlasWidth, int atlasHeight, AtlasPopulationMode atlasPopulationMode = AtlasPopulationMode.Dynamic)
         {
             TMP_FontAsset fontAsset = ScriptableObject.CreateInstance<TMP_FontAsset>();
+
+            fontAsset.m_Version = "1.1.0";
 
             // Set face information
             FontEngine.InitializeFontEngine();
@@ -516,8 +510,6 @@ namespace TMPro
         /// </summary>
         internal void InitializeDictionaryLookupTables()
         {
-            //Debug.Log("Reading [" + this.name + "] font definition.");
-
             // Create new instance of the glyph lookup dictionary or clear the existing one.
             if (m_GlyphLookupDictionary == null)
                 m_GlyphLookupDictionary = new Dictionary<uint, Glyph>();
@@ -553,12 +545,6 @@ namespace TMPro
             else
                 m_CharacterLookupDictionary.Clear();
 
-            // Allocated new character lookup map or clear the existing one.
-            if (m_CharacterLookupMap == null)
-                m_CharacterLookupMap = new Dictionary<uint, List<uint>>();
-            else
-                m_CharacterLookupMap.Clear();
-
             // Add the characters contained in the character table into the dictionary for faster lookup.
             for (int i = 0; i < m_CharacterTable.Count; i++)
             {
@@ -574,49 +560,30 @@ namespace TMPro
                 {
                     character.glyph = m_GlyphLookupDictionary[glyphIndex];
                 }
-
-                // Fill character lookup map
-                if (m_CharacterLookupMap.TryGetValue(glyphIndex, out List<uint> unicodeList))
-                    unicodeList.Add(unicode);
-                else
-                    m_CharacterLookupMap.Add(glyphIndex, new List<uint> { unicode });
-
             }
+
+            // Upgrade Glyph Adjustment Table to the new Font Feature table and Glyph Pair Adjustment Records
+            if (m_KerningTable != null && m_KerningTable.kerningPairs != null && m_KerningTable.kerningPairs.Count > 0)
+                UpgradeGlyphAdjustmentTableToFontFeatureTable();
 
             // Read Font Features which will include kerning data.
-            // TODO
-
-            // Read Kerning pairs and update Kerning pair dictionary for faster lookup.
-            if (m_KerningLookupDictionary == null)
-                m_KerningLookupDictionary = new Dictionary<int, KerningPair>();
+            if (m_FontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary == null)
+                m_FontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary = new Dictionary<long, TMP_GlyphPairAdjustmentRecord>();
             else
-                m_KerningLookupDictionary.Clear();
+                m_FontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.Clear();
 
-            List<KerningPair> glyphPairAdjustmentRecord = m_KerningTable.kerningPairs;
-            if (glyphPairAdjustmentRecord != null)
+            List<TMP_GlyphPairAdjustmentRecord> glyphPairAdjustmentRecords = m_FontFeatureTable.m_GlyphPairAdjustmentRecords;
+            if (glyphPairAdjustmentRecords != null)
             {
-                for (int i = 0; i < glyphPairAdjustmentRecord.Count; i++)
+                for (int i = 0; i < glyphPairAdjustmentRecords.Count; i++)
                 {
-                    KerningPair pair = glyphPairAdjustmentRecord[i];
+                    TMP_GlyphPairAdjustmentRecord record = glyphPairAdjustmentRecords[i];
 
-                    // Convert legacy kerning data
-                    if (pair.xOffset != 0)
-                        glyphPairAdjustmentRecord[i].ConvertLegacyKerningData();
+                    long key = new GlyphPairKey(record).key;
 
-                    KerningPairKey uniqueKey = new KerningPairKey(pair.firstGlyph, pair.secondGlyph);
-
-                    if (m_KerningLookupDictionary.ContainsKey((int)uniqueKey.key) == false)
-                    {
-                        m_KerningLookupDictionary.Add((int)uniqueKey.key, pair);
-                    }
-                    else
-                    {
-                        if (!TMP_Settings.warningsDisabled)
-                            Debug.LogWarning("Kerning Key for [" + uniqueKey.ascii_Left + "] and [" + uniqueKey.ascii_Right + "] already exists.");
-                    }
+                    m_FontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.Add(key, record);
                 }
             }
-
         }
 
 
@@ -997,13 +964,12 @@ namespace TMPro
         /// List used in the process of adding new glyphs to the atlas texture.
         /// </summary>
         private List<uint> m_GlyphIndexList = new List<uint>();
-        private Dictionary<uint, List<uint>> m_CharacterLookupMap = new Dictionary<uint, List<uint>>();
-        //private Dictionary<uint, uint> s_CharacterLookupMap = new Dictionary<uint, uint>();
+        private List<TMP_Character> m_CharactersToAdd = new List<TMP_Character>();
 
         /// <summary>
-        /// Array used in the process of adding glyph adjustment pairs.
+        /// Internal static array used to avoid allocations when using the GetGlyphPairAdjustmentTable().
         /// </summary>
-        private uint[] m_GlyphIndexes;
+        internal static uint[] s_GlyphIndexArray = new uint[16];
 
 
         /// <summary>
@@ -1026,13 +992,19 @@ namespace TMPro
                 return false;
             }
 
+            Profiler.BeginSample("TMP.TryAddCharacter");
+
             // Load font face.
             if (FontEngine.LoadFontFace(m_SourceFontFile, m_FaceInfo.pointSize) != FontEngineError.Success)
+            {
+                Profiler.EndSample();
+
                 return false;
+            }
 
             // Clear data structures used to track which glyph needs to be added to atlas texture.
             m_GlyphIndexList.Clear();
-            m_CharacterLookupMap.Clear();
+            m_CharactersToAdd.Clear();
 
             bool isMissingCharacters = false;
             int unicodeCount = unicodes.Length;
@@ -1054,31 +1026,27 @@ namespace TMPro
                     continue;
                 }
 
+                TMP_Character character = new TMP_Character(unicode, glyphIndex);
+
                 // Check if glyph is already contained in the font asset as the same glyph might be referenced by multiple characters.
                 if (m_GlyphLookupDictionary.ContainsKey(glyphIndex))
                 {
-                    TMP_Character character = new TMP_Character(unicode, m_GlyphLookupDictionary[glyphIndex]);
+                    character.glyph = m_GlyphLookupDictionary[glyphIndex];
                     m_CharacterTable.Add(character);
                     m_CharacterLookupDictionary.Add(unicode, character);
 
                     continue;
                 }
 
-                // Check if glyph is already on the list of glyphs to add
-                if (m_CharacterLookupMap.ContainsKey(glyphIndex))
-                {
-                    m_CharacterLookupMap[glyphIndex].Add(unicode);
-                    continue;
-                }
-
-                // TODO: Consider some alternative implementation that would be as efficient without resulting allocations.
-                m_CharacterLookupMap.Add(glyphIndex, new List<uint> { unicode });
                 m_GlyphIndexList.Add(glyphIndex);
+                m_CharactersToAdd.Add(character);
             }
 
             if (m_GlyphIndexList.Count == 0)
             {
                 //Debug.LogWarning("No characters will be added to font asset [" + this.name + "] either because they are already present in the font asset or missing from the font file.");
+                Profiler.EndSample();
+
                 return false;
             }
 
@@ -1092,6 +1060,7 @@ namespace TMPro
 
             bool allCharactersAdded = FontEngine.TryAddGlyphsToTexture(m_GlyphIndexList, m_AtlasPadding, GlyphPackingMode.BestShortSideFit, m_FreeGlyphRects, m_UsedGlyphRects, m_AtlasRenderMode, m_AtlasTextures[m_AtlasTextureIndex], out Glyph[] glyphs);
 
+            // Add new glyphs to relevant data structures.
             for (int i = 0; i < glyphs.Length; i++)
             {
                 Glyph glyph = glyphs[i];
@@ -1100,20 +1069,23 @@ namespace TMPro
                 // Add new glyph to glyph table.
                 m_GlyphTable.Add(glyph);
                 m_GlyphLookupDictionary.Add(glyphIndex, glyph);
+            }
 
-                // Add new character(s)
-                foreach (uint unicode in m_CharacterLookupMap[glyphIndex])
-                {
-                    TMP_Character character = new TMP_Character(unicode, glyph);
-                    m_CharacterTable.Add(character);
-                    m_CharacterLookupDictionary.Add(unicode, character);
-                }
+            // Add new characters to relevant data structures.
+            for (int i = 0; i < m_CharactersToAdd.Count; i++)
+            {
+                TMP_Character character = m_CharactersToAdd[i];
+                character.glyph = m_GlyphLookupDictionary[character.glyphIndex];
+                m_CharacterTable.Add(character);
+                m_CharacterLookupDictionary.Add(character.unicode, character);
             }
 
             #if UNITY_EDITOR
             // Makes the changes to the font asset persistent.
             UnityEditor.EditorUtility.SetDirty(this);
             #endif
+
+            Profiler.EndSample();
 
             return allCharactersAdded && !isMissingCharacters;
         }
@@ -1145,7 +1117,7 @@ namespace TMPro
 
             // Clear data structures used to track which glyph needs to be added to atlas texture.
             m_GlyphIndexList.Clear();
-            m_CharacterLookupMap.Clear();
+            m_CharactersToAdd.Clear();
 
             bool isMissingCharacters = false;
             int characterCount = characters.Length;
@@ -1170,30 +1142,21 @@ namespace TMPro
                     continue;
                 }
 
+                TMP_Character character = new TMP_Character(unicode, glyphIndex);
+
                 // Check if glyph is already contained in the font asset as the same glyph might be referenced by multiple characters.
                 if (m_GlyphLookupDictionary.ContainsKey(glyphIndex))
                 {
-                    TMP_Character character = new TMP_Character(unicode, m_GlyphLookupDictionary[glyphIndex]);
+                    character.glyph = m_GlyphLookupDictionary[glyphIndex];
                     m_CharacterTable.Add(character);
                     m_CharacterLookupDictionary.Add(unicode, character);
 
                     continue;
                 }
 
-                // Check if glyph is already on the list of glyphs to added.
-                if (m_CharacterLookupMap.ContainsKey(glyphIndex))
-                {
-                    // Exclude duplicates.
-                    if (m_CharacterLookupMap[glyphIndex].Contains(unicode))
-                        continue;
-
-                    m_CharacterLookupMap[glyphIndex].Add(unicode);
-                    continue;
-                }
-
                 // Add glyph to list of glyphs to add and glyph lookup map.
-                m_CharacterLookupMap.Add(glyphIndex, new List<uint> { unicode } );
                 m_GlyphIndexList.Add(glyphIndex);
+                m_CharactersToAdd.Add(character);
             }
 
             if (m_GlyphIndexList.Count == 0)
@@ -1222,17 +1185,26 @@ namespace TMPro
                 m_GlyphLookupDictionary.Add(glyphIndex, glyph);
 
                 // Add new character(s)
-                List<uint> unicodes = m_CharacterLookupMap[glyphIndex];
-                int unicodeCount = unicodes.Count;
+                //List<uint> unicodes = m_CharacterLookupMap[glyphIndex];
+                //int unicodeCount = unicodes.Count;
 
-                for (int j = 0; j < unicodeCount; j++)
-                {
-                    uint unicode = unicodes[j];
+                //for (int j = 0; j < unicodeCount; j++)
+                //{
+                //    uint unicode = unicodes[j];
 
-                    TMP_Character character = new TMP_Character(unicode, glyph);
-                    m_CharacterTable.Add(character);
-                    m_CharacterLookupDictionary.Add(unicode, character);
-                }
+                //    TMP_Character character = new TMP_Character(unicode, glyph);
+                //    m_CharacterTable.Add(character);
+                //    m_CharacterLookupDictionary.Add(unicode, character);
+                //}
+            }
+
+            // Add new characters to relevant data structures.
+            for (int i = 0; i < m_CharactersToAdd.Count; i++)
+            {
+                TMP_Character character = m_CharactersToAdd[i];
+                character.glyph = m_GlyphLookupDictionary[character.glyphIndex];
+                m_CharacterTable.Add(character);
+                m_CharacterLookupDictionary.Add(character.unicode, character);
             }
 
             #if UNITY_EDITOR
@@ -1256,10 +1228,7 @@ namespace TMPro
             
             // Check if character is already contained in the character table.
             if (m_CharacterLookupDictionary.ContainsKey(unicode))
-            {
-                character = m_CharacterLookupDictionary[unicode];
                 return true;
-            }
 
             uint glyphIndex = FontEngine.GetGlyphIndex(unicode);
             if (glyphIndex == 0)
@@ -1318,7 +1287,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        /// To be removed.
         /// </summary>
         /// <param name="unicode"></param>
         /// <param name="glyph"></param>
@@ -1365,7 +1334,7 @@ namespace TMPro
             m_CharacterTable.Add(character);
             m_CharacterLookupDictionary.Add(unicode, character);
 
-            Debug.Log("Adding character [" + (char)unicode + "] with Unicode (" + unicode + ") to [" + this.name + "] font asset.");
+            //Debug.Log("Adding character [" + (char)unicode + "] with Unicode (" + unicode + ") to [" + this.name + "] font asset.");
 
             // Schedule glyph to be added to the font atlas texture
             //TM_FontAssetUpdateManager.RegisterFontAssetForUpdate(this);
@@ -1402,6 +1371,8 @@ namespace TMPro
             if (glyphIndex == 0)
                 return false;
 
+            Profiler.BeginSample("TMP.TryAddCharacter");
+
             // Check if glyph is already contained in the font asset as the same glyph might be referenced by multiple characters.
             if (m_GlyphLookupDictionary.ContainsKey(glyphIndex))
             {
@@ -1409,13 +1380,8 @@ namespace TMPro
                 m_CharacterTable.Add(character);
                 m_CharacterLookupDictionary.Add(unicode, character);
 
-                // Add new unicode to glyph lookup map.
-                if (m_CharacterLookupMap.ContainsKey(glyphIndex))
-                    m_CharacterLookupMap[glyphIndex].Add(unicode);
-                else
-                    m_CharacterLookupMap.Add(glyphIndex, new List<uint> { unicode });
-
-                UpdateGlyphAdjustmentRecords(unicode, glyphIndex);
+                if (TMP_Settings.getFontFeaturesAtRuntime)
+                    UpdateGlyphAdjustmentRecords(unicode, glyphIndex);
 
                 #if UNITY_EDITOR
                 // Makes the changes to the font asset persistent.
@@ -1424,6 +1390,8 @@ namespace TMPro
                 //SortGlyphTable();
                 UnityEditor.EditorUtility.SetDirty(this);
                 #endif
+
+                Profiler.EndSample();
 
                 return true;
             }
@@ -1435,6 +1403,8 @@ namespace TMPro
                 if (m_AtlasTextures[m_AtlasTextureIndex].isReadable == false)
                 {
                     Debug.LogWarning("Unable to add the requested character to font asset [" + this.name + "]'s atlas texture. Please make the texture [" + m_AtlasTextures[m_AtlasTextureIndex].name + "] readable.", m_AtlasTextures[m_AtlasTextureIndex]);
+
+                    Profiler.EndSample();
                     return false;
                 }
 
@@ -1450,14 +1420,13 @@ namespace TMPro
 
                 // Add new character
                 character = new TMP_Character(unicode, glyph);
-                character.glyph = glyph;
                 m_CharacterTable.Add(character);
                 m_CharacterLookupDictionary.Add(unicode, character);
 
                 m_GlyphIndexList.Add(glyphIndex);
-                m_CharacterLookupMap.Add(glyphIndex, new List<uint> { unicode });
 
-                UpdateGlyphAdjustmentRecords(unicode, glyphIndex);
+                if (TMP_Settings.getFontFeaturesAtRuntime)
+                    UpdateGlyphAdjustmentRecords(unicode, glyphIndex);
 
                 #if UNITY_EDITOR
                 // Makes the changes to the font asset persistent.
@@ -1467,10 +1436,29 @@ namespace TMPro
                 UnityEditor.EditorUtility.SetDirty(this);
                 #endif
 
+                Profiler.EndSample();
+
                 return true;
             }
 
+            Profiler.EndSample();
+
             return false;
+        }
+
+
+        /// <summary>
+        /// Internal function used to get the glyph index for the given unicode.
+        /// </summary>
+        /// <param name="unicode"></param>
+        /// <returns></returns>
+        internal uint GetGlyphIndex(uint unicode)
+        {
+            // Load font face.
+            if (FontEngine.LoadFontFace(sourceFontFile, m_FaceInfo.pointSize) != FontEngineError.Success)
+                return 0;
+
+            return FontEngine.GetGlyphIndex(unicode);
         }
 
 
@@ -1548,53 +1536,51 @@ namespace TMPro
 
         internal void UpdateGlyphAdjustmentRecords(uint unicode, uint glyphIndex)
         {
+            Profiler.BeginSample("TMP.UpdateGlyphAdjustmentRecords");
+
+            int glyphCount = m_GlyphIndexList.Count;
+
+            if (s_GlyphIndexArray.Length <= glyphCount)
+                s_GlyphIndexArray = new uint[Mathf.NextPowerOfTwo(glyphCount + 1)];
+
+            for (int i = 0; i < glyphCount; i++)
+                s_GlyphIndexArray[i] = m_GlyphIndexList[i];
+
+            // Clear unused array elements
+            Array.Clear(s_GlyphIndexArray, glyphCount, s_GlyphIndexArray.Length - glyphCount);
+
             // Get glyph pair adjustment records from font file.
-            // TODO: Revise FontEngine bindings to use list instead of array to avoid allocations.
-            m_GlyphPairAdjustmentRecords = FontEngine.GetGlyphPairAdjustmentTable(m_GlyphIndexList.ToArray());
+            // TODO: Revise FontEngine bindings to use a more efficient function where only the new glyph index is passed.
+            GlyphPairAdjustmentRecord[] pairAdjustmentRecords = FontEngine.GetGlyphPairAdjustmentTable(s_GlyphIndexArray);
 
-            if (m_GlyphPairAdjustmentRecords == null)
-                return;
-
-            if (m_KerningTable == null)
-                m_KerningTable = new KerningTable();
-
-            for (int i = 0; i < m_GlyphPairAdjustmentRecords.Length; i++)
+            if (pairAdjustmentRecords == null || pairAdjustmentRecords.Length == 0)
             {
-                GlyphAdjustmentRecord firstRecord = m_GlyphPairAdjustmentRecords[i].firstAdjustmentRecord;
-                GlyphAdjustmentRecord secondRecord = m_GlyphPairAdjustmentRecords[i].secondAdjustmentRecord;
+                Profiler.EndSample();
+                return;
+            }
 
-                // Skip current glyph pair adjustment record if neither record match the new glyph index.
-                if (firstRecord.glyphIndex != glyphIndex && secondRecord.glyphIndex != glyphIndex)
+            if (m_FontFeatureTable == null)
+                m_FontFeatureTable = new TMP_FontFeatureTable();
+
+            for (int i = 0; i < pairAdjustmentRecords.Length && pairAdjustmentRecords[i].firstAdjustmentRecord.glyphIndex != 0; i++)
+            {
+                long pairKey = (long)pairAdjustmentRecords[i].secondAdjustmentRecord.glyphIndex << 32 | pairAdjustmentRecords[i].firstAdjustmentRecord.glyphIndex;
+
+                // Check if table already contains a pair adjustment record for this key.
+                if (m_FontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.ContainsKey(pairKey))
                     continue;
 
-                // Lookup Unicode for the referenced glyphs
-                List<uint> firstRecordUnicodeIndexes = m_CharacterLookupMap[firstRecord.glyphIndex];
-                List<uint> secondRecordUnicodeIndexes = m_CharacterLookupMap[secondRecord.glyphIndex];
+                TMP_GlyphPairAdjustmentRecord record = new TMP_GlyphPairAdjustmentRecord(pairAdjustmentRecords[i]);
 
-                for (int first = 0; first < firstRecordUnicodeIndexes.Count; first++)
-                {
-                    uint firstUnicode = firstRecordUnicodeIndexes[first];
-
-                    for (int second = 0; second < secondRecordUnicodeIndexes.Count; second++)
-                    {
-                        uint secondUnicode = secondRecordUnicodeIndexes[second];
-
-                        uint key = (secondUnicode << 16) + firstUnicode;
-
-                        if (!m_KerningLookupDictionary.ContainsKey((int)key))
-                        {
-                            KerningPair kerningPair = new KerningPair(firstUnicode, new GlyphValueRecord(firstRecord.glyphValueRecord), secondUnicode, new GlyphValueRecord(secondRecord.glyphValueRecord));
-
-                            m_KerningTable.kerningPairs.Add(kerningPair);
-                            m_KerningLookupDictionary.Add((int)key, kerningPair);
-                        }
-                    }
-                }
+                m_FontFeatureTable.m_GlyphPairAdjustmentRecords.Add(record);
+                m_FontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.Add(pairKey, record);
             }
 
             #if UNITY_EDITOR
-            kerningTable.SortKerningPairs();
+            m_FontFeatureTable.SortGlyphPairAdjustmentRecords();
             #endif
+
+            Profiler.EndSample();
         }
 
 
@@ -1607,7 +1593,7 @@ namespace TMPro
         {
             #if UNITY_EDITOR
             // Record full object undo in the Editor.
-            UnityEditor.Undo.RecordObjects(new UnityEngine.Object[] { this, this.atlasTexture }, "Resetting Font Asset");
+            //UnityEditor.Undo.RecordObjects(new UnityEngine.Object[] { this, this.atlasTexture }, "Resetting Font Asset");
             #endif
 
             // Clear glyph and character tables
@@ -1634,8 +1620,8 @@ namespace TMPro
                 m_GlyphsPacked.Clear();
 
             // Clear Glyph Adjustment Table
-            if (m_KerningTable != null && m_KerningTable.kerningPairs != null)
-                m_KerningTable.kerningPairs.Clear();
+            if (m_FontFeatureTable != null && m_FontFeatureTable.m_GlyphPairAdjustmentRecords != null)
+                m_FontFeatureTable.glyphPairAdjustmentRecords.Clear();
 
             m_AtlasTextureIndex = 0;
 
@@ -1822,6 +1808,49 @@ namespace TMPro
             #if UNITY_EDITOR
             UnityEditor.EditorUtility.SetDirty(this);
             UnityEditor.AssetDatabase.SaveAssets();
+            #endif
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        void UpgradeGlyphAdjustmentTableToFontFeatureTable()
+        {
+            Debug.Log("Upgrading font asset [" + this.name + "] Glyph Adjustment Table.", this);
+
+            if (m_FontFeatureTable == null)
+                m_FontFeatureTable = new TMP_FontFeatureTable();
+
+            int pairCount = m_KerningTable.kerningPairs.Count;
+
+            m_FontFeatureTable.m_GlyphPairAdjustmentRecords = new List<TMP_GlyphPairAdjustmentRecord>(pairCount);
+
+            for (int i = 0; i < pairCount; i++)
+            {
+                KerningPair pair = m_KerningTable.kerningPairs[i];
+
+                uint firstGlyphIndex = 0;
+                if (m_CharacterLookupDictionary.TryGetValue(pair.firstGlyph, out TMP_Character firstCharacter))
+                    firstGlyphIndex = firstCharacter.glyphIndex;
+
+                uint secondGlyphIndex = 0;
+                if (m_CharacterLookupDictionary.TryGetValue(pair.secondGlyph, out TMP_Character secondCharacter))
+                    secondGlyphIndex = secondCharacter.glyphIndex;
+
+                TMP_GlyphAdjustmentRecord firstAdjustmentRecord = new TMP_GlyphAdjustmentRecord(firstGlyphIndex, new TMP_GlyphValueRecord(pair.firstGlyphAdjustments.xPlacement, pair.firstGlyphAdjustments.yPlacement, pair.firstGlyphAdjustments.xAdvance, pair.firstGlyphAdjustments.yAdvance));
+                TMP_GlyphAdjustmentRecord secondAdjustmentRecord = new TMP_GlyphAdjustmentRecord(secondGlyphIndex, new TMP_GlyphValueRecord(pair.secondGlyphAdjustments.xPlacement, pair.secondGlyphAdjustments.yPlacement, pair.secondGlyphAdjustments.xAdvance, pair.secondGlyphAdjustments.yAdvance));
+                TMP_GlyphPairAdjustmentRecord record = new TMP_GlyphPairAdjustmentRecord(firstAdjustmentRecord, secondAdjustmentRecord);
+
+                m_FontFeatureTable.m_GlyphPairAdjustmentRecords.Add(record);
+            }
+
+            // TODO: Should clear legacy kerning table.
+            m_KerningTable.kerningPairs = null;
+            m_KerningTable = null;
+
+            #if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(this);
+            //UnityEditor.AssetDatabase.SaveAssets();
             #endif
         }
 

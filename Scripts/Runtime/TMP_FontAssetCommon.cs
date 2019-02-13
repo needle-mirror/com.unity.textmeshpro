@@ -147,14 +147,14 @@ namespace TMPro
     /// Positional adjustments of a glyph
     /// </summary>
     [Serializable]
-    public struct GlyphValueRecord
+    public struct GlyphValueRecord_Legacy
     {
         public float xPlacement;
         public float yPlacement;
         public float xAdvance;
         public float yAdvance;
 
-        internal GlyphValueRecord (UnityEngine.TextCore.LowLevel.GlyphValueRecord valueRecord)
+        internal GlyphValueRecord_Legacy(UnityEngine.TextCore.LowLevel.GlyphValueRecord valueRecord)
         {
             this.xPlacement = valueRecord.xPlacement;
             this.yPlacement = valueRecord.yPlacement;
@@ -162,9 +162,9 @@ namespace TMPro
             this.yAdvance = valueRecord.yAdvance;
         }
 
-        public static GlyphValueRecord operator +(GlyphValueRecord a, GlyphValueRecord b)
+        public static GlyphValueRecord_Legacy operator +(GlyphValueRecord_Legacy a, GlyphValueRecord_Legacy b)
         {
-            GlyphValueRecord c;
+            GlyphValueRecord_Legacy c;
             c.xPlacement = a.xPlacement + b.xPlacement;
             c.yPlacement = a.yPlacement + b.yPlacement;
             c.xAdvance = a.xAdvance + b.xAdvance;
@@ -173,7 +173,6 @@ namespace TMPro
             return c;
         }
     }
-
 
     [Serializable]
     public class KerningPair
@@ -193,12 +192,12 @@ namespace TMPro
         /// <summary>
         /// The positional adjustment of the first glyph.
         /// </summary>
-        public GlyphValueRecord firstGlyphAdjustments
+        public GlyphValueRecord_Legacy firstGlyphAdjustments
         {
             get { return m_FirstGlyphAdjustments; }
         }
         [SerializeField]
-        private GlyphValueRecord m_FirstGlyphAdjustments;
+        private GlyphValueRecord_Legacy m_FirstGlyphAdjustments;
 
         /// <summary>
         /// The second glyph part of a kerning pair.
@@ -215,15 +214,17 @@ namespace TMPro
         /// <summary>
         /// The positional adjustment of the second glyph.
         /// </summary>
-        public GlyphValueRecord secondGlyphAdjustments
+        public GlyphValueRecord_Legacy secondGlyphAdjustments
         {
             get { return m_SecondGlyphAdjustments; }
         }
         [SerializeField]
-        private GlyphValueRecord m_SecondGlyphAdjustments;
+        private GlyphValueRecord_Legacy m_SecondGlyphAdjustments;
 
         [FormerlySerializedAs("XadvanceOffset")]
         public float xOffset;
+
+        internal static KerningPair empty = new KerningPair(0, new GlyphValueRecord_Legacy(), 0, new GlyphValueRecord_Legacy());
 
         /// <summary>
         /// Determines if the Character Spacing property of the text object will affect the kerning pair.
@@ -239,10 +240,10 @@ namespace TMPro
         public KerningPair()
         {
             m_FirstGlyph = 0;
-            m_FirstGlyphAdjustments = new GlyphValueRecord();
+            m_FirstGlyphAdjustments = new GlyphValueRecord_Legacy();
 
             m_SecondGlyph = 0;
-            m_SecondGlyphAdjustments = new GlyphValueRecord();
+            m_SecondGlyphAdjustments = new GlyphValueRecord_Legacy();
         }
 
         public KerningPair(uint left, uint right, float offset)
@@ -252,7 +253,7 @@ namespace TMPro
             xOffset = offset;
         }
 
-        public KerningPair(uint firstGlyph, GlyphValueRecord firstGlyphAdjustments, uint secondGlyph, GlyphValueRecord secondGlyphAdjustments)
+        public KerningPair(uint firstGlyph, GlyphValueRecord_Legacy firstGlyphAdjustments, uint secondGlyph, GlyphValueRecord_Legacy secondGlyphAdjustments)
         {
             m_FirstGlyph = firstGlyph;
             m_FirstGlyphAdjustments = firstGlyphAdjustments;
@@ -267,7 +268,6 @@ namespace TMPro
         }
 
     }
-
 
     [Serializable]
     public class KerningTable
@@ -326,7 +326,7 @@ namespace TMPro
         /// <param name="secondGlyph">The second glyph</param>
         /// <param name="secondGlyphAdjustments">Adjustment record for the second glyph</param>
         /// <returns></returns>
-        public int AddGlyphPairAdjustmentRecord(uint first, GlyphValueRecord firstAdjustments, uint second, GlyphValueRecord secondAdjustments)
+        public int AddGlyphPairAdjustmentRecord(uint first, GlyphValueRecord_Legacy firstAdjustments, uint second, GlyphValueRecord_Legacy secondAdjustments)
         {
             int index = kerningPairs.FindIndex(item => item.firstGlyph == first && item.secondGlyph == second);
 
@@ -453,7 +453,4 @@ namespace TMPro
             return null;
         }
     }
-
-
-
 }

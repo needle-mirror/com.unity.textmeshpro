@@ -40,9 +40,11 @@ namespace TMPro.EditorUtilities
             public static readonly GUIContent tintAllSpritesLabel = new GUIContent("Tint All Sprites");
             public static readonly GUIContent parseEscapeCharactersLabel = new GUIContent("Parse Escape Sequence");
 
-            public static readonly GUIContent missingGlyphsTitleLabel = new GUIContent("Missing glyphs");
-            public static readonly GUIContent missingGlyphLabel = new GUIContent("Replacement", "The glyph to be used as a replacement when a glyph can't be found in a font asset.");
-            public static readonly GUIContent disableWarningsLabel = new GUIContent("Disable warnings");
+            public static readonly GUIContent dynamicFontSystemSettingsLabel = new GUIContent("Dynamic Font System Settings");
+            public static readonly GUIContent getFontFeaturesAtRuntime = new GUIContent("Get Font Features at Runtime", "Determines if Glyph Adjustment Data will be retrieved from font files at runtime when new characters and glyphs are added to font assets.");
+
+            public static readonly GUIContent missingGlyphLabel = new GUIContent("Replacement Character", "The character to be displayed when the requested character is not found in any font asset or fallbacks.");
+            public static readonly GUIContent disableWarningsLabel = new GUIContent("Disable warnings", "Disable warning messages in the Console.");
 
             public static readonly GUIContent defaultSpriteAssetLabel = new GUIContent("Default Sprite Asset", "The Sprite Asset that will be assigned by default when using the <sprite> tag when no Sprite Asset is specified.");
             public static readonly GUIContent enableEmojiSupportLabel = new GUIContent("iOS Emoji Support", "Enables Emoji support for Touch Screen Keyboards on target devices.");
@@ -81,6 +83,8 @@ namespace TMPro.EditorUtilities
         SerializedProperty m_PropTintAllSprites;
         SerializedProperty m_PropParseEscapeCharacters;
         SerializedProperty m_PropMissingGlyphCharacter;
+
+        SerializedProperty m_GetFontFeaturesAtRuntime;
 
         SerializedProperty m_PropWarningsDisabled;
 
@@ -133,6 +137,8 @@ namespace TMPro.EditorUtilities
 
             m_PropWarningsDisabled = serializedObject.FindProperty("m_warningsDisabled");
 
+            m_GetFontFeaturesAtRuntime = serializedObject.FindProperty("m_GetFontFeaturesAtRuntime");
+
             m_PropLeadingCharacters = serializedObject.FindProperty("m_leadingCharacters");
             m_PropFollowingCharacters = serializedObject.FindProperty("m_followingCharacters");
         }
@@ -173,8 +179,9 @@ namespace TMPro.EditorUtilities
 
             // MISSING GLYPHS
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            GUILayout.Label(Styles.missingGlyphsTitleLabel, EditorStyles.boldLabel);
+            GUILayout.Label(Styles.dynamicFontSystemSettingsLabel, EditorStyles.boldLabel);
             EditorGUI.indentLevel = 1;
+            EditorGUILayout.PropertyField(m_GetFontFeaturesAtRuntime, Styles.getFontFeaturesAtRuntime);
             EditorGUILayout.PropertyField(m_PropMissingGlyphCharacter, Styles.missingGlyphLabel);
             EditorGUILayout.PropertyField(m_PropWarningsDisabled, Styles.disableWarningsLabel);
             EditorGUI.indentLevel = 0;

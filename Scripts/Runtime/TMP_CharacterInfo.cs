@@ -28,7 +28,7 @@ namespace TMPro
         public int stringLength;
         public TMP_TextElementType elementType;
 
-        public TMP_Character textElement;
+        public TMP_TextElement textElement;
         public TMP_FontAsset fontAsset;
         public TMP_SpriteAsset spriteAsset;
         public int spriteIndex;

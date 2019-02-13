@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
 using Object = UnityEngine.Object;
@@ -166,7 +167,7 @@ namespace TMPro.EditorUtilities
 
         private FaceInfo m_FaceInfo;
 
-        bool m_IncludeKerningPairs;
+        bool m_IncludeFontFeatures;
 
 
         public void OnEnable()
@@ -593,7 +594,16 @@ namespace TMPro.EditorUtilities
 
                         if (m_CharactersFromFile != null)
                         {
-                            m_CharacterSequence = m_CharactersFromFile.text;
+                            Regex rx = new Regex(@"(?<!\\)(?:\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8})");
+
+                            m_CharacterSequence = rx.Replace(m_CharactersFromFile.text,
+                                match =>
+                                {
+                                    if (match.Value.StartsWith("\\U"))
+                                        return char.ConvertFromUtf32(int.Parse(match.Value.Replace("\\U", ""), NumberStyles.HexNumber));
+
+                                    return char.ConvertFromUtf32(int.Parse(match.Value.Replace("\\u", ""), NumberStyles.HexNumber));
+                                });
                         }
                         break;
                 }
@@ -619,7 +629,7 @@ namespace TMPro.EditorUtilities
                     m_IsFontAtlasInvalid = true;
                 }
 
-                m_IncludeKerningPairs = EditorGUILayout.Toggle("Get Kerning Pairs", m_IncludeKerningPairs);
+                m_IncludeFontFeatures = EditorGUILayout.Toggle("Get Kerning Pairs", m_IncludeFontFeatures);
 
                 EditorGUILayout.Space();
             }
@@ -673,13 +683,18 @@ namespace TMPro.EditorUtilities
 
                             for (int i = 0; i < m_CharacterSequence.Length; i++)
                             {
-                                // Check to make sure we don't include duplicates
-                                if (char_List.FindIndex(item => item == m_CharacterSequence[i]) == -1)
-                                    char_List.Add(m_CharacterSequence[i]);
-                                else
+                                uint unicode = m_CharacterSequence[i];
+
+                                // Handle surrogate pairs
+                                if (i < m_CharacterSequence.Length - 1 && char.IsHighSurrogate((char)unicode) && char.IsLowSurrogate(m_CharacterSequence[i + 1]))
                                 {
-                                    //Debug.Log("Character [" + characterSequence[i] + "] is a duplicate.");
+                                    unicode = (uint)char.ConvertToUtf32(m_CharacterSequence[i], m_CharacterSequence[i + 1]);
+                                    i += 1;
                                 }
+
+                                // Check to make sure we don't include duplicates
+                                if (char_List.FindIndex(item => item == unicode) == -1)
+                                    char_List.Add(unicode);
                             }
 
                             characterSet = char_List.ToArray();
@@ -1277,8 +1292,8 @@ namespace TMPro.EditorUtilities
                 fontAsset.SortGlyphAndCharacterTables();
 
                 // Get and Add Kerning Pairs to Font Asset
-                if (m_IncludeKerningPairs)
-                    fontAsset.kerningTable = GetKerningTable();
+                if (m_IncludeFontFeatures)
+                    fontAsset.fontFeatureTable = GetKerningTable();
 
 
                 // Add Font Atlas as Sub-Asset
@@ -1332,8 +1347,8 @@ namespace TMPro.EditorUtilities
                 fontAsset.SortGlyphAndCharacterTables();
 
                 // Get and Add Kerning Pairs to Font Asset
-                if (m_IncludeKerningPairs)
-                    fontAsset.kerningTable = GetKerningTable();
+                if (m_IncludeFontFeatures)
+                    fontAsset.fontFeatureTable = GetKerningTable();
 
                 // Add Font Atlas as Sub-Asset
                 fontAsset.atlasTextures = new Texture2D[] { m_FontAtlasTexture };
@@ -1431,8 +1446,8 @@ namespace TMPro.EditorUtilities
                 fontAsset.SortGlyphAndCharacterTables();
 
                 // Get and Add Kerning Pairs to Font Asset
-                if (m_IncludeKerningPairs)
-                    fontAsset.kerningTable = GetKerningTable();
+                if (m_IncludeFontFeatures)
+                    fontAsset.fontFeatureTable = GetKerningTable();
 
                 // Add Font Atlas as Sub-Asset
                 fontAsset.atlasTextures = new Texture2D[] { m_FontAtlasTexture };
@@ -1496,8 +1511,8 @@ namespace TMPro.EditorUtilities
 
                 // Get and Add Kerning Pairs to Font Asset
                 // TODO: Check and preserve existing adjustment pairs.
-                if (m_IncludeKerningPairs)
-                    fontAsset.kerningTable = GetKerningTable();
+                if (m_IncludeFontFeatures)
+                    fontAsset.fontFeatureTable = GetKerningTable();
 
                 // Add Font Atlas as Sub-Asset
                 fontAsset.atlasTextures = new Texture2D[] { m_FontAtlasTexture };
@@ -1581,7 +1596,7 @@ namespace TMPro.EditorUtilities
             //settings.fontStyle = (int)m_FontStyle;
             //settings.fontStyleModifier = m_FontStyleValue;
             settings.renderMode = (int)m_GlyphRenderMode;
-            settings.includeFontFeatures = m_IncludeKerningPairs;
+            settings.includeFontFeatures = m_IncludeFontFeatures;
 
             return settings;
         }
@@ -1607,7 +1622,7 @@ namespace TMPro.EditorUtilities
             //m_FontStyle = (FaceStyles)settings.fontStyle;
             //m_FontStyleValue = settings.fontStyleModifier;
             m_GlyphRenderMode = (GlyphRenderMode)settings.renderMode;
-            m_IncludeKerningPairs = settings.includeFontFeatures;
+            m_IncludeFontFeatures = settings.includeFontFeatures;
         }
 
 
@@ -1699,41 +1714,23 @@ namespace TMPro.EditorUtilities
 
 
         // Get Kerning Pairs
-        public KerningTable GetKerningTable()
+        public TMP_FontFeatureTable GetKerningTable()
         {
             GlyphPairAdjustmentRecord[] adjustmentRecords = FontEngine.GetGlyphPairAdjustmentTable(m_AvailableGlyphsToAdd.ToArray());
 
             if (adjustmentRecords == null)
                 return null;
 
-            KerningTable kerningTable = new KerningTable();
+            TMP_FontFeatureTable fontFeatureTable = new TMP_FontFeatureTable();
 
             for (int i = 0; i < adjustmentRecords.Length; i++)
             {
-                GlyphAdjustmentRecord firstRecord = adjustmentRecords[i].firstAdjustmentRecord;
-                GlyphAdjustmentRecord secondRecord = adjustmentRecords[i].secondAdjustmentRecord;
-
-                // Lookup Unicode for the referenced glyphs
-                List<uint> firstRecordUnicodeIndexes = m_GlyphLookupMap[firstRecord.glyphIndex];
-                List<uint> secondRecordUnicodeIndexes = m_GlyphLookupMap[secondRecord.glyphIndex];
-
-                for (int first = 0; first < firstRecordUnicodeIndexes.Count; first++)
-                {
-                    uint firstUnicode = firstRecordUnicodeIndexes[first];
-
-                    for (int second = 0; second < secondRecordUnicodeIndexes.Count; second++)
-                    {
-                        uint secondUnicode = secondRecordUnicodeIndexes[second];
-
-                        //  Add kerning pair for the given unicode characters.
-                        kerningTable.AddGlyphPairAdjustmentRecord(firstUnicode, new GlyphValueRecord(firstRecord.glyphValueRecord), secondUnicode, new GlyphValueRecord(secondRecord.glyphValueRecord));
-                    }
-                }
+                fontFeatureTable.glyphPairAdjustmentRecords.Add(new TMP_GlyphPairAdjustmentRecord(adjustmentRecords[i]));
             }
 
-            kerningTable.SortKerningPairs();
+            fontFeatureTable.SortGlyphPairAdjustmentRecords();
 
-            return kerningTable;
+            return fontFeatureTable;
         }
     }
 }

@@ -5,7 +5,7 @@ namespace TMPro.EditorUtilities
 {
 
     [CustomPropertyDrawer(typeof(TextAlignmentOptions))]
-    public class TextAlignmentDrawer : PropertyDrawer
+    public class TMP_TextAlignmentDrawer : PropertyDrawer
     {
         const int k_AlignmentButtonWidth = 24;
         const int k_AlignmentButtonHeight = 20;

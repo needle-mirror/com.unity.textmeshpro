@@ -3932,33 +3932,33 @@ namespace TMPro
 
                 // Handle Kerning if Enabled.
                 #region Handle Kerning
-                GlyphValueRecord glyphAdjustments = new GlyphValueRecord();
-                float CharacterSpacingAdjustment = m_characterSpacing;
+                TMP_GlyphValueRecord glyphAdjustments = new TMP_GlyphValueRecord();
+                float characterSpacingAdjustment = m_characterSpacing;
                 if (m_enableKerning)
                 {
                     if (m_characterCount < totalCharacterCount - 1)
                     {
-                        uint nextGlyph = m_textInfo.characterInfo[m_characterCount + 1].character;
-                        KerningPairKey keyValue = new KerningPairKey((uint)charCode, nextGlyph);
+                        uint firstGlyphIndex = m_cached_TextElement.glyphIndex;
+                        uint secondGlyphIndex = m_textInfo.characterInfo[m_characterCount + 1].textElement.glyphIndex;
+                        long key = new GlyphPairKey(firstGlyphIndex, secondGlyphIndex).key;
 
-                        m_currentFontAsset.kerningLookupDictionary.TryGetValue((int)keyValue.key, out KerningPair adjustmentPair);
-                        if (adjustmentPair != null)
+                        if (m_currentFontAsset.fontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out TMP_GlyphPairAdjustmentRecord adjustmentPair))
                         {
-                            glyphAdjustments = adjustmentPair.firstGlyphAdjustments;
-                            CharacterSpacingAdjustment = adjustmentPair.ignoreSpacingAdjustments ? 0 : CharacterSpacingAdjustment;
+                            glyphAdjustments = adjustmentPair.firstAdjustmentRecord.glyphValueRecord;
+                            characterSpacingAdjustment = (adjustmentPair.featureLookupFlags & FontFeatureLookupFlags.IgnoreSpacingAdjustments) == FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
                         }
                     }
 
                     if (m_characterCount >= 1)
                     {
-                        uint previousGlyph = m_textInfo.characterInfo[m_characterCount - 1].character;
-                        KerningPairKey keyValue = new KerningPairKey(previousGlyph, (uint)charCode);
+                        uint firstGlyphIndex = m_textInfo.characterInfo[m_characterCount - 1].textElement.glyphIndex;
+                        uint secondGlyphIndex = m_cached_TextElement.glyphIndex;
+                        long key = new GlyphPairKey(firstGlyphIndex, secondGlyphIndex).key;
 
-                        m_currentFontAsset.kerningLookupDictionary.TryGetValue((int)keyValue.key, out KerningPair adjustmentPair);
-                        if (adjustmentPair != null)
+                        if (m_currentFontAsset.fontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out TMP_GlyphPairAdjustmentRecord adjustmentPair))
                         {
-                            glyphAdjustments += adjustmentPair.secondGlyphAdjustments;
-                            CharacterSpacingAdjustment = adjustmentPair.ignoreSpacingAdjustments ? 0 : CharacterSpacingAdjustment;
+                            glyphAdjustments += adjustmentPair.secondAdjustmentRecord.glyphValueRecord;
+                            characterSpacingAdjustment = (adjustmentPair.featureLookupFlags & FontFeatureLookupFlags.IgnoreSpacingAdjustments) == FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
                         }
                     }
                 }
@@ -4263,14 +4263,14 @@ namespace TMPro
                 }
                 else if (m_monoSpacing != 0)
                 {
-                    m_xAdvance += (m_monoSpacing - monoAdvance + ((CharacterSpacingAdjustment + m_currentFontAsset.normalSpacingOffset) * currentElementScale) + m_cSpacing) * (1 - m_charWidthAdjDelta);
+                    m_xAdvance += (m_monoSpacing - monoAdvance + ((characterSpacingAdjustment + m_currentFontAsset.normalSpacingOffset) * currentElementScale) + m_cSpacing) * (1 - m_charWidthAdjDelta);
 
                     if (char.IsWhiteSpace((char)charCode) || charCode == 0x200B)
                         m_xAdvance += m_wordSpacing * currentElementScale;
                 }
                 else
                 {
-                    m_xAdvance += ((m_cached_TextElement.glyph.metrics.horizontalAdvance * bold_xAdvance_multiplier + CharacterSpacingAdjustment + m_currentFontAsset.normalSpacingOffset + glyphAdjustments.xAdvance) * currentElementScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
+                    m_xAdvance += ((m_cached_TextElement.glyph.metrics.horizontalAdvance * bold_xAdvance_multiplier + characterSpacingAdjustment + m_currentFontAsset.normalSpacingOffset + glyphAdjustments.xAdvance) * currentElementScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
 
                     if (char.IsWhiteSpace((char)charCode) || charCode == 0x200B)
                         m_xAdvance += m_wordSpacing * currentElementScale;
