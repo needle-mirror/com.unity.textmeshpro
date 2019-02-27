@@ -971,6 +971,10 @@ namespace TMPro
         /// </summary>
         internal static uint[] s_GlyphIndexArray = new uint[16];
 
+        /// <summary>
+        /// Internal static list used to track characters that could not be added to the font asset.
+        /// </summary>
+        internal static List<uint> s_MissingCharacterList = new List<uint>(16);
 
         /// <summary>
         /// Try adding the characters from the provided string to the font asset.
@@ -979,6 +983,19 @@ namespace TMPro
         /// <returns>Returns true if all the characters were successfully added to the font asset. Return false otherwise.</returns>
         public bool TryAddCharacters(uint[] unicodes)
         {
+            return TryAddCharacters(unicodes, out uint[] missingUnicodes);
+        }
+
+        /// <summary>
+        /// Try adding the characters from the provided string to the font asset.
+        /// </summary>
+        /// <param name="unicodes">Array that contains the characters to add to the font asset.</param>
+        /// <param name="missingUnicodes">Array containing the characters that could not be added to the font asset.</param>
+        /// <returns>Returns true if all the characters were successfully added to the font asset. Return false otherwise.</returns>
+        public bool TryAddCharacters(uint[] unicodes, out uint[] missingUnicodes)
+        {
+            s_MissingCharacterList.Clear();
+
             // Make sure font asset is set to dynamic and that we have a valid list of characters.
             if (unicodes == null || unicodes.Length == 0 || m_AtlasPopulationMode == AtlasPopulationMode.Static)
             {
@@ -989,6 +1006,7 @@ namespace TMPro
                     Debug.LogWarning("Unable to add characters to font asset [" + this.name + "] because the provided Unicode list is Null or Empty.", this);
                 }
 
+                missingUnicodes = unicodes.ToArray();
                 return false;
             }
 
@@ -999,6 +1017,7 @@ namespace TMPro
             {
                 Profiler.EndSample();
 
+                missingUnicodes = unicodes.ToArray();
                 return false;
             }
 
@@ -1047,6 +1066,7 @@ namespace TMPro
                 //Debug.LogWarning("No characters will be added to font asset [" + this.name + "] either because they are already present in the font asset or missing from the font file.");
                 Profiler.EndSample();
 
+                missingUnicodes = unicodes.ToArray();
                 return false;
             }
 
@@ -1075,7 +1095,13 @@ namespace TMPro
             for (int i = 0; i < m_CharactersToAdd.Count; i++)
             {
                 TMP_Character character = m_CharactersToAdd[i];
-                character.glyph = m_GlyphLookupDictionary[character.glyphIndex];
+                if (m_GlyphLookupDictionary.TryGetValue(character.glyphIndex, out Glyph glyph) == false)
+                {
+                    s_MissingCharacterList.Add(character.unicode);
+                    continue;
+                }
+
+                character.glyph = glyph;
                 m_CharacterTable.Add(character);
                 m_CharacterLookupDictionary.Add(character.unicode, character);
             }
@@ -1087,9 +1113,13 @@ namespace TMPro
 
             Profiler.EndSample();
 
+            missingUnicodes = null;
+
+            if (s_MissingCharacterList.Count > 0)
+                missingUnicodes = s_MissingCharacterList.ToArray();
+
             return allCharactersAdded && !isMissingCharacters;
         }
-
 
         /// <summary>
         /// Try adding the characters from the provided string to the font asset.
@@ -1097,6 +1127,18 @@ namespace TMPro
         /// <param name="characters">String containing the characters to add to the font asset.</param>
         /// <returns>Returns true if all the characters were successfully added to the font asset. Return false otherwise.</returns>
         public bool TryAddCharacters(string characters)
+        {
+            return TryAddCharacters(characters, out string missingCharacters);
+        }
+
+
+        /// <summary>
+        /// Try adding the characters from the provided string to the font asset.
+        /// </summary>
+        /// <param name="characters">String containing the characters to add to the font asset.</param>
+        /// <param name="missingCharacters">String containing the characters that could not be added to the font asset.</param>
+        /// <returns>Returns true if all the characters were successfully added to the font asset. Return false otherwise.</returns>
+        public bool TryAddCharacters(string characters, out string missingCharacters)
         {
             // Make sure font asset is set to dynamic and that we have a valid list of characters.
             if (string.IsNullOrEmpty(characters) || m_AtlasPopulationMode == AtlasPopulationMode.Static)
@@ -1108,12 +1150,16 @@ namespace TMPro
                     Debug.LogWarning("Unable to add characters to font asset [" + this.name + "] because the provided character list is Null or Empty.", this);
                 }
 
+                missingCharacters = characters;
                 return false;
             }
 
             // Load font face.
             if (FontEngine.LoadFontFace(m_SourceFontFile, m_FaceInfo.pointSize) != FontEngineError.Success)
+            {
+                missingCharacters = characters;
                 return false;
+            }
 
             // Clear data structures used to track which glyph needs to be added to atlas texture.
             m_GlyphIndexList.Clear();
@@ -1161,7 +1207,7 @@ namespace TMPro
 
             if (m_GlyphIndexList.Count == 0)
             {
-                //Debug.LogWarning("No characters will be added to font asset [" + this.name + "] either because they are already present in the font asset or missing from the font file.");
+                missingCharacters = characters;
                 return false;
             }
 
@@ -1183,26 +1229,23 @@ namespace TMPro
                 // Add new glyph to glyph table.
                 m_GlyphTable.Add(glyph);
                 m_GlyphLookupDictionary.Add(glyphIndex, glyph);
-
-                // Add new character(s)
-                //List<uint> unicodes = m_CharacterLookupMap[glyphIndex];
-                //int unicodeCount = unicodes.Count;
-
-                //for (int j = 0; j < unicodeCount; j++)
-                //{
-                //    uint unicode = unicodes[j];
-
-                //    TMP_Character character = new TMP_Character(unicode, glyph);
-                //    m_CharacterTable.Add(character);
-                //    m_CharacterLookupDictionary.Add(unicode, character);
-                //}
             }
+
+            missingCharacters = string.Empty;
 
             // Add new characters to relevant data structures.
             for (int i = 0; i < m_CharactersToAdd.Count; i++)
             {
                 TMP_Character character = m_CharactersToAdd[i];
-                character.glyph = m_GlyphLookupDictionary[character.glyphIndex];
+
+                if (m_GlyphLookupDictionary.TryGetValue(character.glyphIndex, out Glyph glyph) == false)
+                {
+                    // TODO: Revise to avoid string concatenation.
+                    missingCharacters += (char)character.unicode;
+                    continue;
+                }
+
+                character.glyph = glyph;
                 m_CharacterTable.Add(character);
                 m_CharacterLookupDictionary.Add(character.unicode, character);
             }

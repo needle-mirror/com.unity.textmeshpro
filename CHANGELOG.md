@@ -1,6 +1,14 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [1.4.0-preview.3a] - 2019-02-28
+### Changes
+- Improved performance of the Project Files GUID Remapping Tool.
+- Fixed an issue with the TMP_FontAsset.TryAddCharacters() functions which was resulting in an error when added characters exceeded the capacity of the atlas texture.
+- Updated TMP_FontAsset.TryAddCharacters functions to add new overloads returning list of characters that could not be added.
+- Added function in OnEnable of FontAsset Editor's to clean up Fallback list to remove any null / empty entries.
+- Added support for Stereo rendering to the TMP Distance Field and Mobile Distance Field shaders.
+
 ## [1.4.0-preview.2a] - 2019-02-14
 ### Changes
 - Fixed an issue with SDF Scale handling where the text object would not render correctly after the object scale had been set to zero.

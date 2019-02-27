@@ -224,6 +224,9 @@ namespace TMPro.EditorUtilities
                 EditorGUI.LabelField(rect, "Fallback List");
             };
 
+            // Clean up fallback list in the event if contains null elements.
+            CleanFallbackFontAssetTable();
+
             font_normalStyle_prop = serializedObject.FindProperty("normalStyle");
             font_normalSpacing_prop = serializedObject.FindProperty("normalSpacingOffset");
 
@@ -251,8 +254,6 @@ namespace TMPro.EditorUtilities
             m_SerializedPropertyHolder.fontAsset = m_fontAsset;
             SerializedObject internalSerializedObject = new SerializedObject(m_SerializedPropertyHolder);
             m_EmptyGlyphPairAdjustmentRecord_prop = internalSerializedObject.FindProperty("glyphPairAdjustmentRecord");
-
-            //m_EmptyGlyphPairAdjustmentRecord_prop = serializedObject.FindProperty("m_EmptyGlyphPairAdjustmentRecord");
 
             m_materialPresets = TMP_EditorUtility.FindMaterialReferences(m_fontAsset);
 
@@ -1273,6 +1274,34 @@ namespace TMPro.EditorUtilities
             if (currentEvent.type == EventType.MouseDown && currentEvent.button == 0)
                 m_SelectedAdjustmentRecord = -1;
 
+        }
+
+        void CleanFallbackFontAssetTable()
+        {
+            SerializedProperty m_FallbackFontAsseTable = serializedObject.FindProperty("m_FallbackFontAssetTable");
+
+            bool isListDirty = false;
+
+            int elementCount = m_FallbackFontAsseTable.arraySize;
+
+            for (int i = 0; i < elementCount; i++)
+            {
+                SerializedProperty element = m_FallbackFontAsseTable.GetArrayElementAtIndex(i);
+                if (element.objectReferenceValue == null)
+                {
+                    m_FallbackFontAsseTable.DeleteArrayElementAtIndex(i);
+                    elementCount -= 1;
+                    i -= 1;
+
+                    isListDirty = true;
+                }
+            }
+
+            if (isListDirty)
+            {
+                serializedObject.ApplyModifiedProperties();
+                serializedObject.Update();
+            }
         }
 
         void SavedAtlasGenerationSettings()
