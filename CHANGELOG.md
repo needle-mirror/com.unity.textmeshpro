@@ -1,6 +1,10 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [2.0.0] - 2019-03-01
+### Changes
+- Added dependency on the UGUI package version 1.0.0.
+
 ## [1.4.0-preview.3a] - 2019-02-28
 ### Changes
 - Improved performance of the Project Files GUID Remapping Tool.
@@ -18,7 +22,7 @@ These are the release notes for the TextMesh Pro UPM package which was first int
 - Added new property in the Dynamic Font System section to determine if OpenType Font Features will be retrieved from source font files at runtime as new characters are added to font assets. Glyph Adjustment Data (Kerning) is the only feature currently supported.
 - Fix an issue where font assets created at runtime were not getting their asset version number set to "1.1.0".
 - Improved parsing of the text file used in the Font Asset Creator and "Characters from File" option to handle UTF16 "\u" and UTF32 "\U" escape character sequences.
-- Fixed a Null Reference Error (NRE) that could occur when using the &ltfont&gt tag with an invalid font name followed by the &ltsprite&gt tag.
+- Fixed a Null Reference Error (NRE) that could occur when using the &ltfont&gt tag with an invalid font name followed by the &ltsprite&gt tag. 
 - The Glyph Adjustment Table presentation and internal data structure has been changed to facilitate the future addition of OpenType font features. See https://forum.unity.com/threads/version-1-4-0-preview-with-dynamic-sdf-for-unity-2018-3-now-available.622420/#post-4206595 for more details.
 - Fixed an issue with the &ltrotate&gt tag incorrectly affecting character spacing. 
 
