@@ -1,6 +1,10 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [1.4.0] - 2019-03-07
+### Changes
+- Same release as 1.4.0-preview.3a.
+
 ## [1.4.0-preview.3a] - 2019-02-28
 ### Changes
 - Improved performance of the Project Files GUID Remapping Tool.
