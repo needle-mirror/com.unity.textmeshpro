@@ -41,9 +41,9 @@ namespace TMPro
             "In turpis. Pellentesque posuere. Praesent turpis. Aenean posuere, tortor sed cursus feugiat, nunc augue blandit nunc, eu sollicitudin urna dolor sagittis lacus. Donec elit libero, sodales nec, volutpat a, suscipit non, turpis.Nullam sagittis. Suspendisse pulvinar, augue ac venenatis condimentum, sem libero volutpat nibh, nec pellentesque velit pede quis nunc. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce id purus.Ut varius tincidunt libero.Phasellus dolor.Maecenas vestibulum mollis";
 
         // 
-        private const string m_TextBlock_RichText_00 = "This block of text contains <b>bold</b> and <i>italicized</i> characters.";
+        private const string m_TextBlock_05 = "This block of text contains <b>bold</b> and <i>italicized</i> characters.";
 
-        private const string m_TextBlock_RichText_01 = "<align=center><style=H1><#ffffff><u>Multiple<#80f0ff> Alignment</color> per text object</u></color></style></align><line-height=2em>\n" +
+        private const string m_TextBlock_06 = "<align=center><style=H1><#ffffff><u>Multiple<#80f0ff> Alignment</color> per text object</u></color></style></align><line-height=2em>\n" +
             "</line-height> The <<#ffffa0>align</color>> tag in TextMesh<#40a0ff>Pro</color> provides the ability to control the alignment of lines and paragraphs which is essential when working with text.\n" +
             "<align=left> You may want some block of text to be<#80f0ff>left aligned</color> <<#ffffa0>align=<#80f0ff>left</color></color>> which is sort of the standard.</align>\n" +
             "<style=Quote><#ffffa0>\"Using <#80f0ff>Center Alignment</color> <<#ffffa0>align=<#80f0ff>center</color></color>> for a title or displaying a quote is another good example of text alignment.\"</color></style>\n" +
@@ -52,6 +52,7 @@ namespace TMPro
             "<style=Quote><align=left><#ffffa0>\"Text formatting and alignment has a huge impact on how people will read and perceive your text.\"</color>\n" +
             "<size=65%><align=right> -Stephan Bouchard</style>";
 
+        private readonly string[] testStrings = new string[] { m_TextBlock_00, m_TextBlock_01, m_TextBlock_02, m_TextBlock_03, m_TextBlock_04, m_TextBlock_05, m_TextBlock_06 };
 
         [OneTimeSetUp]
         public void Setup()
@@ -64,17 +65,17 @@ namespace TMPro
 
         public static IEnumerable<object[]> TestCases_Parsing_TextInfo_WordWrapDisabled()
         {
-            yield return new object[] { m_TextBlock_00, 22, 4, 5, 1 };
-            yield return new object[] { m_TextBlock_01, 104, 14, 15, 1 };
-            yield return new object[] { m_TextBlock_02, 1500, 228, 241, 1 };
-            yield return new object[] { m_TextBlock_03, 2500, 343, 370, 1 };
-            yield return new object[] { m_TextBlock_04, 3423, 453, 500, 1 };
+            yield return new object[] { 0, 22, 4, 5, 1 };
+            yield return new object[] { 1, 104, 14, 15, 1 };
+            yield return new object[] { 2, 1500, 228, 241, 1 };
+            yield return new object[] { 3, 2500, 343, 370, 1 };
+            yield return new object[] { 4, 3423, 453, 500, 1 };
         }
 
         [Test, TestCaseSource("TestCases_Parsing_TextInfo_WordWrapDisabled")]
-        public void Parsing_TextInfo_WordWrapDisabled(string sourceText, int characterCount, int spaceCount, int wordCount, int lineCount)
+        public void Parsing_TextInfo_WordWrapDisabled(int sourceTextIndex, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
-            m_TextComponent.text = sourceText;
+            m_TextComponent.text = testStrings[sourceTextIndex];
             m_TextComponent.enableWordWrapping = false;
             m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
 
@@ -93,17 +94,17 @@ namespace TMPro
 
         public static IEnumerable<object[]> TestCases_Parsing_TextInfo_WordWrapEnabled()
         {
-            yield return new object[] { m_TextBlock_00, 22, 4, 5, 1 };
-            yield return new object[] { m_TextBlock_01, 104, 14, 15, 1 };
-            yield return new object[] { m_TextBlock_02, 1500, 228, 241, 13 };
-            yield return new object[] { m_TextBlock_03, 2500, 343, 370, 21 };
-            yield return new object[] { m_TextBlock_04, 3423, 453, 500, 29 };
+            yield return new object[] { 0, 22, 4, 5, 1 };
+            yield return new object[] { 1, 104, 14, 15, 1 };
+            yield return new object[] { 2, 1500, 228, 241, 13 };
+            yield return new object[] { 3, 2500, 343, 370, 21 };
+            yield return new object[] { 4, 3423, 453, 500, 29 };
         }
 
         [Test, TestCaseSource("TestCases_Parsing_TextInfo_WordWrapEnabled")]
-        public void Parsing_TextInfo_WordWrapEnabled(string sourceText, int characterCount, int spaceCount, int wordCount, int lineCount)
+        public void Parsing_TextInfo_WordWrapEnabled(int sourceTextIndex, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
-            m_TextComponent.text = sourceText;
+            m_TextComponent.text = testStrings[sourceTextIndex];
             m_TextComponent.enableWordWrapping = true;
             m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
 
@@ -122,15 +123,15 @@ namespace TMPro
 
         public static IEnumerable<object[]> TestCases_Parsing_TextInfo_AlignmentTopJustified()
         {
-            yield return new object[] { m_TextBlock_02, 1500, 228, 241, 13 };
-            yield return new object[] { m_TextBlock_03, 2500, 343, 370, 20 };
-            yield return new object[] { m_TextBlock_04, 3423, 453, 500, 27 };
+            yield return new object[] { 2, 1500, 228, 241, 13 };
+            yield return new object[] { 3, 2500, 343, 370, 20 };
+            yield return new object[] { 4, 3423, 453, 500, 27 };
         }
 
         [Test, TestCaseSource("TestCases_Parsing_TextInfo_AlignmentTopJustified")]
-        public void Parsing_TextInfo_AlignmentTopJustified(string sourceText, int characterCount, int spaceCount, int wordCount, int lineCount)
+        public void Parsing_TextInfo_AlignmentTopJustified(int sourceTextIndex, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
-            m_TextComponent.text = sourceText;
+            m_TextComponent.text = testStrings[sourceTextIndex];
             m_TextComponent.enableWordWrapping = true;
             m_TextComponent.alignment = TextAlignmentOptions.TopJustified;
 
@@ -149,14 +150,14 @@ namespace TMPro
 
         public static IEnumerable<object[]> TestCases_Parsing_TextInfo_RichText()
         {
-            yield return new object[] { m_TextBlock_RichText_00, 59, 8, 9, 1 };
-            yield return new object[] { m_TextBlock_RichText_01, 768, 124, 126, 14 };
+            yield return new object[] { 5, 59, 8, 9, 1 };
+            yield return new object[] { 6, 768, 124, 126, 14 };
         }
 
         [Test, TestCaseSource("TestCases_Parsing_TextInfo_RichText")]
-        public void Parsing_TextInfo_RichText(string sourceText, int characterCount, int spaceCount, int wordCount, int lineCount)
+        public void Parsing_TextInfo_RichText(int sourceTextIndex, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
-            m_TextComponent.text = sourceText;
+            m_TextComponent.text = testStrings[sourceTextIndex];
             m_TextComponent.enableWordWrapping = true;
             m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
 

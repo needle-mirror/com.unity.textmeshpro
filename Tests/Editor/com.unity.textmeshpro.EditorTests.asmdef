@@ -1,8 +1,8 @@
 {
-    "name": "TMP_Editor-Tests-CSharp",
+    "name": "com.unity.textmeshpro.EditorTests",
     "references": [
-        "TMP_Runtime-CSharp",
-        "TMP_Editor-CSharp"
+        "com.unity.textmeshpro.Runtime",
+        "com.unity.textmeshpro.Editor"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

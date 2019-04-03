@@ -34,6 +34,8 @@ namespace TMPro
 
         public static readonly FastAction TMP_SETTINGS_PROPERTY_EVENT = new FastAction();
 
+        public static readonly FastAction RESOURCE_LOAD_EVENT = new FastAction();
+
         public static readonly FastAction<bool, TextMeshProUGUI> TEXTMESHPRO_UGUI_PROPERTY_EVENT = new FastAction<bool, TextMeshProUGUI>();
 
         public static readonly FastAction OnPreRenderObject_Event = new FastAction();
@@ -100,6 +102,11 @@ namespace TMPro
         public static void ON_TMP_SETTINGS_CHANGED()
         {
             TMP_SETTINGS_PROPERTY_EVENT.Call();
+        }
+
+        public static void ON_RESOURCES_LOADED()
+        {
+            RESOURCE_LOAD_EVENT.Call();
         }
 
         public static void ON_TEXTMESHPRO_UGUI_PROPERTY_CHANGED(bool isChanged, TextMeshProUGUI obj)

@@ -11,7 +11,7 @@ namespace TMPro
     public class TMP_ProjectConversionUtility : EditorWindow
     {
         // Create Sprite Asset Editor Window
-        [MenuItem("Window/TextMeshPro/Project Files GUID Remapping Tool", false, 2051)]
+        [MenuItem("Window/TextMeshPro/Project Files GUID Remapping Tool", false, 2055)]
         static void ShowConverterWindow()
         {
             var window = GetWindow<TMP_ProjectConversionUtility>();
@@ -76,8 +76,6 @@ namespace TMPro
 
         void OnGUI()
         {
-            //m_ProgressPercentage = (m_ProgressPercentage + 1) % 100;
-
             GUILayout.BeginVertical();
             {
                 GUILayout.Label("<b>TMP Project Files GUID Remapping Tool</b>", TMP_UIStyleManager.Section_Label);
@@ -92,7 +90,15 @@ namespace TMPro
                     GUI.enabled = m_IsAlreadyScanningProject == false ? true : false;
                     if (GUILayout.Button("Scan Project Files"))
                     {
-                        EditorCoroutine.StartCoroutine(ScanProjectFiles());
+                        // Make sure Asset Serialization mode is set to ForceText and Version Control mode to Visible Meta Files.
+                        if (CheckProjectSerializationAndSourceControlModes() == true)
+                        {
+                            EditorCoroutine.StartCoroutine(ScanProjectFiles());
+                        }
+                        else
+                        {
+                            EditorUtility.DisplayDialog("Project Settings Change Required", "In menu options \"Edit - Project Settings - Editor\", please change Asset Serialization Mode to ForceText and Source Control Mode to Visible Meta Files.", "OK", string.Empty);
+                        }
                     }
                     GUI.enabled = true;
 
@@ -155,9 +161,6 @@ namespace TMPro
 
         private IEnumerator ScanProjectFiles()
         {
-            // Make sure Asset Serialization mode is set to ForceText with Visible Meta Files.
-            SetProjectSerializationAndSourceControlModes();
-
             m_IsAlreadyScanningProject = true;
             string projectPath = Path.GetFullPath("Assets/..");
             string packageFullPath = EditorUtilities.TMP_EditorUtility.packageFullPath;
@@ -286,7 +289,7 @@ namespace TMPro
         private static void UpdateProjectFiles()
         {
             // Make sure Asset Serialization mode is set to ForceText with Visible Meta Files.
-            SetProjectSerializationAndSourceControlModes();
+            CheckProjectSerializationAndSourceControlModes();
 
             string projectPath = Path.GetFullPath("Assets/..");
 
@@ -308,39 +311,21 @@ namespace TMPro
 
             m_ProgressPercentage = 0;
             m_ProjectScanResults = k_ProjectScanReportDefaultText;
-
-            // Restore project Asset Serialization and Source Control modes.
-            RestoreProjectSerializationAndSourceControlModes();
         }
 
 
         /// <summary>
-        /// Change project asset serialization mode to ForceText (if necessary)
+        /// Check project Asset Serialization and Source Control modes
         /// </summary>
-        private static void SetProjectSerializationAndSourceControlModes()
+        private static bool CheckProjectSerializationAndSourceControlModes()
         {
-            // Make sure Asset Serialization mode is set to ForceText with Visible Meta Files.
-            m_ProjectAssetSerializationMode = EditorSettings.serializationMode;
-            if (m_ProjectAssetSerializationMode != SerializationMode.ForceText)
-                UnityEditor.EditorSettings.serializationMode = SerializationMode.ForceText;
+            // Check Project Asset Serialization and Visible Meta Files mode.
+            if (EditorSettings.serializationMode != SerializationMode.ForceText && EditorSettings.externalVersionControl != "Visible Meta Files")
+            {
+                return false;
+            }
 
-            m_ProjectExternalVersionControl = EditorSettings.externalVersionControl;
-            if (m_ProjectExternalVersionControl != "Visible Meta Files")
-                UnityEditor.EditorSettings.externalVersionControl = "Visible Meta Files";
-        }
-
-
-        /// <summary>
-        /// Revert potential change to asset serialization mode (if necessary)
-        /// </summary>
-        private static void RestoreProjectSerializationAndSourceControlModes()
-        {
-            // Make sure Asset Serialization mode is set to ForceText with Visible Meta Files.
-            if (m_ProjectAssetSerializationMode != EditorSettings.serializationMode)
-                EditorSettings.serializationMode = m_ProjectAssetSerializationMode;
-
-            if (m_ProjectExternalVersionControl != EditorSettings.externalVersionControl)
-                EditorSettings.externalVersionControl = m_ProjectExternalVersionControl;
+            return true;
         }
     }
 
@@ -374,11 +359,21 @@ namespace TMPro
             GenerateNewPackageGUIDs();
         }
 
+		
+		/// <summary>
+        /// 
+        /// </summary>
+        [MenuItem("Window/TextMeshPro/Import TMP Essential Resources", false, 2050)]
+        public static void ImportProjectResourcesMenu()
+        {
+            ImportProjectResources();
+        }
 
+		
         /// <summary>
         /// 
         /// </summary>
-        [MenuItem("Window/TextMeshPro/Import Examples and Extra Content", false, 2050)]
+        [MenuItem("Window/TextMeshPro/Import TMP Examples and Extras", false, 2051)]
         public static void ImportExamplesContentMenu()
         {
             ImportExtraContent();
@@ -437,7 +432,18 @@ namespace TMPro
         {
             string packageFullPath = EditorUtilities.TMP_EditorUtility.packageFullPath;
 
-            AssetDatabase.ImportPackage(packageFullPath + "/Examples/TMP Examples.unitypackage", true);
+            AssetDatabase.ImportPackage(packageFullPath + "/Package Resources/TMP Examples & Extras.unitypackage", true);
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private static void ImportProjectResources()
+        {
+            string packageFullPath = EditorUtilities.TMP_EditorUtility.packageFullPath;
+
+            AssetDatabase.ImportPackage(packageFullPath + "/Package Resources/TMP Essential Resources.unitypackage", true);
         }
 
 

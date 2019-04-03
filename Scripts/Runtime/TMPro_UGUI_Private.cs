@@ -57,7 +57,6 @@ namespace TMPro
         //private System.Diagnostics.Stopwatch m_StopWatch;
         //private int frame = 0;
         //private int m_recursiveCount = 0;
-        private int m_recursiveCountA = 0;
         private int loopCountA = 0;
         //private int loopCountB = 0;
         //private int loopCountC = 0;
@@ -71,6 +70,18 @@ namespace TMPro
         protected override void Awake()
         {
             //Debug.Log("***** Awake() *****");
+
+            #if UNITY_EDITOR
+            // Special handling for TMP Settings and importing Essential Resources
+            if (TMP_Settings.instance == null)
+            {
+                if (m_isWaitingOnResourceLoad == false)
+                    TMPro_EventManager.RESOURCE_LOAD_EVENT.Add(ON_RESOURCES_LOADED);
+
+                m_isWaitingOnResourceLoad = true;
+                return;
+            }
+            #endif
 
             // Cache Reference to the Canvas
             m_canvas = this.canvas;
@@ -143,10 +154,15 @@ namespace TMPro
         {
             //Debug.Log("*** OnEnable() ***", this);
 
+            // Return if Awake() has not been called on the text object.
+            if (m_isAwake == false)
+                return;
+
             if (!m_isRegisteredForEvents)
             {
                 //Debug.Log("Registering for Events.");
-#if UNITY_EDITOR
+                
+                #if UNITY_EDITOR
                 // Register Callbacks for various events.
                 TMPro_EventManager.MATERIAL_PROPERTY_EVENT.Add(ON_MATERIAL_PROPERTY_CHANGED);
                 TMPro_EventManager.FONT_PROPERTY_EVENT.Add(ON_FONT_PROPERTY_CHANGED);
@@ -155,7 +171,7 @@ namespace TMPro
                 TMPro_EventManager.TEXT_STYLE_PROPERTY_EVENT.Add(ON_TEXT_STYLE_CHANGED);
                 TMPro_EventManager.COLOR_GRADIENT_PROPERTY_EVENT.Add(ON_COLOR_GRADIENT_CHANGED);
                 TMPro_EventManager.TMP_SETTINGS_PROPERTY_EVENT.Add(ON_TMP_SETTINGS_CHANGED);
-#endif
+                #endif
                 m_isRegisteredForEvents = true;
             }
 
@@ -183,6 +199,10 @@ namespace TMPro
         {
             //base.OnDisable();
             //Debug.Log("***** OnDisable() *****"); //for " + this.name + " with ID: " + this.GetInstanceID() + " has been called.");
+
+            // Return if Awake() has not been called on the text object.
+            if (m_isAwake == false)
+                return;
 
             if (m_MaskMaterial != null)
             { 
@@ -223,7 +243,7 @@ namespace TMPro
                 m_MaskMaterial = null;
             }
 
-#if UNITY_EDITOR
+            #if UNITY_EDITOR
             // Unregister the event this object was listening to
             TMPro_EventManager.MATERIAL_PROPERTY_EVENT.Remove(ON_MATERIAL_PROPERTY_CHANGED);
             TMPro_EventManager.FONT_PROPERTY_EVENT.Remove(ON_FONT_PROPERTY_CHANGED);
@@ -232,15 +252,20 @@ namespace TMPro
             TMPro_EventManager.TEXT_STYLE_PROPERTY_EVENT.Remove(ON_TEXT_STYLE_CHANGED);
             TMPro_EventManager.COLOR_GRADIENT_PROPERTY_EVENT.Remove(ON_COLOR_GRADIENT_CHANGED);
             TMPro_EventManager.TMP_SETTINGS_PROPERTY_EVENT.Remove(ON_TMP_SETTINGS_CHANGED);
-#endif
+            TMPro_EventManager.RESOURCE_LOAD_EVENT.Remove(ON_RESOURCES_LOADED);
+            #endif
             m_isRegisteredForEvents = false;
         }
 
 
-#if UNITY_EDITOR
+        #if UNITY_EDITOR
         protected override void Reset()
         {
             //Debug.Log("***** Reset() *****"); //has been called.");
+
+            // Return if Awake() has not been called on the text object.
+            if (m_isAwake == false)
+                return;
 
             LoadDefaultSettings();
             LoadFontAsset();
@@ -253,6 +278,10 @@ namespace TMPro
         protected override void OnValidate()
         {
             //Debug.Log("***** OnValidate() ***** Frame:" + Time.frameCount); // ID " + GetInstanceID()); // New Material [" + m_sharedMaterial.name + "] with ID " + m_sharedMaterial.GetInstanceID() + ". Base Material is [" + m_baseMaterial.name + "] with ID " + m_baseMaterial.GetInstanceID() + ". Previous Base Material is [" + (m_lastBaseMaterial == null ? "Null" : m_lastBaseMaterial.name) + "].");
+
+            // Return if Awake() has not been called on the text object.
+            if (m_isAwake == false)
+                return;
 
             // Handle Font Asset changes in the inspector.
             if (m_fontAsset == null || m_hasFontAssetChanged)
@@ -283,6 +312,15 @@ namespace TMPro
             SetAllDirty();
         }
 
+
+        // Event received when TMP resources have been loaded.
+        void ON_RESOURCES_LOADED()
+        {
+            TMPro_EventManager.RESOURCE_LOAD_EVENT.Remove(ON_RESOURCES_LOADED);
+
+            Awake();
+            OnEnable();
+        }
 
 
         // Event received when custom material editor properties are changed.
@@ -450,7 +488,7 @@ namespace TMPro
             m_isInputParsingRequired = true;
             SetAllDirty();
         }
-#endif
+        #endif
 
 
         // Function which loads either the default font or a newly assigned font asset. This function also assigned the appropriate material to the renderer.
@@ -1702,6 +1740,9 @@ namespace TMPro
             m_underlineColorStack.SetDefault(m_htmlColor);
             m_strikethroughColorStack.SetDefault(m_htmlColor);
             m_highlightColorStack.SetDefault(m_htmlColor);
+
+            m_colorGradientPreset = null;
+            m_colorGradientStack.SetDefault(null);
 
             // Clear the Style stack.
             //m_styleStack.Clear();
@@ -3946,10 +3987,8 @@ namespace TMPro
                 //m_textInfo.meshInfo[0].ClearUnusedVertices();
 
                 // Must ensure the Canvas support the additon vertex attributes used by TMP.
-                #if UNITY_5_6_OR_NEWER
                 if (m_canvas.additionalShaderChannels != (AdditionalCanvasShaderChannels)25)
                     m_canvas.additionalShaderChannels |= (AdditionalCanvasShaderChannels)25;
-                #endif
 
                 // Sort the geometry of the text object if needed.
                 if (m_geometrySortingOrder != VertexSortingOrder.Normal)

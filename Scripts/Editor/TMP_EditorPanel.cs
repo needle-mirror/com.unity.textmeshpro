@@ -15,14 +15,13 @@ namespace TMPro.EditorUtilities
     [CustomEditor(typeof(TextMeshPro)), CanEditMultipleObjects]
     public class TMP_EditorPanel : Editor
     {
-
         private struct m_foldout
         { // Track Inspector foldout panel states, globally.
             public static bool textInput = true;
             public static bool fontSettings = true;
             public static bool extraSettings = false;
             public static bool shadowSetting = false;
-            public static bool materialEditor = true;
+            public static bool materialInspector = true;
         }
 
         private static int m_eventID;
@@ -108,25 +107,8 @@ namespace TMPro.EditorUtilities
 
         private SerializedProperty spriteAsset_prop;
         private SerializedProperty isOrthographic_prop;
-        //private SerializedProperty isOverlay_prop;
-
-        //private SerializedProperty textRectangle_prop;
-
-        //private SerializedProperty isMaskUpdateRequired_prop;
-        //private SerializedProperty mask_prop;
-        //private SerializedProperty maskOffset_prop;
-        //private SerializedProperty maskOffsetMode_prop;
-        //private SerializedProperty maskSoftness_prop;
-
-        //private SerializedProperty vertexOffset_prop;
-
-        //private SerializedProperty raycastTarget_prop;
-
-        //private SerializedProperty sortingLayerID_prop;
-        //private SerializedProperty sortingOrder_prop;
 
         private bool havePropertiesChanged = false;
-
 
         private TextMeshPro m_textComponent;
         private RectTransform m_rectTransform;
@@ -139,9 +121,10 @@ namespace TMPro.EditorUtilities
         private Vector3[] m_rectCorners = new Vector3[4];
         private Vector3[] handlePoints = new Vector3[4];
 
+
         public void OnEnable()
         {
-            //Debug.Log("OnEnable() for Inspector ID " + this.GetInstanceID() + " has been called.");
+            //Debug.Log("OnEnable() for Inspector ID " + this.GetInstanceID());
 
             // Initialize the Event Listener for Undo Events.
             Undo.undoRedoPerformed += OnUndoRedo;
@@ -209,19 +192,7 @@ namespace TMPro.EditorUtilities
 
             margin_prop = serializedObject.FindProperty("m_margin");
 
-            //isMaskUpdateRequired_prop = serializedObject.FindProperty("isMaskUpdateRequired");
-            //mask_prop = serializedObject.FindProperty("m_mask");
-            //maskOffset_prop= serializedObject.FindProperty("m_maskOffset");
-            //maskOffsetMode_prop = serializedObject.FindProperty("m_maskOffsetMode");
-            //maskSoftness_prop = serializedObject.FindProperty("m_maskSoftness");
-            //vertexOffset_prop = serializedObject.FindProperty("m_vertexOffset");
-
-            //m_sortingLayerID = serializedObject.FindProperty("m_sortingLayerID");
-            //m_sortingOrder = serializedObject.FindProperty("m_sortingOrder");
-
             hasFontAssetChanged_prop = serializedObject.FindProperty("m_hasFontAssetChanged");
-
-            //renderer_prop = serializedObject.FindProperty("m_renderer");
 
             // Get the UI Skin and Styles for the various Editors
             TMP_UIStyleManager.GetUIStyles();
@@ -230,9 +201,9 @@ namespace TMPro.EditorUtilities
             m_rectTransform = m_textComponent.rectTransform;
             m_targetMaterial = m_textComponent.fontSharedMaterial;
 
-            // Set material editor visibility
-            if (m_foldout.materialEditor)
-                UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(m_targetMaterial, true);
+            // Set material inspector visibility
+            if (m_targetMaterial != null)
+                UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(m_targetMaterial, m_foldout.materialInspector);
 
             // Find all Material Presets matching the current Font Asset Material
             m_materialPresetNames = GetMaterialPresets();
@@ -242,9 +213,12 @@ namespace TMPro.EditorUtilities
         public void OnDisable()
         {
             //Debug.Log("OnDisable() for Inspector ID " + this.GetInstanceID() + " has been called.");
-            Undo.undoRedoPerformed -= OnUndoRedo;
 
-            //Undo.postprocessModifications -= OnUndoRedoEvent;
+            // Set material inspector visibility
+            if (m_targetMaterial != null)
+                m_foldout.materialInspector = UnityEditorInternal.InternalEditorUtility.GetIsInspectorExpanded(m_targetMaterial);
+
+            Undo.undoRedoPerformed -= OnUndoRedo;
         }
 
 
@@ -821,28 +795,13 @@ namespace TMPro.EditorUtilities
             if (havePropertiesChanged)
             {             
                 havePropertiesChanged_prop.boolValue = true;
-                havePropertiesChanged = false;              
+                havePropertiesChanged = false;
                 //m_updateManager.ScheduleObjectForUpdate(m_textMeshProScript);
             }
 
             EditorGUILayout.Space();
 
             serializedObject.ApplyModifiedProperties();
-
-
-            /*
-            Editor materialEditor = Editor.CreateEditor(m_renderer.sharedMaterial);
-            if (materialEditor != null)
-            {
-                if (GUILayout.Button("<b>MATERIAL SETTINGS</b>     - <i>Click to expand</i> -", Section_Label))
-                    m_foldout.materialEditor= !m_foldout.materialEditor;
-
-                if (m_foldout.materialEditor)
-                {
-                    materialEditor.OnInspectorGUI();
-                }
-            }
-            */
         }
 
 

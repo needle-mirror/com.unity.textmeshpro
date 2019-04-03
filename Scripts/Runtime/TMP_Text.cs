@@ -221,11 +221,7 @@ namespace TMPro
         /// <summary>
         /// This is the default vertex color assigned to each vertices. Color tags will override vertex colors unless the overrideColorTags is set.
         /// </summary>
-        #if UNITY_5_4_OR_NEWER
-            public override Color color
-        #else
-            public new Color color
-        #endif
+        public override Color color
         {
             get { return m_fontColor; }
             set { if (m_fontColor == value) return; m_havePropertiesChanged = true; m_fontColor = value; SetVerticesDirty(); }
@@ -1303,6 +1299,7 @@ namespace TMPro
         protected bool m_layoutAlreadyDirty;
 
         protected bool m_isAwake;
+        protected bool m_isWaitingOnResourceLoad;
 
         [SerializeField]
         protected bool m_isInputParsingRequired = false; // Used to determine if the input text needs to be re-parsed.
@@ -1374,6 +1371,9 @@ namespace TMPro
         protected TMP_XmlTagStack<Color32> m_underlineColorStack = new TMP_XmlTagStack<Color32>(new Color32[16]);
         protected TMP_XmlTagStack<Color32> m_strikethroughColorStack = new TMP_XmlTagStack<Color32>(new Color32[16]);
         protected TMP_XmlTagStack<Color32> m_highlightColorStack = new TMP_XmlTagStack<Color32>(new Color32[16]);
+
+        protected TMP_ColorGradient m_colorGradientPreset;
+        protected TMP_XmlTagStack<TMP_ColorGradient> m_colorGradientStack = new TMP_XmlTagStack<TMP_ColorGradient>(new TMP_ColorGradient[16]);
 
         protected float m_tabSpacing = 0;
         protected float m_spacing = 0;
@@ -1628,11 +1628,7 @@ namespace TMPro
         /// <param name="duration">Tween duration.</param>
         /// <param name="ignoreTimeScale">Should ignore Time.scale?</param>
         /// <param name="useAlpha">Should also Tween the alpha channel?</param>
-        #if UNITY_5_4_OR_NEWER
         public override void CrossFadeColor(Color targetColor, float duration, bool ignoreTimeScale, bool useAlpha)
-        #else
-        public new void CrossFadeColor(Color targetColor, float duration, bool ignoreTimeScale, bool useAlpha)
-        #endif
         {
             base.CrossFadeColor(targetColor, duration, ignoreTimeScale, useAlpha);
             InternalCrossFadeColor(targetColor, duration, ignoreTimeScale, useAlpha);
@@ -1645,11 +1641,7 @@ namespace TMPro
         /// <param name="alpha">Target alpha.</param>
         /// <param name="duration">Duration of the tween in seconds.</param>
         /// <param name="ignoreTimeScale">Should ignore Time.scale?</param>
-        #if UNITY_5_4_OR_NEWER
         public override void CrossFadeAlpha(float alpha, float duration, bool ignoreTimeScale)
-        #else
-        public new void CrossFadeAlpha(float alpha, float duration, bool ignoreTimeScale)
-        #endif
         {
             base.CrossFadeAlpha(alpha, duration, ignoreTimeScale);
             InternalCrossFadeAlpha(alpha, duration, ignoreTimeScale);
@@ -3476,8 +3468,10 @@ namespace TMPro
         /// <returns></returns>
         protected float GetPreferredWidth()
         {
+            if (TMP_Settings.instance == null) return 0;
+
             float fontSize = m_enableAutoSizing ? m_fontSizeMax : m_fontSize;
-            
+
             // Reset auto sizing point size bounds
             m_minFontSize = m_fontSizeMin;
             m_maxFontSize = m_fontSizeMax;
@@ -3530,6 +3524,8 @@ namespace TMPro
         /// <returns></returns>
         protected float GetPreferredHeight()
         {
+            if (TMP_Settings.instance == null) return 0;
+
             float fontSize = m_enableAutoSizing ? m_fontSizeMax : m_fontSize;
 
             // Reset auto sizing point size bounds
@@ -4601,6 +4597,7 @@ namespace TMPro
             state.underlineColorStack = m_underlineColorStack;
             state.strikethroughColorStack = m_strikethroughColorStack;
             state.highlightColorStack = m_highlightColorStack;
+            state.colorGradientStack = m_colorGradientStack;
             state.sizeStack = m_sizeStack;
             state.indentStack = m_indentStack;
             state.fontWeightStack = m_fontWeightStack;
@@ -4679,6 +4676,7 @@ namespace TMPro
             m_underlineColorStack = state.underlineColorStack;
             m_strikethroughColorStack = state.strikethroughColorStack;
             m_highlightColorStack = state.highlightColorStack;
+            m_colorGradientStack = state.colorGradientStack;
             m_sizeStack = state.sizeStack;
             m_indentStack = state.indentStack;
             m_fontWeightStack = state.fontWeightStack;
@@ -4753,6 +4751,14 @@ namespace TMPro
                         m_textInfo.characterInfo[m_characterCount].vertex_BR.color = m_fontColorGradient.bottomRight * vertexColor;
                     }
                 }
+            }
+
+            if (m_colorGradientPreset != null)
+            {
+                m_textInfo.characterInfo[m_characterCount].vertex_BL.color *= m_colorGradientPreset.bottomLeft;
+                m_textInfo.characterInfo[m_characterCount].vertex_TL.color *= m_colorGradientPreset.topLeft;
+                m_textInfo.characterInfo[m_characterCount].vertex_TR.color *= m_colorGradientPreset.topRight;
+                m_textInfo.characterInfo[m_characterCount].vertex_BR.color *= m_colorGradientPreset.bottomRight;
             }
             #endregion
 
@@ -5325,7 +5331,7 @@ namespace TMPro
         /// </summary>
         protected void LoadDefaultSettings()
         {
-            if (m_text == null)
+            if (m_text == null || m_isWaitingOnResourceLoad)
             {
                 if (TMP_Settings.autoSizeTextContainer)
                     autoSizeTextContainer = true;
@@ -5348,6 +5354,7 @@ namespace TMPro
                 m_fontSizeMin = m_fontSize * TMP_Settings.defaultTextAutoSizingMinRatio;
                 m_fontSizeMax = m_fontSize * TMP_Settings.defaultTextAutoSizingMaxRatio;
                 m_isAlignmentEnumConverted = true;
+                m_isWaitingOnResourceLoad = false;
             }
             else if (m_isAlignmentEnumConverted == false)
             {
@@ -6832,6 +6839,43 @@ namespace TMPro
                                 return true;
                         }
                         return false;
+
+                    case 100149144: //<gradient>
+                    case 69403544:  // <GRADIENT>
+                        int gradientPresetHashCode = m_xmlAttribute[0].valueHashCode;
+                        TMP_ColorGradient tempColorGradientPreset;
+
+                        // Check if Color Gradient Preset has already been loaded.
+                        if (MaterialReferenceManager.TryGetColorGradientPreset(gradientPresetHashCode, out tempColorGradientPreset))
+                        {
+                            m_colorGradientPreset = tempColorGradientPreset;
+                        }
+                        else
+                        {
+                            // Load Color Gradient Preset
+                            if (tempColorGradientPreset == null)
+                            {
+                                tempColorGradientPreset = Resources.Load<TMP_ColorGradient>(TMP_Settings.defaultColorGradientPresetsPath + new string(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength));
+                            }
+
+                            if (tempColorGradientPreset == null)
+                                return false;
+
+                            MaterialReferenceManager.AddColorGradientPreset(gradientPresetHashCode, tempColorGradientPreset);
+                            m_colorGradientPreset = tempColorGradientPreset;
+                        }
+
+                        m_colorGradientStack.Add(m_colorGradientPreset);
+
+                        // TODO : Add support for defining preset in the tag itself
+
+                        return true;
+
+                    case 371094791: // </gradient>
+                    case 340349191: // </GRADIENT>
+                        m_colorGradientPreset = m_colorGradientStack.Remove();
+                        return true;
+
                     case 1983971: // <cspace=xx.x>
                     case 1356515: // <CSPACE>
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);

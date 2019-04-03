@@ -6,6 +6,6 @@ See the following link for the Release Notes for version 1.0.55.xx.0b12 of TextM
 ## [1.1.0] - 2017-11-14
 ### Added
 - New menu option added to Import Examples and additional content like Font Assets, Materials Presets, etc for TextMesh Pro. This new menu option is located in "Window -> TextMeshPro -> Import Examples and Extra Content".
-- New menu option added to Convert existing project files and assets created with either the Source Code or DLL only version of TextMesh Pro. Please be sure to backup your project before using this option. The new menu option is located in "Window -> TextMeshPro -> Convert TMP Project Files to UPM".
+- New menu option added to Convert existing project files and assets created with either the Source Code or DLL only version of TextMesh Pro. Please be sure to backup your project before using this option. The new menu option is located in "Window -> TextMeshPro -> Project Files GUID Remapping Tool".
 - Added Assembly Definitions for the TMP Runtime and Editor scripts.
 - Added support for the UI DirtyLayoutCallback, DirtyVerticesCallback and DirtyMaterialCallback.

@@ -1,10 +1,7 @@
-﻿// Copyright (C) 2014 - 2016 Stephan Bouchard - All Rights Reserved
-// This code can only be used under the standard Unity Asset Store End User License Agreement
-// A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
-
-
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
+
 
 #pragma warning disable 0649 // Disabled warnings related to serialized fields not assigned in this script but used in the editor.
 
@@ -17,14 +14,14 @@ namespace TMPro
         private static TMP_Settings s_Instance;
 
         /// <summary>
-        /// 
+        /// Returns the release version of the product.
         /// </summary>
         public static string version
         {
             get { return instance.m_version; }
         }
         [SerializeField]
-        private string m_version = "1.0.56.0b1";
+        private string m_version = "1.0.56.0b2";
 
         /// <summary>
         /// Controls if Word Wrapping will be enabled on newly created text objects by default.
@@ -217,6 +214,16 @@ namespace TMPro
         private string m_defaultSpriteAssetPath;
 
         /// <summary>
+        /// The relative path to a Resources folder in the project that contains Color Gradient Presets.
+        /// </summary>
+        public static string defaultColorGradientPresetsPath
+        {
+            get { return instance.m_defaultColorGradientPresetsPath; }
+        }
+        [SerializeField]
+        private string m_defaultColorGradientPresetsPath;
+
+        /// <summary>
         /// Determines if Emoji support is enabled in the Input Field TouchScreenKeyboard.
         /// </summary>
         public static bool enableEmojiSupport
@@ -283,6 +290,15 @@ namespace TMPro
                 if (TMP_Settings.s_Instance == null)
                 {
                     TMP_Settings.s_Instance = Resources.Load("TMP Settings") as TMP_Settings;
+
+                    #if UNITY_EDITOR
+                    // Make sure TextMesh Pro UPM packages resources have been added to the user project
+                    if (TMP_Settings.s_Instance == null)
+                    {
+                        // Open TMP Resources Importer
+                        PackageResourceImporterWindow.ShowPackageImporterWindow();
+                    }
+                    #endif
                 }
 
                 return TMP_Settings.s_Instance;

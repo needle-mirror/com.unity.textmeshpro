@@ -115,11 +115,6 @@ namespace TMPro.EditorUtilities
             {
                 GameObject eventObject = new GameObject("EventSystem", typeof(EventSystem));
                 eventObject.AddComponent<StandaloneInputModule>();
-                #if UNITY_5_3_OR_NEWER
-                    // Nothing
-                #else
-                    eventObject.AddComponent<TouchInputModule>();
-                #endif
                 Undo.RegisterCreatedObjectUndo(eventObject, "Create " + eventObject.name);
             }
 
@@ -248,6 +243,7 @@ namespace TMPro.EditorUtilities
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             root.AddComponent<CanvasScaler>();
             root.AddComponent<GraphicRaycaster>();
+
             Undo.RegisterCreatedObjectUndo(root, "Create " + root.name);
 
             // if there is no event system add one...
@@ -271,11 +267,6 @@ namespace TMPro.EditorUtilities
                 GameObjectUtility.SetParentAndAlign(eventSystem, parent);
                 esys = eventSystem.AddComponent<EventSystem>();
                 eventSystem.AddComponent<StandaloneInputModule>();
-            #if UNITY_5_3_OR_NEWER
-                // Nothing
-            #else
-                eventSystem.AddComponent<TouchInputModule>();
-            #endif
 
                 Undo.RegisterCreatedObjectUndo(eventSystem, "Create " + eventSystem.name);
             }

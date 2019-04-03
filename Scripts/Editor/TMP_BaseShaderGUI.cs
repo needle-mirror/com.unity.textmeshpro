@@ -227,11 +227,8 @@ namespace TMPro.EditorUtilities
             MaterialProperty property = FindProperty(name, properties);
             EditorGUI.BeginChangeCheck();
             EditorGUI.showMixedValue = property.hasMixedValue;
-            #if UNITY_2017_1_OR_NEWER
-                editor.BeginAnimatedCheck(Rect.zero, property);
-            #else
-                editor.BeginAnimatedCheck(property);
-            #endif
+            editor.BeginAnimatedCheck(Rect.zero, property);
+
             return property;
         }
 

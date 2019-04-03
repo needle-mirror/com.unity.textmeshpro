@@ -16,17 +16,17 @@ namespace TMPro
         public Color bottomLeft;
         public Color bottomRight;
 
+        private static Color k_defaultColor = Color.white;
 
         /// <summary>
         /// Default Constructor which sets each of the colors as white.
         /// </summary>
         public TMP_ColorGradient()
         {
-            Color color = Color.white;
-            this.topLeft = color;
-            this.topRight = color;
-            this.bottomLeft = color;
-            this.bottomRight = color;
+            this.topLeft = k_defaultColor;
+            this.topRight = k_defaultColor;
+            this.bottomLeft = k_defaultColor;
+            this.bottomRight = k_defaultColor;
         }
 
         /// <summary>

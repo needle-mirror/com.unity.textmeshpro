@@ -329,11 +329,7 @@ namespace TMPro
                     case RuntimePlatform.Android:
                     case RuntimePlatform.IPhonePlayer:
                     case RuntimePlatform.TizenPlayer:
-                #if UNITY_5_3_OR_NEWER
                     case RuntimePlatform.tvOS:
-                #else
-                    case RuntimePlatform.BlackBerryPlayer:
-                #endif
                     return m_HideMobileInput;
                 }
 
@@ -766,6 +762,7 @@ namespace TMPro
 
                     // Add MaskableGraphic Component
                     TMP_SelectionCaret caret = go.AddComponent<TMP_SelectionCaret>();
+                    caret.raycastTarget = false;
                     caret.color = Color.clear;
 
                     go.hideFlags = HideFlags.DontSave;
@@ -1390,11 +1387,7 @@ namespace TMPro
         {
             var currentEventModifiers = evt.modifiers;
             RuntimePlatform rp = Application.platform;
-            #if UNITY_5_4_OR_NEWER
             bool isMac = (rp == RuntimePlatform.OSXEditor || rp == RuntimePlatform.OSXPlayer);
-            #else
-            bool isMac = (rp == RuntimePlatform.OSXEditor || rp == RuntimePlatform.OSXPlayer || rp == RuntimePlatform.OSXWebPlayer);
-            #endif
             bool ctrl = isMac ? (currentEventModifiers & EventModifiers.Command) != 0 : (currentEventModifiers & EventModifiers.Control) != 0;
             bool shift = (currentEventModifiers & EventModifiers.Shift) != 0;
             bool alt = (currentEventModifiers & EventModifiers.Alt) != 0;

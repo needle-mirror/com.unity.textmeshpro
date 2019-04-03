@@ -13,7 +13,6 @@ using TMPro.SpriteAssetUtilities;
 
 namespace TMPro
 {
-#if UNITY_5_3_OR_NEWER
     public class TMP_SpriteAssetImporter : EditorWindow
     {
         // Create Sprite Asset Editor Window
@@ -249,5 +248,4 @@ namespace TMPro
         }
 
     }
-#endif
 }

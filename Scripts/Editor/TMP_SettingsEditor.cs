@@ -40,8 +40,9 @@ namespace TMPro.EditorUtilities
         private SerializedProperty prop_StyleSheet;
         private ReorderableList m_list;
 
-        private SerializedProperty prop_matchMaterialPreset;
+        private SerializedProperty prop_ColorGradientPresetsPath;
 
+        private SerializedProperty prop_matchMaterialPreset;
         private SerializedProperty prop_WordWrapping;
         private SerializedProperty prop_Kerning;
         private SerializedProperty prop_ExtraPadding;
@@ -71,6 +72,7 @@ namespace TMPro.EditorUtilities
             prop_SpriteAssetPath = serializedObject.FindProperty("m_defaultSpriteAssetPath");
             prop_EnableEmojiSupport = serializedObject.FindProperty("m_enableEmojiSupport");
             prop_StyleSheet = serializedObject.FindProperty("m_defaultStyleSheet");
+            prop_ColorGradientPresetsPath = serializedObject.FindProperty("m_defaultColorGradientPresetsPath");
 
             m_list = new ReorderableList(serializedObject, serializedObject.FindProperty("m_fallbackFontAssets"), true, true, true, true);
 
@@ -219,6 +221,13 @@ namespace TMPro.EditorUtilities
             GUILayout.Label("Select the Style Sheet that will be used for all text objects in this project.", TMP_UIStyleManager.Label);
             GUILayout.Space(5f);
             EditorGUILayout.PropertyField(prop_StyleSheet);
+            EditorGUILayout.EndVertical();
+
+            // COLOR GRADIENT PRESETS
+            EditorGUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
+            GUILayout.Label("<b>Color Gradient Presets</b>", TMP_UIStyleManager.Label);
+            GUILayout.Label("The relative path to a Resources folder where the Color Gradient Presets are located.\nExample \"Color Gradient Presets/\"", TMP_UIStyleManager.Label);
+            EditorGUILayout.PropertyField(prop_ColorGradientPresetsPath, new GUIContent("Path:        Resources/"));
             EditorGUILayout.EndVertical();
 
 

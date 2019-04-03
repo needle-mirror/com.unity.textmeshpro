@@ -1,0 +1,11 @@
+{
+    "name": "com.unity.textmeshpro.Editor",
+    "references": [
+        "com.unity.textmeshpro.Runtime"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

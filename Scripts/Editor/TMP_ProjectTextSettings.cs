@@ -14,11 +14,32 @@ namespace TMPro
         public static void SelectProjectTextSettings()
         {
             TMP_Settings textSettings = TMP_Settings.instance;
+
+            if (textSettings)
+            {
+                Selection.activeObject = textSettings;
+
+                // TODO: Do we want to ping the Project Text Settings asset in the Project Inspector
+                EditorUtility.FocusProjectWindow();
+                EditorGUIUtility.PingObject(textSettings);
+            }
+            else
+                TMPro_EventManager.RESOURCE_LOAD_EVENT.Add(ON_RESOURCES_LOADED);
+        }
+
+
+        // Event received when TMP resources have been loaded.
+        static void ON_RESOURCES_LOADED()
+        {
+            TMPro_EventManager.RESOURCE_LOAD_EVENT.Remove(ON_RESOURCES_LOADED);
+
+            TMP_Settings textSettings = TMP_Settings.instance;
+
             Selection.activeObject = textSettings;
 
             // TODO: Do we want to ping the Project Text Settings asset in the Project Inspector
-            //EditorUtility.FocusProjectWindow();
-            //EditorGUIUtility.PingObject(textSettings);
+            EditorUtility.FocusProjectWindow();
+            EditorGUIUtility.PingObject(textSettings);
         }
     }
 }

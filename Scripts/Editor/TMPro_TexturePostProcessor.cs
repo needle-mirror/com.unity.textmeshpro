@@ -23,53 +23,53 @@ namespace TMPro.EditorUtilities
     }
 
 
-    public class TMPro_PackageImportPostProcessor : AssetPostprocessor
-    {
-        static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
-        {
-            for (int i = 0; i < importedAssets.Length; i++)
-            {
-                if (importedAssets[i].Contains("com.unity.TextMeshPro/Resources/TMP Settings.asset"))
-                {
-                    //Debug.Log("New TMP Settings file was just imported.");
+    //public class TMPro_PackageImportPostProcessor : AssetPostprocessor
+    //{
+    //    static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+    //    {
+    //        for (int i = 0; i < importedAssets.Length; i++)
+    //        {
+    //            if (importedAssets[i].Contains("TextMesh Pro/Resources/TMP Settings.asset"))
+    //            {
+    //                Debug.Log("New TMP Settings file was just imported.");
 
-                    // TMP Settings file was just re-imported.
-                    // Check if project already contains 
-                }
+    //                // TMP Settings file was just re-imported.
+    //                // Check if project already contains 
+    //            }
 
 
-                if (importedAssets[i].Contains("com.unity.TextMeshPro/Examples"))
-                {
-                    //Debug.Log("New TMP Examples folder was just imported.");
-                }
+    //            if (importedAssets[i].Contains("com.unity.TextMeshPro/Examples"))
+    //            {
+    //                //Debug.Log("New TMP Examples folder was just imported.");
+    //            }
 
-                //Debug.Log("[" + importedAssets[i] + "] was just imported.");
-            }
+    //            //Debug.Log("[" + importedAssets[i] + "] was just imported.");
+    //        }
             
             
             
-            //for (int i = 0; i < deletedAssets.Length; i++)
-            //{
-            //    if (deletedAssets[i] == "Assets/TextMesh Pro")
-            //    {
-            //        //Debug.Log("Asset [" + deletedAssets[i] + "] has been deleted.");
-            //        string currentBuildSettings = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+    //        //for (int i = 0; i < deletedAssets.Length; i++)
+    //        //{
+    //        //    if (deletedAssets[i] == "Assets/TextMesh Pro")
+    //        //    {
+    //        //        //Debug.Log("Asset [" + deletedAssets[i] + "] has been deleted.");
+    //        //        string currentBuildSettings = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
 
-            //        //Check for and inject TMP_PRESENT
-            //        if (currentBuildSettings.Contains("TMP_PRESENT;"))
-            //        {
-            //            currentBuildSettings = currentBuildSettings.Replace("TMP_PRESENT;", "");
+    //        //        //Check for and inject TMP_PRESENT
+    //        //        if (currentBuildSettings.Contains("TMP_PRESENT;"))
+    //        //        {
+    //        //            currentBuildSettings = currentBuildSettings.Replace("TMP_PRESENT;", "");
 
-            //            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, currentBuildSettings);
-            //        }
-            //        else if (currentBuildSettings.Contains("TMP_PRESENT"))
-            //        {
-            //            currentBuildSettings = currentBuildSettings.Replace("TMP_PRESENT", "");
+    //        //            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, currentBuildSettings);
+    //        //        }
+    //        //        else if (currentBuildSettings.Contains("TMP_PRESENT"))
+    //        //        {
+    //        //            currentBuildSettings = currentBuildSettings.Replace("TMP_PRESENT", "");
 
-            //            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, currentBuildSettings);
-            //        }
-            //    }
-            //}
-        }
-    }
+    //        //            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, currentBuildSettings);
+    //        //        }
+    //        //    }
+    //        //}
+    //    }
+    //}
 }

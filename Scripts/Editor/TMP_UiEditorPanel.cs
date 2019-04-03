@@ -22,7 +22,7 @@ namespace TMPro.EditorUtilities
             public static bool fontSettings = true;
             public static bool extraSettings = false;
             public static bool shadowSetting = false;
-            public static bool materialEditor = true;
+            public static bool materialInspector = true;
         }
 
         //private static int m_eventID;
@@ -109,18 +109,7 @@ namespace TMPro.EditorUtilities
 
         private SerializedProperty margin_prop;
 
-        //private SerializedProperty isMaskUpdateRequired_prop;
-        //private SerializedProperty mask_prop;
-        //private SerializedProperty maskOffset_prop;
-        //private SerializedProperty maskOffsetMode_prop;
-        //private SerializedProperty maskSoftness_prop;
-
-        //private SerializedProperty vertexOffset_prop;
-
         private SerializedProperty raycastTarget_prop;
-
-        //private SerializedProperty sortingLayerID_prop;
-        //private SerializedProperty sortingOrder_prop;
 
         private bool havePropertiesChanged = false;
 
@@ -128,7 +117,6 @@ namespace TMPro.EditorUtilities
         private TextMeshProUGUI m_textComponent;
         private RectTransform m_rectTransform;
         //private CanvasRenderer m_canvasRenderer;
-        private Editor m_materialEditor;
         private Material m_targetMaterial;
 
 
@@ -206,16 +194,6 @@ namespace TMPro.EditorUtilities
             raycastTarget_prop = serializedObject.FindProperty("m_RaycastTarget");
 
             margin_prop = serializedObject.FindProperty("m_margin");
-            
-            //isMaskUpdateRequired_prop = serializedObject.FindProperty("isMaskUpdateRequired");
-            //mask_prop = serializedObject.FindProperty("m_mask");
-            //maskOffset_prop= serializedObject.FindProperty("m_maskOffset");
-            //maskOffsetMode_prop = serializedObject.FindProperty("m_maskOffsetMode");
-            //maskSoftness_prop = serializedObject.FindProperty("m_maskSoftness");
-            //vertexOffset_prop = serializedObject.FindProperty("m_vertexOffset");
-
-            //sortingLayerID_prop = serializedObject.FindProperty("m_sortingLayerID");
-            //sortingOrder_prop = serializedObject.FindProperty("m_sortingOrder");
 
             hasFontAssetChanged_prop = serializedObject.FindProperty("m_hasFontAssetChanged");
 
@@ -228,14 +206,8 @@ namespace TMPro.EditorUtilities
             // Create new Material Editor if one does not exists
             m_targetMaterial = m_textComponent.fontSharedMaterial;
 
-            #if !UNITY_5_6_OR_NEWER
-            if (m_targetMaterial != null)
-                m_materialEditor = CreateEditor(m_targetMaterial);
-            #endif
-
-            // Set material editor visibility
-            if (m_foldout.materialEditor)
-                UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(m_targetMaterial, true);
+            // Set material inspector visibility
+            UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(m_targetMaterial, m_foldout.materialInspector);
 
             // Find all Material Presets matching the current Font Asset Material
             m_materialPresetNames = GetMaterialPresets();
@@ -245,18 +217,11 @@ namespace TMPro.EditorUtilities
         public void OnDisable()
         {
             //Debug.Log("OnDisable() for GUIEditor Panel called.");
-            Undo.undoRedoPerformed -= OnUndoRedo;
 
-            #if !UNITY_5_6_OR_NEWER
-            // Destroy material editor if one exists
-            if (m_materialEditor != null)
-            {
-                //Debug.Log("Destroying Inline Material Editor.");
-                DestroyImmediate(m_materialEditor);
-            }
-            #endif
+            // Set material inspector visibility
+            m_foldout.materialInspector = UnityEditorInternal.InternalEditorUtility.GetIsInspectorExpanded(m_targetMaterial);
 
-            //Undo.postprocessModifications -= OnUndoRedoEvent;  
+            Undo.undoRedoPerformed -= OnUndoRedo;  
         }
 
 
@@ -787,36 +752,6 @@ namespace TMPro.EditorUtilities
             }
 
             EditorGUILayout.Space();
-
-            #if !UNITY_5_6_OR_NEWER
-            // If a Custom Material Editor exists, we use it.
-            if (m_targetMaterial != null) // m_canvasRenderer != null && m_canvasRenderer.GetMaterial() != null)
-            {
-                Material mat = m_textComponent.fontSharedMaterial; // m_canvasRenderer.GetMaterial();
-
-                //Debug.Log(mat + "  " + m_targetMaterial);
-                
-                if (mat != m_targetMaterial)
-                {
-                    // Destroy previous Material Instance
-                    //Debug.Log("New Material has been assigned.");
-                    m_targetMaterial = mat;
-                    DestroyImmediate(m_materialEditor);
-                }
-
-
-                if (m_materialEditor == null)
-                {
-                    m_materialEditor = CreateEditor(mat);
-                }
-
-                m_materialEditor.DrawHeader();
-
-
-                m_materialEditor.OnInspectorGUI();
-            }
-            #endif
-
 
             if (havePropertiesChanged)
             {

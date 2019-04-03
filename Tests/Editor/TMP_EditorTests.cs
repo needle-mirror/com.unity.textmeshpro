@@ -2,6 +2,7 @@
 using UnityEditor;
 using UnityEngine.TestTools;
 using NUnit.Framework;
+using System.IO;
 using System.Collections;
 
 
@@ -43,9 +44,9 @@ namespace TMPro
             "In turpis. Pellentesque posuere. Praesent turpis. Aenean posuere, tortor sed cursus feugiat, nunc augue blandit nunc, eu sollicitudin urna dolor sagittis lacus. Donec elit libero, sodales nec, volutpat a, suscipit non, turpis.Nullam sagittis. Suspendisse pulvinar, augue ac venenatis condimentum, sem libero volutpat nibh, nec pellentesque velit pede quis nunc. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce id purus.Ut varius tincidunt libero.Phasellus dolor.Maecenas vestibulum mollis";
 
         // 
-        private const string m_TextBlock_RichText_00 = "This block of text contains <b>bold</b> and <i>italicized</i> characters.";
+        private const string m_TextBlock_05 = "This block of text contains <b>bold</b> and <i>italicized</i> characters.";
 
-        private const string m_TextBlock_RichText_01 = "<align=center><style=H1><#ffffff><u>Multiple<#80f0ff> Alignment</color> per text object</u></color></style></align><line-height=2em>\n" +
+        private const string m_TextBlock_06 = "<align=center><style=H1><#ffffff><u>Multiple<#80f0ff> Alignment</color> per text object</u></color></style></align><line-height=2em>\n" +
             "</line-height> The <<#ffffa0>align</color>> tag in TextMesh<#40a0ff>Pro</color> provides the ability to control the alignment of lines and paragraphs which is essential when working with text.\n" +
             "<align=left> You may want some block of text to be<#80f0ff>left aligned</color> <<#ffffa0>align=<#80f0ff>left</color></color>> which is sort of the standard.</align>\n" +
             "<style=Quote><#ffffa0>\"Using <#80f0ff>Center Alignment</color> <<#ffffa0>align=<#80f0ff>center</color></color>> for a title or displaying a quote is another good example of text alignment.\"</color></style>\n" +
@@ -53,6 +54,8 @@ namespace TMPro
             "<align=justified><#80f0ff>Justified Alignment</color> <<#ffffa0>align=<#80f0ff>justified</color></color>> results in text that is flush on both the left and right margins. Used well, justified type can look clean and classy.\n" +
             "<style=Quote><align=left><#ffffa0>\"Text formatting and alignment has a huge impact on how people will read and perceive your text.\"</color>\n" +
             "<size=65%><align=right> -Stephan Bouchard</style>";
+
+        private readonly string[] testStrings = new string[] { m_TextBlock_00, m_TextBlock_01, m_TextBlock_02, m_TextBlock_03, m_TextBlock_04, m_TextBlock_05, m_TextBlock_06 };
 
 
         [OneTimeSetUp]
@@ -66,8 +69,8 @@ namespace TMPro
 
 
         [Test]
-        [TestCase("/Resources/Fonts & Materials/LiberationSans SDF.asset", "8f586378b4e144a9851e7b34d9b748ee")]
-        [TestCase("/Examples/TMP Examples.unitypackage", "bc00e25696e4132499f56528d3fed2e3")]
+        [TestCase("/Package Resources/TMP Essential Resources.unitypackage", "ce4ff17ca867d2b48b5c8a4181611901")]
+        [TestCase("/Package Resources/TMP Examples & Extras.unitypackage", "bc00e25696e4132499f56528d3fed2e3")]
         [TestCase("/PackageConversionData.json", "05f5bfd584002f948982a1498890f9a9")]
         public void InternalResourceCheck(string filePath, string guid)
         {
@@ -80,14 +83,14 @@ namespace TMPro
 
 
         [Test]
-        [TestCase(m_TextBlock_04, 3423, 453, 500, 1)]
-        [TestCase(m_TextBlock_03, 2500, 343, 370, 1)]
-        [TestCase(m_TextBlock_02, 1500, 228, 241, 1)]
-        [TestCase(m_TextBlock_01, 104, 14, 15, 1)]
-        [TestCase(m_TextBlock_00, 22, 4, 5, 1)]
-        public void TextParsing_TextInfoTest_WordWrappingDisabled(string sourceText, int characterCount, int spaceCount, int wordCount, int lineCount)
+        [TestCase(4, 3423, 453, 500, 1)]
+        [TestCase(3, 2500, 343, 370, 1)]
+        [TestCase(2, 1500, 228, 241, 1)]
+        [TestCase(1, 104, 14, 15, 1)]
+        [TestCase(0, 22, 4, 5, 1)]
+        public void TextParsing_TextInfoTest_WordWrappingDisabled(int sourceTextIndex, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
-            m_TextComponent.text = sourceText;
+            m_TextComponent.text = testStrings[sourceTextIndex];
             m_TextComponent.enableWordWrapping = false;
             m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
 
@@ -105,14 +108,14 @@ namespace TMPro
 
 
         [Test]
-        [TestCase(m_TextBlock_04, 3423, 453, 500, 29)]
-        [TestCase(m_TextBlock_03, 2500, 343, 370, 21)]
-        [TestCase(m_TextBlock_02, 1500, 228, 241, 13)]
-        [TestCase(m_TextBlock_01, 104, 14, 15, 1)]
-        [TestCase(m_TextBlock_00, 22, 4, 5, 1)]
-        public void TextParsing_TextInfoTest_WordWrappingEnabled(string sourceText, int characterCount, int spaceCount, int wordCount, int lineCount)
+        [TestCase(4, 3423, 453, 500, 29)]
+        [TestCase(3, 2500, 343, 370, 21)]
+        [TestCase(2, 1500, 228, 241, 13)]
+        [TestCase(1, 104, 14, 15, 1)]
+        [TestCase(0, 22, 4, 5, 1)]
+        public void TextParsing_TextInfoTest_WordWrappingEnabled(int sourceTextIndex, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
-            m_TextComponent.text = sourceText;
+            m_TextComponent.text = testStrings[sourceTextIndex];
             m_TextComponent.enableWordWrapping = true;
             m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
 
@@ -130,12 +133,12 @@ namespace TMPro
 
 
         [Test]
-        [TestCase(m_TextBlock_04, 3423, 453, 500, 27)]
-        [TestCase(m_TextBlock_03, 2500, 343, 370, 20)]
-        [TestCase(m_TextBlock_02, 1500, 228, 241, 13)]
-        public void TextParsing_TextInfoTest_TopJustifiedAlignment(string sourceText, int characterCount, int spaceCount, int wordCount, int lineCount)
+        [TestCase(4, 3423, 453, 500, 27)]
+        [TestCase(3, 2500, 343, 370, 20)]
+        [TestCase(2, 1500, 228, 241, 13)]
+        public void TextParsing_TextInfoTest_TopJustifiedAlignment(int sourceTextIndex, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
-            m_TextComponent.text = sourceText;
+            m_TextComponent.text = testStrings[sourceTextIndex];
             m_TextComponent.enableWordWrapping = true;
             m_TextComponent.alignment = TextAlignmentOptions.TopJustified;
 
@@ -153,11 +156,11 @@ namespace TMPro
 
 
         [Test]
-        [TestCase(m_TextBlock_RichText_01, 768, 124, 126, 14)]
-        [TestCase(m_TextBlock_RichText_00, 59, 8, 9, 1)]
-        public void TextParsing_TextInfoTest_RichText(string sourceText, int characterCount, int spaceCount, int wordCount, int lineCount)
+        [TestCase(6, 768, 124, 126, 14)]
+        [TestCase(5, 59, 8, 9, 1)]
+        public void TextParsing_TextInfoTest_RichText(int sourceTextIndex, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
-            m_TextComponent.text = sourceText;
+            m_TextComponent.text = testStrings[sourceTextIndex];
             m_TextComponent.enableWordWrapping = true;
             m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
 
@@ -176,6 +179,17 @@ namespace TMPro
 
         // Add tests that check position of individual characters in a complex block of text.
         // These test also use the data contained inside the TMP_TextInfo class.
+
+
+        //[OneTimeTearDown]
+        //public void Cleanup()
+        //{
+        //    // Remove TMP Essential Resources which were imported in the project.
+        //    if (Directory.Exists(Path.GetFullPath("Assets/TextMesh Pro")))
+        //    {
+        //        AssetDatabase.DeleteAsset("Assets/TextMesh Pro");
+        //    }
+        //}
 
     }
 }

@@ -64,7 +64,7 @@ namespace TMPro.EditorUtilities
 
         AnimBool m_CustomColor;
 
-        TMP_InputValidator m_ValidationScript;
+        //TMP_InputValidator m_ValidationScript;
 
         protected override void OnEnable()
         {

@@ -69,7 +69,7 @@ namespace TMPro
     /// </summary>
     //[Serializable]
     public struct TMP_CharacterInfo
-    {   
+    {
         public char character; // Should be changed to an int to handle UTF 32
         /// <summary>
         /// Index of the character in the raw string.
@@ -383,6 +383,7 @@ namespace TMPro
         public TMP_XmlTagStack<Color32> underlineColorStack;
         public TMP_XmlTagStack<Color32> strikethroughColorStack;
         public TMP_XmlTagStack<Color32> highlightColorStack;
+        public TMP_XmlTagStack<TMP_ColorGradient> colorGradientStack;
         public TMP_XmlTagStack<float> sizeStack;
         public TMP_XmlTagStack<float> indentStack;
         public TMP_XmlTagStack<int> fontWeightStack;

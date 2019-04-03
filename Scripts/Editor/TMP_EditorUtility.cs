@@ -50,7 +50,6 @@ namespace TMPro.EditorUtilities
 
         
         // Static Fields Related to locating the TextMesh Pro Asset
-        private static bool isTMProFolderLocated;
         private static string folderPath = "Not Found";
         
         private static EditorWindow Gameview;
@@ -150,11 +149,8 @@ namespace TMPro.EditorUtilities
             if (mat.GetTexture(ShaderUtilities.ID_MainTex) == null) return null;
 
             // Find the dependent assets of this material.
-            #if UNITY_5_3_OR_NEWER
-                string[] dependentAssets = AssetDatabase.GetDependencies(AssetDatabase.GetAssetPath(mat), false);
-            #else
-                string[] dependentAssets = AssetDatabase.GetDependencies(new string[] { AssetDatabase.GetAssetPath(mat) } );
-            #endif
+            string[] dependentAssets = AssetDatabase.GetDependencies(AssetDatabase.GetAssetPath(mat), false);
+
             for (int i = 0; i < dependentAssets.Length; i++)
             {
                 TMP_FontAsset fontAsset = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(dependentAssets[i]);
@@ -245,7 +241,8 @@ namespace TMPro.EditorUtilities
                 // Check if any of the matching directories contain a GUISkins directory.
                 if (Directory.Exists(paths[i] + "/Editor Resources"))
                 {
-                    folderPath = paths[i].Replace(projectPath + "\\", "");
+                    folderPath = paths[i].Replace(projectPath, "");
+                    folderPath = folderPath.TrimStart('\\', '/');
                     return folderPath;
                 }
             }

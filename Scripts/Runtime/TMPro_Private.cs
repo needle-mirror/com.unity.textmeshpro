@@ -43,23 +43,11 @@ namespace TMPro
         [SerializeField]
         private MaskingTypes m_maskType;
 
-        /*
-        [SerializeField]
-        private MaskingOffsetMode m_maskOffsetMode;
-        [SerializeField]
-        private Vector4 m_maskOffset;
-        [SerializeField]
-        private Vector2 m_maskSoftness;
-        [SerializeField]
-        private Vector2 m_vertexOffset;
-        */
-        
         // Matrix used to animated Env Map
         private Matrix4x4 m_EnvMapMatrix = new Matrix4x4();
 
 
         // Text Container / RectTransform Component
-        //private TextContainer m_textContainer;
         private Vector3[] m_RectTransformCorners = new Vector3[4];
 
         [NonSerialized]
@@ -81,14 +69,17 @@ namespace TMPro
         {
             //Debug.Log("Awake() called on Object ID " + GetInstanceID());
 
-            // Code to handle compatibility with deprecation of Text Container
+            #if UNITY_EDITOR
+            // Special handling for TMP Settings and importing Essential Resources
+            if (TMP_Settings.instance == null)
+            {
+                if (m_isWaitingOnResourceLoad == false)
+                    TMPro_EventManager.RESOURCE_LOAD_EVENT.Add(ON_RESOURCES_LOADED);
 
-
-            // Make sure we have a valid TextContainer
-            //m_textContainer = GetComponent<TextContainer>();
-            //if (m_textContainer == null)
-            //    m_textContainer = gameObject.AddComponent<TextContainer>();
-
+                m_isWaitingOnResourceLoad = true;
+                return;
+            }
+            #endif
 
             // Cache Reference to the Mesh Renderer.
             m_renderer = GetComponent<Renderer>();
@@ -179,10 +170,14 @@ namespace TMPro
         {
             //Debug.Log("***** OnEnable() called on object ID " + GetInstanceID() + ". *****"); // called. Renderer.MeshFilter ID " + m_renderer.GetComponent<MeshFilter>().sharedMesh.GetInstanceID() + "  Mesh ID " + m_mesh.GetInstanceID() + "  MeshFilter ID " + m_meshFilter.GetInstanceID()); //has been called. HavePropertiesChanged = " + havePropertiesChanged); // has been called on Object ID:" + gameObject.GetInstanceID());      
 
+            // Return if Awake() has not been called on the text object.
+            if (m_isAwake == false)
+                return;
+
             // Register Callbacks for various events.
             if (!m_isRegisteredForEvents)
             {
-#if UNITY_EDITOR
+                #if UNITY_EDITOR
                 TMPro_EventManager.MATERIAL_PROPERTY_EVENT.Add(ON_MATERIAL_PROPERTY_CHANGED);
                 TMPro_EventManager.FONT_PROPERTY_EVENT.Add(ON_FONT_PROPERTY_CHANGED);
                 TMPro_EventManager.TEXTMESHPRO_PROPERTY_EVENT.Add(ON_TEXTMESHPRO_PROPERTY_CHANGED);
@@ -190,7 +185,7 @@ namespace TMPro
                 TMPro_EventManager.TEXT_STYLE_PROPERTY_EVENT.Add(ON_TEXT_STYLE_CHANGED);
                 TMPro_EventManager.COLOR_GRADIENT_PROPERTY_EVENT.Add(ON_COLOR_GRADIENT_CHANGED);
                 TMPro_EventManager.TMP_SETTINGS_PROPERTY_EVENT.Add(ON_TMP_SETTINGS_CHANGED);
-#endif
+                #endif
                 m_isRegisteredForEvents = true;
             }
 
@@ -211,6 +206,10 @@ namespace TMPro
         {
             //Debug.Log("***** OnDisable() called on object ID " + GetInstanceID() + ". *****"); //+ m_renderer.GetComponent<MeshFilter>().sharedMesh.GetInstanceID() + "  Mesh ID " + m_mesh.GetInstanceID() + "  MeshFilter ID " + m_meshFilter.GetInstanceID()); //has been called. HavePropertiesChanged = " + havePropertiesChanged); // has been called on Object ID:" + gameObject.GetInstanceID());      
 
+            // Return if Awake() has not been called on the text object.
+            if (m_isAwake == false)
+                return;
+
             TMP_UpdateManager.UnRegisterTextElementForRebuild(this);
 
             m_meshFilter.sharedMesh = null;
@@ -221,6 +220,7 @@ namespace TMPro
         protected override void OnDestroy()
         {
             //Debug.Log("***** OnDestroy() called on object ID " + GetInstanceID() + ". *****");
+            
             // Destroy the mesh if we have one.
             if (m_mesh != null)
             {
@@ -228,7 +228,7 @@ namespace TMPro
             }
 
             // Unregister the event this object was listening to
-#if UNITY_EDITOR
+            #if UNITY_EDITOR
             TMPro_EventManager.MATERIAL_PROPERTY_EVENT.Remove(ON_MATERIAL_PROPERTY_CHANGED);
             TMPro_EventManager.FONT_PROPERTY_EVENT.Remove(ON_FONT_PROPERTY_CHANGED);
             TMPro_EventManager.TEXTMESHPRO_PROPERTY_EVENT.Remove(ON_TEXTMESHPRO_PROPERTY_CHANGED);
@@ -236,18 +236,22 @@ namespace TMPro
             TMPro_EventManager.TEXT_STYLE_PROPERTY_EVENT.Remove(ON_TEXT_STYLE_CHANGED);
             TMPro_EventManager.COLOR_GRADIENT_PROPERTY_EVENT.Remove(ON_COLOR_GRADIENT_CHANGED);
             TMPro_EventManager.TMP_SETTINGS_PROPERTY_EVENT.Remove(ON_TMP_SETTINGS_CHANGED);
-#endif
+            TMPro_EventManager.RESOURCE_LOAD_EVENT.Remove(ON_RESOURCES_LOADED);
+            #endif
 
             m_isRegisteredForEvents = false;
             TMP_UpdateManager.UnRegisterTextElementForRebuild(this);
         }
 
 
-
-#if UNITY_EDITOR
+        #if UNITY_EDITOR
         protected override void Reset()
         {
             //Debug.Log("Reset() has been called." + m_subTextObjects);
+            
+            // Return if Awake() has not been called on the text object.
+            if (m_isAwake == false)
+                return;
 
             if (m_mesh != null)
                 DestroyImmediate(m_mesh);
@@ -258,8 +262,13 @@ namespace TMPro
 
         protected override void OnValidate()
         {
-            // Additional Properties could be added to sync up Serialized Properties & Properties.
             //Debug.Log("*** TextMeshPro OnValidate() has been called on Object ID:" + gameObject.GetInstanceID());
+            
+            // Return if Awake() has not been called on the text object.
+            if (m_isAwake == false)
+                return;
+
+            // Additional Properties could be added to sync up Serialized Properties & Properties.
 
             // Handle Font Asset changes in the inspector
             if (m_fontAsset == null || m_hasFontAssetChanged)
@@ -279,6 +288,16 @@ namespace TMPro
             m_isPreferredHeightDirty = true;
 
             SetAllDirty();
+        }
+
+
+        // Event received when TMP resources have been loaded.
+        void ON_RESOURCES_LOADED()
+        {
+            TMPro_EventManager.RESOURCE_LOAD_EVENT.Remove(ON_RESOURCES_LOADED);
+
+            Awake();
+            OnEnable();
         }
 
 
@@ -405,7 +424,7 @@ namespace TMPro
             m_isInputParsingRequired = true;
             SetAllDirty();
         }
-#endif
+        #endif
 
 
         // Function which loads either the default font or a newly assigned font asset. This function also assigned the appropriate material to the renderer.
@@ -1647,6 +1666,9 @@ namespace TMPro
             m_underlineColorStack.SetDefault(m_htmlColor);
             m_strikethroughColorStack.SetDefault(m_htmlColor);
             m_highlightColorStack.SetDefault(m_htmlColor);
+
+            m_colorGradientPreset = null;
+            m_colorGradientStack.SetDefault(null);
 
             // Clear the Style stack.
             //m_styleStack.Clear();

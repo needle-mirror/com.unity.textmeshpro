@@ -918,13 +918,6 @@ namespace TMPro.EditorUtilities
                 font_asset.atlas = m_font_Atlas;
                 m_font_Atlas.name = tex_FileName + " Atlas";
 
-                // Special handling due to a bug in earlier versions of Unity.
-                #if UNITY_5_3_OR_NEWER
-                    // Nothing
-                #else
-                    m_font_Atlas.hideFlags = HideFlags.HideInHierarchy;
-                #endif
-
                 AssetDatabase.AddObjectToAsset(m_font_Atlas, font_asset);
 
                 // Create new Material and Add it as Sub-Asset
@@ -933,13 +926,6 @@ namespace TMPro.EditorUtilities
                 tmp_material.name = tex_FileName + " Material";
                 tmp_material.SetTexture(ShaderUtilities.ID_MainTex, m_font_Atlas);
                 font_asset.material = tmp_material;
-
-                // Special handling due to a bug in earlier versions of Unity.
-                #if UNITY_5_3_OR_NEWER
-                    // Nothing
-                #else
-                    tmp_material.hideFlags = HideFlags.HideInHierarchy;
-                #endif
 
                 AssetDatabase.AddObjectToAsset(tmp_material, font_asset);
 
@@ -976,12 +962,8 @@ namespace TMPro.EditorUtilities
                 m_font_Atlas.name = tex_FileName + " Atlas";
 
                 // Special handling due to a bug in earlier versions of Unity.
-                #if UNITY_5_3_OR_NEWER
-                    m_font_Atlas.hideFlags = HideFlags.None;
-                    font_asset.material.hideFlags = HideFlags.None;
-                #else
-                    m_font_Atlas.hideFlags = HideFlags.HideInHierarchy;
-                #endif
+                m_font_Atlas.hideFlags = HideFlags.None;
+                font_asset.material.hideFlags = HideFlags.None;
 
                 AssetDatabase.AddObjectToAsset(m_font_Atlas, font_asset);
 
@@ -1073,13 +1055,6 @@ namespace TMPro.EditorUtilities
                 font_asset.atlas = m_font_Atlas;
                 m_font_Atlas.name = tex_FileName + " Atlas";
 
-                // Special handling due to a bug in earlier versions of Unity.
-                #if UNITY_5_3_OR_NEWER
-                    // Nothing
-                #else
-                    m_font_Atlas.hideFlags = HideFlags.HideInHierarchy;
-                #endif
-
                 AssetDatabase.AddObjectToAsset(m_font_Atlas, font_asset);
 
                 // Create new Material and Add it as Sub-Asset
@@ -1098,13 +1073,6 @@ namespace TMPro.EditorUtilities
                 tmp_material.SetFloat(ShaderUtilities.ID_WeightBold, font_asset.boldStyle);
 
                 font_asset.material = tmp_material;
-
-                // Special handling due to a bug in earlier versions of Unity.
-                #if UNITY_5_3_OR_NEWER
-                    // Nothing
-                #else
-                    tmp_material.hideFlags = HideFlags.HideInHierarchy;
-                #endif
 
                 AssetDatabase.AddObjectToAsset(tmp_material, font_asset);
 
@@ -1142,12 +1110,8 @@ namespace TMPro.EditorUtilities
                 m_font_Atlas.name = tex_FileName + " Atlas";
 
                 // Special handling due to a bug in earlier versions of Unity.
-                #if UNITY_5_3_OR_NEWER
-                    m_font_Atlas.hideFlags = HideFlags.None;
-                    font_asset.material.hideFlags = HideFlags.None;
-                #else
-                    m_font_Atlas.hideFlags = HideFlags.HideInHierarchy;
-                #endif
+                m_font_Atlas.hideFlags = HideFlags.None;
+                font_asset.material.hideFlags = HideFlags.None;
 
                 AssetDatabase.AddObjectToAsset(m_font_Atlas, font_asset);
 

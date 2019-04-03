@@ -1,7 +1,7 @@
 {
-    "name": "TMP_Runtime-Tests-CSharp",
+    "name": "com.unity.textmeshpro.RuntimeTests",
     "references": [
-        "TMP_Runtime-CSharp"
+        "com.unity.textmeshpro.Runtime"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"
