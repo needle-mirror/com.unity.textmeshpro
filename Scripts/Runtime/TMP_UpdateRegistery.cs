@@ -108,23 +108,23 @@ namespace TMPro
 
                 element.Rebuild(CanvasUpdate.Prelayout);
             }
-            //this.m_PerformingLayoutUpdate = false;
+
             if (m_LayoutRebuildQueue.Count > 0)
             {
                 m_LayoutRebuildQueue.Clear();
                 m_LayoutQueueLookup.Clear();
             }
 
+            // Update font assets before graphic rebuild
+
 
             // Processing elements that require a graphic rebuild.
-            //this.m_PerformingGraphicUpdate = true;
             for (int index = 0; index < m_GraphicRebuildQueue.Count; index++)
             {
                 ICanvasElement element = TMP_UpdateRegistry.instance.m_GraphicRebuildQueue[index];
 
                 element.Rebuild(CanvasUpdate.PreRender);
             }
-            //this.m_PerformingGraphicUpdate = false;
 
             // If there are no objects in the queue, we don't need to clear the lists again.
             if (m_GraphicRebuildQueue.Count > 0)

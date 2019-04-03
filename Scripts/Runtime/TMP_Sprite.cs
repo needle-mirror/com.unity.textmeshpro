@@ -9,7 +9,7 @@ namespace TMPro
 
     // Class which contains the Sprite Info for each sprite contained in the sprite asset.
     [Serializable]
-    public class TMP_Sprite : TMP_TextElement
+    public class TMP_Sprite : TMP_TextElement_Legacy
     {
         //public int fileID;
         //public int id;

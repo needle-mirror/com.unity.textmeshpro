@@ -2,7 +2,9 @@
 using UnityEngine.UI;
 using System.Collections.Generic;
 
-#if UNITY_2018_1_OR_NEWER
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.Rendering;
+#elif UNITY_2018_1_OR_NEWER
 using UnityEngine.Experimental.Rendering;
 #endif
 
@@ -19,6 +21,9 @@ namespace TMPro
 
         private readonly List<TMP_Text> m_GraphicRebuildQueue = new List<TMP_Text>();
         private Dictionary<int, int> m_GraphicQueueLookup = new Dictionary<int, int>();
+
+        private readonly List<TMP_Text> m_InternalUpdateQueue = new List<TMP_Text>();
+        private Dictionary<int, int> m_InternalUpdateLookup = new Dictionary<int, int>();
 
         //private bool m_PerformingGraphicRebuild;
         //private bool m_PerformingLayoutRebuild;
@@ -44,9 +49,34 @@ namespace TMPro
         {
             Camera.onPreCull += OnCameraPreCull;
 
-            #if UNITY_2018_1_OR_NEWER
-            RenderPipeline.beginFrameRendering += OnBeginFrameRendering;
+            #if UNITY_2019_1_OR_NEWER
+                RenderPipelineManager.beginFrameRendering += OnBeginFrameRendering;
+            #elif UNITY_2018_1_OR_NEWER
+                RenderPipeline.beginFrameRendering += OnBeginFrameRendering;
             #endif
+        }
+
+        
+        /// <summary>
+        /// Function used as a replacement for LateUpdate() to handle SDF Scale updates and Legacy Animation updates.
+        /// </summary>
+        /// <param name="textObject"></param>
+        internal static void RegisterTextObjectForUpdate(TMP_Text textObject)
+        {
+            TMP_UpdateManager.instance.InternalRegisterTextObjectForUpdate(textObject);
+        }
+
+        private void InternalRegisterTextObjectForUpdate(TMP_Text textObject)
+        {
+            int id = textObject.GetInstanceID();
+
+            if (this.m_InternalUpdateLookup.ContainsKey(id))
+                return;
+
+            m_InternalUpdateLookup[id] = id;
+            this.m_InternalUpdateQueue.Add(textObject);
+
+            return;
         }
 
 
@@ -95,16 +125,21 @@ namespace TMPro
             return true;
         }
 
+
         /// <summary>
         /// Callback which occurs just before the Scriptable Render Pipeline (SRP) begins rendering.
         /// </summary>
         /// <param name="cameras"></param>
+        #if UNITY_2018_1_OR_NEWER
         void OnBeginFrameRendering(Camera[] cameras)
+        #elif UNITY_2019_1_OR_NEWER
+        void OnBeginFrameRendering(ScriptableRenderContext renderContext, Camera[] cameras)
+        #endif
         {
             // Exclude the PreRenderCamera
             #if UNITY_EDITOR
-                if (cameras.Length == 1 && cameras[0].cameraType == CameraType.Preview) 
-                    return;
+            if (cameras.Length == 1 && cameras[0].cameraType == CameraType.Preview) 
+                return;
             #endif
             DoRebuilds();
         }
@@ -117,8 +152,8 @@ namespace TMPro
         {
             // Exclude the PreRenderCamera
             #if UNITY_EDITOR
-                if (cam.cameraType == CameraType.Preview) 
-                    return;
+            if (cam.cameraType == CameraType.Preview) 
+                return;
             #endif
             DoRebuilds();
         }
@@ -128,6 +163,12 @@ namespace TMPro
         /// </summary>
         void DoRebuilds()
         {
+            // Handle text objects the require an update either as a result of scale changes or legacy animation.
+            for (int i = 0; i < m_InternalUpdateQueue.Count; i++)
+            {
+                m_InternalUpdateQueue[i].InternalUpdate();
+            }
+
             // Handle Layout Rebuild Phase
             for (int i = 0; i < m_LayoutRebuildQueue.Count; i++)
             {
@@ -154,6 +195,10 @@ namespace TMPro
             }
         }
 
+        internal static void UnRegisterTextObjectForUpdate(TMP_Text textObject)
+        {
+            TMP_UpdateManager.instance.InternalUnRegisterTextObjectForUpdate(textObject);
+        }
 
         /// <summary>
         /// Function to unregister elements which no longer require a rebuild.
@@ -163,40 +208,31 @@ namespace TMPro
         {
             TMP_UpdateManager.instance.InternalUnRegisterTextElementForGraphicRebuild(element);
             TMP_UpdateManager.instance.InternalUnRegisterTextElementForLayoutRebuild(element);
+            TMP_UpdateManager.instance.InternalUnRegisterTextObjectForUpdate(element);
         }
 
         private void InternalUnRegisterTextElementForGraphicRebuild(TMP_Text element)
         {
-            //if (this.m_PerformingGraphicRebuild)
-            //{
-            //    Debug.LogError((object)string.Format("Trying to remove {0} from rebuild list while we are already inside a rebuild loop. This is not supported.", (object)element));
-            //}
-            //else
-            //{
-                int id = element.GetInstanceID();
+            int id = element.GetInstanceID();
 
-                //element.LayoutComplete();
-                TMP_UpdateManager.instance.m_GraphicRebuildQueue.Remove(element);
-                m_GraphicQueueLookup.Remove(id);
-            //}
+            TMP_UpdateManager.instance.m_GraphicRebuildQueue.Remove(element);
+            m_GraphicQueueLookup.Remove(id);
         }
 
         private void InternalUnRegisterTextElementForLayoutRebuild(TMP_Text element)
         {
-            //if (this.m_PerformingLayoutRebuild)
-            //{
-            //    Debug.LogError((object)string.Format("Trying to remove {0} from rebuild list while we are already inside a rebuild loop. This is not supported.", (object)element));
-            //}
-            //else
-            //{
-                int id = element.GetInstanceID();
+            int id = element.GetInstanceID();
 
-                //element.LayoutComplete();
-                TMP_UpdateManager.instance.m_LayoutRebuildQueue.Remove(element);
-                m_LayoutQueueLookup.Remove(id);
-            //}
+            TMP_UpdateManager.instance.m_LayoutRebuildQueue.Remove(element);
+            m_LayoutQueueLookup.Remove(id);
         }
 
+        private void InternalUnRegisterTextObjectForUpdate(TMP_Text textObject)
+        {
+            int id = textObject.GetInstanceID();
 
+            TMP_UpdateManager.instance.m_InternalUpdateQueue.Remove(textObject);
+            m_LayoutQueueLookup.Remove(id);
+        }
     }
 }

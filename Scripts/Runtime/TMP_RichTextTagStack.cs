@@ -3,7 +3,7 @@
     /// <summary>
     /// Structure used to track basic XML tags which are binary (on / off)
     /// </summary>
-    public struct TMP_BasicXmlTagStack
+    public struct TMP_FontStyleStack
     {
         public byte bold;
         public byte italic;
@@ -38,25 +38,25 @@
             switch (style)
             {
                 case FontStyles.Bold:
-                    bold += 1;
+                    bold++;
                     return bold;
                 case FontStyles.Italic:
-                    italic += 1;
+                    italic++;
                     return italic;
                 case FontStyles.Underline:
-                    underline += 1;
+                    underline++;
                     return underline;
                 case FontStyles.Strikethrough:
-                    strikethrough += 1;
+                    strikethrough++;
                     return strikethrough;
                 case FontStyles.Superscript:
-                    superscript += 1;
+                    superscript++;
                     return superscript;
                 case FontStyles.Subscript:
-                    subscript += 1;
+                    subscript++;
                     return subscript;
                 case FontStyles.Highlight:
-                    highlight += 1;
+                    highlight++;
                     return highlight;
             }
 
@@ -69,43 +69,43 @@
             {
                 case FontStyles.Bold:
                     if (bold > 1)
-                        bold -= 1;
+                        bold--;
                     else
                         bold = 0;
                     return bold;
                 case FontStyles.Italic:
                     if (italic > 1)
-                        italic -= 1;
+                        italic--;
                     else
                         italic = 0;
                     return italic;
                 case FontStyles.Underline:
                     if (underline > 1)
-                        underline -= 1;
+                        underline--;
                     else
                         underline = 0;
                     return underline;
                 case FontStyles.Strikethrough:
                     if (strikethrough > 1)
-                        strikethrough -= 1;
+                        strikethrough--;
                     else
                         strikethrough = 0;
                     return strikethrough;
                 case FontStyles.Highlight:
                     if (highlight > 1)
-                        highlight -= 1;
+                        highlight--;
                     else
                         highlight = 0;
                     return highlight;
                 case FontStyles.Superscript:
                     if (superscript > 1)
-                        superscript -= 1;
+                        superscript--;
                     else
                         superscript = 0;
                     return superscript;
                 case FontStyles.Subscript:
                     if (subscript > 1)
-                        subscript -= 1;
+                        subscript--;
                     else
                         subscript = 0;
                     return subscript;
@@ -120,28 +120,41 @@
     /// Structure used to track XML tags of various types.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public struct TMP_XmlTagStack<T>
+    public struct TMP_RichTextTagStack<T>
     {
-        public T[] itemStack;
-        public int index;
+        public T[] m_ItemStack;
+        public int m_Index;
+        private int m_Capacity;
 
-        private int m_capacity;
-        private T m_defaultItem;
+        private T m_DefaultItem;
 
-        private const int k_defaultCapacity = 4;
-        //static readonly T[] m_emptyStack = new T[0];
+        private const int k_DefaultCapacity = 4;
+        //static readonly T[] m_EmptyStack = new T[0];
 
         /// <summary>
         /// Constructor to create a new item stack.
         /// </summary>
         /// <param name="tagStack"></param>
-        public TMP_XmlTagStack(T[] tagStack)
+        public TMP_RichTextTagStack(T[] tagStack)
         {
-            itemStack = tagStack;
-            m_capacity = tagStack.Length;
-            index = 0;
+            m_ItemStack = tagStack;
+            m_Capacity = tagStack.Length;
+            m_Index = 0;
 
-            m_defaultItem = default(T);
+            m_DefaultItem = default(T);
+        }
+
+        /// <summary>
+        /// Constructor for a new item stack with the given capacity.
+        /// </summary>
+        /// <param name="capacity"></param>
+        public TMP_RichTextTagStack(int capacity)
+        {
+            m_ItemStack = new T[capacity];
+            m_Capacity = capacity;
+            m_Index = 0;
+
+            m_DefaultItem = default(T);
         }
 
 
@@ -150,7 +163,7 @@
         /// </summary>
         public void Clear()
         {
-            index = 0;
+            m_Index = 0;
         }
 
 
@@ -160,8 +173,8 @@
         /// <param name="item"></param>
         public void SetDefault(T item)
         {
-            itemStack[0] = item;
-            index = 1;
+            m_ItemStack[0] = item;
+            m_Index = 1;
         }
 
 
@@ -171,10 +184,10 @@
         /// <param name="item"></param>
         public void Add(T item)
         {
-            if (index < itemStack.Length)
+            if (m_Index < m_ItemStack.Length)
             {
-                itemStack[index] = item;
-                index += 1;
+                m_ItemStack[m_Index] = item;
+                m_Index += 1;
             }
         }
 
@@ -185,43 +198,55 @@
         /// <returns></returns>
         public T Remove()
         {
-            index -= 1;
+            m_Index -= 1;
 
-            if (index <= 0)
+            if (m_Index <= 0)
             {
-                index = 1;
-                return itemStack[0];
+                m_Index = 1;
+                return m_ItemStack[0];
 
             }
 
-            return itemStack[index - 1];
+            return m_ItemStack[m_Index - 1];
         }
 
         public void Push(T item)
         {
-            if (index == m_capacity)
+            if (m_Index == m_Capacity)
             {
-                m_capacity *= 2;
-                if (m_capacity == 0)
-                    m_capacity = k_defaultCapacity;
+                m_Capacity *= 2;
+                if (m_Capacity == 0)
+                    m_Capacity = k_DefaultCapacity;
 
-                System.Array.Resize(ref itemStack, m_capacity);
+                System.Array.Resize(ref m_ItemStack, m_Capacity);
             }
 
-            itemStack[index] = item;
-            index += 1;
+            m_ItemStack[m_Index] = item;
+            m_Index += 1;
         }
 
         public T Pop()
         {
-            if (index == 0)
+            if (m_Index == 0)
                 return default(T);
 
-            index -= 1;
-            T item = itemStack[index];
-            itemStack[index] = m_defaultItem;
+            m_Index -= 1;
+            T item = m_ItemStack[m_Index];
+            m_ItemStack[m_Index] = m_DefaultItem;
 
             return item;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public T Peek()
+        {
+            if (m_Index == 0)
+                return m_DefaultItem;
+
+            return m_ItemStack[m_Index - 1];
         }
 
 
@@ -231,10 +256,10 @@
         /// <returns>itemStack <T></returns>
         public T CurrentItem()
         {
-            if (index > 0)
-                return itemStack[index - 1];
+            if (m_Index > 0)
+                return m_ItemStack[m_Index - 1];
 
-            return itemStack[0];
+            return m_ItemStack[0];
         }
 
 
@@ -244,10 +269,10 @@
         /// <returns></returns>
         public T PreviousItem()
         {
-            if (index > 1)
-                return itemStack[index - 2];
+            if (m_Index > 1)
+                return m_ItemStack[m_Index - 2];
 
-            return itemStack[0];
+            return m_ItemStack[0];
         }
     }
 }

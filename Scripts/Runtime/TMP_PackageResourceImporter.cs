@@ -1,52 +1,31 @@
 ﻿#if UNITY_EDITOR
 
+using System;
 using System.IO;
 using UnityEngine;
 using UnityEditor;
  
 
 namespace TMPro
-{ 
-    public class PackageResourceImporterWindow : EditorWindow
+{
+    [System.Serializable]
+    public class TMP_PackageResourceImporter
     {
-        public static void ShowPackageImporterWindow()
+        bool m_EssentialResourcesImported;
+        bool m_ExamplesAndExtrasResourcesImported;
+        internal bool m_IsImportingExamples;
+
+        public TMP_PackageResourceImporter() { }
+
+        public void OnDestroy()
         {
-            var window = GetWindow<PackageResourceImporterWindow>();
-            window.titleContent = new GUIContent("TMP Importer");
-            window.Focus();
         }
 
-        [SerializeField]
-        bool k_EssentialResourcesImported;
-        [SerializeField]
-        bool k_ExamplesAndExtrasResourcesImported;
-        [SerializeField]
-        bool k_IsImportingExamples;
-
-        void OnEnable()
+        public void OnGUI()
         {
-            // Set Editor Window Size
-            SetEditorWindowSize();
-
-            // Special handling due to scripts imported in a .unitypackage result in resulting in an assembly reload which clears the callbacks.
-            if (k_IsImportingExamples)
-            {
-                AssetDatabase.importPackageCompleted += ImportCallback;
-                k_IsImportingExamples = false;
-            }
-        }
-
-        void OnDestroy()
-        {
-            k_EssentialResourcesImported = false;
-            k_ExamplesAndExtrasResourcesImported = false;
-        }
-
-
-        void OnGUI()
-        {
-            bool importEssentialsPackage = false;
-            bool importExamplesPackage = false;
+            // Check if the resources state has changed.
+            m_EssentialResourcesImported = Directory.Exists("Assets/TextMesh Pro");
+            m_ExamplesAndExtrasResourcesImported = Directory.Exists("Assets/TextMesh Pro/Examples & Extras");
 
             GUILayout.BeginVertical();
             {
@@ -57,10 +36,13 @@ namespace TMPro
                     GUILayout.Label("This appears to be the first time you access TextMesh Pro, as such we need to add resources to your project that are essential for using TextMesh Pro. These new resources will be placed at the root of your project in the \"TextMesh Pro\" folder.", new GUIStyle(EditorStyles.label) { wordWrap = true } );
                     GUILayout.Space(5f);
 
-                    GUI.enabled = !k_EssentialResourcesImported;
+                    GUI.enabled = !m_EssentialResourcesImported;
                     if (GUILayout.Button("Import TMP Essentials"))
                     {
-                        importEssentialsPackage = true;
+                        AssetDatabase.importPackageCompleted += ImportCallback;
+
+                        string packageFullPath = GetPackageFullPath();
+                        AssetDatabase.ImportPackage(packageFullPath + "/Package Resources/TMP Essential Resources.unitypackage", false);
                     }
                     GUILayout.Space(5f);
                     GUI.enabled = true;
@@ -74,10 +56,14 @@ namespace TMPro
                     GUILayout.Label("The Examples & Extras package contains addition resources and examples that will make discovering and learning about TextMesh Pro's powerful features easier. These additional resources will be placed in the same folder as the TMP essential resources.", new GUIStyle(EditorStyles.label) { wordWrap = true });
                     GUILayout.Space(5f);
 
-                    GUI.enabled = k_EssentialResourcesImported && !k_ExamplesAndExtrasResourcesImported;
+                    GUI.enabled = m_EssentialResourcesImported && !m_ExamplesAndExtrasResourcesImported;
                     if (GUILayout.Button("Import TMP Examples & Extras"))
                     {
-                        importExamplesPackage = true;
+                        // Set flag to get around importing scripts as per of this package which results in an assembly reload which in turn prevents / clears any callbacks.
+                        m_IsImportingExamples = true;
+
+                        var packageFullPath = GetPackageFullPath();
+                        AssetDatabase.ImportPackage(packageFullPath + "/Package Resources/TMP Examples & Extras.unitypackage", false);
                     }
                     GUILayout.Space(5f);
                     GUI.enabled = true;
@@ -86,44 +72,12 @@ namespace TMPro
             }
             GUILayout.EndVertical();
             GUILayout.Space(5f);
-
-            // Import Essential Resources 
-            if (importEssentialsPackage)
-            {
-                AssetDatabase.importPackageCompleted += ImportCallback;
-
-                string packageFullPath = GetPackageFullPath();
-                AssetDatabase.ImportPackage(packageFullPath + "/Package Resources/TMP Essential Resources.unitypackage", false);
-            }
-
-            // Import Examples & Extras
-            if (importExamplesPackage)
-            {
-                // Set flag to get around importing scripts as per of this package which results in an assembly reload which in turn prevents / clears any callbacks.
-                k_IsImportingExamples = true;
-
-                string packageFullPath = GetPackageFullPath();
-                AssetDatabase.ImportPackage(packageFullPath + "/Package Resources/TMP Examples & Extras.unitypackage", false);
-            }
         }
 
-        void OnInspectorUpdate()
+        internal void RegisterResourceImportCallback()
         {
-            Repaint();
+            AssetDatabase.importPackageCompleted += ImportCallback;
         }
-        
-        /// <summary>
-        /// Limits the minimum size of the editor window.
-        /// </summary>
-        void SetEditorWindowSize()
-        {
-            EditorWindow editorWindow = this;
-
-            Vector2 windowSize = new Vector2(640, 210);
-            editorWindow.minSize = windowSize;
-            editorWindow.maxSize = windowSize;
-        }
-
 
         /// <summary>
         /// 
@@ -133,7 +87,7 @@ namespace TMPro
         {
             if (packageName == "TMP Essential Resources")
             {
-                k_EssentialResourcesImported = true;
+                m_EssentialResourcesImported = true;
                 TMPro_EventManager.ON_RESOURCES_LOADED();
 
                 #if UNITY_2018_3_OR_NEWER
@@ -142,8 +96,8 @@ namespace TMPro
             }
             else if (packageName == "TMP Examples & Extras")
             {
-                k_ExamplesAndExtrasResourcesImported = true;
-                k_IsImportingExamples = false;
+                m_ExamplesAndExtrasResourcesImported = true;
+                m_IsImportingExamples = false;
             }
 
             Debug.Log("[" + packageName + "] have been imported.");
@@ -151,8 +105,7 @@ namespace TMPro
             AssetDatabase.importPackageCompleted -= ImportCallback;
         }
 
-
-        string GetPackageFullPath()
+        static string GetPackageFullPath()
         {
             // Check for potential UPM package
             string packagePath = Path.GetFullPath("Packages/com.unity.textmeshpro");
@@ -185,7 +138,7 @@ namespace TMPro
             return null;
         }
 
-        string ValidateLocation(string[] paths, string projectPath)
+        static string ValidateLocation(string[] paths, string projectPath)
         {
             for (int i = 0; i < paths.Length; i++)
             {
@@ -199,6 +152,58 @@ namespace TMPro
             }
 
             return null;
+        }
+    }
+
+    public class TMP_PackageResourceImporterWindow : EditorWindow
+    {
+        [SerializeField]
+        TMP_PackageResourceImporter m_ResourceImporter;
+
+        public static void ShowPackageImporterWindow()
+        {
+            var window = GetWindow<TMP_PackageResourceImporterWindow>();
+            window.titleContent = new GUIContent("TMP Importer");
+            window.Focus();
+        }
+
+        void OnEnable()
+        {
+            // Set Editor Window Size
+            SetEditorWindowSize();
+
+            if (m_ResourceImporter == null)
+                m_ResourceImporter = new TMP_PackageResourceImporter();
+
+            if (m_ResourceImporter.m_IsImportingExamples)
+                m_ResourceImporter.RegisterResourceImportCallback();
+        }
+
+        void OnDestroy()
+        {
+            m_ResourceImporter.OnDestroy();
+        }
+
+        void OnGUI()
+        {
+            m_ResourceImporter.OnGUI();
+        }
+
+        void OnInspectorUpdate()
+        {
+            Repaint();
+        }
+        
+        /// <summary>
+        /// Limits the minimum size of the editor window.
+        /// </summary>
+        void SetEditorWindowSize()
+        {
+            EditorWindow editorWindow = this;
+
+            Vector2 windowSize = new Vector2(640, 210);
+            editorWindow.minSize = windowSize;
+            editorWindow.maxSize = windowSize;
         }
     }
 

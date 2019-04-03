@@ -25,6 +25,7 @@ namespace TMPro.EditorUtilities
         SerializedProperty m_Text;
         SerializedProperty m_ContentType;
         SerializedProperty m_LineType;
+        SerializedProperty m_LineLimit;
         SerializedProperty m_InputType;
         SerializedProperty m_CharacterValidation;
         SerializedProperty m_InputValidator;
@@ -36,6 +37,7 @@ namespace TMPro.EditorUtilities
         SerializedProperty m_CaretColor;
         SerializedProperty m_CustomCaretColor;
         SerializedProperty m_SelectionColor;
+        SerializedProperty m_HideMobileKeyboard;
         SerializedProperty m_HideMobileInput;
         SerializedProperty m_Placeholder;
         SerializedProperty m_VerticalScrollbar;
@@ -67,6 +69,7 @@ namespace TMPro.EditorUtilities
             m_Text = serializedObject.FindProperty("m_Text");
             m_ContentType = serializedObject.FindProperty("m_ContentType");
             m_LineType = serializedObject.FindProperty("m_LineType");
+            m_LineLimit = serializedObject.FindProperty("m_LineLimit");
             m_InputType = serializedObject.FindProperty("m_InputType");
             m_CharacterValidation = serializedObject.FindProperty("m_CharacterValidation");
             m_InputValidator = serializedObject.FindProperty("m_InputValidator");
@@ -78,6 +81,8 @@ namespace TMPro.EditorUtilities
             m_CaretColor = serializedObject.FindProperty("m_CaretColor");
             m_CustomCaretColor = serializedObject.FindProperty("m_CustomCaretColor");
             m_SelectionColor = serializedObject.FindProperty("m_SelectionColor");
+
+            m_HideMobileKeyboard = serializedObject.FindProperty("m_HideSoftKeyboard");
             m_HideMobileInput = serializedObject.FindProperty("m_HideMobileInput");
 
             m_Placeholder = serializedObject.FindProperty("m_Placeholder");
@@ -183,8 +188,15 @@ namespace TMPro.EditorUtilities
                                 if (m_LineType.enumValueIndex == (int)TMP_InputField.LineType.SingleLine)
                                     text.enableWordWrapping = false;
                                 else
+                                {
                                     text.enableWordWrapping = true;
+                                }
                             }
+                        }
+
+                        if (m_LineType.enumValueIndex != (int)TMP_InputField.LineType.SingleLine)
+                        {
+                            EditorGUILayout.PropertyField(m_LineLimit);
                         }
                     }
 
@@ -245,7 +257,8 @@ namespace TMPro.EditorUtilities
                 EditorGUILayout.PropertyField(m_OnFocusSelectAll, new GUIContent("OnFocus - Select All", "Should all the text be selected when the Input Field is selected."));
                 EditorGUILayout.PropertyField(m_ResetOnDeActivation, new GUIContent("Reset On DeActivation", "Should the Text and Caret position be reset when Input Field is DeActivated."));
                 EditorGUILayout.PropertyField(m_RestoreOriginalTextOnEscape, new GUIContent("Restore On ESC Key", "Should the original text be restored when pressing ESC."));
-                EditorGUILayout.PropertyField(m_HideMobileInput);
+                EditorGUILayout.PropertyField(m_HideMobileKeyboard, new GUIContent("Hide Soft Keyboard", "Controls the visibility of the mobile virtual keyboard."));
+                EditorGUILayout.PropertyField(m_HideMobileInput, new GUIContent("Hide Mobile Input", "Controls the visibility of the editable text field above the mobile virtual keyboard. Not supported on all mobile platforms."));
                 EditorGUILayout.PropertyField(m_ReadOnly);
                 EditorGUILayout.PropertyField(m_RichText);
                 EditorGUILayout.PropertyField(m_RichTextEditingAllowed, new GUIContent("Allow Rich Text Editing"));

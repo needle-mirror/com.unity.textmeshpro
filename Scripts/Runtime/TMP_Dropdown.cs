@@ -9,8 +9,16 @@ using UnityEngine.UI.CoroutineTween;
 
 namespace TMPro
 {
-    [AddComponentMenu("UI/TMP Dropdown", 35)]
+    [AddComponentMenu("UI/Dropdown - TextMeshPro", 35)]
     [RequireComponent(typeof(RectTransform))]
+    /// <summary>
+    ///   A standard dropdown that presents a list of options when clicked, of which one can be chosen.
+    /// </summary>
+    /// <remarks>
+    /// The dropdown component is a Selectable. When an option is chosen, the label and/or image of the control changes to show the chosen option.
+    ///
+    /// When a dropdown event occurs a callback is sent to any registered listeners of onValueChanged.
+    /// </remarks>
     public class TMP_Dropdown : Selectable, IPointerClickHandler, ISubmitHandler, ICancelHandler
     {
         protected internal class DropdownItem : MonoBehaviour, IPointerEnterHandler, ICancelHandler
@@ -43,6 +51,9 @@ namespace TMPro
         }
 
         [Serializable]
+        /// <summary>
+        /// Class to store the text and/or image of a single option in the dropdown list.
+        /// </summary>
         public class OptionData
         {
             [SerializeField]
@@ -50,12 +61,17 @@ namespace TMPro
             [SerializeField]
             private Sprite m_Image;
 
+            /// <summary>
+            /// The text associated with the option.
+            /// </summary>
             public string text { get { return m_Text; } set { m_Text = value; } }
+
+            /// <summary>
+            /// The image associated with the option.
+            /// </summary>
             public Sprite image { get { return m_Image; } set { m_Image = value; } }
 
-            public OptionData()
-            {
-            }
+            public OptionData() { }
 
             public OptionData(string text)
             {
@@ -67,6 +83,11 @@ namespace TMPro
                 this.image = image;
             }
 
+            /// <summary>
+            /// Create an object representing a single option for the dropdown list.
+            /// </summary>
+            /// <param name="text">Optional text for the option.</param>
+            /// <param name="image">Optional image for the option.</param>
             public OptionData(string text, Sprite image)
             {
                 this.text = text;
@@ -75,10 +96,20 @@ namespace TMPro
         }
 
         [Serializable]
+        /// <summary>
+        /// Class used internally to store the list of options for the dropdown list.
+        /// </summary>
+        /// <remarks>
+        /// The usage of this class is not exposed in the runtime API. It's only relevant for the PropertyDrawer drawing the list of options.
+        /// </remarks>
         public class OptionDataList
         {
             [SerializeField]
             private List<OptionData> m_Options;
+
+            /// <summary>
+            /// The list of options for the dropdown list.
+            /// </summary>
             public List<OptionData> options { get { return m_Options; } set { m_Options = value; } }
 
 
@@ -89,30 +120,53 @@ namespace TMPro
         }
 
         [Serializable]
+        /// <summary>
+        /// UnityEvent callback for when a dropdown current option is changed.
+        /// </summary>
         public class DropdownEvent : UnityEvent<int> { }
 
         // Template used to create the dropdown.
         [SerializeField]
         private RectTransform m_Template;
+
+        /// <summary>
+        /// The Rect Transform of the template for the dropdown list.
+        /// </summary>
         public RectTransform template { get { return m_Template; } set { m_Template = value; RefreshShownValue(); } }
 
         // Text to be used as a caption for the current value. It's not required, but it's kept here for convenience.
         [SerializeField]
         private TMP_Text m_CaptionText;
+
+        /// <summary>
+        /// The Text component to hold the text of the currently selected option.
+        /// </summary>
         public TMP_Text captionText { get { return m_CaptionText; } set { m_CaptionText = value; RefreshShownValue(); } }
 
         [SerializeField]
         private Image m_CaptionImage;
+
+        /// <summary>
+        /// The Image component to hold the image of the currently selected option.
+        /// </summary>
         public Image captionImage { get { return m_CaptionImage; } set { m_CaptionImage = value; RefreshShownValue(); } }
 
         [Space]
 
         [SerializeField]
         private TMP_Text m_ItemText;
+
+        /// <summary>
+        /// The Text component to hold the text of the item.
+        /// </summary>
         public TMP_Text itemText { get { return m_ItemText; } set { m_ItemText = value; RefreshShownValue(); } }
 
         [SerializeField]
         private Image m_ItemImage;
+
+        /// <summary>
+        /// The Image component to hold the image of the item
+        /// </summary>
         public Image itemImage { get { return m_ItemImage; } set { m_ItemImage = value; RefreshShownValue(); } }
 
         [Space]
@@ -126,6 +180,98 @@ namespace TMPro
         // We box this into its own class so we can use a Property Drawer for it.
         [SerializeField]
         private OptionDataList m_Options = new OptionDataList();
+
+        /// <summary>
+        /// The list of possible options. A text string and an image can be specified for each option.
+        /// </summary>
+        /// <remarks>
+        /// This is the list of options within the Dropdown. Each option contains Text and/or image data that you can specify using UI.Dropdown.OptionData before adding to the Dropdown list.
+        /// This also unlocks the ability to edit the Dropdown, including the insertion, removal, and finding of options, as well as other useful tools
+        /// </remarks>
+        /// /// <example>
+        /// <code>
+        /// //Create a new Dropdown GameObject by going to the Hierarchy and clicking Create>UI>Dropdown - TextMeshPro. Attach this script to the Dropdown GameObject.
+        ///
+        /// using UnityEngine;
+        /// using UnityEngine.UI;
+        /// using System.Collections.Generic;
+        /// using TMPro;
+        ///
+        /// public class Example : MonoBehaviour
+        /// {
+        ///     //Use these for adding options to the Dropdown List
+        ///     TMP_Dropdown.OptionData m_NewData, m_NewData2;
+        ///     //The list of messages for the Dropdown
+        ///     List<TMP_Dropdown.OptionData> m_Messages = new List<TMP_Dropdown.OptionData>();
+        ///
+        ///
+        ///     //This is the Dropdown
+        ///     TMP_Dropdown m_Dropdown;
+        ///     string m_MyString;
+        ///     int m_Index;
+        ///
+        ///     void Start()
+        ///     {
+        ///         //Fetch the Dropdown GameObject the script is attached to
+        ///         m_Dropdown = GetComponent<TMP_Dropdown>();
+        ///         //Clear the old options of the Dropdown menu
+        ///         m_Dropdown.ClearOptions();
+        ///
+        ///         //Create a new option for the Dropdown menu which reads "Option 1" and add to messages List
+        ///         m_NewData = new TMP_Dropdown.OptionData();
+        ///         m_NewData.text = "Option 1";
+        ///         m_Messages.Add(m_NewData);
+        ///
+        ///         //Create a new option for the Dropdown menu which reads "Option 2" and add to messages List
+        ///         m_NewData2 = new TMP_Dropdown.OptionData();
+        ///         m_NewData2.text = "Option 2";
+        ///         m_Messages.Add(m_NewData2);
+        ///
+        ///         //Take each entry in the message List
+        ///         foreach (TMP_Dropdown.OptionData message in m_Messages)
+        ///         {
+        ///             //Add each entry to the Dropdown
+        ///             m_Dropdown.options.Add(message);
+        ///             //Make the index equal to the total number of entries
+        ///             m_Index = m_Messages.Count - 1;
+        ///         }
+        ///     }
+        ///
+        ///     //This OnGUI function is used here for a quick demonstration. See the [[wiki:UISystem|UI Section]] for more information about setting up your own UI.
+        ///     void OnGUI()
+        ///     {
+        ///         //TextField for user to type new entry to add to Dropdown
+        ///         m_MyString = GUI.TextField(new Rect(0, 40, 100, 40), m_MyString);
+        ///
+        ///         //Press the "Add" Button to add a new entry to the Dropdown
+        ///         if (GUI.Button(new Rect(0, 0, 100, 40), "Add"))
+        ///         {
+        ///             //Make the index the last number of entries
+        ///             m_Index = m_Messages.Count;
+        ///             //Create a temporary option
+        ///             TMP_Dropdown.OptionData temp = new TMP_Dropdown.OptionData();
+        ///             //Make the option the data from the TextField
+        ///             temp.text = m_MyString;
+        ///
+        ///             //Update the messages list with the TextField data
+        ///             m_Messages.Add(temp);
+        ///
+        ///             //Add the Textfield data to the Dropdown
+        ///             m_Dropdown.options.Insert(m_Index, temp);
+        ///         }
+        ///
+        ///         //Press the "Remove" button to delete the selected option
+        ///         if (GUI.Button(new Rect(110, 0, 100, 40), "Remove"))
+        ///         {
+        ///             //Remove the current selected item from the Dropdown from the messages List
+        ///             m_Messages.RemoveAt(m_Dropdown.value);
+        ///             //Remove the current selection from the Dropdown
+        ///             m_Dropdown.options.RemoveAt(m_Dropdown.value);
+        ///         }
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
         public List<OptionData> options
         {
             get { return m_Options.options; }
@@ -137,6 +283,48 @@ namespace TMPro
         // Notification triggered when the dropdown changes.
         [SerializeField]
         private DropdownEvent m_OnValueChanged = new DropdownEvent();
+
+        /// <summary>
+        /// A UnityEvent that is invoked when a user has clicked one of the options in the dropdown list.
+        /// </summary>
+        /// <remarks>
+        /// Use this to detect when a user selects one or more options in the Dropdown. Add a listener to perform an action when this UnityEvent detects a selection by the user. See https://unity3d.com/learn/tutorials/topics/scripting/delegates for more information on delegates.
+        /// </remarks>
+        /// <example>
+        ///  <code>
+        /// //Create a new Dropdown GameObject by going to the Hierarchy and clicking Create>UI>Dropdown - TextMeshPro. Attach this script to the Dropdown GameObject.
+        /// //Set your own Text in the Inspector window
+        ///
+        /// using UnityEngine;
+        /// using UnityEngine.UI;
+        /// using TMPro;
+        ///
+        /// public class Example : MonoBehaviour
+        /// {
+        ///     TMP_Dropdown m_Dropdown;
+        ///     public Text m_Text;
+        ///
+        ///     void Start()
+        ///     {
+        ///         //Fetch the Dropdown GameObject
+        ///         m_Dropdown = GetComponent<TMP_Dropdown>();
+        ///         //Add listener for when the value of the Dropdown changes, to take action
+        ///         m_Dropdown.onValueChanged.AddListener(delegate {
+        ///                 DropdownValueChanged(m_Dropdown);
+        ///             });
+        ///
+        ///         //Initialize the Text to say the first value of the Dropdown
+        ///         m_Text.text = "First Value : " + m_Dropdown.value;
+        ///     }
+        ///
+        ///     //Output the new value of the Dropdown into Text
+        ///     void DropdownValueChanged(TMP_Dropdown change)
+        ///     {
+        ///         m_Text.text =  "New Value : " + change.value;
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
         public DropdownEvent onValueChanged { get { return m_OnValueChanged; } set { m_OnValueChanged = value; } }
 
         private GameObject m_Dropdown;
@@ -147,7 +335,49 @@ namespace TMPro
 
         private static OptionData s_NoOptionData = new OptionData();
 
-        // Current value.
+        /// <summary>
+        /// The Value is the index number of the current selection in the Dropdown. 0 is the first option in the Dropdown, 1 is the second, and so on.
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// //Create a new Dropdown GameObject by going to the Hierarchy and clicking Create>UI>Dropdown - TextMeshPro. Attach this script to the Dropdown GameObject.
+        /// //Set your own Text in the Inspector window
+        ///
+        /// using UnityEngine;
+        /// using UnityEngine.UI;
+        /// using TMPro;
+        ///
+        /// public class Example : MonoBehaviour
+        /// {
+        ///     //Attach this script to a Dropdown GameObject
+        ///     TMP_Dropdown m_Dropdown;
+        ///     //This is the string that stores the current selection m_Text of the Dropdown
+        ///     string m_Message;
+        ///     //This Text outputs the current selection to the screen
+        ///     public Text m_Text;
+        ///     //This is the index value of the Dropdown
+        ///     int m_DropdownValue;
+        ///
+        ///     void Start()
+        ///     {
+        ///         //Fetch the DropDown component from the GameObject
+        ///         m_Dropdown = GetComponent<TMP_Dropdown>();
+        ///         //Output the first Dropdown index value
+        ///         Debug.Log("Starting Dropdown Value : " + m_Dropdown.value);
+        ///     }
+        ///
+        ///     void Update()
+        ///     {
+        ///         //Keep the current index of the Dropdown in a variable
+        ///         m_DropdownValue = m_Dropdown.value;
+        ///         //Change the message to say the name of the current Dropdown selection using the value
+        ///         m_Message = m_Dropdown.options[m_DropdownValue].text;
+        ///         //Change the on screen Text to reflect the current Dropdown selection
+        ///         m_Text.text = m_Message;
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
         public int value
         {
             get
@@ -156,29 +386,45 @@ namespace TMPro
             }
             set
             {
-                if (Application.isPlaying && (value == m_Value || options.Count == 0))
-                    return;
+                SetValue(value);
+            }
+        }
 
-                m_Value = Mathf.Clamp(value, 0, options.Count - 1);
-                RefreshShownValue();
+        /// <summary>
+        /// Set index number of the current selection in the Dropdown without invoking onValueChanged callback.
+        /// </summary>
+        /// <param name="input">The new index for the current selection.</param>
+        public void SetValueWithoutNotify(int input)
+        {
+            SetValue(input, false);
+        }
 
+        void SetValue(int value, bool sendCallback = true)
+        {
+            if (Application.isPlaying && (value == m_Value || options.Count == 0))
+                return;
+
+            m_Value = Mathf.Clamp(value, 0, options.Count - 1);
+            RefreshShownValue();
+
+            if (sendCallback)
+            {
                 // Notify all listeners
+                UISystemProfilerApi.AddMarker("Dropdown.value", this);
                 m_OnValueChanged.Invoke(m_Value);
             }
         }
 
-        public bool IsExpanded
-        { get { return m_Dropdown != null; } }
+        public bool IsExpanded { get { return m_Dropdown != null; } }
 
-        protected TMP_Dropdown()
-        { }
+        protected TMP_Dropdown() { }
 
         protected override void Awake()
         {
-#if UNITY_EDITOR
+            #if UNITY_EDITOR
             if (!Application.isPlaying)
                 return;
-#endif
+            #endif
 
             m_AlphaTweenRunner = new TweenRunner<FloatTween>();
             m_AlphaTweenRunner.Init(this);
@@ -190,7 +436,14 @@ namespace TMPro
                 m_Template.gameObject.SetActive(false);
         }
 
-#if UNITY_EDITOR
+        protected override void Start()
+        {
+            base.Start();
+
+            RefreshShownValue();
+        }
+
+        #if UNITY_EDITOR
         protected override void OnValidate()
         {
             base.OnValidate();
@@ -200,8 +453,24 @@ namespace TMPro
 
             RefreshShownValue();
         }
-#endif
+        #endif
 
+        protected override void OnDisable()
+        {
+            //Destroy dropdown and blocker in case user deactivates the dropdown when they click an option (case 935649)
+            ImmediateDestroyDropdownList();
+
+            if (m_Blocker != null)
+                DestroyBlocker(m_Blocker);
+            m_Blocker = null;
+        }
+
+        /// <summary>
+        /// Refreshes the text and image (if available) of the currently selected option.
+        /// </summary>
+        /// <remarks>
+        /// If you have modified the list of options, you should call this method afterwards to ensure that the visual state of the dropdown corresponds to the updated options.
+        /// </remarks>
         public void RefreshShownValue()
         {
             OptionData data = s_NoOptionData;
@@ -227,29 +496,84 @@ namespace TMPro
             }
         }
 
+        /// <summary>
+        /// Add multiple options to the options of the Dropdown based on a list of OptionData objects.
+        /// </summary>
+        /// <param name="options">The list of OptionData to add.</param>
+        /// /// <remarks>
+        /// See AddOptions(List<string> options) for code example of usages.
+        /// </remarks>
         public void AddOptions(List<OptionData> options)
         {
             this.options.AddRange(options);
             RefreshShownValue();
         }
 
+        /// <summary>
+        /// Add multiple text-only options to the options of the Dropdown based on a list of strings.
+        /// </summary>
+        /// <remarks>
+        /// Add a List of string messages to the Dropdown. The Dropdown shows each member of the list as a separate option.
+        /// </remarks>
+        /// <param name="options">The list of text strings to add.</param>
+        /// <example>
+        /// <code>
+        /// //Create a new Dropdown GameObject by going to the Hierarchy and clicking Create>UI>Dropdown - TextMeshPro. Attach this script to the Dropdown GameObject.
+        ///
+        /// using System.Collections.Generic;
+        /// using UnityEngine;
+        /// using UnityEngine.UI;
+        /// using TMPro;
+        ///
+        /// public class Example : MonoBehaviour
+        /// {
+        ///     //Create a List of new Dropdown options
+        ///     List<string> m_DropOptions = new List<string> { "Option 1", "Option 2"};
+        ///     //This is the Dropdown
+        ///     TMP_Dropdown m_Dropdown;
+        ///
+        ///     void Start()
+        ///     {
+        ///         //Fetch the Dropdown GameObject the script is attached to
+        ///         m_Dropdown = GetComponent<TMP_Dropdown>();
+        ///         //Clear the old options of the Dropdown menu
+        ///         m_Dropdown.ClearOptions();
+        ///         //Add the options created in the List above
+        ///         m_Dropdown.AddOptions(m_DropOptions);
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
         public void AddOptions(List<string> options)
         {
             for (int i = 0; i < options.Count; i++)
                 this.options.Add(new OptionData(options[i]));
+
             RefreshShownValue();
         }
 
+        /// <summary>
+        /// Add multiple image-only options to the options of the Dropdown based on a list of Sprites.
+        /// </summary>
+        /// <param name="options">The list of Sprites to add.</param>
+        /// <remarks>
+        /// See AddOptions(List<string> options) for code example of usages.
+        /// </remarks>
         public void AddOptions(List<Sprite> options)
         {
             for (int i = 0; i < options.Count; i++)
                 this.options.Add(new OptionData(options[i]));
+
             RefreshShownValue();
         }
 
+        /// <summary>
+        /// Clear the list of options in the Dropdown.
+        /// </summary>
         public void ClearOptions()
         {
             options.Clear();
+            m_Value = 0;
             RefreshShownValue();
         }
 
@@ -320,33 +644,68 @@ namespace TMPro
             return comp;
         }
 
+        /// <summary>
+        /// Handling for when the dropdown is initially 'clicked'. Typically shows the dropdown
+        /// </summary>
+        /// <param name="eventData">The associated event data.</param>
         public virtual void OnPointerClick(PointerEventData eventData)
         {
             Show();
         }
 
+        /// <summary>
+        /// Handling for when the dropdown is selected and a submit event is processed. Typically shows the dropdown
+        /// </summary>
+        /// <param name="eventData">The associated event data.</param>
         public virtual void OnSubmit(BaseEventData eventData)
         {
             Show();
         }
 
+        /// <summary>
+        /// This will hide the dropdown list.
+        /// </summary>
+        /// <remarks>
+        /// Called by a BaseInputModule when a Cancel event occurs.
+        /// </remarks>
+        /// <param name="eventData">The associated event data.</param>
         public virtual void OnCancel(BaseEventData eventData)
         {
             Hide();
         }
 
-        // Show the dropdown.
-        //
-        // Plan for dropdown scrolling to ensure dropdown is contained within screen.
-        //
-        // We assume the Canvas is the screen that the dropdown must be kept inside.
-        // This is always valid for screen space canvas modes.
-        // For world space canvases we don't know how it's used, but it could be e.g. for an in-game monitor.
-        // We consider it a fair constraint that the canvas must be big enough to contains dropdowns.
+        /// <summary>
+        /// Show the dropdown.
+        ///
+        /// Plan for dropdown scrolling to ensure dropdown is contained within screen.
+        ///
+        /// We assume the Canvas is the screen that the dropdown must be kept inside.
+        /// This is always valid for screen space canvas modes.
+        /// For world space canvases we don't know how it's used, but it could be e.g. for an in-game monitor.
+        /// We consider it a fair constraint that the canvas must be big enough to contain dropdowns.
+        /// </summary>
         public void Show()
         {
             if (!IsActive() || !IsInteractable() || m_Dropdown != null)
                 return;
+
+            // Get root Canvas.
+            var list = TMP_ListPool<Canvas>.Get();
+            gameObject.GetComponentsInParent(false, list);
+            if (list.Count == 0)
+                return;
+
+            Canvas rootCanvas = list[list.Count - 1];
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].isRootCanvas)
+                {
+                    rootCanvas = list[i];
+                    break;
+                }
+            }
+
+            TMP_ListPool<Canvas>.Release(list);
 
             if (!validTemplate)
             {
@@ -355,15 +714,10 @@ namespace TMPro
                     return;
             }
 
-            // Get root Canvas.
-            var list = TMP_ListPool<Canvas>.Get();
-            gameObject.GetComponentsInParent(false, list);
-            if (list.Count == 0)
-                return;
-            Canvas rootCanvas = list[0];
-            TMP_ListPool<Canvas>.Release(list);
-
             m_Template.gameObject.SetActive(true);
+
+            // popupCanvas used to assume the root canvas had the default sorting Layer, next line fixes (case 958281 - [UI] Dropdown list does not copy the parent canvas layer when the panel is opened)
+            m_Template.GetComponent<Canvas>().sortingLayerID = rootCanvas.sortingLayerID;
 
             // Instantiate the drop-down template
             m_Dropdown = CreateDropdownList(m_Template.gameObject);
@@ -448,17 +802,18 @@ namespace TMPro
             Rect rootCanvasRect = rootCanvasRectTransform.rect;
             for (int axis = 0; axis < 2; axis++)
             {
-            bool outside = false;
-            for (int i = 0; i < 4; i++)
-            {
-                Vector3 corner = rootCanvasRectTransform.InverseTransformPoint(corners[i]);
-                    if (corner[axis] < rootCanvasRect.min[axis] || corner[axis] > rootCanvasRect.max[axis])
+                bool outside = false;
+                for (int i = 0; i < 4; i++)
                 {
-                    outside = true;
-                    break;
+                    Vector3 corner = rootCanvasRectTransform.InverseTransformPoint(corners[i]);
+                    if ((corner[axis] < rootCanvasRect.min[axis] && !Mathf.Approximately(corner[axis], rootCanvasRect.min[axis])) ||
+                        (corner[axis] > rootCanvasRect.max[axis] && !Mathf.Approximately(corner[axis], rootCanvasRect.max[axis])))
+                    {
+                        outside = true;
+                        break;
+                    }
                 }
-            }
-            if (outside)
+                if (outside)
                     RectTransformUtility.FlipLayoutOnAxis(dropdownRectTransform, axis, false, false);
             }
 
@@ -481,6 +836,14 @@ namespace TMPro
             m_Blocker = CreateBlocker(rootCanvas);
         }
 
+        /// <summary>
+        /// Create a blocker that blocks clicks to other controls while the dropdown list is open.
+        /// </summary>
+        /// <remarks>
+        /// Override this method to implement a different way to obtain a blocker GameObject.
+        /// </remarks>
+        /// <param name="rootCanvas">The root canvas the dropdown is under.</param>
+        /// <returns>The created blocker object</returns>
         protected virtual GameObject CreateBlocker(Canvas rootCanvas)
         {
             // Create blocker GameObject.
@@ -514,30 +877,66 @@ namespace TMPro
             return blocker;
         }
 
+        /// <summary>
+        /// Convenience method to explicitly destroy the previously generated blocker object
+        /// </summary>
+        /// <remarks>
+        /// Override this method to implement a different way to dispose of a blocker GameObject that blocks clicks to other controls while the dropdown list is open.
+        /// </remarks>
+        /// <param name="blocker">The blocker object to destroy.</param>
         protected virtual void DestroyBlocker(GameObject blocker)
         {
             Destroy(blocker);
         }
 
+        /// <summary>
+        /// Create the dropdown list to be shown when the dropdown is clicked. The dropdown list should correspond to the provided template GameObject, equivalent to instantiating a copy of it.
+        /// </summary>
+        /// <remarks>
+        /// Override this method to implement a different way to obtain a dropdown list GameObject.
+        /// </remarks>
+        /// <param name="template">The template to create the dropdown list from.</param>
+        /// <returns>The created drop down list gameobject.</returns>
         protected virtual GameObject CreateDropdownList(GameObject template)
         {
             return (GameObject)Instantiate(template);
         }
 
+        /// <summary>
+        /// Convenience method to explicitly destroy the previously generated dropdown list
+        /// </summary>
+        /// <remarks>
+        /// Override this method to implement a different way to dispose of a dropdown list GameObject.
+        /// </remarks>
+        /// <param name="dropdownList">The dropdown list GameObject to destroy</param>
         protected virtual void DestroyDropdownList(GameObject dropdownList)
         {
             Destroy(dropdownList);
         }
 
+        /// <summary>
+        /// Create a dropdown item based upon the item template.
+        /// </summary>
+        /// <remarks>
+        /// Override this method to implement a different way to obtain an option item.
+        /// The option item should correspond to the provided template DropdownItem and its GameObject, equivalent to instantiating a copy of it.
+        /// </remarks>
+        /// <param name="itemTemplate">e template to create the option item from.</param>
+        /// <returns>The created dropdown item component</returns>
         protected virtual DropdownItem CreateItem(DropdownItem itemTemplate)
         {
             return (DropdownItem)Instantiate(itemTemplate);
         }
 
-        protected virtual void DestroyItem(DropdownItem item)
-        {
-            // No action needed since destroying the dropdown list destroys all contained items as well.
-        }
+        /// <summary>
+        ///  Convenience method to explicitly destroy the previously generated Items.
+        /// </summary>
+        /// <remarks>
+        /// Override this method to implement a different way to dispose of an option item.
+        /// Likely no action needed since destroying the dropdown list destroys all contained items as well.
+        /// </remarks>
+        /// <param name="item">The Item to destroy.</param>
+        protected virtual void DestroyItem(DropdownItem item) { }
 
         // Add a new drop-down list item with the specified values.
         private DropdownItem AddItem(OptionData data, bool selected, DropdownItem itemTemplate, List<DropdownItem> items)
@@ -592,7 +991,9 @@ namespace TMPro
             group.alpha = alpha;
         }
 
-        // Hide the dropdown.
+        /// <summary>
+        /// Hide the dropdown list. I.e. close it.
+        /// </summary>
         public void Hide()
         {
             if (m_Dropdown != null)
@@ -601,7 +1002,7 @@ namespace TMPro
 
                 // User could have disabled the dropdown during the OnValueChanged call.
                 if (IsActive())
-                StartCoroutine(DelayedDestroyDropdownList(0.15f));
+                    StartCoroutine(DelayedDestroyDropdownList(0.15f));
             }
             if (m_Blocker != null)
                 DestroyBlocker(m_Blocker);
@@ -611,15 +1012,19 @@ namespace TMPro
 
         private IEnumerator DelayedDestroyDropdownList(float delay)
         {
+            yield return new WaitForSecondsRealtime(delay);
+            ImmediateDestroyDropdownList();
+        }
 
-                yield return new WaitForSecondsRealtime(delay);
-
+        private void ImmediateDestroyDropdownList()
+        {
             for (int i = 0; i < m_Items.Count; i++)
             {
                 if (m_Items[i] != null)
                     DestroyItem(m_Items[i]);
-                m_Items.Clear();
             }
+            m_Items.Clear();
+
             if (m_Dropdown != null)
                 DestroyDropdownList(m_Dropdown);
             m_Dropdown = null;

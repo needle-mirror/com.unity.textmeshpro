@@ -12,8 +12,9 @@ namespace TMPro.EditorUtilities
         public static GUIStyle textAreaBoxWindow;
         public static GUIStyle boldFoldout;
         public static GUIStyle panelTitle;
+        public static GUIStyle sectionHeader;
         public static GUIStyle centeredLabel;
-        public static GUIStyle lockButton;
+        public static GUIStyle rightLabel;
         public static GUIStyle wrappingTextArea;
 
         public static GUIStyle alignmentButtonLeft;
@@ -33,6 +34,7 @@ namespace TMPro.EditorUtilities
         public static Texture2D alignBaseline;
         public static Texture2D alignMidline;
         public static Texture2D alignCapline;
+        public static Texture2D sectionHeaderTexture;
         
         public static GUIContent[] alignContentA;
         public static GUIContent[] alignContentB;
@@ -56,6 +58,7 @@ namespace TMPro.EditorUtilities
                 alignBaseline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignBaseLine.psd", typeof(Texture2D)) as Texture2D;
                 alignMidline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignMidLine.psd", typeof(Texture2D)) as Texture2D;
                 alignCapline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignCapLine.psd", typeof(Texture2D)) as Texture2D;
+                sectionHeaderTexture = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/SectionHeader_Dark.psd", typeof(Texture2D)) as Texture2D;
             }
             else
             {
@@ -71,16 +74,20 @@ namespace TMPro.EditorUtilities
                 alignBaseline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignBaseLine_Light.psd", typeof(Texture2D)) as Texture2D;
                 alignMidline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignMidLine_Light.psd", typeof(Texture2D)) as Texture2D;
                 alignCapline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignCapLine_Light.psd", typeof(Texture2D)) as Texture2D;
+                sectionHeaderTexture = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/SectionHeader_Light.psd", typeof(Texture2D)) as Texture2D;
             }
 
             label = new GUIStyle(EditorStyles.label) { richText = true, wordWrap = true, stretchWidth = true };
             textAreaBoxWindow = new GUIStyle(EditorStyles.textArea) { richText = true };
             boldFoldout = new GUIStyle(EditorStyles.foldout) { fontStyle = FontStyle.Bold };
-
             panelTitle = new GUIStyle(EditorStyles.label) { fontStyle = FontStyle.Bold };
-            centeredLabel = new GUIStyle(EditorStyles.label) { alignment = TextAnchor.MiddleCenter};
 
-            lockButton = "IN LockButton";
+            sectionHeader = new GUIStyle(EditorStyles.label) { fixedHeight = 22, richText = true, border = new RectOffset(9, 9, 0, 0), overflow = new RectOffset(9, 0, 0, 0), padding = new RectOffset(0, 0, 4, 0) };
+            sectionHeader.normal.background = sectionHeaderTexture;
+
+            centeredLabel = new GUIStyle(EditorStyles.label) { alignment = TextAnchor.MiddleCenter};
+            rightLabel = new GUIStyle(EditorStyles.label) { alignment = TextAnchor.MiddleRight, richText = true };
+
 
             alignmentButtonLeft = new GUIStyle(EditorStyles.miniButtonLeft);
             alignmentButtonLeft.padding.left = 4;

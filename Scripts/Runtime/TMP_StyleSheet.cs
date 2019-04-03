@@ -28,7 +28,7 @@ namespace TMPro
                     s_Instance = TMP_Settings.defaultStyleSheet;
 
                     if (s_Instance == null)
-                        s_Instance = Resources.Load<TMP_StyleSheet>("Style Sheets/TMP Default Style Sheet");
+                        s_Instance = Resources.Load<TMP_StyleSheet>("Style Sheets/Default Style Sheet");
 
                     if (s_Instance == null) return null;
 
@@ -69,8 +69,7 @@ namespace TMPro
         /// <returns></returns>
         private TMP_Style GetStyleInternal(int hashCode)
         {
-            TMP_Style style;
-            if (m_StyleDictionary.TryGetValue(hashCode, out style))
+            if (m_StyleDictionary.TryGetValue(hashCode, out TMP_Style style))
             {
                 return style;
             }

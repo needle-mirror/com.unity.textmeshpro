@@ -18,11 +18,9 @@ namespace TMPro.EditorUtilities
             SerializedProperty prop_FirstGlyphAdjustment = property.FindPropertyRelative("m_FirstGlyphAdjustments");
             SerializedProperty prop_SecondGlyph = property.FindPropertyRelative("m_SecondGlyph");
             SerializedProperty prop_SecondGlyphAdjustment = property.FindPropertyRelative("m_SecondGlyphAdjustments");
+            SerializedProperty prop_IgnoreCharacterSpacing = property.FindPropertyRelative("m_IgnoreSpacingAdjustments");
 
             position.yMin += 2;
-
-            // We get Rect since a valid position may not be provided by the caller.
-            GUILayoutUtility.GetRect(position.width, 45);
 
             float width = position.width / 2;
             float padding = 5.0f;
@@ -31,6 +29,12 @@ namespace TMPro.EditorUtilities
 
             isEditingEnabled = GUI.enabled;
             isSelectable = label.text == "Selectable" ? true : false;
+
+            if (isSelectable)
+                GUILayoutUtility.GetRect(position.width, 65);
+            else
+                GUILayoutUtility.GetRect(position.width, 45);
+
 
             // First Glyph
             GUI.enabled = isEditingEnabled;
@@ -48,8 +52,8 @@ namespace TMPro.EditorUtilities
                 rect = new Rect(position.x + 60f, position.y, 30, 18);
                 EditorGUI.LabelField(rect, "ID:", TMP_UIStyleManager.label);
 
-                rect = new Rect(position.x + 80f, position.y, 40, 18);
-                EditorGUI.LabelField(rect, "<color=#FFFF80>" + prop_FirstGlyph.intValue + "</color>", TMP_UIStyleManager.label);
+                rect = new Rect(position.x + 80f, position.y, 60, 18);
+                EditorGUI.LabelField(rect, "<color=#FFFF80>0x" + prop_FirstGlyph.intValue.ToString("X4") + "</color>", TMP_UIStyleManager.label);
                 GUI.enabled = prevGuiState;
             }
             else
@@ -64,7 +68,26 @@ namespace TMPro.EditorUtilities
                 }
 
                 rect.x += width / 2 * 0.8f;
-                EditorGUI.PropertyField(rect, prop_FirstGlyph, GUIContent.none);
+
+                GUI.SetNextControlName("Unicode 1");
+                EditorGUI.BeginChangeCheck();
+                string unicode = EditorGUI.TextField(rect, prop_FirstGlyph.intValue.ToString("X"));
+
+                if (GUI.GetNameOfFocusedControl() == "Unicode 1")
+                {
+                    //Filter out unwanted characters.
+                    char chr = Event.current.character;
+                    if ((chr < '0' || chr > '9') && (chr < 'a' || chr > 'f') && (chr < 'A' || chr > 'F'))
+                    {
+                        Event.current.character = '\0';
+                    }
+                }
+
+                if (EditorGUI.EndChangeCheck())
+                {
+                    // Update Unicode value
+                    prop_FirstGlyph.intValue = TMP_TextUtilities.StringHexToInt(unicode);
+                }
 
             }
 
@@ -84,7 +107,6 @@ namespace TMPro.EditorUtilities
             //rect.x += width * 0.5f;
             //EditorGUI.PropertyField(rect, prop_FirstGlyphAdjustment.FindPropertyRelative("yAdvance"), new GUIContent("AY"));
 
-
             // Second Glyph
             GUI.enabled = isEditingEnabled;
             if (isSelectable)
@@ -101,8 +123,8 @@ namespace TMPro.EditorUtilities
                 rect = new Rect(rect.x + 25f, position.y, 30, 18);
                 EditorGUI.LabelField(rect, "ID:", TMP_UIStyleManager.label);
 
-                rect = new Rect(rect.x + 20f, position.y, 40, 18);
-                EditorGUI.LabelField(rect, "<color=#FFFF80>" + prop_SecondGlyph.intValue + "</color>", TMP_UIStyleManager.label);
+                rect = new Rect(rect.x + 20f, position.y, 60, 18);
+                EditorGUI.LabelField(rect, "<color=#FFFF80>0x" + prop_SecondGlyph.intValue.ToString("X4") + "</color>", TMP_UIStyleManager.label);
                 GUI.enabled = prevGuiState;
             }
             else
@@ -117,7 +139,26 @@ namespace TMPro.EditorUtilities
                 }
 
                 rect.x += width / 2 * 0.8f;
-                EditorGUI.PropertyField(rect, prop_SecondGlyph, GUIContent.none);
+
+                GUI.SetNextControlName("Unicode 2");
+                EditorGUI.BeginChangeCheck();
+                string unicode = EditorGUI.TextField(rect, prop_SecondGlyph.intValue.ToString("X"));
+
+                if (GUI.GetNameOfFocusedControl() == "Unicode 2")
+                {
+                    //Filter out unwanted characters.
+                    char chr = Event.current.character;
+                    if ((chr < '0' || chr > '9') && (chr < 'a' || chr > 'f') && (chr < 'A' || chr > 'F'))
+                    {
+                        Event.current.character = '\0';
+                    }
+                }
+
+                if (EditorGUI.EndChangeCheck())
+                {
+                    // Update Unicode value
+                    prop_SecondGlyph.intValue = TMP_TextUtilities.StringHexToInt(unicode);
+                }
             }
 
             GUI.enabled = isEditingEnabled;
@@ -135,6 +176,17 @@ namespace TMPro.EditorUtilities
 
             //rect.x += width * 0.5f;
             //EditorGUI.PropertyField(rect, prop_SecondGlyphAdjustment.FindPropertyRelative("yAdvance"), new GUIContent("AY"));
+
+            // Ignore Character Spacing
+            if (isSelectable)
+            {
+                EditorGUIUtility.labelWidth = 160f;
+
+                rect.x = position.x;
+                rect.y += 20;
+                rect.width = 180;
+                EditorGUI.PropertyField(rect, prop_IgnoreCharacterSpacing, new GUIContent("Ignore Character Spacing", "Adjustment Pair will ignore character spacing adjustments on text components."));
+            }
 
         }
 

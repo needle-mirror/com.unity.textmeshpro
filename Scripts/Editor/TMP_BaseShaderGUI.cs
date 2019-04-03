@@ -165,6 +165,8 @@ namespace TMPro.EditorUtilities
         /// <summary>Override this method to create the specific shader GUI.</summary>
         protected abstract void DoGUI();
 
+        static string[] s_PanelStateLabel = new string[] { "\t- <i>Click to collapse</i> -", "\t- <i>Click to expand</i>  -" };
+
         protected bool BeginPanel(string panel, bool expanded)
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
@@ -176,6 +178,8 @@ namespace TMPro.EditorUtilities
             bool enabled = GUI.enabled;
             GUI.enabled = true;
             expanded = TMP_EditorUtility.EditorToggle(r, expanded, new GUIContent(panel), TMP_UIStyleManager.panelTitle);
+            r.width -= 30;
+            EditorGUI.LabelField(r, new GUIContent(expanded ? s_PanelStateLabel[0] : s_PanelStateLabel[1]), TMP_UIStyleManager.rightLabel);
             GUI.enabled = enabled;
 
             EditorGUI.indentLevel += 1;
@@ -211,6 +215,8 @@ namespace TMPro.EditorUtilities
             bool enabled = GUI.enabled;
             GUI.enabled = true;
             expanded = TMP_EditorUtility.EditorToggle(r, expanded, new GUIContent(panel), TMP_UIStyleManager.panelTitle);
+            r.width -= 10;
+            EditorGUI.LabelField(r, new GUIContent(expanded ? s_PanelStateLabel[0] : s_PanelStateLabel[1]), TMP_UIStyleManager.rightLabel);
             GUI.enabled = enabled;
 
             GUILayout.EndHorizontal();

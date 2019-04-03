@@ -135,9 +135,9 @@ namespace TMPro
                 int unicode;
                 int indexOfSeperator = sprite.name.IndexOf('-');
                 if (indexOfSeperator != -1)
-                    unicode = TMP_TextUtilities.StringToInt(sprite.name.Substring(indexOfSeperator + 1));
+                    unicode = TMP_TextUtilities.StringHexToInt(sprite.name.Substring(indexOfSeperator + 1));
                 else
-                    unicode = TMP_TextUtilities.StringToInt(sprite.name);
+                    unicode = TMP_TextUtilities.StringHexToInt(sprite.name);
 
                 sprite.unicode = unicode;
 

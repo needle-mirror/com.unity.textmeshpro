@@ -13,11 +13,11 @@ using UnityEngine.UI.CoroutineTween;
 namespace TMPro
 {
 
-    [ExecuteInEditMode]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(RectTransform))]
     [RequireComponent(typeof(CanvasRenderer))]
     [AddComponentMenu("UI/TextMeshPro - Text (UI)", 11)]
+    [ExecuteAlways]
     public partial class TextMeshProUGUI : TMP_Text, ILayoutElement
     {
         /// <summary>
@@ -503,8 +503,8 @@ namespace TMPro
         /// <returns></returns>
         public override TMP_TextInfo GetTextInfo(string text)
         {
-            StringToCharArray(text, ref m_char_buffer);
-            SetArraySizes(m_char_buffer);
+            StringToCharArray(text, ref m_TextParsingBuffer);
+            SetArraySizes(m_TextParsingBuffer);
 
             m_renderMode = TextRenderFlags.DontRender;
 

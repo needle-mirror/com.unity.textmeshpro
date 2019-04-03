@@ -8,7 +8,6 @@ using System.Collections.Generic;
 namespace TMPro
 {
     [System.Serializable]
-    [ExecuteInEditMode]
     public class TMP_Settings : ScriptableObject
     {
         private static TMP_Settings s_Instance;
@@ -18,7 +17,7 @@ namespace TMPro
         /// </summary>
         public static string version
         {
-            get { return "1.3.0"; }
+            get { return "1.4.0"; }
         }
 
         /// <summary>
@@ -72,11 +71,22 @@ namespace TMPro
         private bool m_enableParseEscapeCharacters;
 
         /// <summary>
-        /// The character the will be used as a replacement for missing glyphs in a font asset.
+        /// Controls if Raycast Target is enabled by default on newly created text objects.
+        /// </summary>
+        public static bool enableRaycastTarget
+        {
+            get { return instance.m_EnableRaycastTarget; }
+        }
+        [SerializeField]
+        private bool m_EnableRaycastTarget = true;
+
+        /// <summary>
+        /// The character that will be used as a replacement for missing glyphs in a font asset.
         /// </summary>
         public static int missingGlyphCharacter
         {
             get { return instance.m_missingGlyphCharacter; }
+            set { instance.m_missingGlyphCharacter = value; }
         }
         [SerializeField]
         private int m_missingGlyphCharacter;
@@ -294,7 +304,7 @@ namespace TMPro
                     if (TMP_Settings.s_Instance == null)
                     {
                         // Open TMP Resources Importer
-                        PackageResourceImporterWindow.ShowPackageImporterWindow();
+                        TMP_PackageResourceImporterWindow.ShowPackageImporterWindow();
                     }
                     #endif
                 }

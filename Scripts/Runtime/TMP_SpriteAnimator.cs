@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.TextCore;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -43,10 +44,8 @@ namespace TMPro
 
         public void DoSpriteAnimation(int currentCharacter, TMP_SpriteAsset spriteAsset, int start, int end, int framerate)
         {
-            bool isPlaying = false;
-
             // Need to add tracking of coroutines that have been lunched for this text object.
-            if (!m_animations.TryGetValue(currentCharacter, out isPlaying))
+            if (!m_animations.TryGetValue(currentCharacter, out bool isPlaying))
             {
                 StartCoroutine(DoSpriteAnimationInternal(currentCharacter, spriteAsset, start, end, framerate));
                 m_animations.Add(currentCharacter, true);
@@ -64,8 +63,8 @@ namespace TMPro
             int currentFrame = start;
 
             // Make sure end frame does not exceed the number of sprites in the sprite asset.
-            if (end > spriteAsset.spriteInfoList.Count)
-                end = spriteAsset.spriteInfoList.Count - 1;
+            if (end > spriteAsset.spriteCharacterTable.Count)
+                end = spriteAsset.spriteCharacterTable.Count - 1;
 
             // Get a reference to the geometry of the current character.
             TMP_CharacterInfo charInfo = m_TextComponent.textInfo.characterInfo[currentCharacter];
@@ -85,17 +84,17 @@ namespace TMPro
                     elapsedTime = 0;
 
                     // Get a reference to the current sprite
-                    TMP_Sprite sprite = spriteAsset.spriteInfoList[currentFrame];
+                    TMP_SpriteCharacter spriteCharacter = spriteAsset.spriteCharacterTable[currentFrame];
 
                     // Update the vertices for the new sprite
                     Vector3[] vertices = meshInfo.vertices;
 
                     Vector2 origin = new Vector2(charInfo.origin, charInfo.baseLine);
-                    float spriteScale = charInfo.fontAsset.fontInfo.Ascender / sprite.height * sprite.scale * charInfo.scale;
+                    float spriteScale = charInfo.fontAsset.faceInfo.ascentLine / spriteCharacter.glyph.metrics.height * spriteCharacter.scale * charInfo.scale;
 
-                    Vector3 bl = new Vector3(origin.x + sprite.xOffset * spriteScale, origin.y + (sprite.yOffset - sprite.height) * spriteScale);
-                    Vector3 tl = new Vector3(bl.x, origin.y + sprite.yOffset * spriteScale);
-                    Vector3 tr = new Vector3(origin.x + (sprite.xOffset + sprite.width) * spriteScale, tl.y);
+                    Vector3 bl = new Vector3(origin.x + spriteCharacter.glyph.metrics.horizontalBearingX * spriteScale, origin.y + (spriteCharacter.glyph.metrics.horizontalBearingY - spriteCharacter.glyph.metrics.height) * spriteScale);
+                    Vector3 tl = new Vector3(bl.x, origin.y + spriteCharacter.glyph.metrics.horizontalBearingY * spriteScale);
+                    Vector3 tr = new Vector3(origin.x + (spriteCharacter.glyph.metrics.horizontalBearingX + spriteCharacter.glyph.metrics.width) * spriteScale, tl.y);
                     Vector3 br = new Vector3(tr.x, bl.y);
 
                     vertices[vertexIndex + 0] = bl;
@@ -106,9 +105,9 @@ namespace TMPro
                     // Update the UV to point to the new sprite
                     Vector2[] uvs0 = meshInfo.uvs0;
 
-                    Vector2 uv0 = new Vector2(sprite.x / spriteAsset.spriteSheet.width, sprite.y / spriteAsset.spriteSheet.height);
-                    Vector2 uv1 = new Vector2(uv0.x, (sprite.y + sprite.height) / spriteAsset.spriteSheet.height);
-                    Vector2 uv2 = new Vector2((sprite.x + sprite.width) / spriteAsset.spriteSheet.width, uv1.y);
+                    Vector2 uv0 = new Vector2((float)spriteCharacter.glyph.glyphRect.x / spriteAsset.spriteSheet.width, (float)spriteCharacter.glyph.glyphRect.y / spriteAsset.spriteSheet.height);
+                    Vector2 uv1 = new Vector2(uv0.x, (float)(spriteCharacter.glyph.glyphRect.y + spriteCharacter.glyph.glyphRect.height) / spriteAsset.spriteSheet.height);
+                    Vector2 uv2 = new Vector2((float)(spriteCharacter.glyph.glyphRect.x + spriteCharacter.glyph.glyphRect.width) / spriteAsset.spriteSheet.width, uv1.y);
                     Vector2 uv3 = new Vector2(uv2.x, uv0.y);
 
                     uvs0[vertexIndex + 0] = uv0;

@@ -60,18 +60,20 @@ namespace TMPro
         [OneTimeSetUp]
         public void Setup()
         {
-            if (Directory.Exists(Path.GetFullPath("Assets/TextMesh Pro")) == false)
+            if (Directory.Exists(Path.GetFullPath("Assets/TextMesh Pro")) || Directory.Exists(Path.GetFullPath("Packages/com.unity.textmeshpro.tests/TextMesh Pro")))
+            {
+                GameObject textObject = new GameObject("Text Object");
+                m_TextComponent = textObject.AddComponent<TextMeshPro>();
+
+                m_TextComponent.fontSize = 18;
+            }
+            else
             {
                 Debug.Log("Skipping over Editor tests as TMP Essential Resources are missing from the current test project.");
                 Assert.Ignore();
 
                 return;
             }
-
-            GameObject textObject = new GameObject("Text Object");
-            m_TextComponent = textObject.AddComponent<TextMeshPro>();
-
-            m_TextComponent.fontSize = 18;
         }
 
 

@@ -6,11 +6,12 @@ using UnityEngine.UI;
 
 namespace TMPro
 {
-    [ExecuteInEditMode]
+
     [DisallowMultipleComponent]
     [RequireComponent(typeof(MeshRenderer))]
     [RequireComponent(typeof(MeshFilter))] 
     [AddComponentMenu("Mesh/TextMeshPro - Text")]
+    [ExecuteAlways]
     public partial class TextMeshPro : TMP_Text, ILayoutElement
     {
         // Public Properties and Serializable Properties
@@ -24,7 +25,6 @@ namespace TMPro
             set { m_renderer.sortingLayerID = value; }
         }
 
-
         /// <summary>
         /// Sets the Renderer's sorting order within the assigned layer.
         /// </summary>
@@ -33,7 +33,6 @@ namespace TMPro
             get { return m_renderer.sortingOrder; }
             set { m_renderer.sortingOrder = value; }
         }
-
 
         /// <summary>
         /// Determines if the size of the text container will be adjusted to fit the text object when it is first created.
@@ -321,8 +320,8 @@ namespace TMPro
         /// <returns></returns>
         public override TMP_TextInfo GetTextInfo(string text)
         {
-            StringToCharArray(text, ref m_char_buffer);
-            SetArraySizes(m_char_buffer);
+            StringToCharArray(text, ref m_TextParsingBuffer);
+            SetArraySizes(m_TextParsingBuffer);
 
             m_renderMode = TextRenderFlags.DontRender;
 

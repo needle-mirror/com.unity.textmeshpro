@@ -4,7 +4,7 @@ using UnityEditor;
 namespace TMPro.EditorUtilities
 {
 
-    [CustomEditor(typeof(TextMeshPro)), CanEditMultipleObjects]
+    [CustomEditor(typeof(TextMeshPro), true), CanEditMultipleObjects]
     public class TMP_EditorPanel : TMP_BaseEditorPanel
     {
         static readonly GUIContent k_SortingLayerLabel = new GUIContent("Sorting Layer", "Name of the Renderer's sorting layer.");
@@ -16,6 +16,8 @@ namespace TMPro.EditorUtilities
         
         SerializedProperty m_IsOrthographicProp;
 
+        Renderer m_Renderer;
+
         protected override void OnEnable()
         {
             base.OnEnable();
@@ -23,6 +25,8 @@ namespace TMPro.EditorUtilities
             m_IsOrthographicProp = serializedObject.FindProperty("m_isOrthographic");
             
             m_IsVolumetricTextProp = serializedObject.FindProperty("m_isVolumetricText");
+
+            m_Renderer = m_TextComponent.GetComponent<Renderer>();
         }
 
         protected override void DrawExtraSettings()
@@ -56,6 +60,8 @@ namespace TMPro.EditorUtilities
 
         protected void DrawSortingLayer()
         {
+            Undo.RecordObject(m_Renderer, "Sorting Layer Change");
+
             EditorGUI.BeginChangeCheck();
 
             // SORTING LAYERS

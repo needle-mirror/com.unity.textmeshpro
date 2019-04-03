@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Serialization;
+using UnityEngine.TextCore;
+using UnityEngine.TextCore.LowLevel;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,7 +14,7 @@ namespace TMPro
     /// Class that contains the basic information about the font.
     /// </summary>
     [Serializable]
-    public class FaceInfo
+    public class FaceInfo_Legacy
     {
         public string Name;
         public float PointSize;
@@ -47,7 +49,7 @@ namespace TMPro
 
     // Class which contains the Glyph Info / Character definition for each character contained in the font asset.
     [Serializable]
-    public class TMP_Glyph : TMP_TextElement
+    public class TMP_Glyph : TMP_TextElement_Legacy
     {
         /// <summary>
         /// Function to create a deep copy of a GlyphInfo.
@@ -93,6 +95,37 @@ namespace TMPro
         public float fontStyleModifier;
         public int renderMode;
         public bool includeFontFeatures;
+
+        internal FontAssetCreationSettings(string sourceFontFileGUID, int pointSize, int pointSizeSamplingMode, int padding, int packingMode, int atlasWidth, int atlasHeight, int characterSelectionMode, string characterSet, int renderMode)
+        {
+            this.sourceFontFileName = string.Empty;
+            this.sourceFontFileGUID = sourceFontFileGUID;
+            this.pointSize = pointSize;
+            this.pointSizeSamplingMode = pointSizeSamplingMode;
+            this.padding = padding;
+            this.packingMode = packingMode;
+            this.atlasWidth = atlasWidth;
+            this.atlasHeight = atlasHeight;
+            this.characterSequence = characterSet;
+            this.characterSetSelectionMode = characterSelectionMode;
+            this.renderMode = renderMode;
+
+            this.referencedFontAssetGUID = string.Empty;
+            this.referencedTextAssetGUID = string.Empty;
+            this.fontStyle = 0;
+            this.fontStyleModifier = 0;
+            this.includeFontFeatures = false;
+        }
+    }
+
+    /// <summary>
+    /// Contains the font assets for the regular and italic styles associated with a given font weight.
+    /// </summary>
+    [Serializable]
+    public struct TMP_FontWeightPair
+    {
+        public TMP_FontAsset regularTypeface;
+        public TMP_FontAsset italicTypeface;
     }
 
 
@@ -121,6 +154,14 @@ namespace TMPro
         public float xAdvance;
         public float yAdvance;
 
+        internal GlyphValueRecord (UnityEngine.TextCore.LowLevel.GlyphValueRecord valueRecord)
+        {
+            this.xPlacement = valueRecord.xPlacement;
+            this.yPlacement = valueRecord.yPlacement;
+            this.xAdvance = valueRecord.xAdvance;
+            this.yAdvance = valueRecord.yAdvance;
+        }
+
         public static GlyphValueRecord operator +(GlyphValueRecord a, GlyphValueRecord b)
         {
             GlyphValueRecord c;
@@ -141,7 +182,7 @@ namespace TMPro
         /// The first glyph part of a kerning pair.
         /// </summary>
         public uint firstGlyph
-    {
+        {
             get { return m_FirstGlyph; }
             set { m_FirstGlyph = value; }
         }
@@ -177,13 +218,23 @@ namespace TMPro
         public GlyphValueRecord secondGlyphAdjustments
         {
             get { return m_SecondGlyphAdjustments; }
-    }
+        }
         [SerializeField]
         private GlyphValueRecord m_SecondGlyphAdjustments;
 
         [FormerlySerializedAs("XadvanceOffset")]
         public float xOffset;
 
+        /// <summary>
+        /// Determines if the Character Spacing property of the text object will affect the kerning pair.
+        /// This is mostly relevant when using Diacritical marks to prevent Character Spacing from altering the 
+        /// </summary>
+        public bool ignoreSpacingAdjustments
+        {
+            get { return m_IgnoreSpacingAdjustments; }
+        }
+        [SerializeField]
+        private bool m_IgnoreSpacingAdjustments = false;
 
         public KerningPair()
         {
@@ -195,7 +246,7 @@ namespace TMPro
         }
 
         public KerningPair(uint left, uint right, float offset)
-    {
+        {
             firstGlyph = left;
             m_SecondGlyph = right;
             xOffset = offset;
@@ -222,7 +273,6 @@ namespace TMPro
     public class KerningTable
     {
         public List<KerningPair> kerningPairs;
-
 
         public KerningTable()
         {
@@ -322,17 +372,17 @@ namespace TMPro
         /// Search through the given font and its fallbacks for the specified character.
         /// </summary>
         /// <param name="font">The font asset to search for the given character.</param>
-        /// <param name="character">The character to find.</param>
-        /// <param name="glyph">out parameter containing the glyph for the specified character (if found).</param>
+        /// <param name="unicode">The character to find.</param>
+        /// <param name="character">out parameter containing the glyph for the specified character (if found).</param>
         /// <returns></returns>
-        public static TMP_FontAsset SearchForGlyph(TMP_FontAsset font, int character, out TMP_Glyph glyph)
+        public static TMP_FontAsset SearchForCharacter(TMP_FontAsset font, uint unicode, out TMP_Character character)
         {
             if (k_searchedFontAssets == null)
                 k_searchedFontAssets = new List<int>();
 
             k_searchedFontAssets.Clear();
 
-            return SearchForGlyphInternal(font, character, out glyph);
+            return SearchForCharacterInternal(font, unicode, out character);
         }
 
 
@@ -340,30 +390,30 @@ namespace TMPro
         /// Search through the given list of fonts and their possible fallbacks for the specified character.
         /// </summary>
         /// <param name="fonts"></param>
+        /// <param name="unicode"></param>
         /// <param name="character"></param>
-        /// <param name="glyph"></param>
         /// <returns></returns>
-        public static TMP_FontAsset SearchForGlyph(List<TMP_FontAsset> fonts, int character, out TMP_Glyph glyph)
+        public static TMP_FontAsset SearchForCharacter(List<TMP_FontAsset> fonts, uint unicode, out TMP_Character character)
         {
-            return SearchForGlyphInternal(fonts, character, out glyph);
+            return SearchForCharacterInternal(fonts, unicode, out character);
         }
 
 
-        private static TMP_FontAsset SearchForGlyphInternal (TMP_FontAsset font, int character, out TMP_Glyph glyph)
+        private static TMP_FontAsset SearchForCharacterInternal(TMP_FontAsset font, uint unicode, out TMP_Character character)
         {
-            glyph = null;
+            character = null;
 
             if (font == null) return null;
 
-            if (font.characterDictionary.TryGetValue(character, out glyph))
+            if (font.characterLookupTable.TryGetValue(unicode, out character))
             {
                 return font;
             }
-            else if (font.fallbackFontAssets != null && font.fallbackFontAssets.Count > 0)
+            else if (font.fallbackFontAssetTable != null && font.fallbackFontAssetTable.Count > 0)
             {
-                for (int i = 0; i < font.fallbackFontAssets.Count && glyph == null; i++)
+                for (int i = 0; i < font.fallbackFontAssetTable.Count && character == null; i++)
                 {
-                    TMP_FontAsset temp = font.fallbackFontAssets[i];
+                    TMP_FontAsset temp = font.fallbackFontAssetTable[i];
                     if (temp == null) continue;
 
                     int id = temp.GetInstanceID();
@@ -374,7 +424,7 @@ namespace TMPro
                     // Add to list of font assets already searched.
                     k_searchedFontAssets.Add(id);
 
-                    temp = SearchForGlyphInternal(temp, character, out glyph);
+                    temp = SearchForCharacterInternal(temp, unicode, out character);
 
                     if (temp != null)
                         return temp;
@@ -385,15 +435,15 @@ namespace TMPro
         }
 
 
-        private static TMP_FontAsset SearchForGlyphInternal(List<TMP_FontAsset> fonts, int character, out TMP_Glyph glyph)
+        private static TMP_FontAsset SearchForCharacterInternal(List<TMP_FontAsset> fonts, uint unicode, out TMP_Character character)
         {
-            glyph = null;
+            character = null;
 
             if (fonts != null && fonts.Count > 0)
             {
                 for (int i = 0; i < fonts.Count; i++)
                 {
-                    TMP_FontAsset fontAsset = SearchForGlyphInternal(fonts[i], character, out glyph);
+                    TMP_FontAsset fontAsset = SearchForCharacterInternal(fonts[i], unicode, out character);
 
                     if (fontAsset != null)
                         return fontAsset;

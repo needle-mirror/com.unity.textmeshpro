@@ -79,7 +79,7 @@ namespace TMPro.EditorUtilities
 
                 if (EditorGUI.EndChangeCheck())
                 {
-                    prop_unicode.intValue = TMP_TextUtilities.StringToInt(unicode);
+                    prop_unicode.intValue = TMP_TextUtilities.StringHexToInt(unicode);
 
                     property.serializedObject.ApplyModifiedProperties();
 

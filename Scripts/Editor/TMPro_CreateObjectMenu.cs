@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEditor.Experimental.SceneManagement;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
@@ -13,10 +16,13 @@ namespace TMPro.EditorUtilities
         /// Create a TextMeshPro object that works with the Mesh Renderer
         /// </summary>
         /// <param name="command"></param>
-        [MenuItem("GameObject/3D Object/TextMeshPro - Text", false, 30)]
+        [MenuItem("GameObject/3D Object/Text - TextMeshPro", false, 30)]
         static void CreateTextMeshProObjectPerform(MenuCommand command)
         {
-            GameObject go = new GameObject("TextMeshPro");
+            GameObject go = new GameObject("Text (TMP)");
+
+            // Add support for new prefab mode
+            StageUtility.PlaceGameObjectInCurrentStage(go);
 
             TextMeshPro textMeshPro = go.AddComponent<TextMeshPro>();
             textMeshPro.text = "Sample text";
@@ -39,85 +45,35 @@ namespace TMPro.EditorUtilities
         /// Create a TextMeshPro object that works with the CanvasRenderer
         /// </summary>
         /// <param name="command"></param>
-        [MenuItem("GameObject/UI/TextMeshPro - Text", false, 2001)]
-        static void CreateTextMeshProGuiObjectPerform(MenuCommand command)
+        [MenuItem("GameObject/UI/Text - TextMeshPro", false, 2001)]
+        static void CreateTextMeshProGuiObjectPerform(MenuCommand menuCommand)
         {
+            GameObject go = TMP_DefaultControls.CreateText(GetStandardResources());
 
-            // Check if there is a Canvas in the scene
-            Canvas canvas = Object.FindObjectOfType<Canvas>();
-            if (canvas == null)
-            {
-                // Create new Canvas since none exists in the scene.
-                GameObject canvasObject = new GameObject("Canvas");
-                canvas = canvasObject.AddComponent<Canvas>();
-                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            // Override text color and font size
+            TMP_Text textComponent = go.GetComponent<TMP_Text>();
+            textComponent.color = Color.white;
+            if (textComponent.m_isWaitingOnResourceLoad == false)
+                textComponent.fontSize = TMP_Settings.defaultFontSize;
 
-                // Add a Graphic Raycaster Component as well
-                canvas.gameObject.AddComponent<GraphicRaycaster>();
+            PlaceUIElementRoot(go, menuCommand);
+        }
 
-                Undo.RegisterCreatedObjectUndo(canvasObject, "Create " + canvasObject.name);
-            }
+        [MenuItem("GameObject/UI/Button - TextMeshPro", false, 2031)]
+        static public void AddButton(MenuCommand menuCommand)
+        {
+            GameObject go = TMP_DefaultControls.CreateButton(GetStandardResources());
 
+            // Override font size
+            TMP_Text textComponent = go.GetComponentInChildren<TMP_Text>();
+            textComponent.fontSize = 24;
 
-            // Create the TextMeshProUGUI Object
-            GameObject go = new GameObject("TextMeshPro Text");
-            RectTransform goRectTransform = go.AddComponent<RectTransform>();
-
-            Undo.RegisterCreatedObjectUndo((Object)go, "Create " + go.name);
-
-            // Check if object is being create with left or right click
-            GameObject contextObject = command.context as GameObject;
-            if (contextObject == null)
-            {
-                //goRectTransform.sizeDelta = new Vector2(200f, 50f);
-                GameObjectUtility.SetParentAndAlign(go, canvas.gameObject);
-
-                TextMeshProUGUI textMeshPro = go.AddComponent<TextMeshProUGUI>();
-                textMeshPro.text = "New Text";
-                textMeshPro.alignment = TextAlignmentOptions.TopLeft;
-            }
-            else
-            {
-                if (contextObject.GetComponent<Button>() != null)
-                {
-                    goRectTransform.sizeDelta = Vector2.zero;
-                    goRectTransform.anchorMin = Vector2.zero;
-                    goRectTransform.anchorMax = Vector2.one;
-
-                    GameObjectUtility.SetParentAndAlign(go, contextObject);
-
-                    TextMeshProUGUI textMeshPro = go.AddComponent<TextMeshProUGUI>();
-                    textMeshPro.text = "Button";
-                    textMeshPro.fontSize = 24;
-                    textMeshPro.alignment = TextAlignmentOptions.Center;
-                }
-                else
-                {
-                    //goRectTransform.sizeDelta = new Vector2(200f, 50f);
-
-                    GameObjectUtility.SetParentAndAlign(go, contextObject);
-
-                    TextMeshProUGUI textMeshPro = go.AddComponent<TextMeshProUGUI>();
-                    textMeshPro.text = "New Text";
-                    textMeshPro.alignment = TextAlignmentOptions.TopLeft;
-                }
-            }
-
-         
-            // Check if an event system already exists in the scene
-            if (!Object.FindObjectOfType<EventSystem>())
-            {
-                GameObject eventObject = new GameObject("EventSystem", typeof(EventSystem));
-                eventObject.AddComponent<StandaloneInputModule>();
-                Undo.RegisterCreatedObjectUndo(eventObject, "Create " + eventObject.name);
-            }
-
-            Selection.activeGameObject = go;
+            PlaceUIElementRoot(go, menuCommand);
         }
 
 
 
-        [MenuItem("GameObject/UI/TextMeshPro - Input Field", false, 2037)]
+        [MenuItem("GameObject/UI/Input Field - TextMeshPro", false, 2037)]
         static void AddTextMeshProInputField(MenuCommand menuCommand)
         {
             GameObject go = TMP_DefaultControls.CreateInputField(GetStandardResources());
@@ -125,7 +81,7 @@ namespace TMPro.EditorUtilities
         }
 
 
-        [MenuItem("GameObject/UI/TextMeshPro - Dropdown", false, 2036)]
+        [MenuItem("GameObject/UI/Dropdown - TextMeshPro", false, 2036)]
         static public void AddDropdown(MenuCommand menuCommand)
         {
             GameObject go = TMP_DefaultControls.CreateDropdown(GetStandardResources());
@@ -174,10 +130,9 @@ namespace TMPro.EditorUtilities
                 return;
 
             // Create world space Plane from canvas position.
-            Vector2 localPlanePosition;
             Camera camera = sceneView.camera;
             Vector3 position = Vector3.zero;
-            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRTransform, new Vector2(camera.pixelWidth / 2, camera.pixelHeight / 2), camera, out localPlanePosition))
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRTransform, new Vector2(camera.pixelWidth / 2, camera.pixelHeight / 2), camera, out Vector2 localPlanePosition))
             {
                 // Adjust for canvas pivot
                 localPlanePosition.x = localPlanePosition.x + canvasRTransform.sizeDelta.x * canvasRTransform.pivot.x;
@@ -211,18 +166,48 @@ namespace TMPro.EditorUtilities
         private static void PlaceUIElementRoot(GameObject element, MenuCommand menuCommand)
         {
             GameObject parent = menuCommand.context as GameObject;
-            if (parent == null || parent.GetComponentInParent<Canvas>() == null)
+            bool explicitParentChoice = true;
+            if (parent == null)
             {
                 parent = GetOrCreateCanvasGameObject();
+                explicitParentChoice = false;
+
+                // If in Prefab Mode, Canvas has to be part of Prefab contents,
+                // otherwise use Prefab root instead.
+                PrefabStage prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+                if (prefabStage != null && !prefabStage.IsPartOfPrefabContents(parent))
+                    parent = prefabStage.prefabContentsRoot;
+            }
+            if (parent.GetComponentInParent<Canvas>() == null)
+            {
+                // Create canvas under context GameObject,
+                // and make that be the parent which UI element is added under.
+                GameObject canvas = CreateNewUI();
+                canvas.transform.SetParent(parent.transform, false);
+                parent = canvas;
             }
 
-            string uniqueName = GameObjectUtility.GetUniqueNameForSibling(parent.transform, element.name);
-            element.name = uniqueName;
-            Undo.RegisterCreatedObjectUndo(element, "Create " + element.name);
-            Undo.SetTransformParent(element.transform, parent.transform, "Parent " + element.name);
+            // Setting the element to be a child of an element already in the scene should
+            // be sufficient to also move the element to that scene.
+            // However, it seems the element needs to be already in its destination scene when the
+            // RegisterCreatedObjectUndo is performed; otherwise the scene it was created in is dirtied.
+            SceneManager.MoveGameObjectToScene(element, parent.scene);
+
+            if (element.transform.parent == null)
+            {
+                Undo.SetTransformParent(element.transform, parent.transform, "Parent " + element.name);
+            }
+
+            GameObjectUtility.EnsureUniqueNameForSibling(element);
+
+            // We have to fix up the undo name since the name of the object was only known after reparenting it.
+            Undo.SetCurrentGroupName("Create " + element.name);
+
             GameObjectUtility.SetParentAndAlign(element, parent);
-            if (parent != menuCommand.context) // not a context click, so center in sceneview
+            if (!explicitParentChoice) // not a context click, so center in sceneview
                 SetPositionVisibleinSceneView(parent.GetComponent<RectTransform>(), element.GetComponent<RectTransform>());
+
+            Undo.RegisterCreatedObjectUndo(element, "Create " + element.name);
 
             Selection.activeGameObject = element;
         }
@@ -237,10 +222,25 @@ namespace TMPro.EditorUtilities
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             root.AddComponent<CanvasScaler>();
             root.AddComponent<GraphicRaycaster>();
+
+            // Works for all stages.
+            StageUtility.PlaceGameObjectInCurrentStage(root);
+            bool customScene = false;
+            PrefabStage prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+            if (prefabStage != null)
+            {
+                root.transform.SetParent(prefabStage.prefabContentsRoot.transform, false);
+                customScene = true;
+            }
+
             Undo.RegisterCreatedObjectUndo(root, "Create " + root.name);
 
-            // if there is no event system add one...
-            CreateEventSystem(false);
+            // If there is no event system add one...
+            // No need to place event system in custom scene as these are temporary anyway.
+            // It can be argued for or against placing it in the user scenes,
+            // but let's not modify scene user is not currently looking at.
+            if (!customScene)
+                CreateEventSystem(false);
             return root;
         }
 
@@ -271,22 +271,41 @@ namespace TMPro.EditorUtilities
         }
 
 
+        // Helper function that returns a Canvas GameObject; preferably a parent of the selection, or other existing Canvas.
         static public GameObject GetOrCreateCanvasGameObject()
         {
             GameObject selectedGo = Selection.activeGameObject;
 
             // Try to find a gameobject that is the selected GO or one if its parents.
             Canvas canvas = (selectedGo != null) ? selectedGo.GetComponentInParent<Canvas>() : null;
-            if (canvas != null && canvas.gameObject.activeInHierarchy)
+            if (IsValidCanvas(canvas))
                 return canvas.gameObject;
 
-            // No canvas in selection or its parents? Then use just any canvas..
-            canvas = Object.FindObjectOfType(typeof(Canvas)) as Canvas;
-            if (canvas != null && canvas.gameObject.activeInHierarchy)
-                return canvas.gameObject;
+            // No canvas in selection or its parents? Then use any valid canvas.
+            // We have to find all loaded Canvases, not just the ones in main scenes.
+            Canvas[] canvasArray = StageUtility.GetCurrentStageHandle().FindComponentsOfType<Canvas>();
+            for (int i = 0; i < canvasArray.Length; i++)
+                if (IsValidCanvas(canvasArray[i]))
+                    return canvasArray[i].gameObject;
 
             // No canvas in the scene at all? Then create a new one.
             return CreateNewUI();
+        }
+
+        static bool IsValidCanvas(Canvas canvas)
+        {
+            if (canvas == null || !canvas.gameObject.activeInHierarchy)
+                return false;
+
+            // It's important that the non-editable canvas from a prefab scene won't be rejected,
+            // but canvases not visible in the Hierarchy at all do. Don't check for HideAndDontSave.
+            if (EditorUtility.IsPersistent(canvas) || (canvas.hideFlags & HideFlags.HideInHierarchy) != 0)
+                return false;
+
+            if (StageUtility.GetStageHandle(canvas.gameObject) != StageUtility.GetCurrentStageHandle())
+                return false;
+
+            return true;
         }
     }
 }

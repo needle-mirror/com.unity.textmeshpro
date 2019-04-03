@@ -33,7 +33,8 @@ namespace TMPro
         public static int ID_GradientScale; 
         public static int ID_ScaleX; 
         public static int ID_ScaleY; 
-        public static int ID_PerspectiveFilter; 
+        public static int ID_PerspectiveFilter;
+        public static int ID_Sharpness;
 
         public static int ID_TextureWidth; 
         public static int ID_TextureHeight; 
@@ -89,6 +90,37 @@ namespace TMPro
 
 
         /// <summary>
+        /// Returns a reference to the mobile distance field shader.
+        /// </summary>
+        internal static Shader ShaderRef_MobileSDF
+        {
+            get
+            {
+                if (k_ShaderRef_MobileSDF == null)
+                    k_ShaderRef_MobileSDF = Shader.Find("TextMeshPro/Mobile/Distance Field");
+
+                return k_ShaderRef_MobileSDF;
+            }
+        }
+        static Shader k_ShaderRef_MobileSDF;
+
+        /// <summary>
+        /// Returns a reference to the mobile bitmap shader.
+        /// </summary>
+        internal static Shader ShaderRef_MobileBitmap
+        {
+            get
+            {
+                if (k_ShaderRef_MobileBitmap == null)
+                    k_ShaderRef_MobileBitmap = Shader.Find("TextMeshPro/Mobile/Bitmap");
+
+                return k_ShaderRef_MobileBitmap;
+            }
+        }
+        static Shader k_ShaderRef_MobileBitmap;
+
+
+        /// <summary>
         /// 
         /// </summary>
         static ShaderUtilities()
@@ -132,6 +164,7 @@ namespace TMPro
                 ID_ScaleX = Shader.PropertyToID("_ScaleX");
                 ID_ScaleY = Shader.PropertyToID("_ScaleY");
                 ID_PerspectiveFilter = Shader.PropertyToID("_PerspectiveFilter");
+                ID_Sharpness = Shader.PropertyToID("_Sharpness");
 
                 ID_TextureWidth = Shader.PropertyToID("_TextureWidth");
                 ID_TextureHeight = Shader.PropertyToID("_TextureHeight");
@@ -169,6 +202,13 @@ namespace TMPro
                 ID_ScaleRatio_A = Shader.PropertyToID("_ScaleRatioA");
                 ID_ScaleRatio_B = Shader.PropertyToID("_ScaleRatioB");
                 ID_ScaleRatio_C = Shader.PropertyToID("_ScaleRatioC");
+
+                // Set internal shader references
+                if (k_ShaderRef_MobileSDF == null)
+                    k_ShaderRef_MobileSDF = Shader.Find("TextMeshPro/Mobile/Distance Field");
+
+                if (k_ShaderRef_MobileBitmap == null)
+                    k_ShaderRef_MobileBitmap = Shader.Find("TextMeshPro/Mobile/Bitmap");
             }
         }
 
@@ -396,7 +436,7 @@ namespace TMPro
             uniformPadding = Mathf.Max(padding.z, uniformPadding);
             uniformPadding = Mathf.Max(padding.w, uniformPadding);
 
-            return uniformPadding + 0.5f;
+            return uniformPadding + 1.25f;
         }
 
 

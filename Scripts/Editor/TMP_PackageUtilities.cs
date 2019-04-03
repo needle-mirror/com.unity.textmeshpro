@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.IO;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro.EditorUtilities;
@@ -193,7 +194,7 @@ namespace TMPro
 
             // Get list of GUIDs for assets that might contain references to previous GUIDs that require updating.
             string searchFolder = string.IsNullOrEmpty(m_ProjectFolderToScan) ? "Assets" : ("Assets/" + m_ProjectFolderToScan);
-            string[] projectGUIDs = AssetDatabase.FindAssets("t:Object", new string[] { searchFolder });
+            string[] projectGUIDs = AssetDatabase.FindAssets("t:Object", new string[] { searchFolder }).Distinct().ToArray();
             m_ScanningTotalFiles = projectGUIDs.Length;
 
             bool cancelScanning = false;

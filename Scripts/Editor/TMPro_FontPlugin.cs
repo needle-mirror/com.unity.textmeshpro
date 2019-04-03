@@ -6,7 +6,8 @@ using System.Runtime.InteropServices;
 
 
 namespace TMPro.EditorUtilities 
-{   
+{
+    /*
     public class TMPro_FontPlugin
     {
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -110,5 +111,5 @@ namespace TMPro.EditorUtilities
             public int atlasWidth;
             public int atlasHeight;
         }
-     
+     */
 }

@@ -131,9 +131,6 @@ namespace TMPro.EditorUtilities
 
         protected SerializedProperty m_EnableKerningProp;
 
-        protected SerializedProperty m_InputSourceProp;
-        protected SerializedProperty m_HavePropertiesChangedProp;
-        protected SerializedProperty m_IsInputPasingRequiredProp;
         protected SerializedProperty m_IsRichTextProp;
 
         protected SerializedProperty m_HasFontAssetChangedProp;
@@ -205,10 +202,6 @@ namespace TMPro.EditorUtilities
             m_IsLinkedTextComponentProp = serializedObject.FindProperty("m_isLinkedTextComponent");
 
             m_EnableKerningProp = serializedObject.FindProperty("m_enableKerning");
-
-            m_HavePropertiesChangedProp = serializedObject.FindProperty("m_havePropertiesChanged");
-            m_InputSourceProp = serializedObject.FindProperty("m_inputSource");
-            m_IsInputPasingRequiredProp = serializedObject.FindProperty("m_isInputParsingRequired");
             
             m_EnableExtraPaddingProp = serializedObject.FindProperty("m_enableExtraPadding");
             m_IsRichTextProp = serializedObject.FindProperty("m_isRichText");
@@ -270,8 +263,8 @@ namespace TMPro.EditorUtilities
 
             if (m_HavePropertiesChanged)
             {
-                m_HavePropertiesChangedProp.boolValue = true;
                 m_HavePropertiesChanged = false;
+                m_TextComponent.havePropertiesChanged = true;
                 m_TextComponent.ComputeMarginSize();
                 EditorUtility.SetDirty(target);
             }
@@ -366,8 +359,8 @@ namespace TMPro.EditorUtilities
 
                 if (EditorGUI.EndChangeCheck() || (m_IsRightToLeftProp.boolValue && string.IsNullOrEmpty(m_RtlText)))
                 {
-                    m_InputSourceProp.enumValueIndex = 0;
-                    m_IsInputPasingRequiredProp.boolValue = true;
+                    m_TextComponent.m_inputSource = TMP_Text.TextInputSources.Text;
+                    m_TextComponent.m_isInputParsingRequired = true;
                     m_HavePropertiesChanged = true;
 
                     // Handle Left to Right or Right to Left Editor
@@ -878,7 +871,7 @@ namespace TMPro.EditorUtilities
             {
                 m_EnableWordWrappingProp.boolValue = wrapSelection == 1;
                 m_HavePropertiesChanged = true;
-                m_IsInputPasingRequiredProp.boolValue = true;
+                m_TextComponent.m_isInputParsingRequired = true;
             }
             
             // TEXT OVERFLOW
@@ -926,7 +919,7 @@ namespace TMPro.EditorUtilities
             if (EditorGUI.EndChangeCheck())
             {
                 m_HavePropertiesChanged = true;
-                m_IsInputPasingRequiredProp.boolValue = true;
+                m_TextComponent.m_isInputParsingRequired = true;
             }
 
             EditorGUILayout.Space();

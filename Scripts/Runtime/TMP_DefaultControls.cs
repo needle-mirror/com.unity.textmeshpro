@@ -116,10 +116,50 @@ namespace TMPro
             return scrollbarRoot;
         }
 
+        public static GameObject CreateButton(Resources resources)
+        {
+            GameObject buttonRoot = CreateUIElementRoot("Button", s_ThickElementSize);
+
+            GameObject childText = new GameObject("Text (TMP)");
+            childText.AddComponent<RectTransform>();
+            SetParentAndAlign(childText, buttonRoot);
+
+            Image image = buttonRoot.AddComponent<Image>();
+            image.sprite = resources.standard;
+            image.type = Image.Type.Sliced;
+            image.color = s_DefaultSelectableColor;
+
+            Button bt = buttonRoot.AddComponent<Button>();
+            SetDefaultColorTransitionValues(bt);
+
+            TextMeshProUGUI text = childText.AddComponent<TextMeshProUGUI>();
+            text.text = "Button";
+            text.alignment = TextAlignmentOptions.Center;
+            SetDefaultTextValues(text);
+
+            RectTransform textRectTransform = childText.GetComponent<RectTransform>();
+            textRectTransform.anchorMin = Vector2.zero;
+            textRectTransform.anchorMax = Vector2.one;
+            textRectTransform.sizeDelta = Vector2.zero;
+
+            return buttonRoot;
+        }
+
+        public static GameObject CreateText(Resources resources)
+        {
+            GameObject go = CreateUIElementRoot("Text (TMP)", s_ThickElementSize);
+
+            TextMeshProUGUI lbl = go.AddComponent<TextMeshProUGUI>();
+            lbl.text = "New Text";
+            SetDefaultTextValues(lbl);
+
+            return go;
+        }
+
 
         public static GameObject CreateInputField(Resources resources)
         {
-            GameObject root = CreateUIElementRoot("TextMeshPro - InputField", s_ThickElementSize);
+            GameObject root = CreateUIElementRoot("InputField (TMP)", s_ThickElementSize);
 
             GameObject textArea = CreateUIObject("Text Area", root);
             GameObject childPlaceholder = CreateUIObject("Placeholder", textArea);

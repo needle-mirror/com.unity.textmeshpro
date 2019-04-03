@@ -17,6 +17,7 @@ namespace TMPro
         private static readonly Color32 s_DefaultColor = new Color32(byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue);
         private static readonly Vector3 s_DefaultNormal = new Vector3(0.0f, 0.0f, -1f);
         private static readonly Vector4 s_DefaultTangent = new Vector4(-1f, 0.0f, 0.0f, 1f);
+        private static readonly Bounds s_DefaultBounds = new Bounds();
 
         public Mesh mesh;
         public int vertexCount;
@@ -100,7 +101,7 @@ namespace TMPro
             this.mesh.normals = this.normals;
             this.mesh.tangents = this.tangents;
             this.mesh.triangles = this.triangles;
-            this.mesh.bounds = new Bounds(Vector3.zero, new Vector3(3840, 2160, 0));
+            this.mesh.bounds = s_DefaultBounds;
         }
 
 
@@ -220,7 +221,7 @@ namespace TMPro
             this.mesh.normals = this.normals;
             this.mesh.tangents = this.tangents;
             this.mesh.triangles = this.triangles;
-            this.mesh.bounds = new Bounds(Vector3.zero, new Vector3(3840, 2160, 64));
+            this.mesh.bounds = s_DefaultBounds;
         }
 
 
@@ -447,6 +448,8 @@ namespace TMPro
 
             Array.Clear(this.vertices, 0, this.vertices.Length);
             this.vertexCount = 0;
+
+            this.mesh.bounds = s_DefaultBounds;
 
             if (uploadChanges && this.mesh != null)
                 this.mesh.vertices = this.vertices;

@@ -6,10 +6,9 @@ using System.Collections;
 
 namespace TMPro
 {
-
-    [ExecuteInEditMode]
     [RequireComponent(typeof(MeshRenderer))]
     [RequireComponent(typeof(MeshFilter))]
+    [ExecuteAlways]
     public class TMP_SubMesh : MonoBehaviour
     {
         /// <summary>
@@ -214,7 +213,7 @@ namespace TMPro
             // Register Callbacks for various events.
             if (!m_isRegisteredForEvents)
             {
-#if UNITY_EDITOR
+                #if UNITY_EDITOR
                 TMPro_EventManager.MATERIAL_PROPERTY_EVENT.Add(ON_MATERIAL_PROPERTY_CHANGED);
                 TMPro_EventManager.FONT_PROPERTY_EVENT.Add(ON_FONT_PROPERTY_CHANGED);
                 //TMPro_EventManager.TEXTMESHPRO_PROPERTY_EVENT.Add(ON_TEXTMESHPRO_PROPERTY_CHANGED);
@@ -222,7 +221,7 @@ namespace TMPro
                 //TMPro_EventManager.TEXT_STYLE_PROPERTY_EVENT.Add(ON_TEXT_STYLE_CHANGED);
                 TMPro_EventManager.SPRITE_ASSET_PROPERTY_EVENT.Add(ON_SPRITE_ASSET_PROPERTY_CHANGED);
                 //TMPro_EventManager.TMP_SETTINGS_PROPERTY_EVENT.Add(ON_TMP_SETTINGS_CHANGED);
-#endif
+                #endif
 
                 m_isRegisteredForEvents = true;
             }
@@ -262,7 +261,7 @@ namespace TMPro
                 m_fallbackMaterial = null;
             }
 
-#if UNITY_EDITOR
+            #if UNITY_EDITOR
             // Unregister the event this object was listening to
             TMPro_EventManager.MATERIAL_PROPERTY_EVENT.Remove(ON_MATERIAL_PROPERTY_CHANGED);
             TMPro_EventManager.FONT_PROPERTY_EVENT.Remove(ON_FONT_PROPERTY_CHANGED);
@@ -271,13 +270,13 @@ namespace TMPro
             //TMPro_EventManager.TEXT_STYLE_PROPERTY_EVENT.Remove(ON_TEXT_STYLE_CHANGED);
             TMPro_EventManager.SPRITE_ASSET_PROPERTY_EVENT.Remove(ON_SPRITE_ASSET_PROPERTY_CHANGED);
             //TMPro_EventManager.TMP_SETTINGS_PROPERTY_EVENT.Remove(ON_TMP_SETTINGS_CHANGED);
-#endif
+            #endif
             m_isRegisteredForEvents = false;
         }
 
 
 
-#if UNITY_EDITOR
+        #if UNITY_EDITOR
         // Event received when custom material editor properties are changed.
         void ON_MATERIAL_PROPERTY_CHANGED(bool isChanged, Material mat)
         {
@@ -366,7 +365,7 @@ namespace TMPro
         //    //SetVerticesDirty();
         //    SetMaterialDirty();
         }
-#endif
+        #endif
 
 
 
@@ -470,10 +469,10 @@ namespace TMPro
 
             SetMaterialDirty();
 
-#if UNITY_EDITOR
+            #if UNITY_EDITOR
             if (m_sharedMaterial != null)
                 gameObject.name = "TMP SubMesh [" + m_sharedMaterial.name + "]";
-#endif
+            #endif
         }
 
 
@@ -546,10 +545,10 @@ namespace TMPro
 
             m_renderer.sharedMaterial = m_sharedMaterial;
 
-#if UNITY_EDITOR
+            #if UNITY_EDITOR
             if (m_sharedMaterial != null && gameObject.name != "TMP SubMesh [" + m_sharedMaterial.name + "]")
                 gameObject.name = "TMP SubMesh [" + m_sharedMaterial.name + "]";
-#endif
+            #endif
         }
 
         /// <summary>

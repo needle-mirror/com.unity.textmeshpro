@@ -1,6 +1,40 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [1.4.0] - 2018-09-10
+### Changes
+- Renamed TMPro_FontUtilities to TMP_FontAssetCommon to more accurately reflect the content of this file.
+- Accessing the TextMesh Pro Settings via the new Edit - Settings menu when TMP Essential Resources have not yet been imported in the project will no longer open a new window to provide the options to import these resources.
+- Fixed an issue where using int.MaxValue, int.MinValue, float.MaxValue and float.MinValue in conjunction with SetText() would display incorrect numerical values. Case #1078521.
+- Added public setter to the TMP Settings' missingGlyphCharacter to allow changing which character will be used for missing characters via scripting.
+- Fixed a potential Null Reference Exception related to loading the Default Style Sheet.
+- Added compiler conditional to TMP_UpdateManager.cs to address changes to SRP.
+- Improved the &ltmargin&gt tag to make it possible to define both left and right margin values. Example: &ltmargin left=10% right=10px&gt.
+- Added new menu option to allow the quick creation of a UI Button using TMP. New menu option is located in Create - UI - Button (TextMeshPro).
+- Renamed TMP related create menu options.
+- Fixed TMP object creation handling when using Prefab isolation mode. Case #1077392
+- Fixed another issue related to Prefabs where some serialized properties of the text object would incorrectly show up in the Overrides prefab options. Case #1093101
+- Fixed issue where changing the Sorting Layer or Sorting Order of a <TextMeshPro> object would not dirty the scene. Case #1069776
+- Fixed a text alignment issue when setting text alignment on disabled text objects. Case #1047771
+- Fixed an issue where text object bounds were not set correctly on newly created text objects or in some cases when setting the text to null or string.empty. Case #1093388
+- Fixed an issue in the IntToString() function that could result in Index Out Of Bounds error. Case #1102007
+- Changed the TMP_InputField IsValidChar function to protected virtual.
+- The "Allow Rich Text Editing" property of the TMP_InputField is now set to false by default.
+- Added new option to the Sprite Asset context menu to make it easier to update sprite glyphs edited via the Unity Sprite Editor.
+- Added new Sharpness slider in the Debug section of the SDF Material inspector.
+- Fixed an error that would occur when using the context menu Reset on text component. Case #1044726
+- Fixed issue where CharacterInfo.index would be incorrect as a result of using Surrogate Pairs in the text. Case #1037828
+- The TMP_EditorPanel and TMP_UiEditorPanel now have their "UseForChildren" flag set to true to enable user / custom inspectors to inherit from them.
+- Fixed an issue where rich text tags using pixel (px) or font units (em) were not correctly accounting for orthographic camera mode. This change only affects the normal TMP text component.
+- Fixed an inspector issue related to changes to the margin in the TMP Extra Settings panel. Case #1114253
+- Added new property to Glyph Adjustment Pairs which determines if Character Spacing Adjustments should affect the given pair.
+- Updated the Glyph Adjustment Table where ID now represents the unicode (hex) value for the character instead of its decimal value.
+- Added new SetValueWithoutNotify() function to TMP_DropDown and SetTextWithoutNotify() function to TMP_InputField allowing these to be set without triggering OnValueChanged event.
+- Geometry buffer deallocation which normally takes place when current allocations exceed those of the new text by more than 256 characters will no longer occur if the new text is set to null or string.empty.
+- Fixed a minor issue where the underline SDF scale would be incorrect when the underline text sequence contained normal size characters and ended with a subscript or superscript character.
+- Fixed an error that would occur when using the Reset Context menu on a Material using the SDF Surface or Mobile SDF Surface Shaders. Case #1122279
+- Resolved a Null Reference Error that would appear when cycling through the text overflow modes. Case #1121624
+
 ## [1.3.0] - 2018-08-09
 ### Changes
 - Revamped UI to conform to Unity Human Interface Guidelines.
