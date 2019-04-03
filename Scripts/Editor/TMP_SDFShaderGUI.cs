@@ -3,65 +3,54 @@ using UnityEditor;
 
 namespace TMPro.EditorUtilities
 {
-
     public class TMP_SDFShaderGUI : TMP_BaseShaderGUI
     {
-        static MaterialPanel
-            facePanel, outlinePanel, underlayPanel,
-            bevelPanel, lightingPanel, bumpMapPanel, envMapPanel, glowPanel, debugPanel;
+        static ShaderFeature s_OutlineFeature, s_UnderlayFeature, s_BevelFeature, s_GlowFeature, s_MaskFeature;
 
-        static ShaderFeature outlineFeature, underlayFeature, bevelFeature, glowFeature, maskFeature;
+        static bool s_Face = true, s_Outline = true, s_Underlay, s_Lighting, s_Glow, s_Bevel, s_Light, s_Bump, s_Env;
 
         static string[]
-            faceUVSpeedNames = { "_FaceUVSpeedX", "_FaceUVSpeedY" },
-            outlineUVSpeedNames = { "_OutlineUVSpeedX", "_OutlineUVSpeedY" };
+            s_FaceUvSpeedNames = { "_FaceUVSpeedX", "_FaceUVSpeedY" },
+            s_OutlineUvSpeedNames = { "_OutlineUVSpeedX", "_OutlineUVSpeedY" };
 
         static TMP_SDFShaderGUI()
         {
-            facePanel = new MaterialPanel("Face", true);
-            outlinePanel = new MaterialPanel("Outline", true);
-            underlayPanel = new MaterialPanel("Underlay", false);
-            bevelPanel = new MaterialPanel("Bevel", false);
-            lightingPanel = new MaterialPanel("Lighting", false);
-            bumpMapPanel = new MaterialPanel("BumpMap", false);
-            envMapPanel = new MaterialPanel("EnvMap", false);
-            glowPanel = new MaterialPanel("Glow", false);
-            debugPanel = new MaterialPanel("Debug", false);
-
-            outlineFeature = new ShaderFeature()
+            s_OutlineFeature = new ShaderFeature()
             {
                 undoLabel = "Outline",
-                keywords = new string[] { "OUTLINE_ON" }
+                keywords = new[] { "OUTLINE_ON" }
             };
 
-            underlayFeature = new ShaderFeature()
+            s_UnderlayFeature = new ShaderFeature()
             {
                 undoLabel = "Underlay",
-                keywords = new string[] { "UNDERLAY_ON", "UNDERLAY_INNER" },
+                keywords = new[] { "UNDERLAY_ON", "UNDERLAY_INNER" },
                 label = new GUIContent("Underlay Type"),
-                keywordLabels = new GUIContent[] {
+                keywordLabels = new[]
+                {
                     new GUIContent("None"), new GUIContent("Normal"), new GUIContent("Inner")
                 }
             };
 
-            bevelFeature = new ShaderFeature()
+            s_BevelFeature = new ShaderFeature()
             {
                 undoLabel = "Bevel",
-                keywords = new string[] { "BEVEL_ON" }
+                keywords = new[] { "BEVEL_ON" }
             };
 
-            glowFeature = new ShaderFeature()
+            s_GlowFeature = new ShaderFeature()
             {
                 undoLabel = "Glow",
-                keywords = new string[] { "GLOW_ON" }
+                keywords = new[] { "GLOW_ON" }
             };
 
-            maskFeature = new ShaderFeature()
+            s_MaskFeature = new ShaderFeature()
             {
                 undoLabel = "Mask",
-                keywords = new string[] { "MASK_HARD", "MASK_SOFT" },
+                keywords = new[] { "MASK_HARD", "MASK_SOFT" },
                 label = new GUIContent("Mask"),
-                keywordLabels = new GUIContent[] {
+                keywordLabels = new[]
+                {
                     new GUIContent("Mask Off"), new GUIContent("Mask Hard"), new GUIContent("Mask Soft")
                 }
             };
@@ -69,105 +58,211 @@ namespace TMPro.EditorUtilities
 
         protected override void DoGUI()
         {
-            if (DoPanelHeader(facePanel))
-            { DoFacePanel(); }
-            if (
-                material.HasProperty(ShaderUtilities.ID_OutlineTex) ?
-                DoPanelHeader(outlinePanel) : DoPanelHeader(outlinePanel, outlineFeature)
-            )
-            { DoOutlinePanel(); }
-            if (material.HasProperty(ShaderUtilities.ID_UnderlayColor) && DoPanelHeader(underlayPanel, underlayFeature))
-            { DoUnderlayPanel(); }
-            if (material.HasProperty("_SpecularColor"))
+            s_Face = BeginPanel("Face", s_Face);
+            if (s_Face)
             {
-                if (DoPanelHeader(bevelPanel, bevelFeature))
-                { DoBevelPanel(); }
-                if (DoPanelHeader(lightingPanel, bevelFeature, false))
-                { DoLocalLightingPanel(); }
-                if (DoPanelHeader(bumpMapPanel, bevelFeature, false))
-                { DoBumpMapPanel(); }
-                if (DoPanelHeader(envMapPanel, bevelFeature, false))
-                { DoEnvMapPanel(); }
+                DoFacePanel();
             }
-            else if (material.HasProperty("_SpecColor"))
+
+            EndPanel();
+
+            s_Outline = m_Material.HasProperty(ShaderUtilities.ID_OutlineTex) ? BeginPanel("Outline", s_Outline) : BeginPanel("Outline", s_OutlineFeature, s_Outline);
+            if (s_Outline)
             {
-                if (DoPanelHeader(bevelPanel))
-                { DoBevelPanel(); }
-                if (DoPanelHeader(lightingPanel))
-                { DoSurfaceLightingPanel(); }
-                if (DoPanelHeader(bumpMapPanel))
-                { DoBumpMapPanel(); }
-                if (DoPanelHeader(envMapPanel))
-                { DoEnvMapPanel(); }
+                DoOutlinePanel();
             }
-            if (material.HasProperty(ShaderUtilities.ID_GlowColor) && DoPanelHeader(glowPanel, glowFeature))
-            { DoGlowPanel(); }
-            if (DoPanelHeader(debugPanel))
-            { DoDebugPanel(); }
+
+            EndPanel();
+
+            if (m_Material.HasProperty(ShaderUtilities.ID_UnderlayColor))
+            {
+                s_Underlay = BeginPanel("Underlay", s_UnderlayFeature, s_Underlay);
+                if (s_Underlay)
+                {
+                    DoUnderlayPanel();
+                }
+
+                EndPanel();
+            }
+
+            if (m_Material.HasProperty("_SpecularColor"))
+            {
+                s_Lighting = BeginPanel("Lighting", s_BevelFeature, s_Lighting);
+                if (s_Lighting)
+                {
+                    s_Bevel = BeginPanel("Bevel", s_Bevel);
+                    if (s_Bevel)
+                    {
+                        DoBevelPanel();
+                    }
+
+                    EndPanel();
+
+                    s_Light = BeginPanel("Local Lighting", s_Light);
+                    if (s_Light)
+                    {
+                        DoLocalLightingPanel();
+                    }
+
+                    EndPanel();
+
+                    s_Bump = BeginPanel("Bump Map", s_Bump);
+                    if (s_Bump)
+                    {
+                        DoBumpMapPanel();
+                    }
+
+                    EndPanel();
+
+                    s_Env = BeginPanel("Environment Map", s_Env);
+                    if (s_Env)
+                    {
+                        DoEnvMapPanel();
+                    }
+
+                    EndPanel();
+                }
+
+                EndPanel();
+            }
+            else if (m_Material.HasProperty("_SpecColor"))
+            {
+                s_Bevel = BeginPanel("Bevel", s_Bevel);
+                if (s_Bevel)
+                {
+                    DoBevelPanel();
+                }
+
+                EndPanel();
+
+                s_Light = BeginPanel("Surface Lighting", s_Light);
+                if (s_Light)
+                {
+                    DoSurfaceLightingPanel();
+                }
+
+                EndPanel();
+
+                s_Bump = BeginPanel("Bump Map", s_Bump);
+                if (s_Bump)
+                {
+                    DoBumpMapPanel();
+                }
+
+                EndPanel();
+
+                s_Env = BeginPanel("Environment Map", s_Env);
+                if (s_Env)
+                {
+                    DoEnvMapPanel();
+                }
+
+                EndPanel();
+            }
+
+            if (m_Material.HasProperty(ShaderUtilities.ID_GlowColor))
+            {
+                s_Glow = BeginPanel("Glow", s_GlowFeature, s_Glow);
+                if (s_Glow)
+                {
+                    DoGlowPanel();
+                }
+
+                EndPanel();
+            }
+
+            s_DebugExtended = BeginPanel("Debug Settings", s_DebugExtended);
+            if (s_DebugExtended)
+            {
+                DoDebugPanel();
+            }
+
+            EndPanel();
         }
 
         void DoFacePanel()
         {
             EditorGUI.indentLevel += 1;
             DoColor("_FaceColor", "Color");
-            if (material.HasProperty(ShaderUtilities.ID_FaceTex))
+            if (m_Material.HasProperty(ShaderUtilities.ID_FaceTex))
             {
-                if (material.HasProperty("_FaceUVSpeedX"))
-                { DoTexture2D("_FaceTex", "Texture", true, faceUVSpeedNames); }
+                if (m_Material.HasProperty("_FaceUVSpeedX"))
+                {
+                    DoTexture2D("_FaceTex", "Texture", true, s_FaceUvSpeedNames);
+                }
                 else
-                { DoTexture2D("_FaceTex", "Texture", true); }
+                {
+                    DoTexture2D("_FaceTex", "Texture", true);
+                }
             }
+
             DoSlider("_OutlineSoftness", "Softness");
             DoSlider("_FaceDilate", "Dilate");
-            if (material.HasProperty(ShaderUtilities.ID_Shininess))
-            { DoSlider("_FaceShininess", "Gloss"); }
+            if (m_Material.HasProperty(ShaderUtilities.ID_Shininess))
+            {
+                DoSlider("_FaceShininess", "Gloss");
+            }
+
             EditorGUI.indentLevel -= 1;
+            EditorGUILayout.Space();
         }
 
         void DoOutlinePanel()
         {
             EditorGUI.indentLevel += 1;
             DoColor("_OutlineColor", "Color");
-            if (material.HasProperty(ShaderUtilities.ID_OutlineTex))
+            if (m_Material.HasProperty(ShaderUtilities.ID_OutlineTex))
             {
-                if (material.HasProperty("_OutlineUVSpeedX"))
-                { DoTexture2D("_OutlineTex", "Texture", true, outlineUVSpeedNames); }
+                if (m_Material.HasProperty("_OutlineUVSpeedX"))
+                {
+                    DoTexture2D("_OutlineTex", "Texture", true, s_OutlineUvSpeedNames);
+                }
                 else
-                { DoTexture2D("_OutlineTex", "Texture", true); }
+                {
+                    DoTexture2D("_OutlineTex", "Texture", true);
+                }
             }
+
             DoSlider("_OutlineWidth", "Thickness");
-            if (material.HasProperty("_OutlineShininess"))
-            { DoSlider("_OutlineShininess", "Gloss"); }
+            if (m_Material.HasProperty("_OutlineShininess"))
+            {
+                DoSlider("_OutlineShininess", "Gloss");
+            }
+
             EditorGUI.indentLevel -= 1;
+            EditorGUILayout.Space();
         }
 
         void DoUnderlayPanel()
         {
             EditorGUI.indentLevel += 1;
-            underlayFeature.DoPopup(editor, material);
+            s_UnderlayFeature.DoPopup(m_Editor, m_Material);
             DoColor("_UnderlayColor", "Color");
             DoSlider("_UnderlayOffsetX", "Offset X");
             DoSlider("_UnderlayOffsetY", "Offset Y");
             DoSlider("_UnderlayDilate", "Dilate");
             DoSlider("_UnderlaySoftness", "Softness");
             EditorGUI.indentLevel -= 1;
+            EditorGUILayout.Space();
         }
 
-        private static GUIContent[] bevelTypeLabels = {
-        new GUIContent("Outer Bevel"),
-        new GUIContent("Inner Bevel")
-    };
+        static GUIContent[] s_BevelTypeLabels =
+        {
+            new GUIContent("Outer Bevel"),
+            new GUIContent("Inner Bevel")
+        };
 
         void DoBevelPanel()
         {
             EditorGUI.indentLevel += 1;
-            DoPopup("_ShaderFlags", "Type", bevelTypeLabels);
+            DoPopup("_ShaderFlags", "Type", s_BevelTypeLabels);
             DoSlider("_Bevel", "Amount");
             DoSlider("_BevelOffset", "Offset");
             DoSlider("_BevelWidth", "Width");
             DoSlider("_BevelRoundness", "Roundness");
             DoSlider("_BevelClamp", "Clamp");
             EditorGUI.indentLevel -= 1;
+            EditorGUILayout.Space();
         }
 
         void DoLocalLightingPanel()
@@ -180,6 +275,7 @@ namespace TMPro.EditorUtilities
             DoSlider("_Diffuse", "Diffuse Shadow");
             DoSlider("_Ambient", "Ambient Shadow");
             EditorGUI.indentLevel -= 1;
+            EditorGUILayout.Space();
         }
 
         void DoSurfaceLightingPanel()
@@ -187,6 +283,7 @@ namespace TMPro.EditorUtilities
             EditorGUI.indentLevel += 1;
             DoColor("_SpecColor", "Specular Color");
             EditorGUI.indentLevel -= 1;
+            EditorGUILayout.Space();
         }
 
         void DoBumpMapPanel()
@@ -196,6 +293,7 @@ namespace TMPro.EditorUtilities
             DoSlider("_BumpFace", "Face");
             DoSlider("_BumpOutline", "Outline");
             EditorGUI.indentLevel -= 1;
+            EditorGUILayout.Space();
         }
 
         void DoEnvMapPanel()
@@ -204,8 +302,9 @@ namespace TMPro.EditorUtilities
             DoColor("_ReflectFaceColor", "Face Color");
             DoColor("_ReflectOutlineColor", "Outline Color");
             DoCubeMap("_Cube", "Texture");
-            DoVector3("_EnvMatrixRotation", "EnvMap Rotation");
+            DoVector3("_EnvMatrixRotation", "Rotation");
             EditorGUI.indentLevel -= 1;
+            EditorGUILayout.Space();
         }
 
         void DoGlowPanel()
@@ -217,6 +316,7 @@ namespace TMPro.EditorUtilities
             DoSlider("_GlowOuter", "Outer");
             DoSlider("_GlowPower", "Power");
             EditorGUI.indentLevel -= 1;
+            EditorGUILayout.Space();
         }
 
         void DoDebugPanel()
@@ -226,52 +326,61 @@ namespace TMPro.EditorUtilities
             DoFloat("_GradientScale", "Gradient Scale");
             DoFloat("_TextureWidth", "Texture Width");
             DoFloat("_TextureHeight", "Texture Height");
-            DoEmptyLine();
+            EditorGUILayout.Space();
             DoFloat("_ScaleX", "Scale X");
             DoFloat("_ScaleY", "Scale Y");
             DoSlider("_PerspectiveFilter", "Perspective Filter");
-            DoEmptyLine();
+            EditorGUILayout.Space();
             DoFloat("_VertexOffsetX", "Offset X");
             DoFloat("_VertexOffsetY", "Offset Y");
 
-            if (material.HasProperty(ShaderUtilities.ID_MaskCoord))
+            if (m_Material.HasProperty(ShaderUtilities.ID_MaskCoord))
             {
-                DoEmptyLine();
-                maskFeature.ReadState(material);
-                maskFeature.DoPopup(editor, material);
-                if (maskFeature.Active)
-                { DoMaskSubgroup(); }
-                DoEmptyLine();
-                DoVector("_ClipRect", "Clip Rect", lbrtVectorLabels);
+                EditorGUILayout.Space();
+                s_MaskFeature.ReadState(m_Material);
+                s_MaskFeature.DoPopup(m_Editor, m_Material);
+                if (s_MaskFeature.Active)
+                {
+                    DoMaskSubgroup();
+                }
+
+                EditorGUILayout.Space();
+                DoVector("_ClipRect", "Clip Rect", s_LbrtVectorLabels);
             }
-            else if (material.HasProperty("_MaskTex"))
-            { DoMaskTexSubgroup(); }
-            else if (material.HasProperty(ShaderUtilities.ID_MaskSoftnessX))
+            else if (m_Material.HasProperty("_MaskTex"))
             {
-                DoEmptyLine();
+                DoMaskTexSubgroup();
+            }
+            else if (m_Material.HasProperty(ShaderUtilities.ID_MaskSoftnessX))
+            {
+                EditorGUILayout.Space();
                 DoFloat("_MaskSoftnessX", "Softness X");
                 DoFloat("_MaskSoftnessY", "Softness Y");
-                DoVector("_ClipRect", "Clip Rect", lbrtVectorLabels);
+                DoVector("_ClipRect", "Clip Rect", s_LbrtVectorLabels);
             }
 
-            if (material.HasProperty(ShaderUtilities.ID_StencilID))
+            if (m_Material.HasProperty(ShaderUtilities.ID_StencilID))
             {
-                DoEmptyLine();
+                EditorGUILayout.Space();
                 DoFloat("_Stencil", "Stencil ID");
                 DoFloat("_StencilComp", "Stencil Comp");
             }
 
-            DoEmptyLine();
+            EditorGUILayout.Space();
 
             EditorGUI.BeginChangeCheck();
-            bool useRatios = EditorGUILayout.Toggle("Use Ratios?", !material.IsKeywordEnabled("RATIOS_OFF"));
+            bool useRatios = EditorGUILayout.Toggle("Use Ratios", !m_Material.IsKeywordEnabled("RATIOS_OFF"));
             if (EditorGUI.EndChangeCheck())
             {
-                editor.RegisterPropertyChangeUndo("Use Ratios");
+                m_Editor.RegisterPropertyChangeUndo("Use Ratios");
                 if (useRatios)
-                { material.DisableKeyword("RATIOS_OFF"); }
+                {
+                    m_Material.DisableKeyword("RATIOS_OFF");
+                }
                 else
-                { material.EnableKeyword("RATIOS_OFF"); }
+                {
+                    m_Material.EnableKeyword("RATIOS_OFF");
+                }
             }
 
             EditorGUI.BeginDisabledGroup(true);
@@ -280,11 +389,12 @@ namespace TMPro.EditorUtilities
             DoFloat("_ScaleRatioC", "Scale Ratio C");
             EditorGUI.EndDisabledGroup();
             EditorGUI.indentLevel -= 1;
+            EditorGUILayout.Space();
         }
 
         void DoMaskSubgroup()
         {
-            DoVector("_MaskCoord", "Mask Bounds", xywhVectorLabels);
+            DoVector("_MaskCoord", "Mask Bounds", s_XywhVectorLabels);
             if (Selection.activeGameObject != null)
             {
                 Renderer renderer = Selection.activeGameObject.GetComponent<Renderer>();
@@ -295,7 +405,7 @@ namespace TMPro.EditorUtilities
                     rect.width -= EditorGUIUtility.labelWidth;
                     if (GUI.Button(rect, "Match Renderer Bounds"))
                     {
-                        FindProperty("_MaskCoord", properties).vectorValue = new Vector4(
+                        FindProperty("_MaskCoord", m_Properties).vectorValue = new Vector4(
                             0,
                             0,
                             Mathf.Round(renderer.bounds.extents.x * 1000) / 1000,
@@ -304,7 +414,8 @@ namespace TMPro.EditorUtilities
                     }
                 }
             }
-            if (maskFeature.State == 1)
+
+            if (s_MaskFeature.State == 1)
             {
                 DoFloat("_MaskSoftnessX", "Softness X");
                 DoFloat("_MaskSoftnessY", "Softness Y");
@@ -313,7 +424,7 @@ namespace TMPro.EditorUtilities
 
         void DoMaskTexSubgroup()
         {
-            DoEmptyLine();
+            EditorGUILayout.Space();
             DoTexture2D("_MaskTex", "Mask Texture");
             DoToggle("_MaskInverse", "Inverse Mask");
             DoColor("_MaskEdgeColor", "Edge Color");
@@ -321,7 +432,7 @@ namespace TMPro.EditorUtilities
             DoSlider("_MaskWipeControl", "Wipe Position");
             DoFloat("_MaskSoftnessX", "Softness X");
             DoFloat("_MaskSoftnessY", "Softness Y");
-            DoVector("_ClipRect", "Clip Rect", lbrtVectorLabels);
+            DoVector("_ClipRect", "Clip Rect", s_LbrtVectorLabels);
         }
     }
 }

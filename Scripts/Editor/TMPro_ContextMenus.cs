@@ -237,7 +237,6 @@ namespace TMPro.EditorUtilities
             //DestroyImmediate(m_copiedAtlasProperties);
         }
 
-
         // Context Menus for TMPro Font Assets
         //This function is used for debugging and fixing potentially broken font atlas links.
         [MenuItem("CONTEXT/TMP_FontAsset/Extract Atlas", false, 2100)]
@@ -273,21 +272,19 @@ namespace TMPro.EditorUtilities
         /// 
         /// </summary>
         /// <param name="command"></param>
-        [MenuItem("CONTEXT/TMP_FontAsset/Update Atlas Texture", false, 2000)]
+        [MenuItem("CONTEXT/TMP_FontAsset/Update Atlas Texture...", false, 2000)]
         static void RegenerateFontAsset(MenuCommand command)
         {
             TMP_FontAsset fontAsset = command.context as TMP_FontAsset;
 
-            if (fontAsset != null && Selection.activeObject != fontAsset)
+            if (fontAsset != null)
             {
-                Selection.activeObject = fontAsset;
+                TMPro_FontAssetCreatorWindow.ShowFontAtlasCreatorWindow(fontAsset);
             }
-
-            TMPro_FontAssetCreatorWindow.ShowFontAtlasCreatorWindow(fontAsset);
         }
 
 
-        [MenuItem("CONTEXT/TrueTypeFontImporter/Create TMP Font Asset", false, 200)]
+        [MenuItem("CONTEXT/TrueTypeFontImporter/Create TMP Font Asset...", false, 200)]
         static void CreateFontAsset(MenuCommand command)
         {
             TrueTypeFontImporter importer = command.context as TrueTypeFontImporter;

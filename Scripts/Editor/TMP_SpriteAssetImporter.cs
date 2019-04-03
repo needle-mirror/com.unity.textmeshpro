@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.IO;
-using System.Collections;
 using System.Collections.Generic;
 using TMPro.EditorUtilities;
 using TMPro.SpriteAssetUtilities;
@@ -19,24 +18,20 @@ namespace TMPro
             window.Focus();
         }
 
-        private Texture2D m_SpriteAtlas;
-        private SpriteAssetImportFormats m_SpriteDataFormat = SpriteAssetImportFormats.TexturePacker;
-        private TextAsset m_JsonFile;
+        Texture2D m_SpriteAtlas;
+        SpriteAssetImportFormats m_SpriteDataFormat = SpriteAssetImportFormats.TexturePacker;
+        TextAsset m_JsonFile;
 
-        private string m_CreationFeedback;
+        string m_CreationFeedback;
 
-        private TMP_SpriteAsset m_SpriteAsset;
-        private List<TMP_Sprite> m_SpriteInfoList = new List<TMP_Sprite>();
+        TMP_SpriteAsset m_SpriteAsset;
+        List<TMP_Sprite> m_SpriteInfoList = new List<TMP_Sprite>();
 
 
         void OnEnable()
         {
             // Set Editor Window Size
             SetEditorWindowSize();
-            
-            // Get the UI Skin and Styles for the various Editors
-            TMP_UIStyleManager.GetUIStyles();
-
         }
 
         public void OnGUI()
@@ -47,89 +42,75 @@ namespace TMPro
 
         void DrawEditorPanel()
         {
-            GUILayout.BeginVertical();
-            {
-                GUILayout.Label("<b>TMP Sprite Importer</b>", TMP_UIStyleManager.Section_Label);
+            // label
+            GUILayout.Label("Import Settings", EditorStyles.boldLabel);
 
-                // Label
-                GUILayout.Label("Import Settings", TMP_UIStyleManager.Section_Label, GUILayout.Width(150));
+            EditorGUI.BeginChangeCheck();
 
-                GUILayout.BeginVertical(TMP_UIStyleManager.TextureAreaBox);
-                {
-                    EditorGUI.BeginChangeCheck();
+            // Sprite Texture Selection
+            m_JsonFile = EditorGUILayout.ObjectField("Sprite Data Source", m_JsonFile, typeof(TextAsset), false) as TextAsset;
 
-                    // Sprite Texture Selection
-                    m_JsonFile = EditorGUILayout.ObjectField("Sprite Data Source", m_JsonFile, typeof(TextAsset), false) as TextAsset;
-
-                    m_SpriteDataFormat = (SpriteAssetImportFormats)EditorGUILayout.EnumPopup("Import Format", m_SpriteDataFormat);
+            m_SpriteDataFormat = (SpriteAssetImportFormats)EditorGUILayout.EnumPopup("Import Format", m_SpriteDataFormat);
                     
-                    // Sprite Texture Selection
-                    m_SpriteAtlas = EditorGUILayout.ObjectField("Sprite Texture Atlas", m_SpriteAtlas, typeof(Texture2D), false) as Texture2D;
+            // Sprite Texture Selection
+            m_SpriteAtlas = EditorGUILayout.ObjectField("Sprite Texture Atlas", m_SpriteAtlas, typeof(Texture2D), false) as Texture2D;
 
-                    if (EditorGUI.EndChangeCheck())
+            if (EditorGUI.EndChangeCheck())
+            {
+                m_CreationFeedback = string.Empty;
+            }
+
+            GUILayout.Space(10);
+
+            GUI.enabled = m_JsonFile != null && m_SpriteAtlas != null && m_SpriteDataFormat == SpriteAssetImportFormats.TexturePacker;
+
+            // Create Sprite Asset
+            if (GUILayout.Button("Create Sprite Asset"))
+            {
+                m_CreationFeedback = string.Empty;
+
+                // Read json data file
+                if (m_JsonFile != null && m_SpriteDataFormat == SpriteAssetImportFormats.TexturePacker)
+                {
+                    TexturePacker.SpriteDataObject sprites = JsonUtility.FromJson<TexturePacker.SpriteDataObject>(m_JsonFile.text);
+
+                    if (sprites != null && sprites.frames != null && sprites.frames.Count > 0)
                     {
-                        m_CreationFeedback = string.Empty;
+                        int spriteCount = sprites.frames.Count;
+
+                        // Update import results
+                        m_CreationFeedback = "<b>Import Results</b>\n--------------------\n";
+                        m_CreationFeedback += "<color=#C0ffff><b>" + spriteCount + "</b></color> Sprites were imported from file.";
+
+                        // Create sprite info list
+                        m_SpriteInfoList = CreateSpriteInfoList(sprites);
                     }
-
-                    GUILayout.Space(10);
-
-                    GUI.enabled = m_JsonFile != null && m_SpriteAtlas != null && m_SpriteDataFormat == SpriteAssetImportFormats.TexturePacker;
-
-                    // Create Sprite Asset
-                    if (GUILayout.Button("Create Sprite Asset"))
-                    {
-                        m_CreationFeedback = string.Empty;
-
-                        // Read json data file
-                        if (m_SpriteDataFormat == SpriteAssetImportFormats.TexturePacker)
-                        {
-                            TexturePacker.SpriteDataObject sprites = JsonUtility.FromJson<TexturePacker.SpriteDataObject>(m_JsonFile.text);
-
-                            if (sprites != null && sprites.frames != null && sprites.frames.Count > 0)
-                            {
-                                int spriteCount = sprites.frames.Count;
-
-                                // Update import results
-                                m_CreationFeedback = "<b>Import Results</b>\n--------------------\n";
-                                m_CreationFeedback += "<color=#C0ffff><b>" + spriteCount + "</b></color> Sprites were imported from file.";
-
-                                // Create sprite info list
-                                m_SpriteInfoList = CreateSpriteInfoList(sprites);
-                            }
-                        }
-
-                    }
-
-                    GUI.enabled = true;
-
-                    // Creation Feedback
-                    GUILayout.Space(5);
-                    GUILayout.BeginVertical(TMP_UIStyleManager.TextAreaBoxWindow, GUILayout.Height(60));
-                    {
-                        EditorGUILayout.LabelField(m_CreationFeedback, TMP_UIStyleManager.Label);
-                    }
-                    GUILayout.EndVertical();
-
-                    GUILayout.Space(5);
-
-                    GUI.enabled = m_JsonFile != null && m_SpriteAtlas && m_SpriteInfoList != null && m_SpriteInfoList.Count > 0;    // Enable Save Button if font_Atlas is not Null.
-                    if (GUILayout.Button("Save Sprite Asset"))
-                    {
-                        string filePath = string.Empty;
-
-                        filePath = EditorUtility.SaveFilePanel("Save Sprite Asset File", new FileInfo(AssetDatabase.GetAssetPath(m_JsonFile)).DirectoryName, m_JsonFile.name, "asset");
-
-                        if (filePath.Length == 0)
-                            return;
-
-                        SaveSpriteAsset(filePath);
-                    }
-
                 }
-                GUILayout.EndVertical();
+
+            }
+
+            GUI.enabled = true;
+
+            // Creation Feedback
+            GUILayout.Space(5);
+            GUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.Height(60));
+            {
+                EditorGUILayout.LabelField(m_CreationFeedback, TMP_UIStyleManager.label);
             }
             GUILayout.EndVertical();
 
+            GUILayout.Space(5);
+            GUI.enabled = m_JsonFile != null && m_SpriteAtlas && m_SpriteInfoList != null && m_SpriteInfoList.Count > 0;    // Enable Save Button if font_Atlas is not Null.
+            if (GUILayout.Button("Save Sprite Asset") && m_JsonFile != null)
+            {
+                string filePath = EditorUtility.SaveFilePanel("Save Sprite Asset File", new FileInfo(AssetDatabase.GetAssetPath(m_JsonFile)).DirectoryName, m_JsonFile.name, "asset");
+
+                if (filePath.Length == 0)
+                    return;
+
+                SaveSpriteAsset(filePath);
+            }
+            GUI.enabled = true;
         }
 
 
@@ -147,11 +128,11 @@ namespace TMPro
                 TMP_Sprite sprite = new TMP_Sprite();
 
                 sprite.id = i;
-                sprite.name = Path.GetFileNameWithoutExtension(importedSprites[i].filename);
+                sprite.name = Path.GetFileNameWithoutExtension(importedSprites[i].filename) ?? "";
                 sprite.hashCode = TMP_TextUtilities.GetSimpleHashCode(sprite.name);
 
                 // Attempt to extract Unicode value from name
-                int unicode = 0;
+                int unicode;
                 int indexOfSeperator = sprite.name.IndexOf('-');
                 if (indexOfSeperator != -1)
                     unicode = TMP_TextUtilities.StringToInt(sprite.name.Substring(indexOfSeperator + 1));
@@ -200,12 +181,12 @@ namespace TMPro
             string relativeAssetPath = filePath.Substring(dataPath.Length - 6);
             string dirName = Path.GetDirectoryName(relativeAssetPath);
             string fileName = Path.GetFileNameWithoutExtension(relativeAssetPath);
-            string path_NoExt = dirName + "/" + fileName;
+            string pathNoExt = dirName + "/" + fileName;
 
 
             // Create new Sprite Asset using this texture
             m_SpriteAsset = CreateInstance<TMP_SpriteAsset>();
-            AssetDatabase.CreateAsset(m_SpriteAsset, path_NoExt + ".asset");
+            AssetDatabase.CreateAsset(m_SpriteAsset, pathNoExt + ".asset");
 
             // Compute the hash code for the sprite asset.
             m_SpriteAsset.hashCode = TMP_TextUtilities.GetSimpleHashCode(m_SpriteAsset.name);
@@ -223,7 +204,7 @@ namespace TMPro
         /// Create and add new default material to sprite asset.
         /// </summary>
         /// <param name="spriteAsset"></param>
-        private static void AddDefaultMaterial(TMP_SpriteAsset spriteAsset)
+        static void AddDefaultMaterial(TMP_SpriteAsset spriteAsset)
         {
             Shader shader = Shader.Find("TextMeshPro/Sprite");
             Material material = new Material(shader);

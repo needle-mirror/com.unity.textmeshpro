@@ -58,9 +58,9 @@ namespace TMPro.EditorUtilities
             rect.x += 70;
 
             bool isEnabled = GUI.enabled;
-            GUI.enabled = false;
+            GUI.enabled = true;
             EditorGUIUtility.labelWidth = 30f;
-            EditorGUI.PropertyField(new Rect(rect.x + 5f, rect.y, 65f, 18), prop_id, new GUIContent("ID:"));
+            EditorGUI.LabelField(new Rect(rect.x + 5f, rect.y, 65f, 18), new GUIContent("ID:"), new GUIContent(prop_id.intValue.ToString()));
 
             GUI.enabled = isEnabled;
             EditorGUI.BeginChangeCheck();

@@ -31,10 +31,12 @@ namespace TMPro.EditorUtilities
             EditorGUIUtility.labelWidth = 40f;
             EditorGUIUtility.fieldWidth = 45f;
 
-            //GUI.enabled = true;
-            EditorGUI.LabelField(new Rect(rect.x + 5f, rect.y, 80f, 18), new GUIContent("Ascii: <color=#FFFF80>" + prop_id.intValue + "</color>"), TMP_UIStyleManager.Label);
-            EditorGUI.LabelField(new Rect(rect.x + 90f, rect.y, 80f, 18), new GUIContent("Hex: <color=#FFFF80>" + prop_id.intValue.ToString("X") + "</color>"), TMP_UIStyleManager.Label);
-            EditorGUI.LabelField(new Rect(rect.x + 170f, rect.y, 80, 18), "Char: [ <color=#FFFF80>" + (char)prop_id.intValue + "</color> ]", TMP_UIStyleManager.Label);
+            bool prevGuiState = GUI.enabled;
+            GUI.enabled = true;
+            EditorGUI.LabelField(new Rect(rect.x + 5f, rect.y, 80f, 18), new GUIContent("Ascii: <color=#FFFF80>" + prop_id.intValue + "</color>"), TMP_UIStyleManager.label);
+            EditorGUI.LabelField(new Rect(rect.x + 90f, rect.y, 80f, 18), new GUIContent("Hex: <color=#FFFF80>" + prop_id.intValue.ToString("X") + "</color>"), TMP_UIStyleManager.label);
+            EditorGUI.LabelField(new Rect(rect.x + 170f, rect.y, 80, 18), "Char: [ <color=#FFFF80>" + (char)prop_id.intValue + "</color> ]", TMP_UIStyleManager.label);
+            GUI.enabled = prevGuiState;
 
             EditorGUIUtility.labelWidth = 35f;
             EditorGUIUtility.fieldWidth = 10f;

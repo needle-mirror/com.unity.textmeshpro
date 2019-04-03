@@ -13,43 +13,37 @@ namespace TMPro.EditorUtilities
     [CustomEditor(typeof(TMP_SpriteAsset))]
     public class TMP_SpriteAssetEditor : Editor
     {
-        private struct UI_PanelState
+        struct UI_PanelState
         {
             public static bool spriteAssetInfoPanel = true;
             public static bool fallbackSpriteAssetPanel = true;
-            public static bool spriteInfoPanel = false;
+            public static bool spriteInfoPanel;
         }
 
-        private int m_moveToIndex = 0;
-        private int m_selectedElement = -1;
-        private int m_page = 0;
+        int m_moveToIndex;
+        int m_selectedElement = -1;
+        int m_page;
 
-        private const string k_UndoRedo = "UndoRedoPerformed";
+        const string k_UndoRedo = "UndoRedoPerformed";
 
-        private string m_searchPattern;
-        private List<int> m_searchList;
-        private bool m_isSearchDirty;
+        string m_searchPattern;
+        List<int> m_searchList;
+        bool m_isSearchDirty;
 
-        private SerializedProperty m_spriteAtlas_prop;
-        private SerializedProperty m_material_prop;
-        private SerializedProperty m_spriteInfoList_prop;
-        private ReorderableList m_fallbackSpriteAssetList;
+        SerializedProperty m_spriteAtlas_prop;
+        SerializedProperty m_material_prop;
+        SerializedProperty m_spriteInfoList_prop;
+        ReorderableList m_fallbackSpriteAssetList;
 
-        private bool isAssetDirty = false;
-      
-        private string[] uiStateLabel = new string[] { "<i>(Click to expand)</i>", "<i>(Click to collapse)</i>" };
+        bool isAssetDirty;
 
-        private float m_xOffset;
-        private float m_yOffset;
-        private float m_xAdvance;
-        private float m_scale;
-
+        float m_xOffset;
+        float m_yOffset;
+        float m_xAdvance;
+        float m_scale;
 
         public void OnEnable()
         {
-            // Styles
-            //GUIStyle _GroupLabel = TMP_UIStyleManager.Group_Label;
-
             m_spriteAtlas_prop = serializedObject.FindProperty("spriteSheet");
             m_material_prop = serializedObject.FindProperty("material");
             m_spriteInfoList_prop = serializedObject.FindProperty("spriteInfoList");
@@ -66,11 +60,8 @@ namespace TMPro.EditorUtilities
 
             m_fallbackSpriteAssetList.drawHeaderCallback = rect =>
             {
-                EditorGUI.LabelField(rect, "<b>Fallback Sprite Asset List</b>", TMP_UIStyleManager.Label);
+                EditorGUI.LabelField(rect, new GUIContent("Fallback Sprite Asset List", "Select the Sprite Assets that will be searched and used as fallback when a given sprite is missing from this sprite asset."));
             };
-
-            // Get the UI Skin and Styles for the various Editors
-            TMP_UIStyleManager.GetUIStyles();
         }
 
 
@@ -83,17 +74,10 @@ namespace TMPro.EditorUtilities
 
             serializedObject.Update();
 
-            EditorGUIUtility.labelWidth = 135;
-
-            // HEADER
-            GUILayout.Label("<b>TextMeshPro - Sprite Asset</b>", TMP_UIStyleManager.Section_Label);
-
-
             // TEXTMESHPRO SPRITE INFO PANEL
-            GUILayout.Label("Sprite Info", TMP_UIStyleManager.Section_Label);
+            GUILayout.Label("Sprite Info", EditorStyles.boldLabel);
             EditorGUI.indentLevel = 1;
-
-            //GUI.enabled = false; // Lock UI
+            
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(m_spriteAtlas_prop , new GUIContent("Sprite Atlas"));
             if (EditorGUI.EndChangeCheck())
@@ -108,38 +92,23 @@ namespace TMPro.EditorUtilities
                 }
             }
 
-
-            GUI.enabled = true;
             EditorGUILayout.PropertyField(m_material_prop, new GUIContent("Default Material"));
-
+             
+            EditorGUILayout.Space();
 
             // FALLBACK SPRITE ASSETS
             EditorGUI.indentLevel = 0;
-            if (GUILayout.Button("Fallback Sprite Assets\t" + (UI_PanelState.fallbackSpriteAssetPanel ? uiStateLabel[1] : uiStateLabel[0]), TMP_UIStyleManager.Section_Label))
-                UI_PanelState.fallbackSpriteAssetPanel = !UI_PanelState.fallbackSpriteAssetPanel;
-
-
+            UI_PanelState.fallbackSpriteAssetPanel = EditorGUILayout.Foldout(UI_PanelState.fallbackSpriteAssetPanel, new GUIContent("Fallback Sprite Assets", "Select the Sprite Assets that will be searched and used as fallback when a given sprite is missing from this sprite asset."), true, TMP_UIStyleManager.boldFoldout);
+            
             if (UI_PanelState.fallbackSpriteAssetPanel)
             {
-                EditorGUIUtility.labelWidth = 120;
-                EditorGUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
-                EditorGUI.indentLevel = 0;
-                GUILayout.Label("Select the Sprite Assets that will be searched and used as fallback when a given sprite is missing from this sprite asset.", TMP_UIStyleManager.Label);
-                GUILayout.Space(10f);
-
                 m_fallbackSpriteAssetList.DoLayoutList();
-
-                EditorGUILayout.EndVertical();
             }
 
-
             // SPRITE LIST
-            GUI.enabled = true; // Unlock UI 
-            GUILayout.Space(10);
             EditorGUI.indentLevel = 0;
 
-            if (GUILayout.Button("Sprite List\t\t" + (UI_PanelState.spriteInfoPanel ? uiStateLabel[1] : uiStateLabel[0]), TMP_UIStyleManager.Section_Label))
-                UI_PanelState.spriteInfoPanel = !UI_PanelState.spriteInfoPanel;
+            UI_PanelState.spriteInfoPanel = EditorGUILayout.Foldout(UI_PanelState.spriteInfoPanel, "Sprite List", true, TMP_UIStyleManager.boldFoldout);
 
             if (UI_PanelState.spriteInfoPanel)
             {
@@ -147,7 +116,7 @@ namespace TMPro.EditorUtilities
                 int itemsPerPage = 10; // (Screen.height - 292) / 80;
 
                 // Display Glyph Management Tools
-                EditorGUILayout.BeginVertical(TMP_UIStyleManager.Group_Label, GUILayout.ExpandWidth(true));
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.ExpandWidth(true));
                 {
                     // Search Bar implementation
                     #region DISPLAY SEARCH BAR
@@ -203,15 +172,15 @@ namespace TMPro.EditorUtilities
 
                         SerializedProperty spriteInfo = m_spriteInfoList_prop.GetArrayElementAtIndex(elementIndex);
 
-                        EditorGUI.BeginDisabledGroup(i != m_selectedElement);
+                        EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.Height(75));
                         {
-                            EditorGUILayout.BeginVertical(TMP_UIStyleManager.Group_Label, GUILayout.Height(75));
+                            EditorGUI.BeginDisabledGroup(i != m_selectedElement);
                             {
                                 EditorGUILayout.PropertyField(spriteInfo);
                             }
-                            EditorGUILayout.EndVertical();
+                            EditorGUI.EndDisabledGroup();
                         }
-                        EditorGUI.EndDisabledGroup();
+                        EditorGUILayout.EndVertical();
 
                         // Define the end of the selection region of the element.
                         Rect elementEndRegion = GUILayoutUtility.GetRect(0f, 0f, GUILayout.ExpandWidth(true));
@@ -220,9 +189,15 @@ namespace TMPro.EditorUtilities
                         Rect selectionArea = new Rect(elementStartRegion.x, elementStartRegion.y, elementEndRegion.width, elementEndRegion.y - elementStartRegion.y);
                         if (DoSelectionCheck(selectionArea))
                         {
-                            m_selectedElement = i;
-                            GUIUtility.keyboardControl = 0;
-
+                            if (m_selectedElement == i)
+                            {
+                                m_selectedElement = -1;
+                            }
+                            else
+                            {
+                                m_selectedElement = i;
+                                GUIUtility.keyboardControl = 0;
+                            }
                         }
 
                         // Draw & Handle Section Area
@@ -314,7 +289,7 @@ namespace TMPro.EditorUtilities
                 // GLOBAL TOOLS
                 #region Global Tools
                 GUI.enabled = true;
-                EditorGUILayout.BeginVertical(TMP_UIStyleManager.Group_Label);
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 Rect rect = EditorGUILayout.GetControlRect(false, 40);
                
                 float width = (rect.width - 75f) / 4;
@@ -382,11 +357,10 @@ namespace TMPro.EditorUtilities
             }
 
             // Page Counter
-            var pageStyle = new GUIStyle(GUI.skin.button) { normal = { background = null } };
             GUI.enabled = true;
             pagePos.x += pagePos.width;
             int totalPages = (int)(arraySize / (float)itemsPerPage + 0.999f);
-            GUI.Button(pagePos, "Page " + (m_page + 1) + " / " + totalPages, pageStyle);
+            GUI.Label(pagePos, "Page " + (m_page + 1) + " / " + totalPages, TMP_UIStyleManager.centeredLabel);
 
             // Next Page
             pagePos.x += pagePos.width;

@@ -36,18 +36,21 @@ namespace TMPro.EditorUtilities
             GUI.enabled = isEditingEnabled;
             if (isSelectable)
             {
+                bool prevGuiState = GUI.enabled;
+                GUI.enabled = true;
                 rect = new Rect(position.x, position.y, 40, 18);
-                EditorGUI.LabelField(rect, "Char:", TMP_UIStyleManager.Label);
+                EditorGUI.LabelField(rect, "Char:", TMP_UIStyleManager.label);
 
                 rect = new Rect(position.x + 35f, position.y, 30, 18);
-                EditorGUI.LabelField(rect, "<color=#FFFF80>" + (char)prop_FirstGlyph.intValue + "</color>", TMP_UIStyleManager.Label);
+                EditorGUI.LabelField(rect, "<color=#FFFF80>" + (char)prop_FirstGlyph.intValue + "</color>", TMP_UIStyleManager.label);
 
                 // Display ASCII decimal value
                 rect = new Rect(position.x + 60f, position.y, 30, 18);
-                EditorGUI.LabelField(rect, "ID:", TMP_UIStyleManager.Label);
+                EditorGUI.LabelField(rect, "ID:", TMP_UIStyleManager.label);
 
                 rect = new Rect(position.x + 80f, position.y, 40, 18);
-                EditorGUI.LabelField(rect, "<color=#FFFF80>" + prop_FirstGlyph.intValue + "</color>", TMP_UIStyleManager.Label);
+                EditorGUI.LabelField(rect, "<color=#FFFF80>" + prop_FirstGlyph.intValue + "</color>", TMP_UIStyleManager.label);
+                GUI.enabled = prevGuiState;
             }
             else
             {
@@ -86,18 +89,21 @@ namespace TMPro.EditorUtilities
             GUI.enabled = isEditingEnabled;
             if (isSelectable)
             {
+                bool prevGuiState = GUI.enabled;
+                GUI.enabled = true;
                 rect = new Rect(position.width / 2 + 20, position.y, 40f, 18);
-                EditorGUI.LabelField(rect, "Char:", TMP_UIStyleManager.Label);
+                EditorGUI.LabelField(rect, "Char:", TMP_UIStyleManager.label);
 
                 rect = new Rect(rect.x + 35f, position.y, 30, 18);
-                EditorGUI.LabelField(rect, "<color=#FFFF80>" + (char)prop_SecondGlyph.intValue + "</color>", TMP_UIStyleManager.Label);
+                EditorGUI.LabelField(rect, "<color=#FFFF80>" + (char)prop_SecondGlyph.intValue + "</color>", TMP_UIStyleManager.label);
 
                 // Display ASCII decimal value
                 rect = new Rect(rect.x + 25f, position.y, 30, 18);
-                EditorGUI.LabelField(rect, "ID:", TMP_UIStyleManager.Label);
+                EditorGUI.LabelField(rect, "ID:", TMP_UIStyleManager.label);
 
                 rect = new Rect(rect.x + 20f, position.y, 40, 18);
-                EditorGUI.LabelField(rect, "<color=#FFFF80>" + prop_SecondGlyph.intValue + "</color>", TMP_UIStyleManager.Label);
+                EditorGUI.LabelField(rect, "<color=#FFFF80>" + prop_SecondGlyph.intValue + "</color>", TMP_UIStyleManager.label);
+                GUI.enabled = prevGuiState;
             }
             else
             {

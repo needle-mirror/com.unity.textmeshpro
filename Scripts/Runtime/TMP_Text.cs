@@ -107,7 +107,7 @@ namespace TMPro
     /// <summary>
     /// Base class which contains common properties and functions shared between the TextMeshPro and TextMeshProUGUI component.
     /// </summary>
-    public class TMP_Text : MaskableGraphic
+    public abstract class TMP_Text : MaskableGraphic
     {
         /// <summary>
         /// A string containing the text to be displayed.
@@ -118,6 +118,7 @@ namespace TMPro
             set { if (m_text == value) return; m_text = old_text = value; m_inputSource = TextInputSources.String; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; m_isInputParsingRequired = true; SetVerticesDirty(); SetLayoutDirty(); }
         }
         [SerializeField]
+        [TextArea(3, 10)]
         protected string m_text;
 
 
@@ -261,7 +262,9 @@ namespace TMPro
         [SerializeField]
         protected bool m_enableVertexGradient;
 
-
+        [SerializeField]
+        protected ColorMode m_colorMode = ColorMode.FourCornersGradient;
+        
         /// <summary>
         /// Sets the vertex colors for each of the 4 vertices of the character quads.
         /// </summary>
@@ -4508,7 +4511,7 @@ namespace TMPro
         /// <summary>
         /// Function to force an update of the margin size.
         /// </summary>
-        protected virtual void ComputeMarginSize() { }
+        public virtual void ComputeMarginSize() { }
 
 
         /// <summary>

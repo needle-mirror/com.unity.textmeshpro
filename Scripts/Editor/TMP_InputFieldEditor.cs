@@ -20,9 +20,6 @@ namespace TMPro.EditorUtilities
             //public static bool materialEditor = true;
         }
 
-        private static string[] uiStateLabel = new string[] { "\t- <i>Click to expand</i> -", "\t- <i>Click to collapse</i> -" };
-        //private GUIStyle toggleStyle;
-
         SerializedProperty m_TextViewport;
         SerializedProperty m_TextComponent;
         SerializedProperty m_Text;
@@ -103,9 +100,6 @@ namespace TMPro.EditorUtilities
 
             m_CustomColor = new AnimBool(m_CustomCaretColor.boolValue);
             m_CustomColor.valueChanged.AddListener(Repaint);
-
-            // Get the UI Skin and Styles for the various Editors
-            TMP_UIStyleManager.GetUIStyles();
         }
 
         protected override void OnDisable()
@@ -139,32 +133,16 @@ namespace TMPro.EditorUtilities
             EditorGUI.BeginDisabledGroup(m_TextComponent == null || m_TextComponent.objectReferenceValue == null);
 
             // TEXT INPUT BOX
-            Rect rect = EditorGUILayout.GetControlRect(false, 25);
-            EditorGUIUtility.labelWidth = 130f;
-            //EditorGUIUtility.fieldWidth;
-
-            rect.y += 2;
-            GUI.Label(rect, "<b>TEXT INPUT BOX</b>" + (m_foldout.textInput ? uiStateLabel[1] : uiStateLabel[0]), TMP_UIStyleManager.Section_Label);
-            if (GUI.Button(new Rect(rect.x, rect.y, rect.width - 150, rect.height), GUIContent.none, GUI.skin.label))
-                m_foldout.textInput = !m_foldout.textInput;
-
-            // Toggle showing Rich Tags
-            //GUI.Label(new Rect(rect.width - 125, rect.y + 4, 125, 24), "<i>Enable RTL Editor</i>", toggleStyle);
-
-            if (m_foldout.textInput)
-            {
-                EditorGUI.BeginChangeCheck();
-                m_Text.stringValue = EditorGUILayout.TextArea(m_Text.stringValue, TMP_UIStyleManager.TextAreaBoxEditor, GUILayout.Height(125), GUILayout.ExpandWidth(true));
-            }
-
+            EditorGUILayout.PropertyField(m_Text);
 
             // INPUT FIELD SETTINGS
             #region INPUT FIELD SETTINGS
-            if (GUILayout.Button("<b>INPUT FIELD SETTINGS</b>" + (m_foldout.fontSettings ? uiStateLabel[1] : uiStateLabel[0]), TMP_UIStyleManager.Section_Label))
-                m_foldout.fontSettings = !m_foldout.fontSettings;
+
+            m_foldout.fontSettings = EditorGUILayout.Foldout(m_foldout.fontSettings, "Input Field Settings", true, TMP_UIStyleManager.boldFoldout);
 
             if (m_foldout.fontSettings)
             {
+                EditorGUI.indentLevel++;
                 EditorGUI.BeginChangeCheck();
                 EditorGUILayout.PropertyField(m_GlobalFontAsset, new GUIContent("Font Asset", "Set the Font Asset for both Placeholder and Input Field text object."));
                 if (EditorGUI.EndChangeCheck())
@@ -250,28 +228,29 @@ namespace TMPro.EditorUtilities
                 EditorGUILayout.EndFadeGroup();
 
                 EditorGUILayout.PropertyField(m_SelectionColor);
+                
+                EditorGUI.indentLevel--;
             }
             #endregion
 
 
             // CONTROL SETTINGS
             #region CONTROL SETTINGS
-            if (GUILayout.Button("<b>CONTROL SETTINGS</b>" + (m_foldout.extraSettings ? uiStateLabel[1] : uiStateLabel[0]), TMP_UIStyleManager.Section_Label))
-                m_foldout.extraSettings = !m_foldout.extraSettings;
+            m_foldout.extraSettings = EditorGUILayout.Foldout(m_foldout.extraSettings, "Control Settings", true, TMP_UIStyleManager.boldFoldout);
 
             if (m_foldout.extraSettings)
             {
+                EditorGUI.indentLevel++;
+
                 EditorGUILayout.PropertyField(m_OnFocusSelectAll, new GUIContent("OnFocus - Select All", "Should all the text be selected when the Input Field is selected."));
                 EditorGUILayout.PropertyField(m_ResetOnDeActivation, new GUIContent("Reset On DeActivation", "Should the Text and Caret position be reset when Input Field is DeActivated."));
                 EditorGUILayout.PropertyField(m_RestoreOriginalTextOnEscape, new GUIContent("Restore On ESC Key", "Should the original text be restored when pressing ESC."));
                 EditorGUILayout.PropertyField(m_HideMobileInput);
                 EditorGUILayout.PropertyField(m_ReadOnly);
-                EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.PropertyField(m_RichText);
-                EditorGUIUtility.labelWidth = 140f;
                 EditorGUILayout.PropertyField(m_RichTextEditingAllowed, new GUIContent("Allow Rich Text Editing"));
-                EditorGUIUtility.labelWidth = 130f;
-                EditorGUILayout.EndHorizontal();
+                
+                EditorGUI.indentLevel--;
             }
             #endregion
 

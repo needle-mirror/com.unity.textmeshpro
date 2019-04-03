@@ -67,9 +67,6 @@ namespace TMPro
             // Set Editor Window Size
             SetEditorWindowSize();
 
-            // Get the UI Skin and Styles for the various Editors
-            TMP_UIStyleManager.GetUIStyles();
-
             m_ProjectScanResults = k_ProjectScanReportDefaultText;
         }
 
@@ -78,13 +75,11 @@ namespace TMPro
         {
             GUILayout.BeginVertical();
             {
-                GUILayout.Label("<b>TMP Project Files GUID Remapping Tool</b>", TMP_UIStyleManager.Section_Label);
-
                 // Scan project files and resources
-                GUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
+                GUILayout.BeginVertical(EditorStyles.helpBox);
                 {
-                    GUILayout.Label("<b>Scan Project Files</b>", TMP_UIStyleManager.Label);
-                    GUILayout.Label("Press the <i>Scan Project Files</i> button to begin scanning your project for files & resources that were created with a previous version of TextMesh Pro", TMP_UIStyleManager.Label);
+                    GUILayout.Label("Scan Project Files", EditorStyles.boldLabel);
+                    GUILayout.Label("Press the <i>Scan Project Files</i> button to begin scanning your project for files & resources that were created with a previous version of TextMesh Pro", TMP_UIStyleManager.label);
                     GUILayout.Space(5f);
 
                     GUI.enabled = m_IsAlreadyScanningProject == false ? true : false;
@@ -108,10 +103,10 @@ namespace TMPro
                     GUILayout.Space(5);
 
                     // Creation Feedback
-                    GUILayout.BeginVertical(TMP_UIStyleManager.TextAreaBoxWindow, GUILayout.ExpandHeight(true));
+                    GUILayout.BeginVertical(TMP_UIStyleManager.textAreaBoxWindow, GUILayout.ExpandHeight(true));
                     {
                         m_ProjectScanResultScrollPosition = EditorGUILayout.BeginScrollView(m_ProjectScanResultScrollPosition, GUILayout.ExpandHeight(true));
-                        EditorGUILayout.LabelField(m_ProjectScanResults, TMP_UIStyleManager.Label);
+                        EditorGUILayout.LabelField(m_ProjectScanResults, TMP_UIStyleManager.label);
                         EditorGUILayout.EndScrollView();
                     }
                     GUILayout.EndVertical();
@@ -120,10 +115,10 @@ namespace TMPro
                 GUILayout.EndVertical();
 
                 // Scan project files and resources
-                GUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
+                GUILayout.BeginVertical(EditorStyles.helpBox);
                 { 
-                    GUILayout.Label("<b>Save Modified Project Files</b>", TMP_UIStyleManager.Label);
-                    GUILayout.Label("Pressing the <i>Save Modified Project Files</i> button will update the files in the <i>Project Scan Results</i> listed above. <color=#FFFF80>Please make sure that you have created a backup of your project first</color> as these file modifications are permanent and cannot be undone.", TMP_UIStyleManager.Label);
+                    GUILayout.Label("Save Modified Project Files", EditorStyles.boldLabel);
+                    GUILayout.Label("Pressing the <i>Save Modified Project Files</i> button will update the files in the <i>Project Scan Results</i> listed above. <color=#FFFF80>Please make sure that you have created a backup of your project first</color> as these file modifications are permanent and cannot be undone.", TMP_UIStyleManager.label);
                     GUILayout.Space(5f);
 
                     GUI.enabled = m_IsAlreadyScanningProject == false && m_ModifiedAssetList.Count > 0 ? true : false;
@@ -227,17 +222,17 @@ namespace TMPro
                 }
                 else
                 {
-                    foreach (AssetConversionRecord record in conversionData.assetRecords)
+                foreach (AssetConversionRecord record in conversionData.assetRecords)
+                {
+                    if (assetDataFile.Contains(record.target))
                     {
-                        if (assetDataFile.Contains(record.target))
-                        {
-                            hasFileChanged = true;
+                        hasFileChanged = true;
 
-                            assetDataFile = assetDataFile.Replace(record.target, record.replacement);
+                        assetDataFile = assetDataFile.Replace(record.target, record.replacement);
 
-                            //Debug.Log("Replacing Reference to [" + record.referencedResource + "] using [" + record.target + "] with [" + record.replacement + "] in asset file: [" + assetFilePath + "].");
-                        }
+                        //Debug.Log("Replacing Reference to [" + record.referencedResource + "] using [" + record.target + "] with [" + record.replacement + "] in asset file: [" + assetFilePath + "].");
                     }
+                }
                 }
 
                 if (hasFileChanged)

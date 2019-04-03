@@ -365,6 +365,7 @@ namespace TMPro
                 m_isInputParsingRequired = true;
 
                 m_padding = GetPaddingForMaterial();
+                ComputeMarginSize();
                 SetVerticesDirty();
             }
         }
@@ -1415,7 +1416,7 @@ namespace TMPro
         /// <summary>
         /// Update the margin width and height
         /// </summary>
-        protected override void ComputeMarginSize()
+        public override void ComputeMarginSize()
         {
             if (this.rectTransform != null)
             {

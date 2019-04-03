@@ -243,6 +243,7 @@ namespace TMPro
         /// </summary>
 
         [SerializeField]
+        [TextArea(3, 10)]
         protected string m_Text = string.Empty;
 
         [SerializeField]

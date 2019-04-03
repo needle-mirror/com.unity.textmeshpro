@@ -421,7 +421,7 @@ namespace TMPro
         // Event received when UNDO / REDO Event alters the properties of the object.
         void ON_TEXTMESHPRO_UGUI_PROPERTY_CHANGED(bool isChanged, TextMeshProUGUI obj)
         {
-            Debug.Log("Event Received by " + obj);
+            //Debug.Log("Event Received by " + obj);
             
             if (obj == this)
             {
@@ -429,6 +429,7 @@ namespace TMPro
                 m_havePropertiesChanged = true;
                 m_isInputParsingRequired = true;
 
+                ComputeMarginSize();
                 SetVerticesDirty();
             }
         }
@@ -1488,7 +1489,7 @@ namespace TMPro
         /// <summary>
         /// Update the margin width and height
         /// </summary>
-        protected override void ComputeMarginSize()
+        public override void ComputeMarginSize()
         {
             if (this.rectTransform != null)
             {

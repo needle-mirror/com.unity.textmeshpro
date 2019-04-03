@@ -1,246 +1,268 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
-using System.Collections;
 
 #pragma warning disable 0414 // Disabled a few warnings for not yet implemented features.
 
 namespace TMPro.EditorUtilities
 {
-
     [CustomEditor(typeof(TMP_Settings))]
     public class TMP_SettingsEditor : Editor
     {
-        //private struct UI_PanelState
-        //{
+        static class Styles
+        {
+            static Styles() { }
 
-        //}
+            public static readonly GUIContent defaultFontAssetLabel = new GUIContent("Default Font Asset", "The Font Asset that will be assigned by default to newly created text objects when no Font Asset is specified.");
+            public static readonly GUIContent defaultFontAssetPathLabel = new GUIContent("Path:        Resources/", "The relative path to a Resources folder where the Font Assets and Material Presets are located.\nExample \"Fonts & Materials/\"");
 
-        //private string[] uiStateLabel = new string[] { "<i>(Click to expand)</i>", "<i>(Click to collapse)</i>" };
-        //private GUIStyle _Label;
+            public static readonly GUIContent fallbackFontAssetsLabel = new GUIContent("Fallback Font Assets", "The Font Assets that will be searched to locate and replace missing characters from a given Font Asset.");
+            public static readonly GUIContent fallbackFontAssetsListLabel = new GUIContent("Fallback Font Assets List", "The Font Assets that will be searched to locate and replace missing characters from a given Font Asset.");
 
-        private SerializedProperty prop_FontAsset;
-        private SerializedProperty prop_DefaultFontAssetPath;
-        private SerializedProperty prop_DefaultFontSize;
-        private SerializedProperty prop_DefaultAutoSizeMinRatio;
-        private SerializedProperty prop_DefaultAutoSizeMaxRatio;
-        private SerializedProperty prop_DefaultTextMeshProTextContainerSize;
-        private SerializedProperty prop_DefaultTextMeshProUITextContainerSize;
-        private SerializedProperty prop_AutoSizeTextContainer;
+            public static readonly GUIContent fallbackMaterialSettingsLabel = new GUIContent("Fallback Material Settings");
+            public static readonly GUIContent matchMaterialPresetLabel = new GUIContent("Match Material Presets");
 
-        private SerializedProperty prop_SpriteAsset;
-        private SerializedProperty prop_SpriteAssetPath;
-        private SerializedProperty prop_EnableEmojiSupport;
-        private SerializedProperty prop_StyleSheet;
-        private ReorderableList m_list;
+            public static readonly GUIContent containerDefaultSettingsLabel = new GUIContent("Text Container Default Settings");
 
-        private SerializedProperty prop_ColorGradientPresetsPath;
+            public static readonly GUIContent textMeshProLabel = new GUIContent("TextMeshPro");
+            public static readonly GUIContent textMeshProUiLabel = new GUIContent("TextMeshPro UI");
+            public static readonly GUIContent autoSizeContainerLabel = new GUIContent("Auto Size Text Container", "Set the size of the text container to match the text.");
+            
+            public static readonly GUIContent textComponentDefaultSettingsLabel = new GUIContent("Text Component Default Settings");
+            public static readonly GUIContent defaultFontSize = new GUIContent("Default Font Size");
+            public static readonly GUIContent autoSizeRatioLabel = new GUIContent("Text Auto Size Ratios");
+            public static readonly GUIContent minLabel = new GUIContent("Min");
+            public static readonly GUIContent maxLabel = new GUIContent("Max");
 
-        private SerializedProperty prop_matchMaterialPreset;
-        private SerializedProperty prop_WordWrapping;
-        private SerializedProperty prop_Kerning;
-        private SerializedProperty prop_ExtraPadding;
-        private SerializedProperty prop_TintAllSprites;
-        private SerializedProperty prop_ParseEscapeCharacters;
-        private SerializedProperty prop_MissingGlyphCharacter;
+            public static readonly GUIContent wordWrappingLabel = new GUIContent("Word Wrapping");
+            public static readonly GUIContent kerningLabel = new GUIContent("Kerning");
+            public static readonly GUIContent extraPaddingLabel = new GUIContent("Extra Padding");
+            public static readonly GUIContent tintAllSpritesLabel = new GUIContent("Tint All Sprites");
+            public static readonly GUIContent parseEscapeCharactersLabel = new GUIContent("Parse Escape Sequence");
 
-        private SerializedProperty prop_WarningsDisabled;
+            public static readonly GUIContent missingGlyphsTitleLabel = new GUIContent("Missing glyphs");
+            public static readonly GUIContent missingGlyphLabel = new GUIContent("Replacement", "The glyph to be used as a replacement when a glyph can't be found in a font asset.");
+            public static readonly GUIContent disableWarningsLabel = new GUIContent("Disable warnings");
 
-        private SerializedProperty prop_LeadingCharacters;
-        private SerializedProperty prop_FollowingCharacters;
+            public static readonly GUIContent defaultSpriteAssetLabel = new GUIContent("Default Sprite Asset", "The Sprite Asset that will be assigned by default when using the <sprite> tag when no Sprite Asset is specified.");
+            public static readonly GUIContent enableEmojiSupportLabel = new GUIContent("iOS Emoji Support", "Enables Emoji support for Touch Screen Keyboards on target devices.");
+            public static readonly GUIContent spriteAssetsPathLabel = new GUIContent("Path:        Resources/", "The relative path to a Resources folder where the Sprite Assets are located.\nExample \"Sprite Assets/\"");
 
+            public static readonly GUIContent defaultStyleSheetLabel = new GUIContent("Default Style Sheet", "The Style Sheet that will be used for all text objects in this project.");
 
+            public static readonly GUIContent colorGradientPresetsLabel = new GUIContent("Color Gradient Presets", "The relative path to a Resources folder where the Color Gradient Presets are located.\nExample \"Color Gradient Presets/\"");
+            public static readonly GUIContent colorGradientsPathLabel = new GUIContent("Path:        Resources/", "The relative path to a Resources folder where the Color Gradient Presets are located.\nExample \"Color Gradient Presets/\"");
+
+            public static readonly GUIContent lineBreakingLabel = new GUIContent("Line Breaking for Asian languages", "The text assets that contain the Leading and Following characters which define the rules for line breaking with Asian languages.");
+        }
+
+        SerializedProperty m_PropFontAsset;
+        SerializedProperty m_PropDefaultFontAssetPath;
+        SerializedProperty m_PropDefaultFontSize;
+        SerializedProperty m_PropDefaultAutoSizeMinRatio;
+        SerializedProperty m_PropDefaultAutoSizeMaxRatio;
+        SerializedProperty m_PropDefaultTextMeshProTextContainerSize;
+        SerializedProperty m_PropDefaultTextMeshProUITextContainerSize;
+        SerializedProperty m_PropAutoSizeTextContainer;
+
+        SerializedProperty m_PropSpriteAsset;
+        SerializedProperty m_PropSpriteAssetPath;
+        SerializedProperty m_PropEnableEmojiSupport;
+        SerializedProperty m_PropStyleSheet;
+        ReorderableList m_List;
+
+        SerializedProperty m_PropColorGradientPresetsPath;
+
+        SerializedProperty m_PropMatchMaterialPreset;
+        SerializedProperty m_PropWordWrapping;
+        SerializedProperty m_PropKerning;
+        SerializedProperty m_PropExtraPadding;
+        SerializedProperty m_PropTintAllSprites;
+        SerializedProperty m_PropParseEscapeCharacters;
+        SerializedProperty m_PropMissingGlyphCharacter;
+
+        SerializedProperty m_PropWarningsDisabled;
+
+        SerializedProperty m_PropLeadingCharacters;
+        SerializedProperty m_PropFollowingCharacters;
 
         public void OnEnable()
         {
-            prop_FontAsset = serializedObject.FindProperty("m_defaultFontAsset");
-            prop_DefaultFontAssetPath = serializedObject.FindProperty("m_defaultFontAssetPath");
-            prop_DefaultFontSize = serializedObject.FindProperty("m_defaultFontSize");
-            prop_DefaultAutoSizeMinRatio = serializedObject.FindProperty("m_defaultAutoSizeMinRatio");
-            prop_DefaultAutoSizeMaxRatio = serializedObject.FindProperty("m_defaultAutoSizeMaxRatio");
-            prop_DefaultTextMeshProTextContainerSize = serializedObject.FindProperty("m_defaultTextMeshProTextContainerSize");
-            prop_DefaultTextMeshProUITextContainerSize = serializedObject.FindProperty("m_defaultTextMeshProUITextContainerSize");
-            prop_AutoSizeTextContainer = serializedObject.FindProperty("m_autoSizeTextContainer");
+            m_PropFontAsset = serializedObject.FindProperty("m_defaultFontAsset");
+            m_PropDefaultFontAssetPath = serializedObject.FindProperty("m_defaultFontAssetPath");
+            m_PropDefaultFontSize = serializedObject.FindProperty("m_defaultFontSize");
+            m_PropDefaultAutoSizeMinRatio = serializedObject.FindProperty("m_defaultAutoSizeMinRatio");
+            m_PropDefaultAutoSizeMaxRatio = serializedObject.FindProperty("m_defaultAutoSizeMaxRatio");
+            m_PropDefaultTextMeshProTextContainerSize = serializedObject.FindProperty("m_defaultTextMeshProTextContainerSize");
+            m_PropDefaultTextMeshProUITextContainerSize = serializedObject.FindProperty("m_defaultTextMeshProUITextContainerSize");
+            m_PropAutoSizeTextContainer = serializedObject.FindProperty("m_autoSizeTextContainer");
 
-            prop_SpriteAsset = serializedObject.FindProperty("m_defaultSpriteAsset");
-            prop_SpriteAssetPath = serializedObject.FindProperty("m_defaultSpriteAssetPath");
-            prop_EnableEmojiSupport = serializedObject.FindProperty("m_enableEmojiSupport");
-            prop_StyleSheet = serializedObject.FindProperty("m_defaultStyleSheet");
-            prop_ColorGradientPresetsPath = serializedObject.FindProperty("m_defaultColorGradientPresetsPath");
+            m_PropSpriteAsset = serializedObject.FindProperty("m_defaultSpriteAsset");
+            m_PropSpriteAssetPath = serializedObject.FindProperty("m_defaultSpriteAssetPath");
+            m_PropEnableEmojiSupport = serializedObject.FindProperty("m_enableEmojiSupport");
+            m_PropStyleSheet = serializedObject.FindProperty("m_defaultStyleSheet");
+            m_PropColorGradientPresetsPath = serializedObject.FindProperty("m_defaultColorGradientPresetsPath");
 
-            m_list = new ReorderableList(serializedObject, serializedObject.FindProperty("m_fallbackFontAssets"), true, true, true, true);
+            m_List = new ReorderableList(serializedObject, serializedObject.FindProperty("m_fallbackFontAssets"), true, true, true, true);
 
-            m_list.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
+            m_List.drawElementCallback = (rect, index, isActive, isFocused) =>
             {
-                var element = m_list.serializedProperty.GetArrayElementAtIndex(index);
+                var element = m_List.serializedProperty.GetArrayElementAtIndex(index);
                 rect.y += 2;
                 EditorGUI.PropertyField( new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), element, GUIContent.none);
             };
 
-            m_list.drawHeaderCallback = rect =>
+            m_List.drawHeaderCallback = rect =>
             {
-                EditorGUI.LabelField(rect, "<b>Fallback Font Asset List</b>", TMP_UIStyleManager.Label);
+                EditorGUI.LabelField(rect, Styles.fallbackFontAssetsListLabel);
             };
 
-            prop_matchMaterialPreset = serializedObject.FindProperty("m_matchMaterialPreset");
+            m_PropMatchMaterialPreset = serializedObject.FindProperty("m_matchMaterialPreset");
 
-            prop_WordWrapping = serializedObject.FindProperty("m_enableWordWrapping");
-            prop_Kerning = serializedObject.FindProperty("m_enableKerning");
-            prop_ExtraPadding = serializedObject.FindProperty("m_enableExtraPadding");
-            prop_TintAllSprites = serializedObject.FindProperty("m_enableTintAllSprites");
-            prop_ParseEscapeCharacters = serializedObject.FindProperty("m_enableParseEscapeCharacters");
-            prop_MissingGlyphCharacter = serializedObject.FindProperty("m_missingGlyphCharacter");
+            m_PropWordWrapping = serializedObject.FindProperty("m_enableWordWrapping");
+            m_PropKerning = serializedObject.FindProperty("m_enableKerning");
+            m_PropExtraPadding = serializedObject.FindProperty("m_enableExtraPadding");
+            m_PropTintAllSprites = serializedObject.FindProperty("m_enableTintAllSprites");
+            m_PropParseEscapeCharacters = serializedObject.FindProperty("m_enableParseEscapeCharacters");
+            m_PropMissingGlyphCharacter = serializedObject.FindProperty("m_missingGlyphCharacter");
 
-            prop_WarningsDisabled = serializedObject.FindProperty("m_warningsDisabled");
+            m_PropWarningsDisabled = serializedObject.FindProperty("m_warningsDisabled");
 
-            prop_LeadingCharacters = serializedObject.FindProperty("m_leadingCharacters");
-            prop_FollowingCharacters = serializedObject.FindProperty("m_followingCharacters");
-
-            // Get the UI Skin and Styles for the various Editors
-            TMP_UIStyleManager.GetUIStyles();
+            m_PropLeadingCharacters = serializedObject.FindProperty("m_leadingCharacters");
+            m_PropFollowingCharacters = serializedObject.FindProperty("m_followingCharacters");
         }
 
         public override void OnInspectorGUI()
         {
-            //Event evt = Event.current;
-
             serializedObject.Update();
-
-            GUILayout.Label("<b>TEXTMESH PRO - SETTINGS</b>     (Version - " + TMP_Settings.version + ")", TMP_UIStyleManager.Section_Label);
 
             // TextMeshPro Font Info Panel
             EditorGUI.indentLevel = 0;
 
-            //GUI.enabled = false; // Lock UI
-
-            EditorGUIUtility.labelWidth = 135;
-            //EditorGUIUtility.fieldWidth = 80;
-
             // FONT ASSET
-            EditorGUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
-            GUILayout.Label("<b>Default Font Asset</b>", TMP_UIStyleManager.Label);
-            GUILayout.Label("Select the Font Asset that will be assigned by default to newly created text objects when no Font Asset is specified.", TMP_UIStyleManager.Label);
-            GUILayout.Space(5f);
-            EditorGUILayout.PropertyField(prop_FontAsset);
-            GUILayout.Space(10f);
-            GUILayout.Label("The relative path to a Resources folder where the Font Assets and Material Presets are located.\nExample \"Fonts & Materials/\"", TMP_UIStyleManager.Label);
-            EditorGUILayout.PropertyField(prop_DefaultFontAssetPath, new GUIContent("Path:        Resources/"));
-            EditorGUILayout.EndVertical();
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.Label(Styles.defaultFontAssetLabel, EditorStyles.boldLabel);
+            EditorGUI.indentLevel = 1;
+            EditorGUILayout.PropertyField(m_PropFontAsset, Styles.defaultFontAssetLabel);
+            EditorGUILayout.PropertyField(m_PropDefaultFontAssetPath, Styles.defaultFontAssetPathLabel);
+            EditorGUI.indentLevel = 0;
 
+            EditorGUILayout.Space();
+            EditorGUILayout.EndVertical();
 
             // FALLBACK FONT ASSETs
-            EditorGUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
-            GUILayout.Label("<b>Fallback Font Assets</b>", TMP_UIStyleManager.Label);
-            GUILayout.Label("Select the Font Assets that will be searched to locate and replace missing characters from a given Font Asset.", TMP_UIStyleManager.Label);
-            GUILayout.Space(5f);
-            m_list.DoLayoutList();
-            GUILayout.Label("<b>Fallback Material Settings</b>", TMP_UIStyleManager.Label);
-            EditorGUILayout.PropertyField(prop_matchMaterialPreset, new GUIContent("Match Material Presets"));
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.Label(Styles.fallbackFontAssetsLabel, EditorStyles.boldLabel);
+            m_List.DoLayoutList();
+
+            GUILayout.Label(Styles.fallbackMaterialSettingsLabel, EditorStyles.boldLabel);
+            EditorGUI.indentLevel = 1;
+            EditorGUILayout.PropertyField(m_PropMatchMaterialPreset, Styles.matchMaterialPresetLabel);
+            EditorGUI.indentLevel = 0;
+
+            EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
-
-
-            // MISSING GLYPH
-            EditorGUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
-            EditorGUIUtility.labelWidth = 135;
-            GUILayout.Label("<b>Missing Glyph</b>", TMP_UIStyleManager.Label);
-            GUILayout.Label("Define which glyph will be displayed in the event a requested glyph is missing from the specified font asset.", TMP_UIStyleManager.Label);
-            GUILayout.Space(5f);
-            EditorGUILayout.PropertyField(prop_MissingGlyphCharacter, new GUIContent("Missing Glyph Repl."), GUILayout.Width(180));
-            GUILayout.Space(10f);
-            GUILayout.Label("<b>Disable warnings for missing glyphs on text objects.</b>", TMP_UIStyleManager.Label);
-            EditorGUILayout.PropertyField(prop_WarningsDisabled, new GUIContent("Disable warnings"));
+            
+            // MISSING GLYPHS
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.Label(Styles.missingGlyphsTitleLabel, EditorStyles.boldLabel);
+            EditorGUI.indentLevel = 1;
+            EditorGUILayout.PropertyField(m_PropMissingGlyphCharacter, Styles.missingGlyphLabel);
+            EditorGUILayout.PropertyField(m_PropWarningsDisabled, Styles.disableWarningsLabel);
+            EditorGUI.indentLevel = 0;
+            
+            EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
-
-
+            
             // TEXT OBJECT DEFAULT PROPERTIES
-            EditorGUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
-            GUILayout.Label("<b>New Text Object Default Settings</b>", TMP_UIStyleManager.Label);
-            GUILayout.Label("Default settings used by all new text objects.", TMP_UIStyleManager.Label);
-            GUILayout.Space(10f);
-            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.Label(Styles.containerDefaultSettingsLabel, EditorStyles.boldLabel);
+            EditorGUI.indentLevel = 1;
+            
+            EditorGUILayout.PropertyField(m_PropDefaultTextMeshProTextContainerSize, Styles.textMeshProLabel);
+            EditorGUILayout.PropertyField(m_PropDefaultTextMeshProUITextContainerSize, Styles.textMeshProUiLabel);
+            EditorGUILayout.PropertyField(m_PropAutoSizeTextContainer, Styles.autoSizeContainerLabel);
+            EditorGUI.indentLevel = 0;
 
-            GUILayout.Label("<b>Text Container Default Settings</b>", TMP_UIStyleManager.Label);
+            EditorGUILayout.Space();
 
-            EditorGUIUtility.labelWidth = 150;
-            EditorGUILayout.PropertyField(prop_DefaultTextMeshProTextContainerSize, new GUIContent("TextMeshPro")); //, GUILayout.MinWidth(180), GUILayout.MaxWidth(200));
-            EditorGUILayout.PropertyField(prop_DefaultTextMeshProUITextContainerSize, new GUIContent("TextMeshPro UI")); //, GUILayout.MinWidth(80), GUILayout.MaxWidth(100));
-            EditorGUILayout.PropertyField(prop_AutoSizeTextContainer, new GUIContent("Auto Size Text Container", "Set the size of the text container to match the text."));
-
-            GUILayout.Space(10f);
-            GUILayout.Label("<b>Text Component Default Settings</b>", TMP_UIStyleManager.Label);
-            EditorGUIUtility.labelWidth = 150;
-            EditorGUILayout.PropertyField(prop_DefaultFontSize, new GUIContent("Default Font Size"), GUILayout.MinWidth(200), GUILayout.MaxWidth(200));
-
+            GUILayout.Label(Styles.textComponentDefaultSettingsLabel, EditorStyles.boldLabel);
+            EditorGUI.indentLevel = 1;
+            EditorGUILayout.PropertyField(m_PropDefaultFontSize, Styles.defaultFontSize);
+            
             EditorGUILayout.BeginHorizontal();
             {
-                EditorGUILayout.PrefixLabel(new GUIContent("Text Auto Size Ratios"));
-                EditorGUIUtility.labelWidth = 35;
-                EditorGUILayout.PropertyField(prop_DefaultAutoSizeMinRatio, new GUIContent("Min:"));
-                EditorGUILayout.PropertyField(prop_DefaultAutoSizeMaxRatio, new GUIContent("Max:"));
+                EditorGUILayout.PrefixLabel(Styles.autoSizeRatioLabel);
+                EditorGUIUtility.labelWidth = 32;
+                EditorGUIUtility.fieldWidth = 10;
+                
+                EditorGUI.indentLevel = 0;
+                EditorGUILayout.PropertyField(m_PropDefaultAutoSizeMinRatio, Styles.minLabel);
+                EditorGUILayout.PropertyField(m_PropDefaultAutoSizeMaxRatio, Styles.maxLabel);
+                EditorGUI.indentLevel = 1;
             }
             EditorGUILayout.EndHorizontal();
+            
+            EditorGUIUtility.labelWidth = 0;
+            EditorGUIUtility.fieldWidth = 0;
+            
+            EditorGUILayout.PropertyField(m_PropWordWrapping, Styles.wordWrappingLabel);
+            EditorGUILayout.PropertyField(m_PropKerning, Styles.kerningLabel);
+            
+            EditorGUILayout.PropertyField(m_PropExtraPadding, Styles.extraPaddingLabel);
+            EditorGUILayout.PropertyField(m_PropTintAllSprites, Styles.tintAllSpritesLabel);
+            
+            EditorGUILayout.PropertyField(m_PropParseEscapeCharacters, Styles.parseEscapeCharactersLabel);
 
-            EditorGUIUtility.labelWidth = 150;
+            EditorGUIUtility.labelWidth = 0;
+            EditorGUI.indentLevel = 0;
 
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.PropertyField(prop_WordWrapping);
-            EditorGUILayout.PropertyField(prop_Kerning);
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.PropertyField(prop_ExtraPadding);
-            EditorGUILayout.PropertyField(prop_TintAllSprites);
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.PropertyField(prop_ParseEscapeCharacters, new GUIContent("Parse Escape Sequence"));
-            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
-
 
             // SPRITE ASSET
-            EditorGUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
-            GUILayout.Label("<b>Default Sprite Asset</b>", TMP_UIStyleManager.Label);
-            //GUI.color = Color.yellow;
-            GUILayout.Label("Select the Sprite Asset that will be assigned by default when using the <sprite> tag when no Sprite Asset is specified.", TMP_UIStyleManager.Label);
-            GUILayout.Space(5f);
-            //GUI.color = Color.white;
-            EditorGUILayout.PropertyField(prop_SpriteAsset);
-            GUILayout.Space(10f);
-            //GUILayout.Label("Enable Emoji Support", TMP_UIStyleManager.Label);
-            EditorGUILayout.PropertyField(prop_EnableEmojiSupport, new GUIContent("Enable Emoji Support", "Enables Emoji support for Touch Screen Keyboards on target devices."));
-            GUILayout.Space(10f);
-            GUILayout.Label("The relative path to a Resources folder where the Sprite Assets are located.\nExample \"Sprite Assets/\"", TMP_UIStyleManager.Label);
-            EditorGUILayout.PropertyField(prop_SpriteAssetPath, new GUIContent("Path:        Resources/"));
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.Label(Styles.defaultSpriteAssetLabel, EditorStyles.boldLabel);
+            EditorGUI.indentLevel = 1;
+            EditorGUILayout.PropertyField(m_PropSpriteAsset, Styles.defaultSpriteAssetLabel);
+            EditorGUILayout.PropertyField(m_PropEnableEmojiSupport, Styles.enableEmojiSupportLabel);
+            EditorGUILayout.PropertyField(m_PropSpriteAssetPath, Styles.spriteAssetsPathLabel);
+            EditorGUI.indentLevel = 0;
+
+            EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
 
-
             // STYLE SHEET
-            EditorGUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
-            GUILayout.Label("<b>Default Style Sheet</b>", TMP_UIStyleManager.Label);
-            GUILayout.Label("Select the Style Sheet that will be used for all text objects in this project.", TMP_UIStyleManager.Label);
-            GUILayout.Space(5f);
-            EditorGUILayout.PropertyField(prop_StyleSheet);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.Label(Styles.defaultStyleSheetLabel, EditorStyles.boldLabel);
+            EditorGUI.indentLevel = 1;
+            EditorGUILayout.PropertyField(m_PropStyleSheet, Styles.defaultStyleSheetLabel);
+            EditorGUI.indentLevel = 0;
+
+            EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
 
             // COLOR GRADIENT PRESETS
-            EditorGUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
-            GUILayout.Label("<b>Color Gradient Presets</b>", TMP_UIStyleManager.Label);
-            GUILayout.Label("The relative path to a Resources folder where the Color Gradient Presets are located.\nExample \"Color Gradient Presets/\"", TMP_UIStyleManager.Label);
-            EditorGUILayout.PropertyField(prop_ColorGradientPresetsPath, new GUIContent("Path:        Resources/"));
-            EditorGUILayout.EndVertical();
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.Label(Styles.colorGradientPresetsLabel, EditorStyles.boldLabel);
+            EditorGUI.indentLevel = 1;
+            EditorGUILayout.PropertyField(m_PropColorGradientPresetsPath, Styles.colorGradientsPathLabel);
+            EditorGUI.indentLevel = 0;
 
+            EditorGUILayout.Space();
+            EditorGUILayout.EndVertical();
 
             // LINE BREAKING RULE
-            EditorGUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
-            GUILayout.Label("<b>Line Breaking Resources for Asian languages</b>", TMP_UIStyleManager.Label);
-            GUILayout.Label("Select the text assets that contain the Leading and Following characters which define the rules for line breaking with Asian languages.", TMP_UIStyleManager.Label);
-            GUILayout.Space(5f);
-            EditorGUILayout.PropertyField(prop_LeadingCharacters);
-            EditorGUILayout.PropertyField(prop_FollowingCharacters);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.Label(Styles.lineBreakingLabel, EditorStyles.boldLabel);
+            EditorGUI.indentLevel = 1;
+            EditorGUILayout.PropertyField(m_PropLeadingCharacters);
+            EditorGUILayout.PropertyField(m_PropFollowingCharacters);
+            EditorGUI.indentLevel = 0;
+
+            EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
-
-
+            
             if (serializedObject.ApplyModifiedProperties())
             {
                 EditorUtility.SetDirty(target);

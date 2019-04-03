@@ -20,18 +20,23 @@ namespace TMPro.EditorUtilities
 
             float width = position.width;
 
-            position.width = 125;
+            position.width = EditorGUIUtility.labelWidth;
             EditorGUI.LabelField(position, label);
+
+            int oldIndent = EditorGUI.indentLevel;
+            EditorGUI.indentLevel = 0;
 
             // NORMAL FACETYPE
             if (label.text[0] == '4') GUI.enabled = false;
-            position.x = 140; position.width = (width - 140) / 2;
+            position.x += position.width; position.width = (width - position.width) / 2;
             EditorGUI.PropertyField(position, prop_regular, GUIContent.none);
 
             // ITALIC FACETYPE
             GUI.enabled = true;
-            position.x += position.width + 17;
+            position.x += position.width;
             EditorGUI.PropertyField(position, prop_italic, GUIContent.none);
+
+            EditorGUI.indentLevel = oldIndent;
         }
     }
 
@@ -42,7 +47,7 @@ namespace TMPro.EditorUtilities
     {
         private struct UI_PanelState
         {
-            public static bool fontInfoPanel = true;
+            public static bool fontSubAssetsPanel = true;
             public static bool fontWeightPanel = true;
             public static bool fallbackFontAssetPanel = true;
             public static bool glyphInfoPanel = false;
@@ -114,8 +119,6 @@ namespace TMPro.EditorUtilities
 
         private System.DateTime timeStamp;
 
-        private string[] uiStateLabel = new string[] { "<i>(Click to expand)</i>", "<i>(Click to collapse)</i>" };
-
         public void OnEnable()
         {
             font_atlas_prop = serializedObject.FindProperty("atlas");
@@ -134,7 +137,7 @@ namespace TMPro.EditorUtilities
 
             m_list.drawHeaderCallback = rect =>
             {
-                EditorGUI.LabelField(rect, "<b>Fallback Font Asset List</b>", TMP_UIStyleManager.Label);
+                EditorGUI.LabelField(rect, "Fallback Font Asset List");
             };
 
             font_normalStyle_prop = serializedObject.FindProperty("normalStyle");
@@ -157,9 +160,6 @@ namespace TMPro.EditorUtilities
 
             m_materialPresets = TMP_EditorUtility.FindMaterialReferences(m_fontAsset);
 
-            // Get the UI Skin and Styles for the various Editors
-            TMP_UIStyleManager.GetUIStyles();
-
             m_GlyphSearchList = new List<int>();
             m_KerningTableSearchList = new List<int>();
         }
@@ -176,26 +176,25 @@ namespace TMPro.EditorUtilities
             serializedObject.Update();
 
             // TextMeshPro Font Info Panel
-            Rect rect = EditorGUILayout.GetControlRect(true, 26f);
-            GUI.Label(rect, "<b>TextMesh Pro! Font Asset</b>", TMP_UIStyleManager.Section_Label);
+            Rect rect = EditorGUILayout.GetControlRect();
 
-            rect.x = rect.width - 125;
-            rect.y += 2;
+            
+            GUI.Label(rect, "Face Info", EditorStyles.boldLabel);
+
+            rect.x += rect.width - 130f;
             rect.width = 130f;
-            rect.height = 20f;
 
             if (GUI.Button(rect, "Update Atlas Texture"))
             {
                 TMPro_FontAssetCreatorWindow.ShowFontAtlasCreatorWindow(target as TMP_FontAsset);
             }
 
-            // TextMeshPro Font Info Panel
-            GUILayout.Label("Face Info", TMP_UIStyleManager.Section_Label);
+
             EditorGUI.indentLevel = 1;
 
             GUI.enabled = false; // Lock UI
 
-            float labelWidth = EditorGUIUtility.labelWidth = 150f;
+            float labelWidth = EditorGUIUtility.labelWidth;
             float fieldWidth = EditorGUIUtility.fieldWidth;
 
             EditorGUILayout.PropertyField(m_fontInfo_prop.FindPropertyRelative("Name"), new GUIContent("Font Source"));
@@ -222,45 +221,51 @@ namespace TMPro.EditorUtilities
             GUI.enabled = false;
             //EditorGUILayout.PropertyField(m_fontInfo_prop.FindPropertyRelative("Padding"));
 
-            //GUILayout.Label("Atlas Size");
+            //GUILayout.label("Atlas Size");
             EditorGUI.indentLevel = 1;
-            GUILayout.Space(18);
+            EditorGUILayout.Space();
             EditorGUILayout.PropertyField(m_fontInfo_prop.FindPropertyRelative("Padding"));
             EditorGUILayout.PropertyField(m_fontInfo_prop.FindPropertyRelative("AtlasWidth"), new GUIContent("Width"));
             EditorGUILayout.PropertyField(m_fontInfo_prop.FindPropertyRelative("AtlasHeight"), new GUIContent("Height"));
-
+            
             GUI.enabled = true;
+
+            EditorGUILayout.Space();
+
             EditorGUI.indentLevel = 0;
-            GUILayout.Space(20);
-            GUILayout.Label("Font Sub-Assets", TMP_UIStyleManager.Section_Label);
-                  
-            GUI.enabled = false;
-            EditorGUI.indentLevel = 1;
-            EditorGUILayout.PropertyField(font_atlas_prop, new GUIContent("Font Atlas:"));
-            EditorGUILayout.PropertyField(font_material_prop, new GUIContent("Font Material:"));
+            UI_PanelState.fontSubAssetsPanel = EditorGUILayout.Foldout(UI_PanelState.fontSubAssetsPanel, new GUIContent("Font Sub-Assets"), true, TMP_UIStyleManager.boldFoldout);
 
-            GUI.enabled = true;
-
+            if (UI_PanelState.fontSubAssetsPanel)
+            {
+                GUI.enabled = false;
+                EditorGUI.indentLevel = 1;
+                EditorGUILayout.PropertyField(font_atlas_prop, new GUIContent("Font Atlas"));
+                EditorGUILayout.PropertyField(font_material_prop, new GUIContent("Font Material"));
+                GUI.enabled = true;
+                EditorGUILayout.Space();
+            }
+            
             string evt_cmd = Event.current.commandName; // Get Current Event CommandName to check for Undo Events
 
             // FONT SETTINGS
             EditorGUI.indentLevel = 0;
-            if (GUILayout.Button("Font Weights\t" + (UI_PanelState.fontWeightPanel ? uiStateLabel[1] : uiStateLabel[0]), TMP_UIStyleManager.Section_Label))
-                UI_PanelState.fontWeightPanel = !UI_PanelState.fontWeightPanel;
-
+            UI_PanelState.fontWeightPanel = EditorGUILayout.Foldout(UI_PanelState.fontWeightPanel, new GUIContent("Font Weights", "The Font Assets that will be used for different font weights and the settings used to simulate a typeface when no asset is available."), true, TMP_UIStyleManager.boldFoldout);
 
             if (UI_PanelState.fontWeightPanel)
             {
-                EditorGUIUtility.labelWidth = 120;
-                EditorGUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
-                EditorGUI.indentLevel = 0;
-                GUILayout.Label("Select the Font Assets that will be used for the following font weights.", TMP_UIStyleManager.Label);
-                GUILayout.Space(10f);
-                EditorGUILayout.BeginHorizontal();
-                GUILayout.Label("<b>Font Weight</b>", TMP_UIStyleManager.Label, GUILayout.Width(117));
-                GUILayout.Label("<b>Normal Style</b>", TMP_UIStyleManager.Label);
-                GUILayout.Label("<b>Italic Style</b>", TMP_UIStyleManager.Label);
-                EditorGUILayout.EndHorizontal();
+                EditorGUIUtility.labelWidth *= 0.75f;
+                EditorGUIUtility.fieldWidth *= 0.25f;
+
+                EditorGUILayout.BeginVertical();
+                EditorGUI.indentLevel = 1;
+                rect = EditorGUILayout.GetControlRect(true);
+                rect.x += EditorGUIUtility.labelWidth;
+                rect.width = (rect.width - EditorGUIUtility.labelWidth) / 2f;
+                GUI.Label(rect, "Normal Style", EditorStyles.boldLabel);
+                rect.x += rect.width;
+                GUI.Label(rect, "Italic Style", EditorStyles.boldLabel);
+                
+                EditorGUI.indentLevel = 1;
 
                 //EditorGUILayout.PropertyField(fontWeights_prop.GetArrayElementAtIndex(1), new GUIContent("100 - Thin"));
                 //EditorGUILayout.PropertyField(fontWeights_prop.GetArrayElementAtIndex(2), new GUIContent("200 - Extra-Light"));
@@ -274,11 +279,10 @@ namespace TMPro.EditorUtilities
 
                 EditorGUILayout.EndVertical();
 
-                //EditorGUI.indentLevel = 1;
-                EditorGUIUtility.labelWidth = 120f;
-                EditorGUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
-                GUILayout.Label("Settings used to simulate a typeface when no font asset is available.", TMP_UIStyleManager.Label);
-                GUILayout.Space(5f);
+                EditorGUILayout.Space();
+
+                EditorGUILayout.BeginVertical();
+
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.PropertyField(font_normalStyle_prop, new GUIContent("Normal Weight"));
                 font_normalStyle_prop.floatValue = Mathf.Clamp(font_normalStyle_prop.floatValue, -3.0f, 3.0f);
@@ -291,8 +295,7 @@ namespace TMPro.EditorUtilities
                         m_materialPresets[i].SetFloat("_WeightNormal", font_normalStyle_prop.floatValue);
                 }
 
-
-                EditorGUILayout.PropertyField(font_boldStyle_prop, new GUIContent("Bold Weight"), GUILayout.MinWidth(100));
+                EditorGUILayout.PropertyField(font_boldStyle_prop, new GUIContent("Bold Weight"));
                 font_boldStyle_prop.floatValue = Mathf.Clamp(font_boldStyle_prop.floatValue, -3.0f, 3.0f);
                 if (GUI.changed || evt_cmd == k_UndoRedo)
                 {
@@ -303,7 +306,7 @@ namespace TMPro.EditorUtilities
                         m_materialPresets[i].SetFloat("_WeightBold", font_boldStyle_prop.floatValue);
                 }
                 EditorGUILayout.EndHorizontal();
-
+                
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.PropertyField(font_normalSpacing_prop, new GUIContent("Spacing Offset"));
                 font_normalSpacing_prop.floatValue = Mathf.Clamp(font_normalSpacing_prop.floatValue, -100, 100);
@@ -319,48 +322,40 @@ namespace TMPro.EditorUtilities
                     GUI.changed = false;
                 }
                 EditorGUILayout.EndHorizontal();
-
+                
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.PropertyField(font_italicStyle_prop, new GUIContent("Italic Style: "));
+                EditorGUILayout.PropertyField(font_italicStyle_prop, new GUIContent("Italic Style"));
                 font_italicStyle_prop.intValue = Mathf.Clamp(font_italicStyle_prop.intValue, 15, 60);
-
-                EditorGUILayout.PropertyField(font_tabSize_prop, new GUIContent("Tab Multiple: "));
-
+                
+                EditorGUILayout.PropertyField(font_tabSize_prop, new GUIContent("Tab Multiple"));
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.EndVertical();
+                EditorGUILayout.Space();
             }
 
-            GUILayout.Space(5);
-
+            EditorGUIUtility.labelWidth = 0;
+            EditorGUIUtility.fieldWidth = 0;
+            
             // FALLBACK FONT ASSETS
             EditorGUI.indentLevel = 0;
-            if (GUILayout.Button("Fallback Font Assets\t" + (UI_PanelState.fallbackFontAssetPanel ? uiStateLabel[1] : uiStateLabel[0]), TMP_UIStyleManager.Section_Label))
-                UI_PanelState.fallbackFontAssetPanel = !UI_PanelState.fallbackFontAssetPanel;
-
+            UI_PanelState.fallbackFontAssetPanel = EditorGUILayout.Foldout(UI_PanelState.fallbackFontAssetPanel, new GUIContent("Fallback Font Assets", "Select the Font Assets that will be searched and used as fallback when characters are missing from this font asset."), true, TMP_UIStyleManager.boldFoldout);
 
             if (UI_PanelState.fallbackFontAssetPanel)
             {
                 EditorGUIUtility.labelWidth = 120;
-                EditorGUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
                 EditorGUI.indentLevel = 0;
-                GUILayout.Label("Select the Font Assets that will be searched and used as fallback when characters are missing from this font asset.", TMP_UIStyleManager.Label);
-                GUILayout.Space(10f);
 
                 m_list.DoLayoutList();
-
-                EditorGUILayout.EndVertical();
+                EditorGUILayout.Space();
             }
-
 
             // GLYPH INFO TABLE
             #region Glyph Table
             EditorGUIUtility.labelWidth = labelWidth;
             EditorGUIUtility.fieldWidth = fieldWidth;
-            GUILayout.Space(5);
             EditorGUI.indentLevel = 0;
 
-            if (GUILayout.Button("Glyph Table\t" + (UI_PanelState.glyphInfoPanel ? uiStateLabel[1] : uiStateLabel[0]), TMP_UIStyleManager.Section_Label))
-                UI_PanelState.glyphInfoPanel = !UI_PanelState.glyphInfoPanel;
+            UI_PanelState.glyphInfoPanel = EditorGUILayout.Foldout(UI_PanelState.glyphInfoPanel, new GUIContent("Glyph Table"), true, TMP_UIStyleManager.boldFoldout);
 
             if (UI_PanelState.glyphInfoPanel)
             {
@@ -368,7 +363,7 @@ namespace TMPro.EditorUtilities
                 int itemsPerPage = 15;
 
                 // Display Glyph Management Tools
-                EditorGUILayout.BeginVertical(TMP_UIStyleManager.Group_Label, GUILayout.ExpandWidth(true));
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 {
                     // Search Bar implementation
                     #region DISPLAY SEARCH BAR
@@ -426,15 +421,15 @@ namespace TMPro.EditorUtilities
                             
                         SerializedProperty glyphInfo = m_glyphInfoList_prop.GetArrayElementAtIndex(elementIndex);
 
+                        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                        
                         EditorGUI.BeginDisabledGroup(i != m_SelectedGlyphRecord);
                         {
-                            EditorGUILayout.BeginVertical(TMP_UIStyleManager.Group_Label);
-
                             EditorGUILayout.PropertyField(glyphInfo);
-
-                            EditorGUILayout.EndVertical();
                         }
                         EditorGUI.EndDisabledGroup();
+
+                        EditorGUILayout.EndVertical();
 
                         // Define the end of the selection region of the element.
                         Rect elementEndRegion = GUILayoutUtility.GetRect(0f, 0f, GUILayout.ExpandWidth(true));
@@ -496,7 +491,7 @@ namespace TMPro.EditorUtilities
                             m_dstGlyphID = EditorGUI.TextField(position, m_dstGlyphID);
 
                             // Placeholder text
-                            EditorGUI.LabelField(position, new GUIContent(m_unicodeHexLabel, "The Unicode (Hex) ID of the duplicated Glyph"), TMP_UIStyleManager.Label);
+                            EditorGUI.LabelField(position, new GUIContent(m_unicodeHexLabel, "The Unicode (Hex) ID of the duplicated Glyph"), TMP_UIStyleManager.label);
 
                             // Only filter the input when the destination glyph ID text field has focus.
                             if (GUI.GetNameOfFocusedControl() == "GlyphID_Input")
@@ -538,6 +533,8 @@ namespace TMPro.EditorUtilities
                 }
 
                 DisplayPageNavigation(ref m_CurrentGlyphPage, arraySize, itemsPerPage);
+
+                EditorGUILayout.Space();
             }
             #endregion
 
@@ -546,12 +543,9 @@ namespace TMPro.EditorUtilities
             #region Kerning Table
             EditorGUIUtility.labelWidth = labelWidth;
             EditorGUIUtility.fieldWidth = fieldWidth;
-            GUILayout.Space(5);
             EditorGUI.indentLevel = 0;
 
-            if (GUILayout.Button("Glyph Adjustment Table\t" + (UI_PanelState.kerningInfoPanel ? uiStateLabel[1] : uiStateLabel[0]), TMP_UIStyleManager.Section_Label))
-                UI_PanelState.kerningInfoPanel = !UI_PanelState.kerningInfoPanel;
-
+            UI_PanelState.kerningInfoPanel = EditorGUILayout.Foldout(UI_PanelState.kerningInfoPanel, new GUIContent("Glyph Adjustment Table"), true, TMP_UIStyleManager.boldFoldout);
 
             if (UI_PanelState.kerningInfoPanel)
             {
@@ -559,7 +553,7 @@ namespace TMPro.EditorUtilities
                 int itemsPerPage = 20;
 
                 // Display Kerning Pair Management Tools
-                EditorGUILayout.BeginVertical(TMP_UIStyleManager.Group_Label, GUILayout.ExpandWidth(true));
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 {
                     // Search Bar implementation
                     #region DISPLAY SEARCH BAR
@@ -628,16 +622,16 @@ namespace TMPro.EditorUtilities
                             elementIndex = m_KerningTableSearchList[i];
 
                         SerializedProperty kerningInfo = m_kerningPairs_prop.GetArrayElementAtIndex(elementIndex);
+                        
+                        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
                         EditorGUI.BeginDisabledGroup(i != m_SelectedAdjustmentRecord);
                         {
-                            EditorGUILayout.BeginVertical(TMP_UIStyleManager.Group_Label);
-
                             EditorGUILayout.PropertyField(kerningInfo, new GUIContent("Selectable"));
-
-                            EditorGUILayout.EndVertical();
                         }
                         EditorGUI.EndDisabledGroup();
+
+                        EditorGUILayout.EndVertical();
 
                         // Define the end of the selection region of the element.
                         Rect elementEndRegion = GUILayoutUtility.GetRect(0f, 0f, GUILayout.ExpandWidth(true));
@@ -647,7 +641,9 @@ namespace TMPro.EditorUtilities
                         if (DoSelectionCheck(selectionArea))
                         {
                             if (m_SelectedAdjustmentRecord == i)
+                            {
                                 m_SelectedAdjustmentRecord = -1;
+                            }
                             else
                             {
                                 m_SelectedAdjustmentRecord = i;
@@ -690,7 +686,7 @@ namespace TMPro.EditorUtilities
                 GUILayout.Space(5);
 
                 // Add new kerning pair
-                EditorGUILayout.BeginVertical(TMP_UIStyleManager.Group_Label);
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 {
                     EditorGUILayout.PropertyField(m_kerningPair_prop);
                 }
@@ -728,7 +724,7 @@ namespace TMPro.EditorUtilities
                 {
                     GUILayout.BeginHorizontal();
                     GUILayout.FlexibleSpace();
-                    GUILayout.Label("Kerning Pair already <color=#ffff00>exists!</color>", TMP_UIStyleManager.Label);
+                    GUILayout.Label("Kerning Pair already <color=#ffff00>exists!</color>", TMP_UIStyleManager.label);
                     GUILayout.FlexibleSpace();
                     GUILayout.EndHorizontal();
 
@@ -772,11 +768,10 @@ namespace TMPro.EditorUtilities
 
 
             // Page Counter
-            var pageStyle = new GUIStyle(GUI.skin.button) { normal = { background = null } };
             GUI.enabled = true;
             pagePos.x += pagePos.width;
             int totalPages = (int)(arraySize / (float)itemsPerPage + 0.999f);
-            GUI.Button(pagePos, "Page " + (currentPage + 1) + " / " + totalPages, pageStyle);
+            GUI.Label(pagePos, "Page " + (currentPage + 1) + " / " + totalPages, TMP_UIStyleManager.centeredLabel);
 
             // Next Page
             pagePos.x += pagePos.width;

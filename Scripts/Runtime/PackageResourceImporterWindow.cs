@@ -16,14 +16,6 @@ namespace TMPro
             window.Focus();
         }
 
-
-        public GUISkin LightSkin;
-        public GUISkin DarkSkin;
-
-        static GUIStyle k_Label;
-        static GUIStyle k_SectionLabel;
-        static GUIStyle k_SquareAreaBoxGrey;
-
         [SerializeField]
         bool k_EssentialResourcesImported;
         [SerializeField]
@@ -31,14 +23,10 @@ namespace TMPro
         [SerializeField]
         bool k_IsImportingExamples;
 
-
         void OnEnable()
         {
             // Set Editor Window Size
             SetEditorWindowSize();
-
-            // Get the UI Skin and Styles for the various Editors
-            GetGUIStyles();
 
             // Special handling due to scripts imported in a .unitypackage result in resulting in an assembly reload which clears the callbacks.
             if (k_IsImportingExamples)
@@ -48,7 +36,7 @@ namespace TMPro
             }
         }
 
-        private void OnDestroy()
+        void OnDestroy()
         {
             k_EssentialResourcesImported = false;
             k_ExamplesAndExtrasResourcesImported = false;
@@ -62,16 +50,14 @@ namespace TMPro
 
             GUILayout.BeginVertical();
             {
-                GUILayout.Label("<b>TextMesh Pro Resources Importer</b>", k_SectionLabel);
-
                 // Display options to import Essential resources
-                GUILayout.BeginVertical(k_SquareAreaBoxGrey);
+                GUILayout.BeginVertical(EditorStyles.helpBox);
                 {
-                    GUILayout.Label("<b>TMP Essentials</b>", k_Label);
-                    GUILayout.Label("This appears to be the first time you access TextMesh Pro, as such we need to add resources to your project that are essential for using TextMesh Pro. These new resources will be placed at the root of your project in the \"TextMesh Pro\" folder.", k_Label);
+                    GUILayout.Label("TMP Essentials", EditorStyles.boldLabel);
+                    GUILayout.Label("This appears to be the first time you access TextMesh Pro, as such we need to add resources to your project that are essential for using TextMesh Pro. These new resources will be placed at the root of your project in the \"TextMesh Pro\" folder.", new GUIStyle(EditorStyles.label) { wordWrap = true } );
                     GUILayout.Space(5f);
 
-                    GUI.enabled = k_EssentialResourcesImported == false ? true : false;
+                    GUI.enabled = !k_EssentialResourcesImported;
                     if (GUILayout.Button("Import TMP Essentials"))
                     {
                         importEssentialsPackage = true;
@@ -82,13 +68,13 @@ namespace TMPro
                 GUILayout.EndVertical();
 
                 // Display options to import Examples & Extras
-                GUILayout.BeginVertical(k_SquareAreaBoxGrey);
+                GUILayout.BeginVertical(EditorStyles.helpBox);
                 {
-                    GUILayout.Label("<b>TMP Examples & Extras</b>", k_Label);
-                    GUILayout.Label("The Examples & Extras package contains addition resources and examples that will make discovering and learning about TextMesh Pro's powerful features easier. These additional resources will be placed in the same folder as the TMP essential resources.", k_Label);
+                    GUILayout.Label("TMP Examples & Extras", EditorStyles.boldLabel);
+                    GUILayout.Label("The Examples & Extras package contains addition resources and examples that will make discovering and learning about TextMesh Pro's powerful features easier. These additional resources will be placed in the same folder as the TMP essential resources.", new GUIStyle(EditorStyles.label) { wordWrap = true });
                     GUILayout.Space(5f);
 
-                    GUI.enabled = (k_EssentialResourcesImported == true && k_ExamplesAndExtrasResourcesImported == false) ? true : false;
+                    GUI.enabled = k_EssentialResourcesImported && !k_ExamplesAndExtrasResourcesImported;
                     if (GUILayout.Button("Import TMP Examples & Extras"))
                     {
                         importExamplesPackage = true;
@@ -125,24 +111,7 @@ namespace TMPro
         {
             Repaint();
         }
-
-
-        void GetGUIStyles()
-        {
-            GUISkin skin;
-
-            if (EditorGUIUtility.isProSkin)
-                skin = DarkSkin;
-            else
-                skin = LightSkin;
-
-            k_Label = skin.FindStyle("Label");
-            k_SectionLabel = skin.FindStyle("Section Label");
-            k_SquareAreaBoxGrey = skin.FindStyle("Square Area Box (85 Grey)");
-
-        }
-
-
+        
         /// <summary>
         /// Limits the minimum size of the editor window.
         /// </summary>
@@ -150,7 +119,7 @@ namespace TMPro
         {
             EditorWindow editorWindow = this;
 
-            Vector2 windowSize = new Vector2(640, 240);
+            Vector2 windowSize = new Vector2(640, 210);
             editorWindow.minSize = windowSize;
             editorWindow.maxSize = windowSize;
         }

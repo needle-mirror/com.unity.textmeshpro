@@ -373,18 +373,72 @@ namespace TMPro.EditorUtilities
         {
             if ((value & 0x100) == 0x100)
                 return 0;
-            else if ((value & 0x200) == 0x200)
+            if ((value & 0x200) == 0x200)
                 return 1;
-            else if ((value & 0x400) == 0x400)
+            if ((value & 0x400) == 0x400)
                 return 2;
-            else if ((value & 0x800) == 0x800)
+            if ((value & 0x800) == 0x800)
                 return 3;
-            else if ((value & 0x1000) == 0x1000)
+            if ((value & 0x1000) == 0x1000)
                 return 4;
-            else if ((value & 0x2000) == 0x2000)
+            if ((value & 0x2000) == 0x2000)
                 return 5;
 
             return 0;
+        }
+
+        public static void DrawColorProperty(Rect rect, SerializedProperty property)
+        {
+            int oldIndent = EditorGUI.indentLevel;
+            EditorGUI.indentLevel = 0;
+            if (EditorGUIUtility.wideMode)
+            {
+                EditorGUI.PropertyField(new Rect(rect.x, rect.y, 50f, rect.height), property, GUIContent.none);
+                rect.x += 50f;
+                rect.width = Mathf.Min(100f, rect.width - 55f);
+            }
+            else
+            {
+                rect.height /= 2f;
+                rect.width = Mathf.Min(100f, rect.width - 5f);
+                EditorGUI.PropertyField(rect, property, GUIContent.none);
+                rect.y += rect.height;
+            }
+
+            EditorGUI.BeginChangeCheck();
+            string colorString = EditorGUI.TextField(rect, string.Format("#{0}", ColorUtility.ToHtmlStringRGBA(property.colorValue)));
+            if (EditorGUI.EndChangeCheck())
+            {
+                Color color;
+                if (ColorUtility.TryParseHtmlString(colorString, out color))
+                {
+                    property.colorValue = color;
+                }
+            }
+            EditorGUI.indentLevel = oldIndent;
+        }
+        
+        public static bool EditorToggle(Rect position, bool value, GUIContent content, GUIStyle style)
+        {
+            var id = GUIUtility.GetControlID(content, FocusType.Keyboard, position);
+            var evt = Event.current;
+
+            // Toggle selected toggle on space or return key
+            if (GUIUtility.keyboardControl == id && evt.type == EventType.KeyDown && (evt.keyCode == KeyCode.Space || evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter))
+            {
+                value = !value;
+                evt.Use();
+                GUI.changed = true;
+            }
+
+            if (evt.type == EventType.MouseDown && position.Contains(Event.current.mousePosition))
+            {
+                GUIUtility.keyboardControl = id;
+                EditorGUIUtility.editingTextField = false;
+                HandleUtility.Repaint();
+            }
+            
+            return GUI.Toggle(position, id, value, content, style);
         }
 
     }

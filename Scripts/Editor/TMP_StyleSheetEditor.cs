@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
 using UnityEditor;
-using UnityEditorInternal;
-using System.Collections;
 
 
 namespace TMPro.EditorUtilities
@@ -109,22 +107,18 @@ namespace TMPro.EditorUtilities
     public class TMP_StyleEditor : Editor
     {
 
-        private SerializedProperty m_styleList_prop;
+        SerializedProperty m_StyleListProp;
 
-        private int m_selectedElement = -1;
-        private Rect m_selectionRect;
+        int m_SelectedElement = -1;
 
         //private Event m_CurrentEvent;
-        private int m_page = 0;
+        int m_Page;
 
 
        
         void OnEnable()
         {
-            // Get the UI Skin and Styles for the various Editors
-            TMP_UIStyleManager.GetUIStyles();
-
-            m_styleList_prop = serializedObject.FindProperty("m_StyleList");
+            m_StyleListProp = serializedObject.FindProperty("m_StyleList");
         }
 
 
@@ -134,28 +128,21 @@ namespace TMPro.EditorUtilities
 
             serializedObject.Update();
 
-            GUILayout.Label("<b>TextMeshPro - Style Sheet</b>", TMP_UIStyleManager.Section_Label);
-
-            int arraySize = m_styleList_prop.arraySize;
+            int arraySize = m_StyleListProp.arraySize;
             int itemsPerPage = (Screen.height - 178) / 111;
 
             if (arraySize > 0)
             {
                 // Display each Style entry using the StyleDrawer PropertyDrawer.
-                for (int i = itemsPerPage * m_page; i < arraySize && i < itemsPerPage * (m_page + 1); i++)
+                for (int i = itemsPerPage * m_Page; i < arraySize && i < itemsPerPage * (m_Page + 1); i++)
                 {
-                    // Handle Selection Highlighting
-                    if (m_selectedElement == i)
-                    {
-                        EditorGUI.DrawRect(m_selectionRect, new Color32(40, 192, 255, 255));
-                    }
 
                     // Define the start of the selection region of the element.
                     Rect elementStartRegion = GUILayoutUtility.GetRect(0f, 0f, GUILayout.ExpandWidth(true));
 
-                    EditorGUILayout.BeginVertical(TMP_UIStyleManager.Group_Label);
+                    EditorGUILayout.BeginVertical(EditorStyles.helpBox);
    
-                    SerializedProperty spriteInfo = m_styleList_prop.GetArrayElementAtIndex(i);
+                    SerializedProperty spriteInfo = m_StyleListProp.GetArrayElementAtIndex(i);
                     EditorGUI.BeginChangeCheck();
                     EditorGUILayout.PropertyField(spriteInfo);
                     EditorGUILayout.EndVertical();
@@ -171,9 +158,21 @@ namespace TMPro.EditorUtilities
                     Rect selectionArea = new Rect(elementStartRegion.x, elementStartRegion.y, elementEndRegion.width, elementEndRegion.y - elementStartRegion.y);
                     if (DoSelectionCheck(selectionArea))
                     {
-                        m_selectedElement = i;
-                        m_selectionRect = new Rect(selectionArea.x - 2, selectionArea.y + 2, selectionArea.width + 4, selectionArea.height - 4);
-                        Repaint();
+                        if (m_SelectedElement == i)
+                        {
+                            m_SelectedElement = -1;
+                        }
+                        else
+                        {
+                            m_SelectedElement = i;
+                            GUIUtility.keyboardControl = 0;
+                        }
+                    }
+                    
+                    // Handle Selection Highlighting
+                    if (m_SelectedElement == i)
+                    {
+                        TMP_EditorUtility.DrawBox(selectionArea, 2f, new Color32(40, 192, 255, 255));
                     }
                 }
             }
@@ -193,7 +192,7 @@ namespace TMPro.EditorUtilities
             pagePos.x += pagePos.width * 4;
             if (GUI.Button(pagePos, "+"))
             {
-                m_styleList_prop.arraySize += 1;
+                m_StyleListProp.arraySize += 1;
                 serializedObject.ApplyModifiedProperties();
                 TMP_StyleSheet.RefreshStyles();
             }
@@ -201,13 +200,13 @@ namespace TMPro.EditorUtilities
 
             // Delete selected style.
             pagePos.x += pagePos.width;
-            if (m_selectedElement == -1) GUI.enabled = false;
+            if (m_SelectedElement == -1) GUI.enabled = false;
             if (GUI.Button(pagePos, "-"))
             {
-                if (m_selectedElement != -1)
-                    m_styleList_prop.DeleteArrayElementAtIndex(m_selectedElement);
+                if (m_SelectedElement != -1)
+                    m_StyleListProp.DeleteArrayElementAtIndex(m_SelectedElement);
 
-                m_selectedElement = -1;
+                m_SelectedElement = -1;
                 serializedObject.ApplyModifiedProperties();
                 TMP_StyleSheet.RefreshStyles();
             }
@@ -219,28 +218,28 @@ namespace TMPro.EditorUtilities
 
            
             // Previous Page
-            if (m_page > 0) GUI.enabled = true;
+            if (m_Page > 0) GUI.enabled = true;
             else GUI.enabled = false;
 
             if (GUI.Button(pagePos, "Previous"))
-                m_page -= 1 * shiftMultiplier;
+                m_Page -= 1 * shiftMultiplier;
 
             // PAGE COUNTER
             GUI.enabled = true;
             pagePos.x += pagePos.width;
             int totalPages = (int)(arraySize / (float)itemsPerPage + 0.999f);
-            GUI.Label(pagePos, "Page " + (m_page + 1) + " / " + totalPages, GUI.skin.button);
+            GUI.Label(pagePos, "Page " + (m_Page + 1) + " / " + totalPages, TMP_UIStyleManager.centeredLabel);
 
             // Next Page
             pagePos.x += pagePos.width;
-            if (itemsPerPage * (m_page + 1) < arraySize) GUI.enabled = true;
+            if (itemsPerPage * (m_Page + 1) < arraySize) GUI.enabled = true;
             else GUI.enabled = false;
 
             if (GUI.Button(pagePos, "Next"))
-                m_page += 1 * shiftMultiplier;
+                m_Page += 1 * shiftMultiplier;
 
             // Clamp page range
-            m_page = Mathf.Clamp(m_page, 0, arraySize / itemsPerPage);
+            m_Page = Mathf.Clamp(m_Page, 0, arraySize / itemsPerPage);
 
 
             if (serializedObject.ApplyModifiedProperties())
@@ -249,14 +248,14 @@ namespace TMPro.EditorUtilities
             // Clear selection if mouse event was not consumed. 
             GUI.enabled = true;
             if (currentEvent.type == EventType.MouseDown && currentEvent.button == 0)
-                m_selectedElement = -1;
+                m_SelectedElement = -1;
             
 
         }
 
 
         // Check if any of the Style elements were clicked on.
-        private bool DoSelectionCheck(Rect selectionArea)
+        static bool DoSelectionCheck(Rect selectionArea)
         {
             Event currentEvent = Event.current;
 

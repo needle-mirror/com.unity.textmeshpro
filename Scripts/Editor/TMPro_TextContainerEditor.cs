@@ -41,10 +41,6 @@ namespace TMPro.EditorUtilities
 
             m_textContainer = (TextContainer)target;
             //m_transform = m_textContainer.transform;
-
-
-            // Get the UI Skin and Styles for the various Editors
-            TMP_UIStyleManager.GetUIStyles();
             
 
             /*
@@ -71,8 +67,6 @@ namespace TMPro.EditorUtilities
         {
             serializedObject.Update();
 
-            GUILayout.Label("<b>TEXT CONTAINER</b>", TMP_UIStyleManager.Section_Label, GUILayout.Height(23));
-
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(anchorPosition_prop);
             if (anchorPosition_prop.enumValueIndex == 9)
@@ -95,6 +89,8 @@ namespace TMPro.EditorUtilities
             }
 
             serializedObject.ApplyModifiedProperties();
+
+            EditorGUILayout.Space();
         }
 
 

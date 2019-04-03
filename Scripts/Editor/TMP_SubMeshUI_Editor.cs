@@ -16,8 +16,6 @@ namespace TMPro.EditorUtilities
             //public static bool materialEditor = true;
         }
 
-        private static string[] uiStateLabel = new string[] { "\t- <i>Click to expand</i> -", "\t- <i>Click to collapse</i> -" };
-
         private SerializedProperty fontAsset_prop;
         private SerializedProperty spriteAsset_prop;
 
@@ -30,9 +28,6 @@ namespace TMPro.EditorUtilities
 
         public void OnEnable()
         {
-            // Get the UI Skin and Styles for the various Editors
-            TMP_UIStyleManager.GetUIStyles();
-
             fontAsset_prop = serializedObject.FindProperty("m_fontAsset");
             spriteAsset_prop = serializedObject.FindProperty("m_spriteAsset");
 
@@ -64,17 +59,10 @@ namespace TMPro.EditorUtilities
 
         public override void OnInspectorGUI()
         {
-            // FONT SETTINGS SECTION
-            if (GUILayout.Button("<b>SUB OBJECT SETTINGS</b>" + (m_foldout.fontSettings ? uiStateLabel[1] : uiStateLabel[0]), TMP_UIStyleManager.Section_Label))
-                m_foldout.fontSettings = !m_foldout.fontSettings;
-
-            if (m_foldout.fontSettings)
-            {
-                GUI.enabled = false;
-                EditorGUILayout.PropertyField(fontAsset_prop);
-                EditorGUILayout.PropertyField(spriteAsset_prop);
-                GUI.enabled = true;
-            }
+            GUI.enabled = false;
+            EditorGUILayout.PropertyField(fontAsset_prop);
+            EditorGUILayout.PropertyField(spriteAsset_prop);
+            GUI.enabled = true;
 
             EditorGUILayout.Space();
 
