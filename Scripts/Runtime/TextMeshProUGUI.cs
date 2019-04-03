@@ -65,15 +65,6 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
-        /// </summary>
-        public InlineGraphicManager inlineGraphicManager
-        {
-            get { return m_inlineGraphics; }
-        }
-
-
-        /// <summary>
         /// Anchor dampening prevents the anchor position from being adjusted unless the positional change exceeds about 40% of the width of the underline character. This essentially stabilizes the anchor position.
         /// </summary>
         //public bool anchorDampening
@@ -135,13 +126,14 @@ namespace TMPro
 
         public override void SetVerticesDirty()
         {
-            //Debug.Log("SetVerticesDirty() on Object ID: " + this.GetInstanceID());
-
             if (m_verticesAlreadyDirty || this == null || !this.IsActive() || CanvasUpdateRegistry.IsRebuildingGraphics())
                 return;
 
             m_verticesAlreadyDirty = true;
             CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild((ICanvasElement)this);
+
+            if (m_OnDirtyVertsCallback != null)
+                m_OnDirtyVertsCallback();
         }
 
 
@@ -161,6 +153,9 @@ namespace TMPro
             LayoutRebuilder.MarkLayoutForRebuild(this.rectTransform);
 
             m_isLayoutDirty = true;
+
+            if (m_OnDirtyLayoutCallback != null)
+                m_OnDirtyLayoutCallback();
         }
 
 
@@ -179,8 +174,6 @@ namespace TMPro
 
             if (m_OnDirtyMaterialCallback != null)
                 m_OnDirtyMaterialCallback();
-
-            //UpdateMaterial();
         }
 
 

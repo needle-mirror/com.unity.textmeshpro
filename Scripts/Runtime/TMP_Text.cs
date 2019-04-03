@@ -388,7 +388,7 @@ namespace TMPro
         public float fontSize
         {
             get { return m_fontSize; }
-            set { if (m_fontSize == value) return; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; SetVerticesDirty(); SetLayoutDirty(); m_fontSize = value; if (!m_enableAutoSizing) m_fontSizeBase = m_fontSize; }
+            set { if (m_fontSize == value) return; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; m_fontSize = value; if (!m_enableAutoSizing) m_fontSizeBase = m_fontSize; SetVerticesDirty(); SetLayoutDirty(); }
         }
         [SerializeField]
         protected float m_fontSize = 36; // Font Size
@@ -534,7 +534,7 @@ namespace TMPro
         public float characterSpacing
         {
             get { return m_characterSpacing; }
-            set { if (m_characterSpacing == value) return; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; SetVerticesDirty(); SetLayoutDirty(); m_characterSpacing = value; }
+            set { if (m_characterSpacing == value) return; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true;  m_characterSpacing = value; SetVerticesDirty(); SetLayoutDirty(); }
         }
         [SerializeField]
         protected float m_characterSpacing = 0;
@@ -547,7 +547,7 @@ namespace TMPro
         public float wordSpacing
         {
             get { return m_wordSpacing; }
-            set { if (m_wordSpacing == value) return; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; SetVerticesDirty(); SetLayoutDirty(); m_wordSpacing = value; }
+            set { if (m_wordSpacing == value) return; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; m_wordSpacing = value; SetVerticesDirty(); SetLayoutDirty(); }
         }
         [SerializeField]
         protected float m_wordSpacing = 0;
@@ -558,7 +558,7 @@ namespace TMPro
         public float lineSpacing
         {
             get { return m_lineSpacing; }
-            set { if (m_lineSpacing == value) return; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; SetVerticesDirty(); SetLayoutDirty(); m_lineSpacing = value; }
+            set { if (m_lineSpacing == value) return; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; m_lineSpacing = value; SetVerticesDirty(); SetLayoutDirty(); }
         }
         [SerializeField]
         protected float m_lineSpacing = 0;
@@ -572,7 +572,7 @@ namespace TMPro
         public float lineSpacingAdjustment
         {
             get { return m_lineSpacingMax; }
-            set { if (m_lineSpacingMax == value) return; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; SetVerticesDirty(); SetLayoutDirty(); m_lineSpacingMax = value; }
+            set { if (m_lineSpacingMax == value) return; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; m_lineSpacingMax = value; SetVerticesDirty(); SetLayoutDirty(); }
         }
         [SerializeField]
         protected float m_lineSpacingMax = 0; // Text Auto Sizing Max Line spacing reduction.
@@ -584,7 +584,7 @@ namespace TMPro
         public float paragraphSpacing
         {
             get { return m_paragraphSpacing; }
-            set { if (m_paragraphSpacing == value) return; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; SetVerticesDirty(); SetLayoutDirty(); m_paragraphSpacing = value; }
+            set { if (m_paragraphSpacing == value) return; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; m_paragraphSpacing = value; SetVerticesDirty(); SetLayoutDirty(); }
         }
         [SerializeField]
         protected float m_paragraphSpacing = 0;
@@ -596,7 +596,7 @@ namespace TMPro
         public float characterWidthAdjustment
         {
             get { return m_charWidthMaxAdj; }
-            set { if (m_charWidthMaxAdj == value) return; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; SetVerticesDirty(); SetLayoutDirty(); m_charWidthMaxAdj = value; }
+            set { if (m_charWidthMaxAdj == value) return; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; m_charWidthMaxAdj = value; SetVerticesDirty(); SetLayoutDirty(); }
         }
         [SerializeField]
         protected float m_charWidthMaxAdj = 0f; // Text Auto Sizing Max Character Width reduction.
@@ -746,7 +746,7 @@ namespace TMPro
         public bool enableKerning
         {
             get { return m_enableKerning; }
-            set { if (m_enableKerning == value) return; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; SetVerticesDirty(); SetLayoutDirty(); m_enableKerning = value; }
+            set { if (m_enableKerning == value) return; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; m_enableKerning = value; SetVerticesDirty(); SetLayoutDirty(); }
         }
         [SerializeField]
         protected bool m_enableKerning;
@@ -772,7 +772,7 @@ namespace TMPro
         public bool richText
         {
             get { return m_isRichText; }
-            set { if (m_isRichText == value) return; m_isRichText = value; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; SetVerticesDirty(); SetLayoutDirty(); m_isInputParsingRequired = true; }
+            set { if (m_isRichText == value) return; m_isRichText = value; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; m_isInputParsingRequired = true; SetVerticesDirty(); SetLayoutDirty(); }
         }
         [SerializeField]
         protected bool m_isRichText = true; // Used to enable or disable Rich Text.
@@ -784,7 +784,7 @@ namespace TMPro
         public bool parseCtrlCharacters
         {
             get { return m_parseCtrlCharacters; }
-            set { if (m_parseCtrlCharacters == value) return; m_parseCtrlCharacters = value; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; SetVerticesDirty(); SetLayoutDirty(); m_isInputParsingRequired = true; }
+            set { if (m_parseCtrlCharacters == value) return; m_parseCtrlCharacters = value; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; m_isInputParsingRequired = true; SetVerticesDirty(); SetLayoutDirty(); }
         }
         [SerializeField]
         protected bool m_parseCtrlCharacters = true;
@@ -1400,7 +1400,6 @@ namespace TMPro
         protected TMP_SpriteAsset m_currentSpriteAsset;
         protected int m_spriteCount = 0;
         protected int m_spriteIndex;
-        protected InlineGraphicManager m_inlineGraphics;
         protected int m_spriteAnimationID;
         //protected TMP_XmlTagStack<int> m_spriteAnimationStack = new TMP_XmlTagStack<int>(new int[16]);
 

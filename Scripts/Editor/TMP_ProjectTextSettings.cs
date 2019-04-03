@@ -9,9 +9,8 @@ namespace TMPro
 
     public static class TMP_ProjectTextSettings
     {
-
         // Open Project Text Settings
-        [MenuItem("Window/TextMeshPro/TMP Settings", false, 2000)]
+        [MenuItem("Edit/Project Settings/TextMeshPro Settings", false, 309)]
         public static void SelectProjectTextSettings()
         {
             TMP_Settings textSettings = TMP_Settings.instance;

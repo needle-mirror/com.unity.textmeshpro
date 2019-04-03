@@ -62,12 +62,16 @@ namespace TMPro
             m_TextComponent.fontSize = 18;
         }
 
-        [Test]
-        [TestCase(m_TextBlock_04, 3423, 453, 500, 1)]
-        [TestCase(m_TextBlock_03, 2500, 343, 370, 1)]
-        [TestCase(m_TextBlock_02, 1500, 228, 241, 1)]
-        [TestCase(m_TextBlock_01, 104, 14, 15, 1)]
-        [TestCase(m_TextBlock_00, 22, 4, 5, 1)]
+        public static IEnumerable<object[]> TestCases_Parsing_TextInfo_WordWrapDisabled()
+        {
+            yield return new object[] { m_TextBlock_00, 22, 4, 5, 1 };
+            yield return new object[] { m_TextBlock_01, 104, 14, 15, 1 };
+            yield return new object[] { m_TextBlock_02, 1500, 228, 241, 1 };
+            yield return new object[] { m_TextBlock_03, 2500, 343, 370, 1 };
+            yield return new object[] { m_TextBlock_04, 3423, 453, 500, 1 };
+        }
+
+        [Test, TestCaseSource("TestCases_Parsing_TextInfo_WordWrapDisabled")]
         public void Parsing_TextInfo_WordWrapDisabled(string sourceText, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
             m_TextComponent.text = sourceText;
@@ -86,12 +90,17 @@ namespace TMPro
             Assert.AreEqual(m_TextComponent.textInfo.lineCount, lineCount);
         }
 
-        [Test]
-        [TestCase(m_TextBlock_04, 3423, 453, 500, 29)]
-        [TestCase(m_TextBlock_03, 2500, 343, 370, 21)]
-        [TestCase(m_TextBlock_02, 1500, 228, 241, 13)]
-        [TestCase(m_TextBlock_01, 104, 14, 15, 1)]
-        [TestCase(m_TextBlock_00, 22, 4, 5, 1)]
+
+        public static IEnumerable<object[]> TestCases_Parsing_TextInfo_WordWrapEnabled()
+        {
+            yield return new object[] { m_TextBlock_00, 22, 4, 5, 1 };
+            yield return new object[] { m_TextBlock_01, 104, 14, 15, 1 };
+            yield return new object[] { m_TextBlock_02, 1500, 228, 241, 13 };
+            yield return new object[] { m_TextBlock_03, 2500, 343, 370, 21 };
+            yield return new object[] { m_TextBlock_04, 3423, 453, 500, 29 };
+        }
+
+        [Test, TestCaseSource("TestCases_Parsing_TextInfo_WordWrapEnabled")]
         public void Parsing_TextInfo_WordWrapEnabled(string sourceText, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
             m_TextComponent.text = sourceText;
@@ -110,10 +119,15 @@ namespace TMPro
             Assert.AreEqual(m_TextComponent.textInfo.lineCount, lineCount);
         }
 
-        [Test]
-        [TestCase(m_TextBlock_04, 3423, 453, 500, 27)]
-        [TestCase(m_TextBlock_03, 2500, 343, 370, 20)]
-        [TestCase(m_TextBlock_02, 1500, 228, 241, 13)]
+
+        public static IEnumerable<object[]> TestCases_Parsing_TextInfo_AlignmentTopJustified()
+        {
+            yield return new object[] { m_TextBlock_02, 1500, 228, 241, 13 };
+            yield return new object[] { m_TextBlock_03, 2500, 343, 370, 20 };
+            yield return new object[] { m_TextBlock_04, 3423, 453, 500, 27 };
+        }
+
+        [Test, TestCaseSource("TestCases_Parsing_TextInfo_AlignmentTopJustified")]
         public void Parsing_TextInfo_AlignmentTopJustified(string sourceText, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
             m_TextComponent.text = sourceText;
@@ -132,9 +146,14 @@ namespace TMPro
             Assert.AreEqual(m_TextComponent.textInfo.lineCount, lineCount);
         }
 
-        [Test]
-        [TestCase(m_TextBlock_RichText_01, 768, 124, 126, 14)]
-        [TestCase(m_TextBlock_RichText_00, 59, 8, 9, 1)]
+
+        public static IEnumerable<object[]> TestCases_Parsing_TextInfo_RichText()
+        {
+            yield return new object[] { m_TextBlock_RichText_00, 59, 8, 9, 1 };
+            yield return new object[] { m_TextBlock_RichText_01, 768, 124, 126, 14 };
+        }
+
+        [Test, TestCaseSource("TestCases_Parsing_TextInfo_RichText")]
         public void Parsing_TextInfo_RichText(string sourceText, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
             m_TextComponent.text = sourceText;

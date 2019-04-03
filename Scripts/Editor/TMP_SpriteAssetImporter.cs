@@ -17,7 +17,7 @@ namespace TMPro
     public class TMP_SpriteAssetImporter : EditorWindow
     {
         // Create Sprite Asset Editor Window
-        [MenuItem("Window/TextMeshPro/Sprite Importer")]
+        [MenuItem("Window/TextMeshPro/Sprite Importer", false, 2026)]
         public static void ShowFontAtlasCreatorWindow()
         {
             var window = GetWindow<TMP_SpriteAssetImporter>();

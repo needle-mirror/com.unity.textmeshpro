@@ -1140,10 +1140,10 @@ namespace TMPro
                     if (!m_ReadOnly)
                         text = m_Keyboard.text;
 
-                    if (m_Keyboard.wasCanceled)
+                    if (m_Keyboard.status == TouchScreenKeyboard.Status.Canceled)
                         m_WasCanceled = true;
 
-                    if (m_Keyboard.done)
+                    if (m_Keyboard.status == TouchScreenKeyboard.Status.Done)
                         OnSubmit(null);
                 }
 
@@ -1202,9 +1202,9 @@ namespace TMPro
             }
 
 
-            if (m_Keyboard.done)
+            if (m_Keyboard.status == TouchScreenKeyboard.Status.Done)
             {
-                if (m_Keyboard.wasCanceled)
+                if (m_Keyboard.status == TouchScreenKeyboard.Status.Canceled)
                     m_WasCanceled = true;
 
                 OnDeselect(null);

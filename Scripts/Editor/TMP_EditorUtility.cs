@@ -179,13 +179,13 @@ namespace TMPro.EditorUtilities
             if (Directory.Exists(packagePath))
             {
                 // Search default location for development package
-                if (Directory.Exists(packagePath + "/Assets/Packages/com.unity.TextMeshPro/GUISkins"))
+                if (Directory.Exists(packagePath + "/Assets/Packages/com.unity.TextMeshPro/Editor Resources"))
                 {
                     return "Assets/Packages/com.unity.TextMeshPro";
                 }
 
                 // Search for default location of normal TextMesh Pro AssetStore package
-                if (Directory.Exists(packagePath + "/Assets/TextMesh Pro/GUISkins"))
+                if (Directory.Exists(packagePath + "/Assets/TextMesh Pro/Editor Resources"))
                 {
                     return "Assets/TextMesh Pro";
                 }
@@ -212,13 +212,13 @@ namespace TMPro.EditorUtilities
             if (Directory.Exists(packagePath))
             {
                 // Search default location for development package
-                if (Directory.Exists(packagePath + "/Assets/Packages/com.unity.TextMeshPro/GUISkins"))
+                if (Directory.Exists(packagePath + "/Assets/Packages/com.unity.TextMeshPro/Editor Resources"))
                 {
                     return packagePath + "/Assets/Packages/com.unity.TextMeshPro";
                 }
 
                 // Search for default location of normal TextMesh Pro AssetStore package
-                if (Directory.Exists(packagePath + "/Assets/TextMesh Pro/GUISkins"))
+                if (Directory.Exists(packagePath + "/Assets/TextMesh Pro/Editor Resources"))
                 {
                     return packagePath + "/Assets/TextMesh Pro";
                 }
@@ -232,54 +232,6 @@ namespace TMPro.EditorUtilities
             return null;
         }
 
-        /// <summary>
-        /// Function to find the asset folder location in case it was moved by the user.
-        /// </summary>
-        /// <returns></returns>
-        public static string GetAssetLocation()
-        {
-            if (isTMProFolderLocated == false)
-            {
-                isTMProFolderLocated = true;
-
-                // Check for potential UPM package
-                string packagePath = Path.GetFullPath("Packages/com.unity.textmeshpro");
-                if (Directory.Exists(packagePath))
-                {
-                    return "Packages/com.unity.textmeshpro";
-                }
-
-                string projectPath = Path.GetFullPath("Assets/..");
-                if (Directory.Exists(projectPath))
-                {
-
-                }
-
-                // Find all potential directories where TextMesh Pro and its resources could be located.
-                string[] matchingPaths = Directory.GetDirectories(projectPath, "*TextMeshPro", SearchOption.AllDirectories);
-                folderPath = ValidateLocation(matchingPaths, projectPath);
-                if (folderPath != null) return folderPath;
-
-                // Check alternative Asset folder name.
-                matchingPaths = Directory.GetDirectories(projectPath, "TextMesh Pro", SearchOption.AllDirectories);
-                folderPath = ValidateLocation(matchingPaths, projectPath);
-                if (folderPath != null) return folderPath;
-
-                //string packagePath = Path.GetFullPath("Packages/com.unity.textmeshpro");
-                //matchingPaths = Directory.GetDirectories(projectPath, "TextMeshPro", SearchOption.AllDirectories);
-                //folderPath = ValidateLocation(matchingPaths, packagePath);
-                //if (folderPath != null) return folderPath;
-            }
-
-            if (folderPath != null) return folderPath;
-            else
-            {
-                isTMProFolderLocated = false;
-                Debug.LogWarning("Could not located the \"TextMesh Pro/GUISkins\" Folder to load the Editor Skins.");
-                return null;
-            }
-        }
-
 
         /// <summary>
         /// Method to validate the location of the asset folder by making sure the GUISkins folder exists.
@@ -291,7 +243,7 @@ namespace TMPro.EditorUtilities
             for (int i = 0; i < paths.Length; i++)
             {
                 // Check if any of the matching directories contain a GUISkins directory.
-                if (Directory.Exists(paths[i] + "/GUISkins"))
+                if (Directory.Exists(paths[i] + "/Editor Resources"))
                 {
                     folderPath = paths[i].Replace(projectPath + "\\", "");
                     return folderPath;

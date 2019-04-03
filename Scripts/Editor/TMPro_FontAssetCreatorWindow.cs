@@ -34,7 +34,7 @@ namespace TMPro.EditorUtilities
         //    Debug.Log("Menu Item 1 selected");
         //}
 
-        [MenuItem("Window/TextMeshPro/Font Asset Creator")]
+        [MenuItem("Window/TextMeshPro/Font Asset Creator", false, 2025)]
         public static void ShowFontAtlasCreatorWindow()
         {
             var window = GetWindow<TMPro_FontAssetCreatorWindow>();

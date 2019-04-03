@@ -66,46 +66,46 @@ namespace TMPro.EditorUtilities
 
             if (EditorGUIUtility.isProSkin)
             {
-                TMP_GUISkin = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/TMPro_DarkSkin.guiskin", typeof(GUISkin)) as GUISkin;
+                TMP_GUISkin = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/TMPro_DarkSkin.guiskin", typeof(GUISkin)) as GUISkin;
 
-                alignLeft = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignLeft.psd", typeof(Texture2D)) as Texture2D;
-                alignCenter = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignCenter.psd", typeof(Texture2D)) as Texture2D;
-                alignRight = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignRight.psd", typeof(Texture2D)) as Texture2D;
-                alignJustified = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignJustified.psd", typeof(Texture2D)) as Texture2D;
-                alignFlush = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignFlush.psd", typeof(Texture2D)) as Texture2D;
-                alignGeoCenter = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignCenterGeo.psd", typeof(Texture2D)) as Texture2D;
-                alignTop = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignTop.psd", typeof(Texture2D)) as Texture2D;
-                alignMiddle = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignMiddle.psd", typeof(Texture2D)) as Texture2D;
-                alignBottom = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignBottom.psd", typeof(Texture2D)) as Texture2D;
-                alignBaseline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignBaseLine.psd", typeof(Texture2D)) as Texture2D;
-                alignMidline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignMidLine.psd", typeof(Texture2D)) as Texture2D;
-                alignCapline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignCapLine.psd", typeof(Texture2D)) as Texture2D;
+                alignLeft = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignLeft.psd", typeof(Texture2D)) as Texture2D;
+                alignCenter = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignCenter.psd", typeof(Texture2D)) as Texture2D;
+                alignRight = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignRight.psd", typeof(Texture2D)) as Texture2D;
+                alignJustified = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignJustified.psd", typeof(Texture2D)) as Texture2D;
+                alignFlush = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignFlush.psd", typeof(Texture2D)) as Texture2D;
+                alignGeoCenter = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignCenterGeo.psd", typeof(Texture2D)) as Texture2D;
+                alignTop = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignTop.psd", typeof(Texture2D)) as Texture2D;
+                alignMiddle = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignMiddle.psd", typeof(Texture2D)) as Texture2D;
+                alignBottom = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignBottom.psd", typeof(Texture2D)) as Texture2D;
+                alignBaseline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignBaseLine.psd", typeof(Texture2D)) as Texture2D;
+                alignMidline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignMidLine.psd", typeof(Texture2D)) as Texture2D;
+                alignCapline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignCapLine.psd", typeof(Texture2D)) as Texture2D;
 
-                progressTexture = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/Progress Bar.psd", typeof(Texture2D)) as Texture2D;
-                //selectionBox = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/SelectionBox.psd", typeof(Texture2D)) as Texture2D;
-                //strikethroughIcon = new GUIContent(AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/icon_strikethrough.psd", typeof(Texture2D)) as Texture2D);
+                progressTexture = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/Progress Bar.psd", typeof(Texture2D)) as Texture2D;
+                //selectionBox = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/SelectionBox.psd", typeof(Texture2D)) as Texture2D;
+                //strikethroughIcon = new GUIContent(AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/icon_strikethrough.psd", typeof(Texture2D)) as Texture2D);
                 selectionBox = EditorGUIUtility.Load("IN thumbnailshadow On@2x") as Texture2D;
 
 
             }
             else
             {
-                TMP_GUISkin = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/TMPro_LightSkin.guiskin", typeof(GUISkin)) as GUISkin;
+                TMP_GUISkin = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/TMPro_LightSkin.guiskin", typeof(GUISkin)) as GUISkin;
 
-                alignLeft = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignLeft_Light.psd", typeof(Texture2D)) as Texture2D;
-                alignCenter = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignCenter_Light.psd", typeof(Texture2D)) as Texture2D;
-                alignRight = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignRight_Light.psd", typeof(Texture2D)) as Texture2D;
-                alignJustified = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignJustified_Light.psd", typeof(Texture2D)) as Texture2D;
-                alignFlush = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignFlush_Light.psd", typeof(Texture2D)) as Texture2D;
-                alignGeoCenter = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignCenterGeo_Light.psd", typeof(Texture2D)) as Texture2D;
-                alignTop = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignTop_Light.psd", typeof(Texture2D)) as Texture2D;
-                alignMiddle = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignMiddle_Light.psd", typeof(Texture2D)) as Texture2D;
-                alignBottom = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignBottom_Light.psd", typeof(Texture2D)) as Texture2D;
-                alignBaseline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignBaseLine_Light.psd", typeof(Texture2D)) as Texture2D;
-                alignMidline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignMidLine_Light.psd", typeof(Texture2D)) as Texture2D;
-                alignCapline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/btn_AlignCapLine_Light.psd", typeof(Texture2D)) as Texture2D;
+                alignLeft = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignLeft_Light.psd", typeof(Texture2D)) as Texture2D;
+                alignCenter = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignCenter_Light.psd", typeof(Texture2D)) as Texture2D;
+                alignRight = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignRight_Light.psd", typeof(Texture2D)) as Texture2D;
+                alignJustified = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignJustified_Light.psd", typeof(Texture2D)) as Texture2D;
+                alignFlush = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignFlush_Light.psd", typeof(Texture2D)) as Texture2D;
+                alignGeoCenter = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignCenterGeo_Light.psd", typeof(Texture2D)) as Texture2D;
+                alignTop = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignTop_Light.psd", typeof(Texture2D)) as Texture2D;
+                alignMiddle = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignMiddle_Light.psd", typeof(Texture2D)) as Texture2D;
+                alignBottom = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignBottom_Light.psd", typeof(Texture2D)) as Texture2D;
+                alignBaseline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignBaseLine_Light.psd", typeof(Texture2D)) as Texture2D;
+                alignMidline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignMidLine_Light.psd", typeof(Texture2D)) as Texture2D;
+                alignCapline = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/btn_AlignCapLine_Light.psd", typeof(Texture2D)) as Texture2D;
 
-                progressTexture = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/GUISkins/Textures/Progress Bar (Light).psd", typeof(Texture2D)) as Texture2D;
+                progressTexture = AssetDatabase.LoadAssetAtPath(tmproAssetFolderPath + "/Editor Resources/Textures/Progress Bar (Light).psd", typeof(Texture2D)) as Texture2D;
                 selectionBox = EditorGUIUtility.Load("IN thumbnailshadow On@2x") as Texture2D;
             }
 
