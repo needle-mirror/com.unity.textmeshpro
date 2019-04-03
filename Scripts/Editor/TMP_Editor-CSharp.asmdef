@@ -1,0 +1,10 @@
+{
+    "name": "TMP_Editor-CSharp",
+    "references": [
+        "TMP_Runtime-CSharp"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

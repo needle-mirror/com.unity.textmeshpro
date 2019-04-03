@@ -1,0 +1,10 @@
+{
+	"name": "com.unity.textmeshpro",
+	"version": "0.1.2",
+	"unity": "2018.1",
+	"description": "UPM version of TextMesh Pro",
+	"keywords": ["TextMeshPro", "TextMesh Pro", "Text", "SDF"],
+	"category": "Text Rendering",
+	"dependencies": {
+	}
+}
