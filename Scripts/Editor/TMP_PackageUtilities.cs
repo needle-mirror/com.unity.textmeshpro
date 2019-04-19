@@ -6,7 +6,6 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using TMPro.EditorUtilities;
 
 
@@ -307,7 +306,7 @@ namespace TMPro
 
                 AssetFileRecord fileRecord = projectFilesToScan[i];
 
-                Task.Run(() =>
+                ThreadPool.QueueUserWorkItem(Task =>
                 {
                     ScanProjectFileAsync(fileRecord);
 

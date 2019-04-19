@@ -1945,7 +1945,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out int srcOffset, ref m_TextParsingBuffer, ref writeIndex))
+                        int srcOffset;
+
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref m_TextParsingBuffer, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2057,7 +2059,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out int srcOffset, ref m_TextParsingBuffer, ref writeIndex))
+                        int srcOffset;
+
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref m_TextParsingBuffer, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2167,7 +2171,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out int srcOffset, ref m_TextParsingBuffer, ref writeIndex))
+                        int srcOffset;
+
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref m_TextParsingBuffer, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2249,7 +2255,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out int srcOffset, ref charBuffer, ref writeIndex))
+                        int srcOffset;
+
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref charBuffer, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2414,7 +2422,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out int srcOffset, ref charBuffer, ref writeIndex))
+                        int srcOffset;
+
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref charBuffer, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2558,7 +2568,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out int srcOffset, ref charBuffer, ref writeIndex))
+                        int srcOffset;
+
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref charBuffer, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2630,7 +2642,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref openingTagArray, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref openingTagArray, i, out int offset, ref charBuffer, ref writeIndex))
+                        int offset;
+
+                        if (ReplaceOpeningStyleTag(ref openingTagArray, i, out offset, ref charBuffer, ref writeIndex))
                         {
                             i = offset;
                             continue;
@@ -2700,7 +2714,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref openingTagArray, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref openingTagArray, i, out int offset, ref charBuffer, ref writeIndex))
+                        int offset;
+
+                        if (ReplaceOpeningStyleTag(ref openingTagArray, i, out offset, ref charBuffer, ref writeIndex))
                         {
                             i = offset;
                             continue;
@@ -2770,7 +2786,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref openingTagArray, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref openingTagArray, i, out int offset, ref charBuffer, ref writeIndex))
+                        int offset;
+
+                        if (ReplaceOpeningStyleTag(ref openingTagArray, i, out offset, ref charBuffer, ref writeIndex))
                         {
                             i = offset;
                             continue;
@@ -2840,7 +2858,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref openingTagArray, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref openingTagArray, i, out int offset, ref charBuffer, ref writeIndex))
+                        int offset;
+
+                        if (ReplaceOpeningStyleTag(ref openingTagArray, i, out offset, ref charBuffer, ref writeIndex))
                         {
                             i = offset;
                             continue;
@@ -2908,7 +2928,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref closingTagArray, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref closingTagArray, i, out int offset, ref charBuffer, ref writeIndex))
+                        int offset;
+
+                        if (ReplaceOpeningStyleTag(ref closingTagArray, i, out offset, ref charBuffer, ref writeIndex))
                         {
                             i = offset;
                             continue;
@@ -2976,7 +2998,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref closingTagArray, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref closingTagArray, i, out int offset, ref charBuffer, ref writeIndex))
+                        int offset;
+
+                        if (ReplaceOpeningStyleTag(ref closingTagArray, i, out offset, ref charBuffer, ref writeIndex))
                         {
                             i = offset;
                             continue;
@@ -3044,7 +3068,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref closingTagArray, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref closingTagArray, i, out int offset, ref charBuffer, ref writeIndex))
+                        int offset;
+
+                        if (ReplaceOpeningStyleTag(ref closingTagArray, i, out offset, ref charBuffer, ref writeIndex))
                         {
                             i = offset;
                             continue;
@@ -3111,7 +3137,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref closingTagArray, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref closingTagArray, i, out int offset, ref charBuffer, ref writeIndex))
+                        int offset;
+
+                        if (ReplaceOpeningStyleTag(ref closingTagArray, i, out offset, ref charBuffer, ref writeIndex))
                         {
                             i = offset;
                             continue;
@@ -3807,9 +3835,10 @@ namespace TMPro
                 {
                     m_isParsingText = true;
                     m_textElementType = TMP_TextElementType.Character;
+                    int endTagIndex;
 
                     // Check if Tag is valid. If valid, skip to the end of the validated tag.
-                    if (ValidateHtmlTag(m_TextParsingBuffer, i + 1, out int endTagIndex))
+                    if (ValidateHtmlTag(m_TextParsingBuffer, i + 1, out endTagIndex))
                     {
                         i = endTagIndex;
 
@@ -3936,13 +3965,15 @@ namespace TMPro
                 float characterSpacingAdjustment = m_characterSpacing;
                 if (m_enableKerning)
                 {
+                    TMP_GlyphPairAdjustmentRecord adjustmentPair;
+
                     if (m_characterCount < totalCharacterCount - 1)
                     {
                         uint firstGlyphIndex = m_cached_TextElement.glyphIndex;
                         uint secondGlyphIndex = m_textInfo.characterInfo[m_characterCount + 1].textElement.glyphIndex;
                         long key = new GlyphPairKey(firstGlyphIndex, secondGlyphIndex).key;
 
-                        if (m_currentFontAsset.fontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out TMP_GlyphPairAdjustmentRecord adjustmentPair))
+                        if (m_currentFontAsset.fontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out adjustmentPair))
                         {
                             glyphAdjustments = adjustmentPair.firstAdjustmentRecord.glyphValueRecord;
                             characterSpacingAdjustment = (adjustmentPair.featureLookupFlags & FontFeatureLookupFlags.IgnoreSpacingAdjustments) == FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
@@ -3955,7 +3986,7 @@ namespace TMPro
                         uint secondGlyphIndex = m_cached_TextElement.glyphIndex;
                         long key = new GlyphPairKey(firstGlyphIndex, secondGlyphIndex).key;
 
-                        if (m_currentFontAsset.fontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out TMP_GlyphPairAdjustmentRecord adjustmentPair))
+                        if (m_currentFontAsset.fontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out adjustmentPair))
                         {
                             glyphAdjustments += adjustmentPair.secondAdjustmentRecord.glyphValueRecord;
                             characterSpacingAdjustment = (adjustmentPair.featureLookupFlags & FontFeatureLookupFlags.IgnoreSpacingAdjustments) == FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
@@ -5440,10 +5471,13 @@ namespace TMPro
         /// <param name=""></param>
         protected void GetSpecialCharacters(TMP_FontAsset fontAsset)
         {
+            bool isUsingAlternativeTypeface;
+            TMP_FontAsset tempFontAsset;
+
             // Check & Assign Underline Character for use with the Underline tag.
             if (!fontAsset.characterLookupTable.TryGetValue(95, out m_cached_Underline_Character))
             {
-                m_cached_Underline_Character = TMP_FontAssetUtilities.GetCharacterFromFontAsset(95,fontAsset, false, m_FontStyleInternal, (FontWeight)m_FontWeightInternal, out bool isUsingAlternativeTypeface, out TMP_FontAsset tempFontAsset);
+                m_cached_Underline_Character = TMP_FontAssetUtilities.GetCharacterFromFontAsset(95,fontAsset, false, m_FontStyleInternal, (FontWeight)m_FontWeightInternal, out isUsingAlternativeTypeface, out tempFontAsset);
 
                 if (m_cached_Underline_Character == null)
             {
@@ -5455,7 +5489,7 @@ namespace TMPro
             // Check & Assign Underline Character for use with the Underline tag.
             if (!fontAsset.characterLookupTable.TryGetValue(8230, out m_cached_Ellipsis_Character)) //95
             {
-                m_cached_Ellipsis_Character = TMP_FontAssetUtilities.GetCharacterFromFontAsset(8230, fontAsset, false, m_FontStyleInternal, (FontWeight)m_FontWeightInternal, out bool isUsingAlternativeTypeface, out TMP_FontAsset tempFontAsset);
+                m_cached_Ellipsis_Character = TMP_FontAssetUtilities.GetCharacterFromFontAsset(8230, fontAsset, false, m_FontStyleInternal, (FontWeight)m_FontWeightInternal, out isUsingAlternativeTypeface, out tempFontAsset);
 
                 if (m_cached_Ellipsis_Character == null)
             {
@@ -5916,7 +5950,9 @@ namespace TMPro
         /// <returns></returns>
         protected float ConvertToFloat(char[] chars, int startIndex, int length)
         {
-            return ConvertToFloat(chars, startIndex, length, out int lastIndex);
+            int lastIndex;
+
+            return ConvertToFloat(chars, startIndex, length, out lastIndex);
         }
 
 

@@ -1084,12 +1084,13 @@ namespace TMPro
                 if (m_isRichText && unicode == 60) // if Char '<'
                 {
                     int prev_MaterialIndex = m_currentMaterialIndex;
+                    int tagEndIndex;
 
                     // Check if Tag is Valid
-                    if (ValidateHtmlTag(chars, i + 1, out int tagEnd))
+                    if (ValidateHtmlTag(chars, i + 1, out tagEndIndex))
                     {
                         int tagStartIndex = chars[i].stringIndex;
-                        i = tagEnd;
+                        i = tagEndIndex;
 
                         if ((m_FontStyleInternal & FontStyles.Bold) == FontStyles.Bold) m_isUsingBold = true;
 
@@ -1860,9 +1861,10 @@ namespace TMPro
                 {
                     m_isParsingText = true;
                     m_textElementType = TMP_TextElementType.Character;
+                    int tagEndIndex;
 
                     // Check if Tag is valid. If valid, skip to the end of the validated tag.
-                    if (ValidateHtmlTag(m_TextParsingBuffer, i + 1, out int tagEndIndex))
+                    if (ValidateHtmlTag(m_TextParsingBuffer, i + 1, out tagEndIndex))
                     {
                         i = tagEndIndex;
 
@@ -2019,13 +2021,15 @@ namespace TMPro
                 float characterSpacingAdjustment = m_characterSpacing;
                 if (m_enableKerning)
                 {
+                    TMP_GlyphPairAdjustmentRecord adjustmentPair;
+
                     if (m_characterCount < totalCharacterCount - 1)
                     {
                         uint firstGlyphIndex = m_cached_TextElement.glyphIndex;
                         uint secondGlyphIndex = m_textInfo.characterInfo[m_characterCount + 1].textElement.glyphIndex;
                         long key = new GlyphPairKey(firstGlyphIndex, secondGlyphIndex).key;
 
-                        if (m_currentFontAsset.fontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out TMP_GlyphPairAdjustmentRecord adjustmentPair))
+                        if (m_currentFontAsset.fontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out adjustmentPair))
                         {
                             glyphAdjustments = adjustmentPair.firstAdjustmentRecord.glyphValueRecord;
                             characterSpacingAdjustment = (adjustmentPair.featureLookupFlags & FontFeatureLookupFlags.IgnoreSpacingAdjustments) == FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
@@ -2038,7 +2042,7 @@ namespace TMPro
                         uint secondGlyphIndex = m_cached_TextElement.glyphIndex;
                         long key = new GlyphPairKey(firstGlyphIndex, secondGlyphIndex).key;
 
-                        if (m_currentFontAsset.fontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out TMP_GlyphPairAdjustmentRecord adjustmentPair))
+                        if (m_currentFontAsset.fontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out adjustmentPair))
                         {
                             glyphAdjustments += adjustmentPair.secondAdjustmentRecord.glyphValueRecord;
                             characterSpacingAdjustment = (adjustmentPair.featureLookupFlags & FontFeatureLookupFlags.IgnoreSpacingAdjustments) == FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;

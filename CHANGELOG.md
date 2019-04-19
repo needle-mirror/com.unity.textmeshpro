@@ -1,6 +1,13 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [1.4.1] - 2019-04-20
+### Changes
+- Improved handling of automatic Font Asset upgrade to version 1.1.0 which is required to support the new Dynamic SDF system. See Case #1144858
+- Made release compatible with .Net 3.5 Scripting Runtime.
+- Added support for Stereo rendering to the TMP SDF Overlay shaders.
+- Fixed Caret positioning issue when using IME. Case #1146626
+
 ## [1.4.0] - 2019-03-07
 ### Changes
 - Same release as 1.4.0-preview.3a.

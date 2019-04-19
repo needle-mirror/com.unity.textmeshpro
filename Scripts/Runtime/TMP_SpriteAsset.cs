@@ -166,8 +166,9 @@ namespace TMPro
 
                 // Update glyph reference which is not serialized
                 uint glyphIndex = m_SpriteCharacterTable[i].glyphIndex;
+                int index;
 
-                if (m_GlyphIndexLookup.TryGetValue(glyphIndex, out int index))
+                if (m_GlyphIndexLookup.TryGetValue(glyphIndex, out index))
                     m_SpriteCharacterTable[i].glyph = m_SpriteGlyphTable[index];
             }
 
@@ -185,7 +186,9 @@ namespace TMPro
             if (m_NameLookup == null)
                 UpdateLookupTables();
 
-            if (m_NameLookup.TryGetValue(hashCode, out int index))
+            int index;
+
+            if (m_NameLookup.TryGetValue(hashCode, out index))
                 return index;
 
             return -1;
@@ -202,7 +205,9 @@ namespace TMPro
             if (m_UnicodeLookup == null)
                 UpdateLookupTables();
 
-            if (m_UnicodeLookup.TryGetValue(unicode, out int index))
+            int index;
+
+            if (m_UnicodeLookup.TryGetValue(unicode, out index))
                 return index;
 
             return -1;

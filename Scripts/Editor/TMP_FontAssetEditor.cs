@@ -979,9 +979,10 @@ namespace TMPro.EditorUtilities
                             if (GUI.Button(position, new GUIContent("Copy to")))
                             {
                                 GUIUtility.keyboardControl = 0;
+                                int dstGlyphID;
 
                                 // Convert Hex Value to Decimal
-                                int.TryParse(m_dstGlyphID, out int dstGlyphID);
+                                int.TryParse(m_dstGlyphID, out dstGlyphID);
 
                                 //Add new glyph at target Unicode hex id.
                                 if (!AddNewGlyph(elementIndex, dstGlyphID))
@@ -1215,14 +1216,16 @@ namespace TMPro.EditorUtilities
                         errorCode = 0;
                     }
 
+                    TMP_Character character;
+
                     // Add glyphs and characters
                     uint firstCharacter = m_SerializedPropertyHolder.firstCharacter;
                     if (!m_fontAsset.characterLookupTable.ContainsKey(firstCharacter))
-                        m_fontAsset.TryAddCharacterInternal(firstCharacter, out TMP_Character character);
+                        m_fontAsset.TryAddCharacterInternal(firstCharacter, out character);
 
                     uint secondCharacter = m_SerializedPropertyHolder.secondCharacter;
                     if (!m_fontAsset.characterLookupTable.ContainsKey(secondCharacter))
-                        m_fontAsset.TryAddCharacterInternal(secondCharacter, out TMP_Character character);
+                        m_fontAsset.TryAddCharacterInternal(secondCharacter, out character);
 
                     // Sort Kerning Pairs & Reload Font Asset if new kerning pair was added.
                     if (errorCode != -1)
@@ -1678,11 +1681,15 @@ namespace TMPro.EditorUtilities
 
             // Lookup glyph index of potential characters contained in the search pattern.
             uint firstGlyphIndex = 0;
-            if (searchPattern.Length > 0 && m_fontAsset.characterLookupTable.TryGetValue(searchPattern[0], out TMP_Character firstCharacterSearch))
+            TMP_Character firstCharacterSearch;
+
+            if (searchPattern.Length > 0 && m_fontAsset.characterLookupTable.TryGetValue(searchPattern[0], out firstCharacterSearch))
                 firstGlyphIndex = firstCharacterSearch.glyphIndex;
 
             uint secondGlyphIndex = 0;
-            if (searchPattern.Length > 1 && m_fontAsset.characterLookupTable.TryGetValue(searchPattern[1], out TMP_Character secondCharacterSearch))
+            TMP_Character secondCharacterSearch;
+
+            if (searchPattern.Length > 1 && m_fontAsset.characterLookupTable.TryGetValue(searchPattern[1], out secondCharacterSearch))
                 secondGlyphIndex = secondCharacterSearch.glyphIndex;
 
             int arraySize = m_GlyphPairAdjustmentRecords_prop.arraySize;

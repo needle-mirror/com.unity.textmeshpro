@@ -738,8 +738,9 @@ namespace TMPro.EditorUtilities
                             for (int i = 0; i < characterSet.Length; i++)
                             {
                                 uint unicode = characterSet[i];
+                                uint glyphIndex;
 
-                                if (FontEngine.TryGetGlyphIndex(unicode, out uint glyphIndex))
+                                if (FontEngine.TryGetGlyphIndex(unicode, out glyphIndex))
                                 {
                                     // Skip over potential duplicate characters.
                                     if (m_CharacterLookupMap.ContainsKey(unicode))
@@ -799,8 +800,9 @@ namespace TMPro.EditorUtilities
                                         for (int i = 0; i < m_AvailableGlyphsToAdd.Count; i++)
                                         {
                                             uint glyphIndex = m_AvailableGlyphsToAdd[i];
+                                            Glyph glyph;
 
-                                            if (FontEngine.TryGetGlyphWithIndexValue(glyphIndex, glyphLoadFlags, out Glyph glyph))
+                                            if (FontEngine.TryGetGlyphWithIndexValue(glyphIndex, glyphLoadFlags, out glyph))
                                             {
                                                 if (glyph.glyphRect.width > 0 && glyph.glyphRect.height > 0)
                                                 {
@@ -868,8 +870,9 @@ namespace TMPro.EditorUtilities
                                     for (int i = 0; i < m_AvailableGlyphsToAdd.Count; i++)
                                     {
                                         uint glyphIndex = m_AvailableGlyphsToAdd[i];
+                                        Glyph glyph;
 
-                                        if (FontEngine.TryGetGlyphWithIndexValue(glyphIndex, glyphLoadFlags, out Glyph glyph))
+                                        if (FontEngine.TryGetGlyphWithIndexValue(glyphIndex, glyphLoadFlags, out glyph))
                                         {
                                             if (glyph.glyphRect.width > 0 && glyph.glyphRect.height > 0)
                                             {

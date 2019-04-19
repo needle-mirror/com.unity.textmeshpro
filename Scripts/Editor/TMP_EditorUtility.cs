@@ -415,7 +415,9 @@ namespace TMPro.EditorUtilities
             string colorString = EditorGUI.TextField(rect, string.Format("#{0}", ColorUtility.ToHtmlStringRGBA(property.colorValue)));
             if (EditorGUI.EndChangeCheck())
             {
-                if (ColorUtility.TryParseHtmlString(colorString, out Color color))
+                Color color;
+
+                if (ColorUtility.TryParseHtmlString(colorString, out color))
                 {
                     property.colorValue = color;
                 }
