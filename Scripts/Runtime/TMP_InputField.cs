@@ -26,6 +26,7 @@ namespace TMPro
         IPointerClickHandler,
         ISubmitHandler,
         ICanvasElement,
+        ILayoutElement,
         IScrollHandler
     {
 
@@ -115,6 +116,8 @@ namespace TMPro
         [SerializeField]
         protected TMP_ScrollbarEventHandler m_VerticalScrollbarEventHandler;
         //private bool m_ForceDeactivation;
+
+        private bool m_IsDrivenByLayoutComponents = false;
 
         /// <summary>
         /// Used to keep track of scroll position
@@ -285,7 +288,6 @@ namespace TMPro
         private RectTransform caretRectTrans = null;
         protected UIVertex[] m_CursorVerts = null;
         private CanvasRenderer m_CachedInputRenderer;
-        private Vector2 m_DefaultTransformPosition;
         private Vector2 m_LastPosition;
 
         [NonSerialized]
@@ -938,7 +940,7 @@ namespace TMPro
         }
 
 
-#if UNITY_EDITOR
+        #if UNITY_EDITOR
         // Remember: This is NOT related to text validation!
         // This is Unity's own OnValidate method which is invoked when changing values in the Inspector.
         protected override void OnValidate()
@@ -958,8 +960,7 @@ namespace TMPro
             if (m_AllowInput)
                 SetCaretActive();
         }
-
-#endif // if UNITY_EDITOR
+        #endif
 
         protected override void OnEnable()
         {
@@ -974,6 +975,9 @@ namespace TMPro
             {
                 if (m_CachedInputRenderer == null && m_TextComponent != null)
                 {
+                    // Check if Input Field is driven by any layout components
+                    m_IsDrivenByLayoutComponents = GetComponent<ILayoutController>() != null ? true : false;
+
                     GameObject go = new GameObject(transform.name + " Input Caret", typeof(RectTransform));
 
                     // Add MaskableGraphic Component
@@ -1007,7 +1011,7 @@ namespace TMPro
                 m_TextComponent.RegisterDirtyVerticesCallback(UpdateLabel);
                 //m_TextComponent.ignoreRectMaskCulling = multiLine;
 
-                m_DefaultTransformPosition = m_TextComponent.rectTransform.localPosition;
+                //m_DefaultTransformPosition = m_TextComponent.rectTransform.localPosition;
 
                 // Cache reference to Vertical Scrollbar RectTransform and add listener.
                 if (m_VerticalScrollbar != null)
@@ -1061,12 +1065,14 @@ namespace TMPro
         /// <param name="obj"></param>
         private void ON_TEXT_CHANGED(UnityEngine.Object obj)
         {
-            if (obj == m_TextComponent && Application.isPlaying)
+            if (obj == m_TextComponent && Application.isPlaying && compositionString.Length == 0)
             {
                 caretPositionInternal = GetCaretPositionFromStringIndex(stringPositionInternal);
                 caretSelectPositionInternal = GetCaretPositionFromStringIndex(stringSelectPositionInternal);
 
-                //Debug.Log("Updating Caret position - Caret Position: " + m_CaretPosition + "  Caret Select Position: " + m_CaretSelectPosition);
+                #if TMP_DEBUG_MODE
+                    Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal);
+                #endif
             }
         }
 
@@ -1785,9 +1791,7 @@ namespace TMPro
         protected EditState KeyPressed(Event evt)
         {
             var currentEventModifiers = evt.modifiers;
-            RuntimePlatform rp = Application.platform;
-            bool isMac = (rp == RuntimePlatform.OSXEditor || rp == RuntimePlatform.OSXPlayer);
-            bool ctrl = isMac ? (currentEventModifiers & EventModifiers.Command) != 0 : (currentEventModifiers & EventModifiers.Control) != 0;
+            bool ctrl = SystemInfo.operatingSystemFamily == OperatingSystemFamily.MacOSX ? (currentEventModifiers & EventModifiers.Command) != 0 : (currentEventModifiers & EventModifiers.Control) != 0;
             bool shift = (currentEventModifiers & EventModifiers.Shift) != 0;
             bool alt = (currentEventModifiers & EventModifiers.Alt) != 0;
             bool ctrlOnly = ctrl && !alt && !shift;
@@ -3296,7 +3300,6 @@ namespace TMPro
 
             // TODO: Optimize to only update the caret position when needed.
 
-            int characterCount = m_TextComponent.textInfo.characterCount;
             Vector2 startPosition = Vector2.zero;
             float height = 0;
             TMP_CharacterInfo currentCharacter;
@@ -3487,7 +3490,7 @@ namespace TMPro
         {
             //Debug.Log("Adjusting transform position relative to viewport.");
 
-            if (m_TextViewport == null)
+            if (m_TextViewport == null || m_IsDrivenByLayoutComponents)
                 return;
 
             float viewportMin = m_TextViewport.rect.xMin;
@@ -3775,7 +3778,13 @@ namespace TMPro
             //Debug.Log("Input Field control click...");
         }
 
-        public void DeactivateInputField()
+        public void ReleaseSelection()
+        {
+            m_SelectionStillActive = false;
+            MarkGeometryAsDirty();
+        }
+
+        public void DeactivateInputField(bool clearSelection = false)
         {
             //Debug.Log("Deactivate Input Field...");
 
@@ -4004,6 +4013,73 @@ namespace TMPro
             base.DoStateTransition(state, instant);
         }
 
+
+        /// <summary>
+        /// See ILayoutElement.CalculateLayoutInputHorizontal.
+        /// </summary>
+        public virtual void CalculateLayoutInputHorizontal()
+        { }
+
+        /// <summary>
+        /// See ILayoutElement.CalculateLayoutInputVertical.
+        /// </summary>
+        public virtual void CalculateLayoutInputVertical()
+        { }
+
+        /// <summary>
+        /// See ILayoutElement.minWidth.
+        /// </summary>
+        public virtual float minWidth { get { return 0; } }
+
+        /// <summary>
+        /// Get the displayed with of all input characters.
+        /// </summary>
+        public virtual float preferredWidth
+        {
+            get
+            {
+                if (textComponent == null)
+                    return 0;
+
+                return m_TextComponent.preferredWidth + 16 + m_CaretWidth + 1;
+            }
+        }
+
+        /// <summary>
+        /// See ILayoutElement.flexibleWidth.
+        /// </summary>
+        public virtual float flexibleWidth { get { return -1; } }
+
+        /// <summary>
+        /// See ILayoutElement.minHeight.
+        /// </summary>
+        public virtual float minHeight { get { return 0; } }
+
+        /// <summary>
+        /// Get the height of all the text if constrained to the height of the RectTransform.
+        /// </summary>
+        public virtual float preferredHeight
+        {
+            get
+            {
+                if (textComponent == null)
+                    return 0;
+
+                return m_TextComponent.preferredHeight + 16;
+            }
+        }
+
+        /// <summary>
+        /// See ILayoutElement.flexibleHeight.
+        /// </summary>
+        public virtual float flexibleHeight { get { return -1; } }
+
+        /// <summary>
+        /// See ILayoutElement.layoutPriority.
+        /// </summary>
+        public virtual int layoutPriority { get { return 1; } }
+
+
         /// <summary>
         /// Function to conveniently set the point size of both Placeholder and Input Field text object.
         /// </summary>
@@ -4030,7 +4106,6 @@ namespace TMPro
         }
 
     }
-
 
 
     static class SetPropertyUtility
