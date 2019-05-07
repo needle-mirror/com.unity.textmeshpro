@@ -1,15 +1,16 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
-## [2.0.1] - 2019-04-20
+## [2.0.1] - 2019-05-08
 ### Changes
-- Same release as 1.4.1
+- See Release 1.4.1
+- Requires .Net 4.x Scripting Runtime.
 
 ## [2.0.0] - 2019-03-01
 ### Changes
 - Same release as 1.4.0
 
-## [1.4.1] - 2019-04-20
+## [1.4.1] - 2019-05-08
 ### Changes
 - Improved handling of automatic Font Asset upgrade to version 1.1.0 which is required to support the new Dynamic SDF system. See Case #1144858
 - Made release compatible with .Net 3.5 Scripting Runtime.

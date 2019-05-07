@@ -1852,7 +1852,7 @@ namespace TMPro
 
                 Glyph glyph = new Glyph();
 
-                uint glyphIndex = (uint)i;
+                uint glyphIndex = (uint)i + 1;
                 
                 //#if UNITY_EDITOR
                 //if (m_SourceFontFile_EditorRef != null)
