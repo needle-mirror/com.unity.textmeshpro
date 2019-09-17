@@ -25,6 +25,17 @@ namespace TMPro
         [SerializeField]
         private string m_Version;
 
+        /// <summary>
+        /// Information about the sprite asset's face.
+        /// </summary>
+        public FaceInfo faceInfo
+        {
+            get { return m_FaceInfo; }
+            internal set { m_FaceInfo = value; }
+        }
+        [SerializeField]
+        internal FaceInfo m_FaceInfo;
+
         // The texture which contains the sprites.
         public Texture spriteSheet;
 

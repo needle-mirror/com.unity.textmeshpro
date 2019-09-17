@@ -15,10 +15,10 @@ namespace TMPro
         private static TMP_UpdateRegistry s_Instance;
 
         private readonly List<ICanvasElement> m_LayoutRebuildQueue = new List<ICanvasElement>();
-        private Dictionary<int, int> m_LayoutQueueLookup = new Dictionary<int, int>();
+        private HashSet<int> m_LayoutQueueLookup = new HashSet<int>();
 
         private readonly List<ICanvasElement> m_GraphicRebuildQueue = new List<ICanvasElement>();
-        private Dictionary<int, int> m_GraphicQueueLookup = new Dictionary<int, int>();
+        private HashSet<int> m_GraphicQueueLookup = new HashSet<int>();
 
         //private bool m_PerformingLayoutUpdate;
         //private bool m_PerformingGraphicUpdate;
@@ -60,10 +60,9 @@ namespace TMPro
         {
             int id = (element as Object).GetInstanceID();
 
-            if (this.m_LayoutQueueLookup.ContainsKey(id))
+            if (this.m_LayoutQueueLookup.Contains(id))
                 return false;
 
-            m_LayoutQueueLookup[id] = id;
             this.m_LayoutRebuildQueue.Add(element);
 
             return true;
@@ -83,10 +82,9 @@ namespace TMPro
         {
             int id = (element as Object).GetInstanceID();
 
-            if (this.m_GraphicQueueLookup.ContainsKey(id))
+            if (this.m_GraphicQueueLookup.Contains(id))
                 return false;
 
-            m_GraphicQueueLookup[id] = id;
             this.m_GraphicRebuildQueue.Add(element);
 
             return true;

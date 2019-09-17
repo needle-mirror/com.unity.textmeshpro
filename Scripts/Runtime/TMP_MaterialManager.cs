@@ -352,6 +352,46 @@ namespace TMPro
         }
 
 
+        internal static Material GetFallbackMaterial(TMP_FontAsset fontAsset, Material sourceMaterial, int atlasIndex)
+        {
+            int sourceMaterialID = sourceMaterial.GetInstanceID();
+            Texture tex = fontAsset.atlasTextures[atlasIndex];
+            int texID = tex.GetInstanceID();
+            long key = (long)sourceMaterialID << 32 | (long)(uint)texID;
+            FallbackMaterial fallback;
+
+            if (m_fallbackMaterials.TryGetValue(key, out fallback))
+                return fallback.fallbackMaterial;
+
+            // Create new material from the source material and assign relevant atlas texture
+            Material fallbackMaterial = new Material(sourceMaterial);
+            fallbackMaterial.SetTexture(ShaderUtilities.ID_MainTex, tex);
+
+            fallbackMaterial.hideFlags = HideFlags.HideAndDontSave;
+
+            #if UNITY_EDITOR
+                fallbackMaterial.name += " + " + tex.name;
+            #endif
+
+            fallback = new FallbackMaterial();
+            fallback.baseID = sourceMaterialID;
+            fallback.baseMaterial = fontAsset.material;
+            fallback.fallbackID = key;
+            fallback.fallbackMaterial = fallbackMaterial;
+            fallback.count = 0;
+
+            m_fallbackMaterials.Add(key, fallback);
+            m_fallbackMaterialLookup.Add(fallbackMaterial.GetInstanceID(), key);
+
+            #if TMP_DEBUG_MODE
+            ListFallbackMaterials();
+            #endif
+
+            return fallbackMaterial;
+        }
+
+
+
         /// <summary>
         /// This function returns a material instance using the material properties of a previous material but using the font atlas texture of the new font asset.
         /// </summary>

@@ -24,8 +24,8 @@ namespace TMPro
     public static class TMP_TextUtilities
     {
         private static Vector3[] m_rectWorldCorners = new Vector3[4];
-        
-        
+
+
         // TEXT INPUT COMPONENT RELATED FUNCTIONS
 
         /// <summary>
@@ -2035,8 +2035,8 @@ namespace TMPro
         {
             worldPoint = (Vector3)Vector2.zero;
             Ray ray = RectTransformUtility.ScreenPointToRay(cam, screenPoint);
-            float enter;
 
+            float enter;
             if (!new Plane(transform.rotation * Vector3.back, transform.position).Raycast(ray, out enter))
                 return false;
 
@@ -2192,6 +2192,21 @@ namespace TMPro
                 return c;
 
             return k_lookupStringU[c];
+        }
+
+        /// <summary>
+        /// Returns the case insensitive hashcode for the given string.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        public static int GetHashCode(string s)
+        {
+            int hashCode = 0;
+
+            for (int i = 0; i < s.Length; i++)
+                hashCode = ((hashCode << 5) + hashCode) ^ ToUpperFast(s[i]);
+
+            return hashCode;
         }
 
         /// <summary>

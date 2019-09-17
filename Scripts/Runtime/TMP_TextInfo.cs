@@ -12,8 +12,8 @@ namespace TMPro
     [Serializable]
     public class TMP_TextInfo
     {
-        private static Vector2 k_InfinityVectorPositive = new Vector2(32767, 32767);
-        private static Vector2 k_InfinityVectorNegative = new Vector2(-32767, -32767);
+        internal static Vector2 k_InfinityVectorPositive = new Vector2(32767, 32767);
+        internal static Vector2 k_InfinityVectorNegative = new Vector2(-32767, -32767);
 
         public TMP_Text textComponent;
 
@@ -139,7 +139,9 @@ namespace TMPro
             if (this.lineInfo == null)
                 this.lineInfo = new TMP_LineInfo[2];
 
-            for (int i = 0; i < this.lineInfo.Length; i++)
+            int length = this.lineInfo.Length;
+
+            for (int i = 0; i < length; i++)
             {
                 this.lineInfo[i].characterCount = 0;
                 this.lineInfo[i].spaceCount = 0;
@@ -155,7 +157,23 @@ namespace TMPro
 
                 this.lineInfo[i].maxAdvance = 0;
                 //this.lineInfo[i].maxScale = 0;
+            }
+        }
 
+        internal void ClearPageInfo()
+        {
+            if (this.pageInfo == null)
+                this.pageInfo = new TMP_PageInfo[2];
+
+            int length = this.pageInfo.Length;
+
+            for (int i = 0; i < length; i++)
+            {
+                this.pageInfo[i].firstCharacterIndex = 0;
+                this.pageInfo[i].lastCharacterIndex = 0;
+                this.pageInfo[i].ascender = -32767;
+                this.pageInfo[i].baseLine = 0;
+                this.pageInfo[i].descender = 32767;
             }
         }
 

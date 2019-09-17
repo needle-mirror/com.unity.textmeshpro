@@ -416,7 +416,6 @@ namespace TMPro.EditorUtilities
             if (EditorGUI.EndChangeCheck())
             {
                 Color color;
-
                 if (ColorUtility.TryParseHtmlString(colorString, out color))
                 {
                     property.colorValue = color;

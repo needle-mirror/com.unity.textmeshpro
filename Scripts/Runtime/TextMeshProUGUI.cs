@@ -282,6 +282,7 @@ namespace TMPro
 
             m_canvasRenderer.materialCount = 1;
             m_canvasRenderer.SetMaterial(materialForRendering, 0);
+            //m_canvasRenderer.SetTexture(m_sharedMaterial.mainTexture);
         }
 
 
@@ -473,26 +474,19 @@ namespace TMPro
 
 
         /// <summary>
-        /// Function to force regeneration of the mesh before its normal process time. This is useful when changes to the text object properties need to be applied immediately.
+        /// Function to force regeneration of the text object before its normal process time. This is useful when changes to the text object properties need to be applied immediately.
         /// </summary>
-        public override void ForceMeshUpdate()
-        {
-            //if (m_isEnabled == false) this.OnEnable();
-
-            m_havePropertiesChanged = true;
-            OnPreRenderCanvas();
-        }
-
-
-        /// <summary>
-        /// Function to force regeneration of the mesh before its normal process time. This is useful when changes to the text object properties need to be applied immediately.
-        /// </summary>
-        /// <param name="ignoreInactive">If set to true, the text object will be regenerated regardless of is active state.</param>
-        public override void ForceMeshUpdate(bool ignoreInactive)
+        /// <param name="ignoreActiveState">Ignore Active State of text objects. Inactive objects are ignored by default.</param>
+        /// <param name="forceTextReparsing">Force re-parsing of the text.</param>
+        public override void ForceMeshUpdate(bool ignoreActiveState = false, bool forceTextReparsing = false)
         {
             m_havePropertiesChanged = true;
-            m_ignoreActiveState = true;
+            m_ignoreActiveState = ignoreActiveState;
+            m_isInputParsingRequired = m_isInputParsingRequired ? true : forceTextReparsing;
             OnPreRenderCanvas();
+
+            m_verticesAlreadyDirty = false;
+            m_layoutAlreadyDirty = false;
         }
 
 

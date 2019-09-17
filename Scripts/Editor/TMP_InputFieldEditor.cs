@@ -258,7 +258,7 @@ namespace TMPro.EditorUtilities
                 EditorGUILayout.PropertyField(m_ResetOnDeActivation, new GUIContent("Reset On DeActivation", "Should the Text and Caret position be reset when Input Field is DeActivated."));
                 EditorGUILayout.PropertyField(m_RestoreOriginalTextOnEscape, new GUIContent("Restore On ESC Key", "Should the original text be restored when pressing ESC."));
                 EditorGUILayout.PropertyField(m_HideMobileKeyboard, new GUIContent("Hide Soft Keyboard", "Controls the visibility of the mobile virtual keyboard."));
-                EditorGUILayout.PropertyField(m_HideMobileInput, new GUIContent("Hide Mobile Input", "Controls the visibility of the editable text field above the mobile virtual keyboard. Not supported on all mobile platforms."));
+                EditorGUILayout.PropertyField(m_HideMobileInput, new GUIContent("Hide Mobile Input", "Controls the visibility of the editable text field above the mobile virtual keyboard."));
                 EditorGUILayout.PropertyField(m_ReadOnly);
                 EditorGUILayout.PropertyField(m_RichText);
                 EditorGUILayout.PropertyField(m_RichTextEditingAllowed, new GUIContent("Allow Rich Text Editing"));

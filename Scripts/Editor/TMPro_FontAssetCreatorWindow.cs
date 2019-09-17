@@ -666,7 +666,7 @@ namespace TMPro.EditorUtilities
 
                         if (errorCode != FontEngineError.Success)
                         {
-                            Debug.Log("Font Asset Creator - Error Code [" + errorCode + "] has occurred trying to load the [" + m_SourceFontFile.name + "] font file. This typically results from the use of an incompatible or corrupted font file.");
+                            Debug.Log("Font Asset Creator - Error Code [" + errorCode + "] has occurred trying to load the [" + m_SourceFontFile.name + "] font file. This typically results from the use of an incompatible or corrupted font file.", m_SourceFontFile);
                         }
                     }
 
@@ -1280,6 +1280,7 @@ namespace TMPro.EditorUtilities
                 fontAsset.atlasRenderMode = m_GlyphRenderMode;
 
                 // Reference to the source font file GUID.
+                fontAsset.m_SourceFontFile_EditorRef = (Font)m_SourceFontFile;
                 fontAsset.m_SourceFontFileGUID = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(m_SourceFontFile));
 
                 // Add FaceInfo to Font Asset
@@ -1330,10 +1331,6 @@ namespace TMPro.EditorUtilities
                 if (fontAsset.m_glyphInfoList != null && fontAsset.m_glyphInfoList.Count > 0)
                     fontAsset.m_glyphInfoList = null;
 
-                // Destroy Assets that will be replaced.
-                if (fontAsset.atlasTextures != null && fontAsset.atlasTextures.Length > 0)
-                    DestroyImmediate(fontAsset.atlasTextures[0], true);
-
                 //Set Font Asset Type
                 fontAsset.atlasRenderMode = m_GlyphRenderMode;
 
@@ -1353,27 +1350,47 @@ namespace TMPro.EditorUtilities
                 if (m_IncludeFontFeatures)
                     fontAsset.fontFeatureTable = GetKerningTable();
 
-                // Add Font Atlas as Sub-Asset
-                fontAsset.atlasTextures = new Texture2D[] { m_FontAtlasTexture };
-                m_FontAtlasTexture.name = tex_FileName + " Atlas";
+                // Destroy Assets that will be replaced.
+                if (fontAsset.atlasTextures != null && fontAsset.atlasTextures.Length > 0)
+                {
+                    for (int i = 1; i < fontAsset.atlasTextures.Length; i++)
+                        DestroyImmediate(fontAsset.atlasTextures[i], true);
+                }
+
+                fontAsset.m_AtlasTextureIndex = 0;
                 fontAsset.atlasWidth = m_AtlasWidth;
                 fontAsset.atlasHeight = m_AtlasHeight;
                 fontAsset.atlasPadding = m_Padding;
+
+                // Make sure remaining atlas texture is of the correct size
+                Texture2D tex = fontAsset.atlasTextures[0];
+                tex.name = tex_FileName + " Atlas";
+
+                if (tex.width != m_AtlasWidth || tex.height != m_AtlasHeight)
+                {
+                    tex.Resize(m_AtlasWidth, m_AtlasHeight);
+                    tex.Apply();
+                }
+
+                // Copy new texture data to existing texture
+                Graphics.CopyTexture(m_FontAtlasTexture, tex);
 
                 // Special handling due to a bug in earlier versions of Unity.
                 m_FontAtlasTexture.hideFlags = HideFlags.None;
                 fontAsset.material.hideFlags = HideFlags.None;
 
-                AssetDatabase.AddObjectToAsset(m_FontAtlasTexture, fontAsset);
-
-                // Assign new font atlas texture to the existing material.
-                fontAsset.material.SetTexture(ShaderUtilities.ID_MainTex, fontAsset.atlasTextures[0]);
-
                 // Update the Texture reference on the Material
-                for (int i = 0; i < material_references.Length; i++)
-                {
-                    material_references[i].SetTexture(ShaderUtilities.ID_MainTex, m_FontAtlasTexture);
-                }
+                //for (int i = 0; i < material_references.Length; i++)
+                //{
+                //    material_references[i].SetFloat(ShaderUtilities.ID_TextureWidth, tex.width);
+                //    material_references[i].SetFloat(ShaderUtilities.ID_TextureHeight, tex.height);
+
+                //    int spread = m_Padding;
+                //    material_references[i].SetFloat(ShaderUtilities.ID_GradientScale, spread);
+
+                //    material_references[i].SetFloat(ShaderUtilities.ID_WeightNormal, fontAsset.normalStyle);
+                //    material_references[i].SetFloat(ShaderUtilities.ID_WeightBold, fontAsset.boldStyle);
+                //}
             }
 
             // Add list of GlyphRects to font asset.
@@ -1431,6 +1448,7 @@ namespace TMPro.EditorUtilities
                 fontAsset.version = "1.1.0";
 
                 // Reference to source font file GUID.
+                fontAsset.m_SourceFontFile_EditorRef = (Font)m_SourceFontFile;
                 fontAsset.m_SourceFontFileGUID = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(m_SourceFontFile));
 
                 //Set Font Asset Type
@@ -1486,10 +1504,6 @@ namespace TMPro.EditorUtilities
                 // Find all Materials referencing this font atlas.
                 Material[] material_references = TMP_EditorUtility.FindMaterialReferences(fontAsset);
 
-                // Destroy Assets that will be replaced.
-                if (fontAsset.atlasTextures != null && fontAsset.atlasTextures.Length > 0)
-                    DestroyImmediate(fontAsset.atlasTextures[0], true);
-
                 // Set version number of font asset
                 fontAsset.version = "1.1.0";
 
@@ -1517,31 +1531,46 @@ namespace TMPro.EditorUtilities
                 if (m_IncludeFontFeatures)
                     fontAsset.fontFeatureTable = GetKerningTable();
 
-                // Add Font Atlas as Sub-Asset
-                fontAsset.atlasTextures = new Texture2D[] { m_FontAtlasTexture };
-                m_FontAtlasTexture.name = tex_FileName + " Atlas";
+                // Destroy Assets that will be replaced.
+                if (fontAsset.atlasTextures != null && fontAsset.atlasTextures.Length > 0)
+                {
+                    for (int i = 1; i < fontAsset.atlasTextures.Length; i++)
+                        DestroyImmediate(fontAsset.atlasTextures[i], true);
+                }
+
+                fontAsset.m_AtlasTextureIndex = 0;
                 fontAsset.atlasWidth = m_AtlasWidth;
                 fontAsset.atlasHeight = m_AtlasHeight;
                 fontAsset.atlasPadding = m_Padding;
+
+                // Make sure remaining atlas texture is of the correct size
+                Texture2D tex = fontAsset.atlasTextures[0];
+                tex.name = tex_FileName + " Atlas";
+
+                if (tex.width != m_AtlasWidth || tex.height != m_AtlasHeight)
+                {
+                    tex.Resize(m_AtlasWidth, m_AtlasHeight);
+                    tex.Apply();
+                }
+
+                // Copy new texture data to existing texture
+                Graphics.CopyTexture(m_FontAtlasTexture, tex);
+
+                // Apply changes to the texture.
+                tex.Apply();
 
                 // Special handling due to a bug in earlier versions of Unity.
                 m_FontAtlasTexture.hideFlags = HideFlags.None;
                 fontAsset.material.hideFlags = HideFlags.None;
 
-                AssetDatabase.AddObjectToAsset(m_FontAtlasTexture, fontAsset);
-
-                // Assign new font atlas texture to the existing material.
-                fontAsset.material.SetTexture(ShaderUtilities.ID_MainTex, fontAsset.atlasTextures[0]);
-
                 // Update the Texture reference on the Material
                 for (int i = 0; i < material_references.Length; i++)
                 {
-                    material_references[i].SetTexture(ShaderUtilities.ID_MainTex, m_FontAtlasTexture);
-                    material_references[i].SetFloat(ShaderUtilities.ID_TextureWidth, m_FontAtlasTexture.width);
-                    material_references[i].SetFloat(ShaderUtilities.ID_TextureHeight, m_FontAtlasTexture.height);
+                    material_references[i].SetFloat(ShaderUtilities.ID_TextureWidth, tex.width);
+                    material_references[i].SetFloat(ShaderUtilities.ID_TextureHeight, tex.height);
 
                     int spread = m_Padding + 1;
-                    material_references[i].SetFloat(ShaderUtilities.ID_GradientScale, spread); // Spread = Padding for Brute Force SDF.
+                    material_references[i].SetFloat(ShaderUtilities.ID_GradientScale, spread);
 
                     material_references[i].SetFloat(ShaderUtilities.ID_WeightNormal, fontAsset.normalStyle);
                     material_references[i].SetFloat(ShaderUtilities.ID_WeightBold, fontAsset.boldStyle);

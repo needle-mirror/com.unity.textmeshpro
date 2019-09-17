@@ -6,7 +6,7 @@ namespace TMPro.EditorUtilities
 {
 
     [CustomEditor(typeof(TextMeshProUGUI), true), CanEditMultipleObjects]
-    public class TMP_UiEditorPanel : TMP_BaseEditorPanel
+    public class TMP_EditorPanelUI : TMP_BaseEditorPanel
     {
         static readonly GUIContent k_RaycastTargetLabel = new GUIContent("Raycast Target", "Whether the text blocks raycasts from the Graphic Raycaster.");
 
@@ -20,10 +20,15 @@ namespace TMPro.EditorUtilities
 
         protected override void DrawExtraSettings()
         {
-            Foldout.extraSettings = EditorGUILayout.Foldout(Foldout.extraSettings, k_ExtraSettingsLabel, true, TMP_UIStyleManager.boldFoldout);
+            Rect rect = EditorGUILayout.GetControlRect(false, 24);
+
+            if (GUI.Button(rect, new GUIContent("<b>Extra Settings</b>"), TMP_UIStyleManager.sectionHeader))
+                Foldout.extraSettings = !Foldout.extraSettings;
+
+            GUI.Label(rect, (Foldout.extraSettings ? k_UiStateLabel[0] : k_UiStateLabel[1]), TMP_UIStyleManager.rightLabel);
             if (Foldout.extraSettings)
             {
-                EditorGUI.indentLevel += 1;
+                //EditorGUI.indentLevel += 1;
 
                 DrawMargins();
 
@@ -34,12 +39,16 @@ namespace TMPro.EditorUtilities
                 DrawRaycastTarget();
 
                 DrawParsing();
-                
+
+                DrawSpriteAsset();
+
+                DrawStyleSheet();
+
                 DrawKerning();
 
                 DrawPadding();
 
-                EditorGUI.indentLevel -= 1;
+                //EditorGUI.indentLevel -= 1;
             }
         }
 

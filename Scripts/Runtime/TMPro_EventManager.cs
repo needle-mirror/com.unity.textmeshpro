@@ -82,7 +82,7 @@ namespace TMPro
             TEXT_STYLE_PROPERTY_EVENT.Call(isChanged);
         }
 
-        public static void ON_COLOR_GRAIDENT_PROPERTY_CHANGED(TMP_ColorGradient gradient)
+        public static void ON_COLOR_GRADIENT_PROPERTY_CHANGED(TMP_ColorGradient gradient)
         {
             COLOR_GRADIENT_PROPERTY_EVENT.Call(gradient);
         }

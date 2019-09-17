@@ -32,9 +32,8 @@ namespace TMPro.EditorUtilities
             // Display non-editable fields
             if (GUI.enabled == false)
             {
-                int spriteCharacterIndex;
-
                 // Sprite Character Index
+                int spriteCharacterIndex;
                 int.TryParse(property.displayName.Split(' ')[1], out spriteCharacterIndex);
                 EditorGUI.LabelField(new Rect(rect.x, rect.y, 75f, 18), new GUIContent("Index: <color=#FFFF80>" + spriteCharacterIndex + "</color>"), style);
 
@@ -52,9 +51,9 @@ namespace TMPro.EditorUtilities
             {
                 // Get a reference to the underlying Sprite Asset
                 TMP_SpriteAsset spriteAsset = property.serializedObject.targetObject as TMP_SpriteAsset;
-                int spriteCharacterIndex;
 
                 // Sprite Character Index
+                int spriteCharacterIndex;
                 int.TryParse(property.displayName.Split(' ')[1], out spriteCharacterIndex);
 
                 EditorGUI.LabelField(new Rect(rect.x, rect.y, 75f, 18), new GUIContent("Index: <color=#FFFF80>" + spriteCharacterIndex + "</color>"), style);

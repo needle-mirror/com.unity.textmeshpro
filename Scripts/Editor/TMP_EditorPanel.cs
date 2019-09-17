@@ -31,10 +31,16 @@ namespace TMPro.EditorUtilities
 
         protected override void DrawExtraSettings()
         {
-            Foldout.extraSettings = EditorGUILayout.Foldout(Foldout.extraSettings, k_ExtraSettingsLabel, true, TMP_UIStyleManager.boldFoldout);
+            Rect rect = EditorGUILayout.GetControlRect(false, 24);
+
+            if (GUI.Button(rect, new GUIContent("<b>Extra Settings</b>"), TMP_UIStyleManager.sectionHeader))
+                Foldout.extraSettings = !Foldout.extraSettings;
+
+            GUI.Label(rect, (Foldout.extraSettings ? "" : k_UiStateLabel[1]), TMP_UIStyleManager.rightLabel);
+
             if (Foldout.extraSettings)
             {
-                EditorGUI.indentLevel += 1;
+                //EditorGUI.indentLevel += 1;
 
                 DrawMargins();
 
@@ -48,13 +54,17 @@ namespace TMPro.EditorUtilities
 
                 DrawParsing();
 
-                DrawVolumetricSetup();
+                DrawSpriteAsset();
+
+                DrawStyleSheet();
+
+                //DrawVolumetricSetup();
 
                 DrawKerning();
 
                 DrawPadding();
 
-                EditorGUI.indentLevel -= 1;
+                //EditorGUI.indentLevel -= 1;
             }
         }
 

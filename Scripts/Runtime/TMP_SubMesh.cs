@@ -201,6 +201,20 @@ namespace TMPro
         //[SerializeField]
         //private BoxCollider m_boxCollider;
 
+
+        /// <summary>
+        /// Reference to the parent Text Component.
+        /// </summary>
+        public TMP_Text textComponent
+        {
+            get
+            {
+                if (m_TextComponent == null)
+                    m_TextComponent = GetComponentInParent<TextMeshPro>();
+
+                return m_TextComponent;
+            }
+        }
         [SerializeField]
         private TextMeshPro m_TextComponent;
 
@@ -210,6 +224,8 @@ namespace TMPro
 
         void OnEnable()
         {
+            //Debug.Log("***** OnEnable() called on object ID " + GetInstanceID() + "]. Parent Text Object ID [" + (textComponent == null ? "" : textComponent.GetInstanceID().ToString()) + "] *****");
+
             // Register Callbacks for various events.
             if (!m_isRegisteredForEvents)
             {
@@ -237,6 +253,8 @@ namespace TMPro
 
         void OnDisable()
         {
+            //Debug.Log("***** OnDisable() called on Sub Object ID [" + GetInstanceID() + "]. Parent Text Object ID [" + textComponent.GetInstanceID() + "] *****");
+
             // Hide the geometry when the object is disabled.
             m_meshFilter.sharedMesh = null;
 
@@ -245,13 +263,13 @@ namespace TMPro
                 TMP_MaterialManager.ReleaseFallbackMaterial(m_fallbackMaterial);
                 m_fallbackMaterial = null;
             }
-
-
         }
 
 
         void OnDestroy()
         {
+            //Debug.Log("***** OnDestroy() called on Sub Object ID [" + GetInstanceID() + "]. Parent Text Object ID [" + textComponent.GetInstanceID() + "] *****");
+
             // Destroy Mesh
             if (m_mesh != null) DestroyImmediate(m_mesh);
 
@@ -272,6 +290,10 @@ namespace TMPro
             //TMPro_EventManager.TMP_SETTINGS_PROPERTY_EVENT.Remove(ON_TMP_SETTINGS_CHANGED);
             #endif
             m_isRegisteredForEvents = false;
+
+            // Notify parent text object
+            m_TextComponent.havePropertiesChanged = true;
+            m_TextComponent.SetAllDirty();
         }
 
 
@@ -289,7 +311,7 @@ namespace TMPro
             if (targetMaterialID != sharedMaterialID)
             {
                 // Check if event applies to the source fallback material
-                if (m_fallbackMaterial != null && fallbackSourceMaterialID == targetMaterialID)
+                if (m_fallbackMaterial != null && fallbackSourceMaterialID == targetMaterialID && TMP_Settings.matchMaterialPreset)
                     TMP_MaterialManager.CopyMaterialPresetProperties(mat, m_fallbackMaterial);
                 else
                     return;

@@ -151,6 +151,14 @@ namespace TMPro
         /// </summary>
         public Image captionImage { get { return m_CaptionImage; } set { m_CaptionImage = value; RefreshShownValue(); } }
 
+        [SerializeField]
+        private Graphic m_Placeholder;
+
+        /// <summary>
+        /// The placeholder Graphic component. Shown when no option is selected.
+        /// </summary>
+        public Graphic placeholder { get { return m_Placeholder; } set { m_Placeholder = value; RefreshShownValue(); } }
+
         [Space]
 
         [SerializeField]
@@ -327,6 +335,14 @@ namespace TMPro
         /// </example>
         public DropdownEvent onValueChanged { get { return m_OnValueChanged; } set { m_OnValueChanged = value; } }
 
+        [SerializeField]
+        private float m_AlphaFadeSpeed = 0.15f;
+
+        /// <summary>
+        /// The time interval at which a drop down will appear and disappear
+        /// </summary>
+        public float alphaFadeSpeed { get { return m_AlphaFadeSpeed; } set { m_AlphaFadeSpeed = value; } }
+
         private GameObject m_Dropdown;
         private GameObject m_Blocker;
         private List<DropdownItem> m_Items = new List<DropdownItem>();
@@ -404,7 +420,7 @@ namespace TMPro
             if (Application.isPlaying && (value == m_Value || options.Count == 0))
                 return;
 
-            m_Value = Mathf.Clamp(value, 0, options.Count - 1);
+            m_Value = Mathf.Clamp(value, m_Placeholder ? -1 : 0, options.Count - 1);
             RefreshShownValue();
 
             if (sendCallback)
@@ -421,10 +437,10 @@ namespace TMPro
 
         protected override void Awake()
         {
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             if (!Application.isPlaying)
                 return;
-            #endif
+#endif
 
             m_AlphaTweenRunner = new TweenRunner<FloatTween>();
             m_AlphaTweenRunner.Init(this);
@@ -443,7 +459,7 @@ namespace TMPro
             RefreshShownValue();
         }
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         protected override void OnValidate()
         {
             base.OnValidate();
@@ -453,7 +469,7 @@ namespace TMPro
 
             RefreshShownValue();
         }
-        #endif
+#endif
 
         protected override void OnDisable()
         {
@@ -462,7 +478,10 @@ namespace TMPro
 
             if (m_Blocker != null)
                 DestroyBlocker(m_Blocker);
+
             m_Blocker = null;
+
+            base.OnDisable();
         }
 
         /// <summary>
@@ -475,7 +494,7 @@ namespace TMPro
         {
             OptionData data = s_NoOptionData;
 
-            if (options.Count > 0)
+            if (options.Count > 0 && m_Value >= 0)
                 data = options[Mathf.Clamp(m_Value, 0, options.Count - 1)];
 
             if (m_CaptionText)
@@ -493,6 +512,11 @@ namespace TMPro
                 else
                     m_CaptionImage.sprite = null;
                 m_CaptionImage.enabled = (m_CaptionImage.sprite != null);
+            }
+
+            if (m_Placeholder)
+            {
+                m_Placeholder.enabled = options.Count == 0 || m_Value == -1;
             }
         }
 
@@ -573,7 +597,7 @@ namespace TMPro
         public void ClearOptions()
         {
             options.Clear();
-            m_Value = 0;
+            m_Value = m_Placeholder ? -1 : 0;
             RefreshShownValue();
         }
 
@@ -625,11 +649,40 @@ namespace TMPro
             item.toggle = itemToggle;
             item.rectTransform = (RectTransform)itemToggle.transform;
 
+            // Find the Canvas that this dropdown is a part of
+            Canvas parentCanvas = null;
+            Transform parentTransform = m_Template.parent;
+            while (parentTransform != null)
+            {
+                parentCanvas = parentTransform.GetComponent<Canvas>();
+                if (parentCanvas != null)
+                    break;
+
+                parentTransform = parentTransform.parent;
+            }
+
             Canvas popupCanvas = GetOrAddComponent<Canvas>(templateGo);
             popupCanvas.overrideSorting = true;
             popupCanvas.sortingOrder = 30000;
 
-            GetOrAddComponent<GraphicRaycaster>(templateGo);
+            // If we have a parent canvas, apply the same raycasters as the parent for consistency.
+            if (parentCanvas != null)
+            {
+                Component[] components = parentCanvas.GetComponents<BaseRaycaster>();
+                for (int i = 0; i < components.Length; i++)
+                {
+                    Type raycasterType = components[i].GetType();
+                    if (templateGo.GetComponent(raycasterType) == null)
+                    {
+                        templateGo.AddComponent(raycasterType);
+                    }
+                }
+            }
+            else
+            {
+                GetOrAddComponent<GraphicRaycaster>(templateGo);
+            }
+
             GetOrAddComponent<CanvasGroup>(templateGo);
             templateGo.SetActive(false);
 
@@ -827,7 +880,7 @@ namespace TMPro
             }
 
             // Fade in the popup
-            AlphaFadeList(0.15f, 0f, 1f);
+            AlphaFadeList(m_AlphaFadeSpeed, 0f, 1f);
 
             // Make drop-down template and item template inactive
             m_Template.gameObject.SetActive(false);
@@ -863,8 +916,37 @@ namespace TMPro
             blockerCanvas.sortingLayerID = dropdownCanvas.sortingLayerID;
             blockerCanvas.sortingOrder = dropdownCanvas.sortingOrder - 1;
 
-            // Add raycaster since it's needed to block.
-            blocker.AddComponent<GraphicRaycaster>();
+            // Find the Canvas that this dropdown is a part of
+            Canvas parentCanvas = null;
+            Transform parentTransform = m_Template.parent;
+            while (parentTransform != null)
+            {
+                parentCanvas = parentTransform.GetComponent<Canvas>();
+                if (parentCanvas != null)
+                    break;
+
+                parentTransform = parentTransform.parent;
+            }
+
+            // If we have a parent canvas, apply the same raycasters as the parent for consistency.
+            if (parentCanvas != null)
+            {
+                Component[] components = parentCanvas.GetComponents<BaseRaycaster>();
+                for (int i = 0; i < components.Length; i++)
+                {
+                    Type raycasterType = components[i].GetType();
+                    if (blocker.GetComponent(raycasterType) == null)
+                    {
+                        blocker.AddComponent(raycasterType);
+                    }
+                }
+            }
+            else
+            {
+                // Add raycaster since it's needed to block.
+                GetOrAddComponent<GraphicRaycaster>(blocker);
+            }
+
 
             // Add image since it's needed to block, but make it clear.
             Image blockerImage = blocker.AddComponent<Image>();
@@ -987,6 +1069,7 @@ namespace TMPro
         {
             if (!m_Dropdown)
                 return;
+
             CanvasGroup group = m_Dropdown.GetComponent<CanvasGroup>();
             group.alpha = alpha;
         }
@@ -998,14 +1081,16 @@ namespace TMPro
         {
             if (m_Dropdown != null)
             {
-                AlphaFadeList(0.15f, 0f);
+                AlphaFadeList(m_AlphaFadeSpeed, 0f);
 
                 // User could have disabled the dropdown during the OnValueChanged call.
                 if (IsActive())
-                    StartCoroutine(DelayedDestroyDropdownList(0.15f));
+                    StartCoroutine(DelayedDestroyDropdownList(m_AlphaFadeSpeed));
             }
+
             if (m_Blocker != null)
                 DestroyBlocker(m_Blocker);
+
             m_Blocker = null;
             Select();
         }
@@ -1023,10 +1108,12 @@ namespace TMPro
                 if (m_Items[i] != null)
                     DestroyItem(m_Items[i]);
             }
+
             m_Items.Clear();
 
             if (m_Dropdown != null)
                 DestroyDropdownList(m_Dropdown);
+
             m_Dropdown = null;
         }
 

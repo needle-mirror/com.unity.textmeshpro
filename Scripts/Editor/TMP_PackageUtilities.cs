@@ -244,7 +244,9 @@ namespace TMPro
                 return true;
 
             // Exclude FBX
-            if (fileType == typeof(GameObject) && fileExtension.ToLower() == ".fbx") { return true; }
+            if (fileType == typeof(GameObject) && (fileExtension.ToLower() == ".fbx" || fileExtension.ToLower() == ".blend"))
+                return true;
+
             return false;
         }
 

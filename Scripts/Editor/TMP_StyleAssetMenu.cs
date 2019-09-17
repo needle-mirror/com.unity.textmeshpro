@@ -38,11 +38,18 @@ namespace TMPro.EditorUtilities
             //// Create new Style Sheet Asset.
             TMP_StyleSheet styleSheet = ScriptableObject.CreateInstance<TMP_StyleSheet>();
 
+            // Create Normal default style
+            TMP_Style style = new TMP_Style("Normal", string.Empty, string.Empty);
+            styleSheet.styles.Add(style);
+
             AssetDatabase.CreateAsset(styleSheet, filePathWithName);
 
             EditorUtility.SetDirty(styleSheet);
 
             AssetDatabase.SaveAssets();
+
+            EditorUtility.FocusProjectWindow();
+            EditorGUIUtility.PingObject(styleSheet);
         }
     }
 

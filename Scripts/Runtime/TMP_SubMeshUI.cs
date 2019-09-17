@@ -191,6 +191,19 @@ namespace TMPro
         private Mesh m_mesh;
 
 
+        /// <summary>
+        /// Reference to the parent Text Component.
+        /// </summary>
+        public TMP_Text textComponent
+        {
+            get
+            {
+                if (m_TextComponent == null)
+                    m_TextComponent = GetComponentInParent<TextMeshProUGUI>();
+
+                return m_TextComponent;
+            }
+        }
         [SerializeField]
         private TextMeshProUGUI m_TextComponent;
 
@@ -309,7 +322,7 @@ namespace TMPro
                 m_fallbackMaterial = null;
             }
 
-#if UNITY_EDITOR
+            #if UNITY_EDITOR
             // Unregister the event this object was listening to
             TMPro_EventManager.MATERIAL_PROPERTY_EVENT.Remove(ON_MATERIAL_PROPERTY_CHANGED);
             TMPro_EventManager.FONT_PROPERTY_EVENT.Remove(ON_FONT_PROPERTY_CHANGED);
@@ -318,11 +331,15 @@ namespace TMPro
             //TMPro_EventManager.TEXT_STYLE_PROPERTY_EVENT.Remove(ON_TEXT_STYLE_CHANGED);
             TMPro_EventManager.SPRITE_ASSET_PROPERTY_EVENT.Remove(ON_SPRITE_ASSET_PROPERTY_CHANGED);
             //TMPro_EventManager.TMP_SETTINGS_PROPERTY_EVENT.Remove(ON_TMP_SETTINGS_CHANGED);
-        #endif
+            #endif
 
             m_isRegisteredForEvents = false;
 
             RecalculateClipping();
+
+            // Notify parent text object
+            m_TextComponent.havePropertiesChanged = true;
+            m_TextComponent.SetAllDirty();
         }
 
 
@@ -342,7 +359,7 @@ namespace TMPro
             //if (targetMaterialID != sharedMaterialID && targetMaterialID != maskingMaterialID) return;
 
             // Filter events and return if the affected material is not this object's material.
-            if (m_fallbackMaterial != null && fallbackSourceMaterialID == targetMaterialID)
+            if (m_fallbackMaterial != null && fallbackSourceMaterialID == targetMaterialID && TMP_Settings.matchMaterialPreset)
                 TMP_MaterialManager.CopyMaterialPresetProperties(mat, m_fallbackMaterial);
 
             if (m_TextComponent == null) m_TextComponent = GetComponentInParent<TextMeshProUGUI>();
@@ -626,7 +643,7 @@ namespace TMPro
         protected override void UpdateGeometry()
         {
             // Need to override to prevent Unity from changing the geometry of the object.
-            Debug.Log("UpdateGeometry()");
+            //Debug.Log("UpdateGeometry()");
         }
 
 
@@ -669,7 +686,7 @@ namespace TMPro
 
             m_canvasRenderer.materialCount = 1;
             m_canvasRenderer.SetMaterial(materialForRendering, 0);
-            m_canvasRenderer.SetTexture(mainTexture);
+            //m_canvasRenderer.SetTexture(mainTexture);
 
             #if UNITY_EDITOR
             if (m_sharedMaterial != null && gameObject.name != "TMP SubMeshUI [" + m_sharedMaterial.name + "]")
@@ -798,10 +815,10 @@ namespace TMPro
             //SetVerticesDirty();
             SetMaterialDirty();
 
-#if UNITY_EDITOR
+            #if UNITY_EDITOR
             //if (m_sharedMaterial != null)
             //    gameObject.name = "TMP SubMesh [" + m_sharedMaterial.name + "]";
-#endif
+            #endif
         }
     }
 }

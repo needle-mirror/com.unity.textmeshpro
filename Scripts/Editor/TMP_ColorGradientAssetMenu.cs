@@ -44,8 +44,7 @@ namespace TMPro.EditorUtilities
             AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(colorGradient));
 
             EditorUtility.FocusProjectWindow();
-            Selection.activeObject = colorGradient;
-
+            EditorGUIUtility.PingObject(colorGradient);
         }
     }
 }

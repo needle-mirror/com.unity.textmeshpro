@@ -49,14 +49,14 @@ namespace TMPro
         protected TextElementType m_ElementType;
 
         [SerializeField]
-        private uint m_Unicode;
+        internal uint m_Unicode;
 
-        private Glyph m_Glyph;
-
-        [SerializeField]
-        private uint m_GlyphIndex;
+        internal Glyph m_Glyph;
 
         [SerializeField]
-        private float m_Scale;
+        internal uint m_GlyphIndex;
+
+        [SerializeField]
+        internal float m_Scale;
     }
 }

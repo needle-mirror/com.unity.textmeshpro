@@ -28,6 +28,8 @@ namespace TMPro.EditorUtilities
             textMeshPro.text = "Sample text";
             textMeshPro.alignment = TextAlignmentOptions.TopLeft;
 
+            
+
             Undo.RegisterCreatedObjectUndo((Object)go, "Create " + go.name);
 
             GameObject contextObject = command.context as GameObject;

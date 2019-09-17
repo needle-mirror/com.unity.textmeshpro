@@ -5,9 +5,9 @@ using System.Collections.Generic;
 
 namespace TMPro.SpriteAssetUtilities
 {
-    public enum SpriteAssetImportFormats { None = 0, TexturePacker = 0x1 };
+    public enum SpriteAssetImportFormats { None = 0, TexturePackerJsonArray = 0x1 };
 
-    public class TexturePacker
+    public class TexturePacker_JsonArray
     {
         [System.Serializable]
         public struct SpriteFrame
@@ -38,7 +38,7 @@ namespace TMPro.SpriteAssetUtilities
         }
 
         [System.Serializable]
-        public struct SpriteData
+        public struct Frame
         {
             public string filename;
             public SpriteFrame frame;
@@ -47,15 +47,12 @@ namespace TMPro.SpriteAssetUtilities
             public SpriteFrame spriteSourceSize;
             public SpriteSize sourceSize;
             public Vector2 pivot;
-
         }
 
         [System.Serializable]
         public class SpriteDataObject
         {
-            public List<SpriteData> frames;
+            public List<Frame> frames;
         }
-
-
     }
 }

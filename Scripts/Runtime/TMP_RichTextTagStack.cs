@@ -122,14 +122,27 @@
     /// <typeparam name="T"></typeparam>
     public struct TMP_RichTextTagStack<T>
     {
-        public T[] m_ItemStack;
-        public int m_Index;
-        private int m_Capacity;
+        public T[] itemStack;
+        public int index;
 
-        private T m_DefaultItem;
+        int m_Capacity;
+        T m_DefaultItem;
 
-        private const int k_DefaultCapacity = 4;
-        //static readonly T[] m_EmptyStack = new T[0];
+        const int k_DefaultCapacity = 4;
+
+        /// <summary>
+        /// Returns the current item on the stack.
+        /// </summary>
+        public T current
+        {
+            get
+            {
+                if (index > 0)
+                    return itemStack[index - 1];
+
+                return itemStack[0];
+            }
+        }
 
         /// <summary>
         /// Constructor to create a new item stack.
@@ -137,9 +150,9 @@
         /// <param name="tagStack"></param>
         public TMP_RichTextTagStack(T[] tagStack)
         {
-            m_ItemStack = tagStack;
+            itemStack = tagStack;
             m_Capacity = tagStack.Length;
-            m_Index = 0;
+            index = 0;
 
             m_DefaultItem = default(T);
         }
@@ -150,9 +163,9 @@
         /// <param name="capacity"></param>
         public TMP_RichTextTagStack(int capacity)
         {
-            m_ItemStack = new T[capacity];
+            itemStack = new T[capacity];
             m_Capacity = capacity;
-            m_Index = 0;
+            index = 0;
 
             m_DefaultItem = default(T);
         }
@@ -163,7 +176,7 @@
         /// </summary>
         public void Clear()
         {
-            m_Index = 0;
+            index = 0;
         }
 
 
@@ -173,8 +186,15 @@
         /// <param name="item"></param>
         public void SetDefault(T item)
         {
-            m_ItemStack[0] = item;
-            m_Index = 1;
+            if (itemStack == null)
+            {
+                m_Capacity = k_DefaultCapacity;
+                itemStack = new T[m_Capacity];
+                m_DefaultItem = default(T);
+            }
+
+            itemStack[0] = item;
+            index = 1;
         }
 
 
@@ -184,10 +204,10 @@
         /// <param name="item"></param>
         public void Add(T item)
         {
-            if (m_Index < m_ItemStack.Length)
+            if (index < itemStack.Length)
             {
-                m_ItemStack[m_Index] = item;
-                m_Index += 1;
+                itemStack[index] = item;
+                index += 1;
             }
         }
 
@@ -198,41 +218,41 @@
         /// <returns></returns>
         public T Remove()
         {
-            m_Index -= 1;
+            index -= 1;
 
-            if (m_Index <= 0)
+            if (index <= 0)
             {
-                m_Index = 1;
-                return m_ItemStack[0];
+                index = 1;
+                return itemStack[0];
 
             }
 
-            return m_ItemStack[m_Index - 1];
+            return itemStack[index - 1];
         }
 
         public void Push(T item)
         {
-            if (m_Index == m_Capacity)
+            if (index == m_Capacity)
             {
                 m_Capacity *= 2;
                 if (m_Capacity == 0)
                     m_Capacity = k_DefaultCapacity;
 
-                System.Array.Resize(ref m_ItemStack, m_Capacity);
+                System.Array.Resize(ref itemStack, m_Capacity);
             }
 
-            m_ItemStack[m_Index] = item;
-            m_Index += 1;
+            itemStack[index] = item;
+            index += 1;
         }
 
         public T Pop()
         {
-            if (m_Index == 0)
+            if (index == 0)
                 return default(T);
 
-            m_Index -= 1;
-            T item = m_ItemStack[m_Index];
-            m_ItemStack[m_Index] = m_DefaultItem;
+            index -= 1;
+            T item = itemStack[index];
+            itemStack[index] = m_DefaultItem;
 
             return item;
         }
@@ -243,10 +263,10 @@
         /// <returns></returns>
         public T Peek()
         {
-            if (m_Index == 0)
+            if (index == 0)
                 return m_DefaultItem;
 
-            return m_ItemStack[m_Index - 1];
+            return itemStack[index - 1];
         }
 
 
@@ -256,10 +276,10 @@
         /// <returns>itemStack <T></returns>
         public T CurrentItem()
         {
-            if (m_Index > 0)
-                return m_ItemStack[m_Index - 1];
+            if (index > 0)
+                return itemStack[index - 1];
 
-            return m_ItemStack[0];
+            return itemStack[0];
         }
 
 
@@ -269,10 +289,10 @@
         /// <returns></returns>
         public T PreviousItem()
         {
-            if (m_Index > 1)
-                return m_ItemStack[m_Index - 2];
+            if (index > 1)
+                return itemStack[index - 2];
 
-            return m_ItemStack[0];
+            return itemStack[0];
         }
     }
 }

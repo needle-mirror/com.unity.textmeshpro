@@ -39,8 +39,8 @@ namespace TMPro.EditorUtilities
             DrawGlyph(position, property);
 
             int spriteCharacterIndex;
-
             int.TryParse(property.displayName.Split(' ')[1], out spriteCharacterIndex);
+
             EditorGUI.LabelField(new Rect(position.x, position.y + 5, 64f, 18f), new GUIContent("#" + spriteCharacterIndex), style);
 
             float labelWidthID = GUI.skin.label.CalcSize(new GUIContent("ID: " + prop_GlyphIndex.intValue)).x;

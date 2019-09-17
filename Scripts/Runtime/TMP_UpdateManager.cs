@@ -17,13 +17,13 @@ namespace TMPro
         private static TMP_UpdateManager s_Instance;
 
         private readonly List<TMP_Text> m_LayoutRebuildQueue = new List<TMP_Text>();
-        private Dictionary<int, int> m_LayoutQueueLookup = new Dictionary<int, int>();
+        private HashSet<int> m_LayoutQueueLookup = new HashSet<int>();
 
         private readonly List<TMP_Text> m_GraphicRebuildQueue = new List<TMP_Text>();
-        private Dictionary<int, int> m_GraphicQueueLookup = new Dictionary<int, int>();
+        private HashSet<int> m_GraphicQueueLookup = new HashSet<int>();
 
         private readonly List<TMP_Text> m_InternalUpdateQueue = new List<TMP_Text>();
-        private Dictionary<int, int> m_InternalUpdateLookup = new Dictionary<int, int>();
+        private HashSet<int> m_InternalUpdateLookup = new HashSet<int>();
 
         //private bool m_PerformingGraphicRebuild;
         //private bool m_PerformingLayoutRebuild;
@@ -70,10 +70,9 @@ namespace TMPro
         {
             int id = textObject.GetInstanceID();
 
-            if (this.m_InternalUpdateLookup.ContainsKey(id))
+            if (this.m_InternalUpdateLookup.Contains(id))
                 return;
 
-            m_InternalUpdateLookup[id] = id;
             this.m_InternalUpdateQueue.Add(textObject);
 
             return;
@@ -93,10 +92,9 @@ namespace TMPro
         {
             int id = element.GetInstanceID();
 
-            if (this.m_LayoutQueueLookup.ContainsKey(id))
+            if (this.m_LayoutQueueLookup.Contains(id))
                 return false;
 
-            m_LayoutQueueLookup[id] = id;
             this.m_LayoutRebuildQueue.Add(element);
 
             return true;
@@ -116,10 +114,9 @@ namespace TMPro
         {
             int id = element.GetInstanceID();
 
-            if (this.m_GraphicQueueLookup.ContainsKey(id))
+            if (this.m_GraphicQueueLookup.Contains(id))
                 return false;
 
-            m_GraphicQueueLookup[id] = id;
             this.m_GraphicRebuildQueue.Add(element);
 
             return true;
