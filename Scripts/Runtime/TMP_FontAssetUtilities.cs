@@ -170,21 +170,8 @@ namespace TMPro
                     return characterData;
                 }
 
-                //// Check if the source font file contains the requested character.
-                //if (TryGetCharacterFromFontFile(unicode, sourceFontAsset, out characterData))
-                //{
-                //    fontAsset = sourceFontAsset;
+                // Unable to add character and glyph to font asset
 
-                //    //fontAsset.AddCharacterToRasterList(unicode);
-
-                //    return characterData;
-                //}
-
-                // If we find the requested character, we add it to the font asset character table
-                // and return its character data.
-                // We also add this character to the list of characters we will need to add to the font atlas.
-                // We assume the font atlas has room otherwise this font asset should not be marked as dynamic.
-                // Alternatively, we could also add multiple pages of font atlas textures (feature consideration)
             }
 
             // Search fallback font assets if we still don't have a valid character and include fallback is set to true.

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.TextCore;
 using UnityEditor;
 using System.IO;
 using System.Collections.Generic;
@@ -19,7 +20,7 @@ namespace TMPro
         }
 
         Texture2D m_SpriteAtlas;
-        SpriteAssetImportFormats m_SpriteDataFormat = SpriteAssetImportFormats.TexturePacker;
+        SpriteAssetImportFormats m_SpriteDataFormat = SpriteAssetImportFormats.TexturePackerJsonArray;
         TextAsset m_JsonFile;
 
         string m_CreationFeedback;
@@ -51,7 +52,7 @@ namespace TMPro
             m_JsonFile = EditorGUILayout.ObjectField("Sprite Data Source", m_JsonFile, typeof(TextAsset), false) as TextAsset;
 
             m_SpriteDataFormat = (SpriteAssetImportFormats)EditorGUILayout.EnumPopup("Import Format", m_SpriteDataFormat);
-                    
+
             // Sprite Texture Selection
             m_SpriteAtlas = EditorGUILayout.ObjectField("Sprite Texture Atlas", m_SpriteAtlas, typeof(Texture2D), false) as Texture2D;
 
@@ -62,7 +63,7 @@ namespace TMPro
 
             GUILayout.Space(10);
 
-            GUI.enabled = m_JsonFile != null && m_SpriteAtlas != null && m_SpriteDataFormat == SpriteAssetImportFormats.TexturePacker;
+            GUI.enabled = m_JsonFile != null && m_SpriteAtlas != null && m_SpriteDataFormat != SpriteAssetImportFormats.None;
 
             // Create Sprite Asset
             if (GUILayout.Button("Create Sprite Asset"))
@@ -70,23 +71,49 @@ namespace TMPro
                 m_CreationFeedback = string.Empty;
 
                 // Read json data file
-                if (m_JsonFile != null && m_SpriteDataFormat == SpriteAssetImportFormats.TexturePacker)
+                if (m_JsonFile != null)
                 {
-                    TexturePacker.SpriteDataObject sprites = JsonUtility.FromJson<TexturePacker.SpriteDataObject>(m_JsonFile.text);
-
-                    if (sprites != null && sprites.frames != null && sprites.frames.Count > 0)
+                    switch (m_SpriteDataFormat)
                     {
-                        int spriteCount = sprites.frames.Count;
+                        case SpriteAssetImportFormats.TexturePackerJsonArray:
+                            TexturePacker_JsonArray.SpriteDataObject jsonData = null;
+                            try
+                            {
+                                jsonData = JsonUtility.FromJson<TexturePacker_JsonArray.SpriteDataObject>(m_JsonFile.text);
+                            }
+                            catch
+                            {
+                                m_CreationFeedback = "The Sprite Data Source file [" + m_JsonFile.name + "] appears to be invalid or incorrectly formatted.";
+                            }
 
-                        // Update import results
-                        m_CreationFeedback = "<b>Import Results</b>\n--------------------\n";
-                        m_CreationFeedback += "<color=#C0ffff><b>" + spriteCount + "</b></color> Sprites were imported from file.";
+                            if (jsonData != null && jsonData.frames != null && jsonData.frames.Count > 0)
+                            {
+                                int spriteCount = jsonData.frames.Count;
 
-                        // Create sprite info list
-                        m_SpriteInfoList = CreateSpriteInfoList(sprites);
+                                // Update import results
+                                m_CreationFeedback = "<b>Import Results</b>\n--------------------\n";
+                                m_CreationFeedback += "<color=#C0ffff><b>" + spriteCount + "</b></color> Sprites were imported from file.";
+
+                                if (m_SpriteAsset != null)
+                                    DestroyImmediate(m_SpriteAsset);
+
+                                // Create new Sprite Asset
+                                m_SpriteAsset = CreateInstance<TMP_SpriteAsset>();
+
+                                // Assign sprite sheet / atlas texture to sprite asset
+                                m_SpriteAsset.spriteSheet = m_SpriteAtlas;
+
+                                List<TMP_SpriteGlyph> spriteGlyphTable = new List<TMP_SpriteGlyph>();
+                                List<TMP_SpriteCharacter> spriteCharacterTable = new List<TMP_SpriteCharacter>();
+
+                                PopulateSpriteTables(jsonData, spriteCharacterTable, spriteGlyphTable);
+
+                                m_SpriteAsset.spriteCharacterTable = spriteCharacterTable;
+                                m_SpriteAsset.spriteGlyphTable = spriteGlyphTable;
+                            }
+                            break;
                     }
                 }
-
             }
 
             GUI.enabled = true;
@@ -100,7 +127,7 @@ namespace TMPro
             GUILayout.EndVertical();
 
             GUILayout.Space(5);
-            GUI.enabled = m_JsonFile != null && m_SpriteAtlas && m_SpriteInfoList != null && m_SpriteInfoList.Count > 0;    // Enable Save Button if font_Atlas is not Null.
+            GUI.enabled = m_JsonFile != null && m_SpriteAtlas && m_SpriteInfoList != null && m_SpriteAsset != null;
             if (GUILayout.Button("Save Sprite Asset") && m_JsonFile != null)
             {
                 string filePath = EditorUtility.SaveFilePanel("Save Sprite Asset File", new FileInfo(AssetDatabase.GetAssetPath(m_JsonFile)).DirectoryName, m_JsonFile.name, "asset");
@@ -117,48 +144,32 @@ namespace TMPro
         /// <summary>
         /// 
         /// </summary>
-        List<TMP_Sprite> CreateSpriteInfoList(TexturePacker.SpriteDataObject spriteDataObject)
+        /// <param name="spriteDataObject"></param>
+        /// <param name="spriteCharacterTable"></param>
+        /// <param name="spriteGlyphTable"></param>
+        private static void PopulateSpriteTables(TexturePacker_JsonArray.SpriteDataObject spriteDataObject, List<TMP_SpriteCharacter> spriteCharacterTable, List<TMP_SpriteGlyph> spriteGlyphTable)
         {
-            List<TexturePacker.SpriteData> importedSprites = spriteDataObject.frames;
-
-            List<TMP_Sprite> spriteInfoList = new List<TMP_Sprite>();
+            List<TexturePacker_JsonArray.Frame> importedSprites = spriteDataObject.frames;
 
             for (int i = 0; i < importedSprites.Count; i++)
             {
-                TMP_Sprite sprite = new TMP_Sprite();
+                TexturePacker_JsonArray.Frame spriteData = importedSprites[i];
 
-                sprite.id = i;
-                sprite.name = Path.GetFileNameWithoutExtension(importedSprites[i].filename) ?? "";
-                sprite.hashCode = TMP_TextUtilities.GetSimpleHashCode(sprite.name);
+                TMP_SpriteGlyph spriteGlyph = new TMP_SpriteGlyph();
+                spriteGlyph.index = (uint)i;
 
-                // Attempt to extract Unicode value from name
-                int unicode;
-                int indexOfSeperator = sprite.name.IndexOf('-');
-                if (indexOfSeperator != -1)
-                    unicode = TMP_TextUtilities.StringHexToInt(sprite.name.Substring(indexOfSeperator + 1));
-                else
-                    unicode = TMP_TextUtilities.StringHexToInt(sprite.name);
+                spriteGlyph.metrics = new GlyphMetrics((int)spriteData.frame.w, (int)spriteData.frame.h, -spriteData.frame.w * spriteData.pivot.x, spriteData.frame.h * spriteData.pivot.y, (int)spriteData.frame.w);
+                spriteGlyph.glyphRect = new GlyphRect((int)spriteData.frame.x, (int)spriteData.frame.y, (int)spriteData.frame.w, (int)spriteData.frame.h);
+                spriteGlyph.scale = 1.0f;
 
-                sprite.unicode = unicode;
+                spriteGlyphTable.Add(spriteGlyph);
 
-                sprite.x = importedSprites[i].frame.x;
-                sprite.y = m_SpriteAtlas.height - (importedSprites[i].frame.y + importedSprites[i].frame.h);
-                sprite.width = importedSprites[i].frame.w;
-                sprite.height = importedSprites[i].frame.h;
+                TMP_SpriteCharacter spriteCharacter = new TMP_SpriteCharacter(0, spriteGlyph);
+                spriteCharacter.name = spriteData.filename.Split('.')[0];
+                spriteCharacter.scale = 1.0f;
 
-                //Calculate sprite pivot position
-                sprite.pivot = importedSprites[i].pivot;
-
-                // Properties the can be modified
-                sprite.xAdvance = sprite.width;
-                sprite.scale = 1.0f;
-                sprite.xOffset = 0 - (sprite.width * sprite.pivot.x);
-                sprite.yOffset = sprite.height - (sprite.height * sprite.pivot.y);
-
-                spriteInfoList.Add(sprite);
+                spriteCharacterTable.Add(spriteCharacter);
             }
-
-            return spriteInfoList;
         }
 
 
@@ -183,17 +194,14 @@ namespace TMPro
             string fileName = Path.GetFileNameWithoutExtension(relativeAssetPath);
             string pathNoExt = dirName + "/" + fileName;
 
-
-            // Create new Sprite Asset using this texture
-            m_SpriteAsset = CreateInstance<TMP_SpriteAsset>();
+            // Save Sprite Asset
             AssetDatabase.CreateAsset(m_SpriteAsset, pathNoExt + ".asset");
+
+            // Set version number
+            m_SpriteAsset.version = "1.1.0";
 
             // Compute the hash code for the sprite asset.
             m_SpriteAsset.hashCode = TMP_TextUtilities.GetSimpleHashCode(m_SpriteAsset.name);
-
-            // Assign new Sprite Sheet texture to the Sprite Asset.
-            m_SpriteAsset.spriteSheet = m_SpriteAtlas;
-            m_SpriteAsset.spriteInfoList = m_SpriteInfoList;
 
             // Add new default material for sprite asset.
             AddDefaultMaterial(m_SpriteAsset);

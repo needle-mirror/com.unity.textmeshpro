@@ -42,20 +42,25 @@ namespace TMPro.EditorUtilities
 
             public static readonly GUIContent dynamicFontSystemSettingsLabel = new GUIContent("Dynamic Font System Settings");
             public static readonly GUIContent getFontFeaturesAtRuntime = new GUIContent("Get Font Features at Runtime", "Determines if Glyph Adjustment Data will be retrieved from font files at runtime when new characters and glyphs are added to font assets.");
+            public static readonly GUIContent dynamicAtlasTextureGroup = new GUIContent("Dynamic Atlas Texture Group");
 
             public static readonly GUIContent missingGlyphLabel = new GUIContent("Replacement Character", "The character to be displayed when the requested character is not found in any font asset or fallbacks.");
             public static readonly GUIContent disableWarningsLabel = new GUIContent("Disable warnings", "Disable warning messages in the Console.");
 
             public static readonly GUIContent defaultSpriteAssetLabel = new GUIContent("Default Sprite Asset", "The Sprite Asset that will be assigned by default when using the <sprite> tag when no Sprite Asset is specified.");
             public static readonly GUIContent enableEmojiSupportLabel = new GUIContent("iOS Emoji Support", "Enables Emoji support for Touch Screen Keyboards on target devices.");
+            //public static readonly GUIContent spriteRelativeScale = new GUIContent("Relative Scaling", "Determines if the sprites will be scaled relative to the primary font asset assigned to the text object or relative to the current font asset.");
+
             public static readonly GUIContent spriteAssetsPathLabel = new GUIContent("Path:        Resources/", "The relative path to a Resources folder where the Sprite Assets are located.\nExample \"Sprite Assets/\"");
 
             public static readonly GUIContent defaultStyleSheetLabel = new GUIContent("Default Style Sheet", "The Style Sheet that will be used for all text objects in this project.");
+            public static readonly GUIContent styleSheetResourcePathLabel = new GUIContent("Path:        Resources/", "The relative path to a Resources folder where the Style Sheets are located.\nExample \"Style Sheets/\"");
 
             public static readonly GUIContent colorGradientPresetsLabel = new GUIContent("Color Gradient Presets", "The relative path to a Resources folder where the Color Gradient Presets are located.\nExample \"Color Gradient Presets/\"");
             public static readonly GUIContent colorGradientsPathLabel = new GUIContent("Path:        Resources/", "The relative path to a Resources folder where the Color Gradient Presets are located.\nExample \"Color Gradient Presets/\"");
 
             public static readonly GUIContent lineBreakingLabel = new GUIContent("Line Breaking for Asian languages", "The text assets that contain the Leading and Following characters which define the rules for line breaking with Asian languages.");
+            public static readonly GUIContent koreanSpecificRules = new GUIContent("Korean Language Options");
         }
 
         SerializedProperty m_PropFontAsset;
@@ -69,9 +74,13 @@ namespace TMPro.EditorUtilities
         SerializedProperty m_PropEnableRaycastTarget;
 
         SerializedProperty m_PropSpriteAsset;
-        SerializedProperty m_PropSpriteAssetPath;
+        //SerializedProperty m_PropSpriteRelativeScaling;
         SerializedProperty m_PropEnableEmojiSupport;
+        SerializedProperty m_PropSpriteAssetPath;
+
+
         SerializedProperty m_PropStyleSheet;
+        SerializedProperty m_PropStyleSheetsResourcePath;
         ReorderableList m_List;
 
         SerializedProperty m_PropColorGradientPresetsPath;
@@ -84,12 +93,14 @@ namespace TMPro.EditorUtilities
         SerializedProperty m_PropParseEscapeCharacters;
         SerializedProperty m_PropMissingGlyphCharacter;
 
+        //SerializedProperty m_DynamicAtlasTextureManager;
         SerializedProperty m_GetFontFeaturesAtRuntime;
 
         SerializedProperty m_PropWarningsDisabled;
 
         SerializedProperty m_PropLeadingCharacters;
         SerializedProperty m_PropFollowingCharacters;
+        SerializedProperty m_PropUseModernHangulLineBreakingRules;
 
         public void OnEnable()
         {
@@ -107,9 +118,14 @@ namespace TMPro.EditorUtilities
             m_PropEnableRaycastTarget = serializedObject.FindProperty("m_EnableRaycastTarget");
 
             m_PropSpriteAsset = serializedObject.FindProperty("m_defaultSpriteAsset");
-            m_PropSpriteAssetPath = serializedObject.FindProperty("m_defaultSpriteAssetPath");
+            //m_PropSpriteRelativeScaling = serializedObject.FindProperty("m_SpriteRelativeScaling");
             m_PropEnableEmojiSupport = serializedObject.FindProperty("m_enableEmojiSupport");
+            m_PropSpriteAssetPath = serializedObject.FindProperty("m_defaultSpriteAssetPath");
+
             m_PropStyleSheet = serializedObject.FindProperty("m_defaultStyleSheet");
+            m_PropStyleSheetsResourcePath = serializedObject.FindProperty("m_StyleSheetsResourcePath");
+
+
             m_PropColorGradientPresetsPath = serializedObject.FindProperty("m_defaultColorGradientPresetsPath");
 
             m_List = new ReorderableList(serializedObject, serializedObject.FindProperty("m_fallbackFontAssets"), true, true, true, true);
@@ -137,10 +153,12 @@ namespace TMPro.EditorUtilities
 
             m_PropWarningsDisabled = serializedObject.FindProperty("m_warningsDisabled");
 
+            //m_DynamicAtlasTextureManager = serializedObject.FindProperty("m_DynamicAtlasTextureGroup");
             m_GetFontFeaturesAtRuntime = serializedObject.FindProperty("m_GetFontFeaturesAtRuntime");
 
             m_PropLeadingCharacters = serializedObject.FindProperty("m_leadingCharacters");
             m_PropFollowingCharacters = serializedObject.FindProperty("m_followingCharacters");
+            m_PropUseModernHangulLineBreakingRules = serializedObject.FindProperty("m_UseModernHangulLineBreakingRules");
         }
 
         public override void OnInspectorGUI()
@@ -184,6 +202,7 @@ namespace TMPro.EditorUtilities
             EditorGUILayout.PropertyField(m_GetFontFeaturesAtRuntime, Styles.getFontFeaturesAtRuntime);
             EditorGUILayout.PropertyField(m_PropMissingGlyphCharacter, Styles.missingGlyphLabel);
             EditorGUILayout.PropertyField(m_PropWarningsDisabled, Styles.disableWarningsLabel);
+            //EditorGUILayout.PropertyField(m_DynamicAtlasTextureManager, Styles.dynamicAtlasTextureManager);
             EditorGUI.indentLevel = 0;
 
             EditorGUILayout.Space();
@@ -241,6 +260,7 @@ namespace TMPro.EditorUtilities
             EditorGUI.indentLevel = 1;
             EditorGUILayout.PropertyField(m_PropSpriteAsset, Styles.defaultSpriteAssetLabel);
             EditorGUILayout.PropertyField(m_PropEnableEmojiSupport, Styles.enableEmojiSupportLabel);
+            //EditorGUILayout.PropertyField(m_PropSpriteRelativeScaling, Styles.spriteRelativeScale);
             EditorGUILayout.PropertyField(m_PropSpriteAssetPath, Styles.spriteAssetsPathLabel);
             EditorGUI.indentLevel = 0;
 
@@ -256,8 +276,12 @@ namespace TMPro.EditorUtilities
             if (EditorGUI.EndChangeCheck())
             {
                 serializedObject.ApplyModifiedProperties();
-                TMP_StyleSheet.UpdateStyleSheet();
+
+                TMP_StyleSheet styleSheet = m_PropStyleSheet.objectReferenceValue as TMP_StyleSheet;
+                if (styleSheet != null)
+                    styleSheet.RefreshStyles();
             }
+            EditorGUILayout.PropertyField(m_PropStyleSheetsResourcePath, Styles.styleSheetResourcePathLabel);
             EditorGUI.indentLevel = 0;
 
             EditorGUILayout.Space();
@@ -279,6 +303,11 @@ namespace TMPro.EditorUtilities
             EditorGUI.indentLevel = 1;
             EditorGUILayout.PropertyField(m_PropLeadingCharacters);
             EditorGUILayout.PropertyField(m_PropFollowingCharacters);
+
+            EditorGUILayout.Space();
+            GUILayout.Label(Styles.koreanSpecificRules, EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(m_PropUseModernHangulLineBreakingRules, new GUIContent("Use Modern Line Breaking", "Determines if traditional or modern line breaking rules will be used to control line breaking. Traditional line breaking rules use the Leading and Following Character rules whereas Modern uses spaces for line breaking."));
+
             EditorGUI.indentLevel = 0;
 
             EditorGUILayout.Space();

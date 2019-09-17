@@ -38,8 +38,10 @@ namespace TMPro.EditorUtilities
                 hashCodeProperty.intValue = TMP_TextUtilities.GetSimpleHashCode(nameProperty.stringValue);
 
                 property.serializedObject.ApplyModifiedProperties();
+
                 // Dictionary needs to be updated since HashCode has changed.
-                TMP_StyleSheet.RefreshStyles();
+                TMP_StyleSheet styleSheet = property.serializedObject.targetObject as TMP_StyleSheet;
+                styleSheet.RefreshStyles();
             }
 
             // HashCode
@@ -107,17 +109,18 @@ namespace TMPro.EditorUtilities
     public class TMP_StyleEditor : Editor
     {
 
+        TMP_StyleSheet m_StyleSheet;
         SerializedProperty m_StyleListProp;
 
         int m_SelectedElement = -1;
-
-        //private Event m_CurrentEvent;
         int m_Page;
 
+        bool m_IsStyleSheetDirty;
 
-       
+
         void OnEnable()
         {
+            m_StyleSheet = target as TMP_StyleSheet;
             m_StyleListProp = serializedObject.FindProperty("m_StyleList");
         }
 
@@ -128,23 +131,23 @@ namespace TMPro.EditorUtilities
 
             serializedObject.Update();
 
+            m_IsStyleSheetDirty = false;
             int arraySize = m_StyleListProp.arraySize;
-            int itemsPerPage = (Screen.height - 178) / 111;
+            int itemsPerPage = (Screen.height - 100) / 110;
 
             if (arraySize > 0)
             {
                 // Display each Style entry using the StyleDrawer PropertyDrawer.
                 for (int i = itemsPerPage * m_Page; i < arraySize && i < itemsPerPage * (m_Page + 1); i++)
                 {
-
                     // Define the start of the selection region of the element.
                     Rect elementStartRegion = GUILayoutUtility.GetRect(0f, 0f, GUILayout.ExpandWidth(true));
 
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
    
-                    SerializedProperty spriteInfo = m_StyleListProp.GetArrayElementAtIndex(i);
+                    SerializedProperty styleProperty = m_StyleListProp.GetArrayElementAtIndex(i);
                     EditorGUI.BeginChangeCheck();
-                    EditorGUILayout.PropertyField(spriteInfo);
+                    EditorGUILayout.PropertyField(styleProperty);
                     EditorGUILayout.EndVertical();
                     if (EditorGUI.EndChangeCheck())
                     {
@@ -173,50 +176,81 @@ namespace TMPro.EditorUtilities
                     if (m_SelectedElement == i)
                     {
                         TMP_EditorUtility.DrawBox(selectionArea, 2f, new Color32(40, 192, 255, 255));
+
+                        // Draw options to MoveUp, MoveDown, Add or Remove Sprites
+                        Rect controlRect = EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight * 1f);
+                        controlRect.width /= 6;
+
+                        // Move sprite up.
+                        bool guiEnabled = GUI.enabled;
+                        if (i == 0) { GUI.enabled = false; }
+                        if (GUI.Button(controlRect, "Up"))
+                        {
+                            SwapStyleElements(i, i - 1);
+                        }
+                        GUI.enabled = guiEnabled;
+
+                        // Move sprite down.
+                        controlRect.x += controlRect.width;
+                        if (i == arraySize - 1) { GUI.enabled = false; }
+                        if (GUI.Button(controlRect, "Down"))
+                        {
+                            SwapStyleElements(i, i + 1);
+                        }
+                        GUI.enabled = guiEnabled;
+
+                        /*
+                        // Move sprite to new index
+                        controlRect.x += controlRect.width * 2;
+                        //if (i == arraySize - 1) { GUI.enabled = false; }
+                        m_moveToIndex = EditorGUI.IntField(controlRect, m_moveToIndex);
+                        controlRect.x -= controlRect.width;
+                        if (GUI.Button(controlRect, "Goto"))
+                        {
+                            MoveGlyphToIndex(i, m_moveToIndex);
+                        }
+                        //controlRect.x += controlRect.width;
+                        GUI.enabled = guiEnabled;
+                        */
+
+                        // Add new Sprite
+                        controlRect.x += controlRect.width * 3;
+                        if (GUI.Button(controlRect, "+"))
+                        {
+                            // Copy selected element
+                            m_StyleListProp.InsertArrayElementAtIndex(m_SelectedElement);
+
+                            // Move copy of element to last index in the array.
+                            m_StyleListProp.MoveArrayElement(m_SelectedElement, arraySize);
+
+                            serializedObject.ApplyModifiedProperties();
+                            m_StyleSheet.RefreshStyles();
+                        }
+
+                        // Delete selected Sprite
+                        controlRect.x += controlRect.width;
+                        if (m_SelectedElement == -1) GUI.enabled = false;
+                        if (GUI.Button(controlRect, "-"))
+                        {
+                            m_StyleListProp.DeleteArrayElementAtIndex(m_SelectedElement);
+
+                            m_SelectedElement = -1;
+                            serializedObject.ApplyModifiedProperties();
+                            m_StyleSheet.RefreshStyles();
+                            return;
+                        }
                     }
                 }
             }
 
             int shiftMultiplier = currentEvent.shift ? 10 : 1; // Page + Shift goes 10 page forward
 
-            GUILayout.Space(-3f);
-
-            Rect pagePos = EditorGUILayout.GetControlRect(false, 20);
-            pagePos.width /= 6;
-
             // Return if we can't display any items.
             if (itemsPerPage == 0) return;
 
-
-            // Add new style.
-            pagePos.x += pagePos.width * 4;
-            if (GUI.Button(pagePos, "+"))
-            {
-                m_StyleListProp.arraySize += 1;
-                serializedObject.ApplyModifiedProperties();
-                TMP_StyleSheet.RefreshStyles();
-            }
-
-
-            // Delete selected style.
-            pagePos.x += pagePos.width;
-            if (m_SelectedElement == -1) GUI.enabled = false;
-            if (GUI.Button(pagePos, "-"))
-            {
-                if (m_SelectedElement != -1)
-                    m_StyleListProp.DeleteArrayElementAtIndex(m_SelectedElement);
-
-                m_SelectedElement = -1;
-                serializedObject.ApplyModifiedProperties();
-                TMP_StyleSheet.RefreshStyles();
-            }
-
-            GUILayout.Space(5f);
-
-            pagePos = EditorGUILayout.GetControlRect(false, 20);
+            Rect pagePos = EditorGUILayout.GetControlRect(false, 20);
             pagePos.width /= 3;
 
-           
             // Previous Page
             if (m_Page > 0) GUI.enabled = true;
             else GUI.enabled = false;
@@ -243,7 +277,15 @@ namespace TMPro.EditorUtilities
 
 
             if (serializedObject.ApplyModifiedProperties())
+            {
                 TMPro_EventManager.ON_TEXT_STYLE_PROPERTY_CHANGED(true);
+
+                if (m_IsStyleSheetDirty)
+                {
+                    m_IsStyleSheetDirty = false;
+                    m_StyleSheet.RefreshStyles();
+                }
+            }
 
             // Clear selection if mouse event was not consumed. 
             GUI.enabled = true;
@@ -273,6 +315,12 @@ namespace TMPro.EditorUtilities
             return false;
         }
 
-    }
+        void SwapStyleElements(int selectedIndex, int newIndex)
+        {
+            m_StyleListProp.MoveArrayElement(selectedIndex, newIndex);
+            m_SelectedElement = newIndex;
+            m_IsStyleSheetDirty = true;
+        }
 
+    }
 }

@@ -10,7 +10,7 @@ namespace TMPro
 
 
     [RequireComponent(typeof(RectTransform))]
-    [AddComponentMenu("Layout/Text Container")]
+    //[AddComponentMenu("Layout/Text Container")]
     public class TextContainer : UIBehaviour
     {
 

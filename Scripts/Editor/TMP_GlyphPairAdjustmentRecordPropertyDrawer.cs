@@ -322,8 +322,10 @@ namespace TMPro.EditorUtilities
             if (fontAsset == null)
                 return;
 
+            Glyph glyph;
+
             // Check if glyph currently exists in the atlas texture.
-            if (!fontAsset.glyphLookupTable.TryGetValue(glyphIndex, out Glyph glyph))
+            if (!fontAsset.glyphLookupTable.TryGetValue(glyphIndex, out glyph))
                 return;
 
             // Get reference to atlas texture.

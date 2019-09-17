@@ -28,6 +28,8 @@ namespace TMPro.EditorUtilities
             textMeshPro.text = "Sample text";
             textMeshPro.alignment = TextAlignmentOptions.TopLeft;
 
+            
+
             Undo.RegisterCreatedObjectUndo((Object)go, "Create " + go.name);
 
             GameObject contextObject = command.context as GameObject;
@@ -132,7 +134,9 @@ namespace TMPro.EditorUtilities
             // Create world space Plane from canvas position.
             Camera camera = sceneView.camera;
             Vector3 position = Vector3.zero;
-            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRTransform, new Vector2(camera.pixelWidth / 2, camera.pixelHeight / 2), camera, out Vector2 localPlanePosition))
+            Vector2 localPlanePosition;
+
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRTransform, new Vector2(camera.pixelWidth / 2, camera.pixelHeight / 2), camera, out localPlanePosition))
             {
                 // Adjust for canvas pivot
                 localPlanePosition.x = localPlanePosition.x + canvasRTransform.sizeDelta.x * canvasRTransform.pivot.x;

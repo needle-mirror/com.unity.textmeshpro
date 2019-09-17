@@ -60,23 +60,26 @@ namespace TMPro.EditorUtilities
 
             AssetDatabase.CreateAsset(duplicate, AssetDatabase.GenerateUniqueAssetPath(assetPath + ".mat"));
 
-            // Assign duplicate Material to selected object (if one is)
-            if (Selection.activeGameObject != null)
+            GameObject[] selectedObjects = Selection.gameObjects;
+
+            // Assign new Material Preset to selected text objects.
+            for (int i = 0; i < selectedObjects.Length; i++)
             {
-                TMP_Text textObject = Selection.activeGameObject.GetComponent<TMP_Text>();
+                TMP_Text textObject = selectedObjects[i].GetComponent<TMP_Text>();
+
                 if (textObject != null)
                 {
                     textObject.fontSharedMaterial = duplicate;
                 }
                 else
                 {
-                    TMP_SubMesh subMeshObject = Selection.activeGameObject.GetComponent<TMP_SubMesh>();
+                    TMP_SubMesh subMeshObject = selectedObjects[i].GetComponent<TMP_SubMesh>();
 
                     if (subMeshObject != null)
                         subMeshObject.sharedMaterial = duplicate;
                     else
                     {
-                        TMP_SubMeshUI subMeshUIObject = Selection.activeGameObject.GetComponent<TMP_SubMeshUI>();
+                        TMP_SubMeshUI subMeshUIObject = selectedObjects[i].GetComponent<TMP_SubMeshUI>();
 
                         if (subMeshUIObject != null)
                             subMeshUIObject.sharedMaterial = duplicate;
@@ -300,6 +303,18 @@ namespace TMPro.EditorUtilities
             if (fontAsset != null)
             {
                 TMPro_FontAssetCreatorWindow.ShowFontAtlasCreatorWindow(fontAsset);
+            }
+        }
+
+        [MenuItem("CONTEXT/TMP_FontAsset/Force Upgrade To Version 1.1.0...", false, 2010)]
+        static void ForceFontAssetUpgrade(MenuCommand command)
+        {
+            TMP_FontAsset fontAsset = command.context as TMP_FontAsset;
+
+            if (fontAsset != null)
+            {
+                fontAsset.UpgradeFontAsset();
+                TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
             }
         }
 

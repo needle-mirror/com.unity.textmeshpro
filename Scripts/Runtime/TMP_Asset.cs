@@ -8,6 +8,21 @@ namespace TMPro
     public class TMP_Asset : ScriptableObject
     {
         /// <summary>
+        /// Instance ID of the TMP Asset
+        /// </summary>
+        public int instanceID
+        {
+            get
+            {
+                if (m_InstanceID == 0)
+                    m_InstanceID = GetInstanceID();
+
+                return m_InstanceID;
+            }
+        }
+        private int m_InstanceID;
+
+        /// <summary>
         /// HashCode based on the name of the asset.
         /// </summary>
         public int hashCode;

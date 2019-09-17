@@ -15,7 +15,8 @@ namespace TMPro.EditorUtilities
     {
         struct UI_PanelState
         {
-            public static bool spriteAssetInfoPanel = true;
+            public static bool spriteAssetFaceInfoPanel = true;
+            public static bool spriteAtlasInfoPanel = true;
             public static bool fallbackSpriteAssetPanel = true;
             public static bool spriteCharacterTablePanel;
             public static bool spriteGlyphTablePanel;
@@ -38,6 +39,14 @@ namespace TMPro.EditorUtilities
         List<int> m_GlyphSearchList;
         bool m_IsGlyphSearchDirty;
 
+        SerializedProperty m_FaceInfoProperty;
+        SerializedProperty m_PointSizeProperty;
+        SerializedProperty m_ScaleProperty;
+        SerializedProperty m_LineHeightProperty;
+        SerializedProperty m_AscentLineProperty;
+        SerializedProperty m_BaselineProperty;
+        SerializedProperty m_DescentLineProperty;
+
         SerializedProperty m_spriteAtlas_prop;
         SerializedProperty m_material_prop;
         SerializedProperty m_SpriteCharacterTableProperty;
@@ -56,6 +65,14 @@ namespace TMPro.EditorUtilities
         public void OnEnable()
         {
             m_SpriteAsset = target as TMP_SpriteAsset;
+
+            m_FaceInfoProperty = serializedObject.FindProperty("m_FaceInfo");
+            m_PointSizeProperty = m_FaceInfoProperty.FindPropertyRelative("m_PointSize");
+            m_ScaleProperty = m_FaceInfoProperty.FindPropertyRelative("m_Scale");
+            m_LineHeightProperty = m_FaceInfoProperty.FindPropertyRelative("m_LineHeight");
+            m_AscentLineProperty = m_FaceInfoProperty.FindPropertyRelative("m_AscentLine");
+            m_BaselineProperty = m_FaceInfoProperty.FindPropertyRelative("m_Baseline");
+            m_DescentLineProperty = m_FaceInfoProperty.FindPropertyRelative("m_DescentLine");
 
             m_spriteAtlas_prop = serializedObject.FindProperty("spriteSheet");
             m_material_prop = serializedObject.FindProperty("material");
@@ -88,38 +105,80 @@ namespace TMPro.EditorUtilities
 
             serializedObject.Update();
 
-            Rect rect;
 
             // TEXTMESHPRO SPRITE INFO PANEL
-            GUILayout.Label("Sprite Info", EditorStyles.boldLabel);
-            EditorGUI.indentLevel = 1;
-            
-            EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(m_spriteAtlas_prop , new GUIContent("Sprite Atlas"));
-            if (EditorGUI.EndChangeCheck())
-            {
-                // Assign the new sprite atlas texture to the current material
-                Texture2D tex = m_spriteAtlas_prop.objectReferenceValue as Texture2D;
-                if (tex != null)
-                {
-                    Material mat = m_material_prop.objectReferenceValue as Material;
-                    if (mat != null)
-                        mat.mainTexture = tex;
-                }
-            }
+            #region Display Sprite Asset Face Info
+            Rect rect = EditorGUILayout.GetControlRect(false, 24);
 
-            EditorGUILayout.PropertyField(m_material_prop, new GUIContent("Default Material"));
-             
+            GUI.Label(rect, new GUIContent("<b>Face Info</b> - v" + m_SpriteAsset.version), TMP_UIStyleManager.sectionHeader);
+
+            rect.x += rect.width - 132f;
+            rect.y += 2;
+            rect.width = 130f;
+            rect.height = 18f;
+            if (GUI.Button(rect, new GUIContent("Update Sprite Asset")))
+            {
+                TMP_SpriteAssetMenu.UpdateSpriteAsset(m_SpriteAsset);
+            }
+            EditorGUI.indentLevel = 1;
+
+            EditorGUILayout.PropertyField(m_PointSizeProperty);
+            EditorGUILayout.PropertyField(m_ScaleProperty);
+            //EditorGUILayout.PropertyField(m_LineHeightProperty);
+            EditorGUILayout.PropertyField(m_AscentLineProperty);
+            EditorGUILayout.PropertyField(m_BaselineProperty);
+            EditorGUILayout.PropertyField(m_DescentLineProperty);
             EditorGUILayout.Space();
+            #endregion
+
+
+            // ATLAS TEXTURE & MATERIAL
+            #region Display Atlas Texture and Material
+            rect = EditorGUILayout.GetControlRect(false, 24);
+
+            if (GUI.Button(rect, new GUIContent("<b>Atlas & Material</b>"), TMP_UIStyleManager.sectionHeader))
+                UI_PanelState.spriteAtlasInfoPanel = !UI_PanelState.spriteAtlasInfoPanel;
+
+            GUI.Label(rect, (UI_PanelState.spriteAtlasInfoPanel ? "" : s_UiStateLabel[1]), TMP_UIStyleManager.rightLabel);
+
+            if (UI_PanelState.spriteAtlasInfoPanel)
+            {
+                EditorGUI.BeginChangeCheck();
+                EditorGUILayout.PropertyField(m_spriteAtlas_prop, new GUIContent("Sprite Atlas"));
+                if (EditorGUI.EndChangeCheck())
+                {
+                    // Assign the new sprite atlas texture to the current material
+                    Texture2D tex = m_spriteAtlas_prop.objectReferenceValue as Texture2D;
+                    if (tex != null)
+                    {
+                        Material mat = m_material_prop.objectReferenceValue as Material;
+                        if (mat != null)
+                            mat.mainTexture = tex;
+                    }
+                }
+
+                EditorGUILayout.PropertyField(m_material_prop, new GUIContent("Default Material"));
+                EditorGUILayout.Space();
+            }
+            #endregion
+
 
             // FALLBACK SPRITE ASSETS
+            #region Display Sprite Fallbacks
+            rect = EditorGUILayout.GetControlRect(false, 24);
             EditorGUI.indentLevel = 0;
-            UI_PanelState.fallbackSpriteAssetPanel = EditorGUILayout.Foldout(UI_PanelState.fallbackSpriteAssetPanel, new GUIContent("Fallback Sprite Assets", "Select the Sprite Assets that will be searched and used as fallback when a given sprite is missing from this sprite asset."), true, TMP_UIStyleManager.boldFoldout);
-            
+            if (GUI.Button(rect, new GUIContent("<b>Fallback Sprite Assets</b>", "Select the Sprite Assets that will be searched and used as fallback when a given sprite is missing from this sprite asset."), TMP_UIStyleManager.sectionHeader))
+                UI_PanelState.fallbackSpriteAssetPanel = !UI_PanelState.fallbackSpriteAssetPanel;
+
+            GUI.Label(rect, (UI_PanelState.fallbackSpriteAssetPanel ? "" : s_UiStateLabel[1]), TMP_UIStyleManager.rightLabel);
+
             if (UI_PanelState.fallbackSpriteAssetPanel)
             {
                 m_fallbackSpriteAssetList.DoLayoutList();
+                EditorGUILayout.Space();
             }
+            #endregion
+
 
             // SPRITE CHARACTER TABLE
             #region Display Sprite Character Table

@@ -220,6 +220,9 @@ namespace TMPro
 
     public struct Extents
     {
+        internal static Extents zero = new Extents(Vector2.zero, Vector2.zero);
+        internal static Extents uninitialized = new Extents(new Vector2(32767, 32767), new Vector2(-32767, -32767));
+
         public Vector2 min;
         public Vector2 max;
 
@@ -279,6 +282,10 @@ namespace TMPro
         public float maxLineAscender;
         public float maxLineDescender;
         public float previousLineAscender;
+        
+        public HorizontalAlignmentOptions horizontalAlignment;
+        public float marginLeft;
+        public float marginRight;
 
         public float xAdvance;
         public float preferredWidth;
@@ -288,12 +295,16 @@ namespace TMPro
       
         public int wordCount;
         public FontStyles fontStyle;
+        public int italicAngle;
         public float fontScale;
         public float fontScaleMultiplier;
       
         public float currentFontSize;
         public float baselineOffset;
         public float lineOffset;
+
+        public float cSpace;
+        public float mSpace;
 
         public TMP_TextInfo textInfo;
         //public TMPro_CharacterInfo[] characterInfo;
@@ -304,10 +315,12 @@ namespace TMPro
         public Color32 strikethroughColor;
         public Color32 highlightColor;
         public TMP_FontStyleStack basicStyleStack;
+        public TMP_RichTextTagStack<int> italicAngleStack;
         public TMP_RichTextTagStack<Color32> colorStack;
         public TMP_RichTextTagStack<Color32> underlineColorStack;
         public TMP_RichTextTagStack<Color32> strikethroughColorStack;
         public TMP_RichTextTagStack<Color32> highlightColorStack;
+        public TMP_RichTextTagStack<HighlightState> highlightStateStack;
         public TMP_RichTextTagStack<TMP_ColorGradient> colorGradientStack;
         public TMP_RichTextTagStack<float> sizeStack;
         public TMP_RichTextTagStack<float> indentStack;
@@ -316,7 +329,7 @@ namespace TMPro
         public TMP_RichTextTagStack<float> baselineStack;
         public TMP_RichTextTagStack<int> actionStack;
         public TMP_RichTextTagStack<MaterialReference> materialReferenceStack;
-        public TMP_RichTextTagStack<TextAlignmentOptions> lineJustificationStack;
+        public TMP_RichTextTagStack<HorizontalAlignmentOptions> lineJustificationStack;
         //public TMP_XmlTagStack<int> spriteAnimationStack;
         public int spriteAnimationID;
 

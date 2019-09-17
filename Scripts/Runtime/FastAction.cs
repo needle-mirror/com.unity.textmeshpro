@@ -21,7 +21,8 @@ namespace TMPro
 
         public void Remove(System.Action rhs)
         {
-            if (lookup.TryGetValue(rhs, out LinkedListNode<System.Action> node))
+            LinkedListNode<System.Action> node; 
+            if (lookup.TryGetValue(rhs, out node))
             {
                 lookup.Remove(rhs);
                 delegates.Remove(node);
@@ -56,7 +57,8 @@ namespace TMPro
 
         public void Remove(System.Action<A> rhs)
         {
-            if (lookup.TryGetValue(rhs, out LinkedListNode<System.Action<A>> node))
+            LinkedListNode<System.Action<A>> node;
+            if (lookup.TryGetValue(rhs, out node))
             {
                 lookup.Remove(rhs);
                 delegates.Remove(node);
@@ -91,7 +93,8 @@ namespace TMPro
 
         public void Remove(System.Action<A, B> rhs)
         {
-            if (lookup.TryGetValue(rhs, out LinkedListNode<System.Action<A, B>> node))
+            LinkedListNode<System.Action<A, B>> node;
+            if (lookup.TryGetValue(rhs, out node))
             {
                 lookup.Remove(rhs);
                 delegates.Remove(node);
@@ -126,7 +129,8 @@ namespace TMPro
 
         public void Remove(System.Action<A, B, C> rhs)
         {
-            if (lookup.TryGetValue(rhs, out LinkedListNode<System.Action<A, B, C>> node))
+            LinkedListNode<System.Action<A, B, C>> node;
+            if (lookup.TryGetValue(rhs, out node))
             {
                 lookup.Remove(rhs);
                 delegates.Remove(node);

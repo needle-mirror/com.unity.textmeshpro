@@ -26,7 +26,7 @@ namespace TMPro
         /// <summary>
         /// 
         /// </summary>
-        internal Dictionary<long, TMP_GlyphPairAdjustmentRecord> m_GlyphPairAdjustmentRecordLookupDictionary;
+        internal Dictionary<uint, TMP_GlyphPairAdjustmentRecord> m_GlyphPairAdjustmentRecordLookupDictionary;
 
         // =============================================
         // Constructor(s)
@@ -35,7 +35,7 @@ namespace TMPro
         public TMP_FontFeatureTable()
         {
             m_GlyphPairAdjustmentRecords = new List<TMP_GlyphPairAdjustmentRecord>();
-            m_GlyphPairAdjustmentRecordLookupDictionary = new Dictionary<long, TMP_GlyphPairAdjustmentRecord>();
+            m_GlyphPairAdjustmentRecordLookupDictionary = new Dictionary<uint, TMP_GlyphPairAdjustmentRecord>();
         }
 
         // =============================================

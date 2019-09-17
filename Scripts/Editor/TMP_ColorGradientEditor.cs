@@ -139,7 +139,7 @@ namespace TMPro.EditorUtilities
             }
 
             if (serializedObject.ApplyModifiedProperties())
-                TMPro_EventManager.ON_COLOR_GRAIDENT_PROPERTY_CHANGED(target as TMP_ColorGradient);
+                TMPro_EventManager.ON_COLOR_GRADIENT_PROPERTY_CHANGED(target as TMP_ColorGradient);
 
         }
     }

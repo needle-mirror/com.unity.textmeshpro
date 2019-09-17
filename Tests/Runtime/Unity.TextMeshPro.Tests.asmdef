@@ -1,8 +1,7 @@
 {
     "name": "Unity.TextMeshPro.Tests",
     "references": [
-        "Unity.TextMeshPro",
-		"Unity.ugui"
+        "Unity.TextMeshPro"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

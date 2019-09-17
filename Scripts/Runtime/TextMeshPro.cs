@@ -164,10 +164,10 @@ namespace TMPro
         /// </summary>
         public override void SetVerticesDirty()
         {
-            //Debug.Log("SetVerticesDirty()");
-
             if (m_verticesAlreadyDirty || this == null || !this.IsActive())
                 return;
+
+            //Debug.Log("***** SetVerticesDirty() called on object ID " + GetInstanceID() + ". ***** Dirty = " + m_verticesAlreadyDirty);
 
             TMP_UpdateManager.RegisterTextElementForGraphicRebuild(this);
             m_verticesAlreadyDirty = true;
@@ -185,9 +185,7 @@ namespace TMPro
             if (m_layoutAlreadyDirty || this == null || !this.IsActive())
                 return;
 
-            //TMP_UpdateManager.RegisterTextElementForLayoutRebuild(this);
             m_layoutAlreadyDirty = true;
-            //LayoutRebuilder.MarkLayoutForRebuild(this.rectTransform);
             m_isLayoutDirty = true;
         }
 
@@ -255,7 +253,7 @@ namespace TMPro
         /// </summary>
         protected override void UpdateMaterial()
         {
-            //Debug.Log("*** UpdateMaterial() ***");
+            //Debug.Log("***** UpdateMaterial() called on object ID " + GetInstanceID() + ". *****");
 
             //if (!this.IsActive())
             //    return;
@@ -291,25 +289,19 @@ namespace TMPro
 
 
         /// <summary>
-        /// Function to force regeneration of the mesh before its normal process time. This is useful when changes to the text object properties need to be applied immediately.
+        /// Function to force regeneration of the text object before its normal process time. This is useful when changes to the text object properties need to be applied immediately.
         /// </summary>
-        public override void ForceMeshUpdate()
-        {
-            //Debug.Log("ForceMeshUpdate() called.");
-            m_havePropertiesChanged = true;
-            OnPreRenderObject();
-        }
-
-
-        /// <summary>
-        /// Function to force regeneration of the mesh before its normal process time. This is useful when changes to the text object properties need to be applied immediately.
-        /// </summary>
-        /// <param name="ignoreInactive">If set to true, the text object will be regenerated regardless of is active state.</param>
-        public override void ForceMeshUpdate(bool ignoreInactive)
+        /// <param name="ignoreActiveState">Ignore Active State of text objects. Inactive objects are ignored by default.</param>
+        /// <param name="forceTextReparsing">Force re-parsing of the text.</param>
+        public override void ForceMeshUpdate(bool ignoreActiveState = false, bool forceTextReparsing = false)
         {
             m_havePropertiesChanged = true;
-            m_ignoreActiveState = true;
+            m_ignoreActiveState = ignoreActiveState;
+            m_isInputParsingRequired = m_isInputParsingRequired ? true : forceTextReparsing;
             OnPreRenderObject();
+
+            m_verticesAlreadyDirty = false;
+            m_layoutAlreadyDirty = false;
         }
 
 

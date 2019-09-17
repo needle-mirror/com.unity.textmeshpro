@@ -33,7 +33,8 @@ namespace TMPro.EditorUtilities
             if (GUI.enabled == false)
             {
                 // Sprite Character Index
-                int.TryParse(property.displayName.Split(' ')[1], out int spriteCharacterIndex);
+                int spriteCharacterIndex;
+                int.TryParse(property.displayName.Split(' ')[1], out spriteCharacterIndex);
                 EditorGUI.LabelField(new Rect(rect.x, rect.y, 75f, 18), new GUIContent("Index: <color=#FFFF80>" + spriteCharacterIndex + "</color>"), style);
 
                 EditorGUI.LabelField(new Rect(rect.x + 75f, rect.y, 120f, 18), new GUIContent("Unicode: <color=#FFFF80>0x" + prop_SpriteUnicode.intValue.ToString("X") + "</color>"), style);
@@ -52,7 +53,8 @@ namespace TMPro.EditorUtilities
                 TMP_SpriteAsset spriteAsset = property.serializedObject.targetObject as TMP_SpriteAsset;
 
                 // Sprite Character Index
-                int.TryParse(property.displayName.Split(' ')[1], out int spriteCharacterIndex);
+                int spriteCharacterIndex;
+                int.TryParse(property.displayName.Split(' ')[1], out spriteCharacterIndex);
 
                 EditorGUI.LabelField(new Rect(rect.x, rect.y, 75f, 18), new GUIContent("Index: <color=#FFFF80>" + spriteCharacterIndex + "</color>"), style);
 

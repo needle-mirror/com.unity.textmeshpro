@@ -6,7 +6,6 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using TMPro.EditorUtilities;
 
 
@@ -245,7 +244,9 @@ namespace TMPro
                 return true;
 
             // Exclude FBX
-            if (fileType == typeof(GameObject) && fileExtension.ToLower() == ".fbx") { return true; }
+            if (fileType == typeof(GameObject) && (fileExtension.ToLower() == ".fbx" || fileExtension.ToLower() == ".blend"))
+                return true;
+
             return false;
         }
 
@@ -307,7 +308,7 @@ namespace TMPro
 
                 AssetFileRecord fileRecord = projectFilesToScan[i];
 
-                Task.Run(() =>
+                ThreadPool.QueueUserWorkItem(Task =>
                 {
                     ScanProjectFileAsync(fileRecord);
 

@@ -2,9 +2,7 @@
     "name": "Unity.TextMeshPro.Editor.Tests",
     "references": [
         "Unity.TextMeshPro",
-        "Unity.TextMeshPro.Editor",
-		"Unity.ugui",
-        "Unity.ugui.Editor"
+        "Unity.TextMeshPro.Editor"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

@@ -352,6 +352,46 @@ namespace TMPro
         }
 
 
+        internal static Material GetFallbackMaterial(TMP_FontAsset fontAsset, Material sourceMaterial, int atlasIndex)
+        {
+            int sourceMaterialID = sourceMaterial.GetInstanceID();
+            Texture tex = fontAsset.atlasTextures[atlasIndex];
+            int texID = tex.GetInstanceID();
+            long key = (long)sourceMaterialID << 32 | (long)(uint)texID;
+            FallbackMaterial fallback;
+
+            if (m_fallbackMaterials.TryGetValue(key, out fallback))
+                return fallback.fallbackMaterial;
+
+            // Create new material from the source material and assign relevant atlas texture
+            Material fallbackMaterial = new Material(sourceMaterial);
+            fallbackMaterial.SetTexture(ShaderUtilities.ID_MainTex, tex);
+
+            fallbackMaterial.hideFlags = HideFlags.HideAndDontSave;
+
+            #if UNITY_EDITOR
+                fallbackMaterial.name += " + " + tex.name;
+            #endif
+
+            fallback = new FallbackMaterial();
+            fallback.baseID = sourceMaterialID;
+            fallback.baseMaterial = fontAsset.material;
+            fallback.fallbackID = key;
+            fallback.fallbackMaterial = fallbackMaterial;
+            fallback.count = 0;
+
+            m_fallbackMaterials.Add(key, fallback);
+            m_fallbackMaterialLookup.Add(fallbackMaterial.GetInstanceID(), key);
+
+            #if TMP_DEBUG_MODE
+            ListFallbackMaterials();
+            #endif
+
+            return fallbackMaterial;
+        }
+
+
+
         /// <summary>
         /// This function returns a material instance using the material properties of a previous material but using the font atlas texture of the new font asset.
         /// </summary>
@@ -364,8 +404,9 @@ namespace TMPro
             Texture tex = targetMaterial.GetTexture(ShaderUtilities.ID_MainTex);
             int texID = tex.GetInstanceID();
             long key = (long)sourceID << 32 | (long)(uint)texID;
+            FallbackMaterial fallback;
 
-            if (m_fallbackMaterials.TryGetValue(key, out FallbackMaterial fallback))
+            if (m_fallbackMaterials.TryGetValue(key, out fallback))
             {
                 //Debug.Log("Material [" + fallback.fallbackMaterial.name + "] already exists.");
                 return fallback.fallbackMaterial;
@@ -423,11 +464,13 @@ namespace TMPro
             if (targetMaterial == null) return;
 
             int sourceID = targetMaterial.GetInstanceID();
+            long key;
+            FallbackMaterial fallback;
 
             // Lookup key to retrieve 
-            if (m_fallbackMaterialLookup.TryGetValue(sourceID, out long key))
+            if (m_fallbackMaterialLookup.TryGetValue(sourceID, out key))
             {
-                if (m_fallbackMaterials.TryGetValue(key, out FallbackMaterial fallback))
+                if (m_fallbackMaterials.TryGetValue(key, out fallback))
                 {
                     //Debug.Log("Adding Fallback material " + fallback.fallbackMaterial.name + " with reference count of " + (fallback.count + 1));
                     fallback.count += 1;
@@ -445,11 +488,13 @@ namespace TMPro
             if (targetMaterial == null) return;
 
             int sourceID = targetMaterial.GetInstanceID();
+            long key;
+            FallbackMaterial fallback;
 
             // Lookup key to retrieve 
-            if (m_fallbackMaterialLookup.TryGetValue(sourceID, out long key))
+            if (m_fallbackMaterialLookup.TryGetValue(sourceID, out key))
             {
-                if (m_fallbackMaterials.TryGetValue(key, out FallbackMaterial fallback))
+                if (m_fallbackMaterials.TryGetValue(key, out fallback))
                 {
                     fallback.count -= 1;
 
@@ -497,10 +542,12 @@ namespace TMPro
             if (fallackMaterial == null) return;
 
             int materialID = fallackMaterial.GetInstanceID();
+            long key;
+            FallbackMaterial fallback;
 
-            if (m_fallbackMaterialLookup.TryGetValue(materialID, out long key))
+            if (m_fallbackMaterialLookup.TryGetValue(materialID, out key))
             {
-                if (m_fallbackMaterials.TryGetValue(key, out FallbackMaterial fallback))
+                if (m_fallbackMaterials.TryGetValue(key, out fallback))
                 {
                     //Debug.Log("Releasing Fallback material " + fallback.fallbackMaterial.name + " with remaining reference count of " + (fallback.count - 1));
 

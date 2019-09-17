@@ -32,6 +32,8 @@ namespace TMPro
         public Color32[] colors32;
         public int[] triangles;
 
+        public Material material;
+
 
         /// <summary>
         /// Function to pre-allocate vertex attributes for a mesh of size X.
@@ -102,6 +104,7 @@ namespace TMPro
             this.mesh.tangents = this.tangents;
             this.mesh.triangles = this.triangles;
             this.mesh.bounds = s_DefaultBounds;
+            this.material = null;
         }
 
 
@@ -222,6 +225,7 @@ namespace TMPro
             this.mesh.tangents = this.tangents;
             this.mesh.triangles = this.triangles;
             this.mesh.bounds = s_DefaultBounds;
+            this.material = null;
         }
 
 

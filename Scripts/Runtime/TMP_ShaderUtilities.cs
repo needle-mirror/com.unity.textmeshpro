@@ -29,6 +29,9 @@ namespace TMPro
         public static int ID_OutlineSoftness;
         public static int ID_OutlineColor;
 
+        public static int ID_Outline2Color;
+        public static int ID_Outline2Width;
+
         public static int ID_Padding;
         public static int ID_GradientScale; 
         public static int ID_ScaleX; 
@@ -44,8 +47,9 @@ namespace TMPro
         public static int ID_GlowColor; 
         public static int ID_GlowOffset;
         public static int ID_GlowPower;  
-        public static int ID_GlowOuter; 
-       
+        public static int ID_GlowOuter;
+        public static int ID_GlowInner;
+
         public static int ID_LightAngle;
 
         public static int ID_EnvMap;
@@ -159,6 +163,9 @@ namespace TMPro
                 ID_OutlineSoftness = Shader.PropertyToID("_OutlineSoftness");
                 ID_OutlineColor = Shader.PropertyToID("_OutlineColor");
 
+                ID_Outline2Color = Shader.PropertyToID("_Outline2Color");
+                ID_Outline2Width = Shader.PropertyToID("_Outline2Width");
+
                 ID_Padding = Shader.PropertyToID("_Padding");
                 ID_GradientScale = Shader.PropertyToID("_GradientScale");
                 ID_ScaleX = Shader.PropertyToID("_ScaleX");
@@ -182,6 +189,7 @@ namespace TMPro
                 ID_GlowOffset = Shader.PropertyToID("_GlowOffset");
                 ID_GlowPower = Shader.PropertyToID("_GlowPower");
                 ID_GlowOuter = Shader.PropertyToID("_GlowOuter");
+                ID_GlowInner = Shader.PropertyToID("_GlowInner");
 
                 //ID_MaskID = Shader.PropertyToID("_MaskID");
                 ID_MaskCoord = Shader.PropertyToID("_MaskCoord");

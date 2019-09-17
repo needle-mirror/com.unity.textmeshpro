@@ -5,10 +5,21 @@ using System.Collections;
 
 namespace TMPro
 {
-    
     [System.Serializable]
     public class TMP_Style
     {
+        public static TMP_Style NormalStyle
+        {
+            get
+            {
+                if (k_NormalStyle == null)
+                    k_NormalStyle = new TMP_Style("Normal", string.Empty, string.Empty);
+
+                return k_NormalStyle;
+            }
+        }
+        internal static TMP_Style k_NormalStyle;
+
         // PUBLIC PROPERTIES
 
         /// <summary>
@@ -64,10 +75,21 @@ namespace TMPro
         private int[] m_ClosingTagArray;
 
 
-        //public TMP_Style()
-        //{
-            //Debug.Log("New Style with Name: " + m_Name + " was created. ID: ");
-        //}
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="styleName">Name of the style.</param>
+        /// <param name="styleOpeningDefinition">Style opening definition.</param>
+        /// <param name="styleClosingDefinition">Style closing definition.</param>
+        internal TMP_Style(string styleName, string styleOpeningDefinition, string styleClosingDefinition)
+        {
+            m_Name = styleName;
+            m_HashCode = TMP_TextParsingUtilities.GetHashCode(styleName);
+            m_OpeningDefinition = styleOpeningDefinition;
+            m_ClosingDefinition = styleClosingDefinition;
+
+            RefreshStyle();
+        }
 
 
         /// <summary>
@@ -75,20 +97,15 @@ namespace TMPro
         /// </summary>
         public void RefreshStyle()
         {
-            m_HashCode = TMP_TextUtilities.GetSimpleHashCode(m_Name);
+            m_HashCode = TMP_TextParsingUtilities.GetHashCode(m_Name);
             
             m_OpeningTagArray = new int[m_OpeningDefinition.Length];
-            for (int i = 0; i < m_OpeningDefinition.Length; i++)       
+            for (int i = 0; i < m_OpeningDefinition.Length; i++)
                 m_OpeningTagArray[i] = m_OpeningDefinition[i];
 
             m_ClosingTagArray = new int[m_ClosingDefinition.Length];
             for (int i = 0; i < m_ClosingDefinition.Length; i++)
                 m_ClosingTagArray[i] = m_ClosingDefinition[i];
-
-#if UNITY_EDITOR
-            // Event to update objects when styles are changed in the editor.
-            TMPro_EventManager.ON_TEXT_STYLE_PROPERTY_CHANGED(true);
-#endif
         }
 
     }

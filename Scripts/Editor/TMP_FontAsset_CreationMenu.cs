@@ -13,6 +13,44 @@ namespace TMPro
 {
     public static class TMP_FontAsset_CreationMenu
     {
+        [MenuItem("Assets/Create/TextMeshPro/Font Asset Variant", false, 105)]
+        public static void CreateFontAssetVariant()
+        {
+            Object target = Selection.activeObject;
+
+            // Make sure the selection is a font file
+            if (target == null || target.GetType() != typeof(TMP_FontAsset))
+            {
+                Debug.LogWarning("A Font file must first be selected in order to create a Font Asset.");
+                return;
+            }
+
+            TMP_FontAsset sourceFontAsset = (TMP_FontAsset)target;
+
+            string sourceFontFilePath = AssetDatabase.GetAssetPath(target);
+
+            string folderPath = Path.GetDirectoryName(sourceFontFilePath);
+            string assetName = Path.GetFileNameWithoutExtension(sourceFontFilePath);
+
+            string newAssetFilePathWithName = AssetDatabase.GenerateUniqueAssetPath(folderPath + "/" + assetName + " - Variant.asset");
+
+            // Set Texture and Material reference to the source font asset.
+            TMP_FontAsset fontAsset = ScriptableObject.Instantiate<TMP_FontAsset>(sourceFontAsset);
+            AssetDatabase.CreateAsset(fontAsset, newAssetFilePathWithName);
+
+            fontAsset.atlasPopulationMode = AtlasPopulationMode.Static;
+
+            // Initialize array for the font atlas textures.
+            fontAsset.atlasTextures = sourceFontAsset.atlasTextures;
+            fontAsset.material = sourceFontAsset.material;
+
+            // Not sure if this is still necessary in newer versions of Unity.
+            EditorUtility.SetDirty(fontAsset);
+
+            AssetDatabase.SaveAssets();
+        }
+
+
         /*
         [MenuItem("Assets/Create/TextMeshPro/Font Asset Fallback", false, 105)]
         public static void CreateFallbackFontAsset()

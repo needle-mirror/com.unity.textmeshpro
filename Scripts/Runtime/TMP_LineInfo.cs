@@ -28,9 +28,8 @@
         public float marginLeft;
         public float marginRight;
 
-        public TextAlignmentOptions alignment;
+        public HorizontalAlignmentOptions alignment;
         public Extents lineExtents;
-
 
         /// <summary>
         /// Function returning the current line of text.
