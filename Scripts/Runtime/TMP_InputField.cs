@@ -348,6 +348,19 @@ namespace TMPro
         private bool m_ShouldUpdateIMEWindowPosition = false;
         private int m_PreviousIMEInsertionLine = 0;
 
+        private int compositionLength
+        {
+            get
+            {
+                if (m_ReadOnly)
+                    return 0;
+
+                return compositionString.Length;
+            }
+        }
+
+
+
         protected TMP_InputField()
         {
             SetTextComponentWrapMode();
@@ -833,11 +846,11 @@ namespace TMPro
         /// Getters are public Setters are protected
         /// </summary>
 
-        protected int caretPositionInternal { get { /*Debug.Log("Caret Position - Composition Length = " + compositionString.Length);*/ return m_CaretPosition + compositionString.Length; } set { m_CaretPosition = value; ClampCaretPos(ref m_CaretPosition); } }
-        protected int stringPositionInternal { get { /*Debug.Log("String Position - Composition Length = " + compositionString.Length);*/ return m_StringPosition + compositionString.Length; } set { m_StringPosition = value; ClampStringPos(ref m_StringPosition); } }
+        protected int caretPositionInternal { get { return m_CaretPosition + compositionLength; } set { m_CaretPosition = value; ClampCaretPos(ref m_CaretPosition); } }
+        protected int stringPositionInternal { get { return m_StringPosition + compositionLength; } set { m_StringPosition = value; ClampStringPos(ref m_StringPosition); } }
 
-        protected int caretSelectPositionInternal { get { /*Debug.Log("Caret Select Position - Composition Length = " + compositionString.Length);*/ return m_CaretSelectPosition + compositionString.Length; } set { m_CaretSelectPosition = value; ClampCaretPos(ref m_CaretSelectPosition); } }
-        protected int stringSelectPositionInternal { get { /*Debug.Log("String Select Position - Composition Length = " + compositionString.Length);*/ return m_StringSelectPosition + compositionString.Length; } set { m_StringSelectPosition = value; ClampStringPos(ref m_StringSelectPosition); } }
+        protected int caretSelectPositionInternal { get { return m_CaretSelectPosition + compositionLength; } set { m_CaretSelectPosition = value; ClampCaretPos(ref m_CaretSelectPosition); } }
+        protected int stringSelectPositionInternal { get { return m_StringSelectPosition + compositionLength; } set { m_StringSelectPosition = value; ClampStringPos(ref m_StringSelectPosition); } }
 
         private bool hasSelection { get { return stringPositionInternal != stringSelectPositionInternal; } }
         private bool m_isSelected;
@@ -868,7 +881,7 @@ namespace TMPro
 
             set
             {
-                if (compositionString.Length != 0)
+                if (compositionLength != 0)
                     return;
 
                 caretPositionInternal = value;
@@ -888,7 +901,7 @@ namespace TMPro
             }
             set
             {
-                if (compositionString.Length != 0)
+                if (compositionLength != 0)
                     return;
 
                 caretSelectPositionInternal = value;
@@ -919,7 +932,7 @@ namespace TMPro
 
             set
             {
-                if (compositionString.Length != 0)
+                if (compositionLength != 0)
                     return;
 
                 stringPositionInternal = value;
@@ -939,7 +952,7 @@ namespace TMPro
             }
             set
             {
-                if (compositionString.Length != 0)
+                if (compositionLength != 0)
                     return;
 
                 stringSelectPositionInternal = value;
@@ -995,7 +1008,7 @@ namespace TMPro
             {
                 if (m_CachedInputRenderer == null && m_TextComponent != null)
                 {
-                    GameObject go = new GameObject("Caret", typeof(RectTransform), typeof(CanvasRenderer));
+                    GameObject go = new GameObject("Caret", typeof(TMP_SelectionCaret));
 
                     go.hideFlags = HideFlags.DontSave;
                     go.transform.SetParent(m_TextComponent.transform.parent);
@@ -1019,7 +1032,6 @@ namespace TMPro
             if (m_TextViewport != null)
             {
                 m_TextViewportRectMask = m_TextViewport.GetComponent<RectMask2D>();
-                m_TextViewportRectMask.enabled = false;
 
                 UpdateMaskRegions();
             }
@@ -1030,14 +1042,12 @@ namespace TMPro
 
             if (m_TextComponent != null)
             {
-                m_TextComponent.ignoreRectMaskCulling = true;
                 m_TextComponent.RegisterDirtyVerticesCallback(MarkGeometryAsDirty);
                 m_TextComponent.RegisterDirtyVerticesCallback(UpdateLabel);
 
                 // Cache reference to Vertical Scrollbar RectTransform and add listener.
                 if (m_VerticalScrollbar != null)
                 {
-                    //m_TextComponent.ignoreRectMaskCulling = true;
                     m_VerticalScrollbar.onValueChanged.AddListener(OnScrollbarValueChange);
                 }
 
@@ -1087,7 +1097,7 @@ namespace TMPro
         /// <param name="obj"></param>
         private void ON_TEXT_CHANGED(UnityEngine.Object obj)
         {
-            if (obj == m_TextComponent && Application.isPlaying && compositionString.Length == 0)
+            if (obj == m_TextComponent && Application.isPlaying && compositionLength == 0)
             {
                 caretPositionInternal = GetCaretPositionFromStringIndex(stringPositionInternal);
                 caretSelectPositionInternal = GetCaretPositionFromStringIndex(stringSelectPositionInternal);
@@ -1411,7 +1421,7 @@ namespace TMPro
                     {
                         m_SelectedObject = selectedObject;
 
-                        // Check if object has a TMP Input Field
+                        // Release current selection of the newly selected object is another Input Field
                         if (selectedObject.GetComponent<TMP_InputField>() != null)
                         {
                             // Release selection
@@ -1984,7 +1994,7 @@ namespace TMPro
 
             if (c == 0)
             {
-                if (compositionString.Length > 0)
+                if (compositionLength > 0)
                 {
                     UpdateLabel();
                 }
@@ -2037,9 +2047,9 @@ namespace TMPro
 
             while (Event.PopEvent(m_ProcessingEvent))
             {
-                //Debug.Log("Event: " + m_ProcessingEvent.ToString() + "  IsCompositionActive= " + m_IsCompositionActive + "  Composition Length: " + compositionString.Length);
+                //Debug.Log("Event: " + m_ProcessingEvent.ToString() + "  IsCompositionActive= " + m_IsCompositionActive + "  Composition Length: " + compositionLength);
 
-                switch(m_ProcessingEvent.rawType)
+                switch (m_ProcessingEvent.rawType)
                 {
                     case EventType.KeyUp:
                         // TODO: Figure out way to handle navigation during IME Composition.
@@ -2051,7 +2061,7 @@ namespace TMPro
                         consumedEvent = true;
 
                         // Special handling on OSX which produces more events which need to be suppressed.
-                        if (m_IsCompositionActive && compositionString.Length == 0)
+                        if (m_IsCompositionActive && compositionLength == 0)
                         {
                             //if (m_ProcessingEvent.keyCode == KeyCode.Backspace && m_ProcessingEvent.modifiers == EventModifiers.None)
                             //{
@@ -3054,13 +3064,13 @@ namespace TMPro
 
         protected void UpdateLabel()
         {
-            if (m_TextComponent != null && m_TextComponent.font != null && m_PreventCallback == false && m_ReadOnly == false )
+            if (m_TextComponent != null && m_TextComponent.font != null && m_PreventCallback == false)
             {
                 // Prevent callback from the text component as we assign new text. This is to prevent a recursive call.
                 m_PreventCallback = true;
 
                 string fullText;
-                if (compositionString.Length > 0)
+                if (compositionLength > 0 && m_ReadOnly == false)
                 {
                     //Input.imeCompositionMode = IMECompositionMode.On;
 
@@ -3081,7 +3091,7 @@ namespace TMPro
 
                 }
 
-                //Debug.Log("Handling IME Input... [" + compositionString + "] of length [" + compositionString.Length + "] at StringPosition [" + m_StringPosition + "]  IsActive [" + m_IsCompositionActive + "]");
+                //Debug.Log("Handling IME Input... [" + compositionString + "] of length [" + compositionLength + "] at StringPosition [" + m_StringPosition + "]  IsActive [" + m_IsCompositionActive + "]");
 
                 string processed;
                 if (inputType == InputType.Password)
@@ -3094,7 +3104,7 @@ namespace TMPro
                 if (m_Placeholder != null)
                     m_Placeholder.enabled = isEmpty;
 
-                if (!isEmpty)
+                if (!isEmpty && m_ReadOnly == false)
                 {
                     SetCaretVisible();
                 }
@@ -3174,6 +3184,9 @@ namespace TMPro
 
         void UpdateMaskRegions()
         {
+            // TODO: Figure out a better way to handle adding an offset to the masking region
+            // This region is defined by the RectTransform of the GameObject that contains the RectMask2D component. 
+            /*
             // Update Masking Region
             if (m_TextViewportRectMask != null)
             {
@@ -3196,6 +3209,7 @@ namespace TMPro
                         m_Placeholder.canvasRenderer.EnableRectClipping(viewportRect);
                 }
             }
+            */
         }
 
         /// <summary>
@@ -3435,7 +3449,18 @@ namespace TMPro
             }
 
             if (m_SoftKeyboard != null)
-                m_SoftKeyboard.selection = new RangeInt(stringPositionInternal, 0);
+            {
+                int selectionStart = m_StringPosition;
+                int softKeyboardStringLength = m_SoftKeyboard.text == null ? 0 : m_SoftKeyboard.text.Length;
+
+                if (selectionStart < 0)
+                    selectionStart = 0;
+
+                if (selectionStart > softKeyboardStringLength)
+                    selectionStart = softKeyboardStringLength;
+
+                m_SoftKeyboard.selection = new RangeInt(selectionStart, 0);
+            }
 
             // Adjust the position of the RectTransform based on the caret position in the viewport (only if we have focus).
             if (isFocused && startPosition != m_LastPosition || m_forceRectTransformAdjustment || m_isLastKeyBackspace)
@@ -3482,7 +3507,7 @@ namespace TMPro
 
                 inputSystem.compositionCursorPos = screenPosition;
 
-                //Debug.Log("[" + Time.frameCount + "] Updating IME Window position（" + screenPosition + ") with Composition Length: " + compositionString.Length);
+                //Debug.Log("[" + Time.frameCount + "] Updating IME Window position（" + screenPosition + ") with Composition Length: " + compositionLength);
             }
 
             //#if TMP_DEBUG_MODE
@@ -3860,22 +3885,16 @@ namespace TMPro
                         TouchScreenKeyboard.Open(m_Text, keyboardType, false, multiLine, true, false, "", characterLimit) :
                         TouchScreenKeyboard.Open(m_Text, keyboardType, inputType == InputType.AutoCorrect, multiLine, false, false, "", characterLimit);
 
-                    if (shouldHideMobileInput == false)
-                    {
-                        MoveTextEnd(false);
-                    }
-                    else
-                    {
-                        OnFocus();
+                    OnFocus();
 
-                        // Opening the soft keyboard sets its selection to the end of the text. 
-                        // As such, we set the selection to match the Input Field's internal selection.
-                        if (m_SoftKeyboard != null)
-                        {
-                            int length = stringPositionInternal < stringSelectPositionInternal ? stringSelectPositionInternal - stringPositionInternal : stringPositionInternal - stringSelectPositionInternal;
-                            m_SoftKeyboard.selection = new RangeInt(stringPositionInternal < stringSelectPositionInternal ? stringPositionInternal : stringSelectPositionInternal, length);
-                        }
+                    // Opening the soft keyboard sets its selection to the end of the text. 
+                    // As such, we set the selection to match the Input Field's internal selection.
+                    if (m_SoftKeyboard != null)
+                    {
+                        int length = stringPositionInternal < stringSelectPositionInternal ? stringSelectPositionInternal - stringPositionInternal : stringPositionInternal - stringSelectPositionInternal;
+                        m_SoftKeyboard.selection = new RangeInt(stringPositionInternal < stringSelectPositionInternal ? stringPositionInternal : stringSelectPositionInternal, length);
                     }
+                    //}
                 }
 
                 // Cache the value of isInPlaceEditingAllowed, because on UWP this involves calling into native code
@@ -3886,7 +3905,7 @@ namespace TMPro
             }
             else
             {
-                if (!TouchScreenKeyboard.isSupported)
+                if (!TouchScreenKeyboard.isSupported && m_ReadOnly == false)
                     inputSystem.imeCompositionMode = IMECompositionMode.On;
 
                 OnFocus();

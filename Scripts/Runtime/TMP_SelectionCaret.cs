@@ -9,7 +9,6 @@ namespace TMPro
     /// </summary>
     public class TMP_SelectionCaret : MaskableGraphic
     {
-
         /// <summary>
         /// Override to Cull function of MaskableGraphic to prevent Culling.
         /// </summary>
@@ -17,7 +16,21 @@ namespace TMPro
         /// <param name="validRect"></param>
         public override void Cull(Rect clipRect, bool validRect)
         {
-            //base.Cull(clipRect, validRect);
+            //Debug.Log("***** Cull (" + clipRect + ")   Valid Rect: " + validRect + "   Cull: " + canvasRenderer.cull + " *****");
+
+            if (validRect)
+            {
+                canvasRenderer.cull = false;
+                CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(this);
+                return;
+            }
+
+            base.Cull(clipRect, validRect);
+        }
+
+        protected override void UpdateGeometry()
+        {
+            // Function overridden as Caret and text Selection Highlight is controlled by the Input Field. 
         }
     }
 }

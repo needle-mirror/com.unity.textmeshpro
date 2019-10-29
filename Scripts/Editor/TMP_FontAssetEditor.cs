@@ -575,7 +575,7 @@ namespace TMPro.EditorUtilities
                 rect = EditorGUILayout.GetControlRect(true);
                 rect.x += EditorGUIUtility.labelWidth;
                 rect.width = (rect.width - EditorGUIUtility.labelWidth) / 2f;
-                GUI.Label(rect, "Regular Tyepface", EditorStyles.label);
+                GUI.Label(rect, "Regular Typeface", EditorStyles.label);
                 rect.x += rect.width;
                 GUI.Label(rect, "Italic Typeface", EditorStyles.label);
                 

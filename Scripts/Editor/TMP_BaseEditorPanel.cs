@@ -53,6 +53,7 @@ namespace TMPro.EditorUtilities
 
         static readonly GUIContent k_MarginsLabel = new GUIContent("Margins", "The space between the text and the edge of its container.");
         static readonly GUIContent k_GeometrySortingLabel = new GUIContent("Geometry Sorting", "The order in which text geometry is sorted. Used to adjust the way overlapping characters are displayed.");
+        static readonly GUIContent k_IsTextObjectScaleStatic = new GUIContent("Is Scale Static", "Controls whether a text object will be excluded from the InteralUpdate callback to handle scale changes of the text object or its parent(s).");
         static readonly GUIContent k_RichTextLabel = new GUIContent("Rich Text", "Enables the use of rich text tags such as <color> and <font>.");
         static readonly GUIContent k_EscapeCharactersLabel = new GUIContent("Parse Escape Characters", "Whether to display strings such as \"\\n\" as is or replace them by the character they represent.");
         static readonly GUIContent k_VisibleDescenderLabel = new GUIContent("Visible Descender", "Compute descender values from visible characters only. Used to adjust layout behavior when hiding and revealing characters dynamically.");
@@ -157,6 +158,7 @@ namespace TMPro.EditorUtilities
         protected SerializedProperty m_EnableEscapeCharacterParsingProp;
         protected SerializedProperty m_UseMaxVisibleDescenderProp;
         protected SerializedProperty m_GeometrySortingOrderProp;
+        protected SerializedProperty m_IsTextObjectScaleStaticProp;
 
         protected SerializedProperty m_SpriteAssetProp;
 
@@ -233,6 +235,7 @@ namespace TMPro.EditorUtilities
             m_UseMaxVisibleDescenderProp = serializedObject.FindProperty("m_useMaxVisibleDescender");
             
             m_GeometrySortingOrderProp = serializedObject.FindProperty("m_geometrySortingOrder");
+            m_IsTextObjectScaleStaticProp = serializedObject.FindProperty("m_IsTextObjectScaleStatic");
 
             m_SpriteAssetProp = serializedObject.FindProperty("m_spriteAsset");
 
@@ -522,7 +525,8 @@ namespace TMPro.EditorUtilities
                 int oldSize = EditorStyles.popup.fontSize;
                 EditorStyles.popup.fontSize = 11;
 
-                m_MaterialPresetIndexLookup.TryGetValue(m_FontSharedMaterialProp.objectReferenceValue.GetInstanceID(), out m_MaterialPresetSelectionIndex);
+                if (m_FontSharedMaterialProp.objectReferenceValue != null)
+                    m_MaterialPresetIndexLookup.TryGetValue(m_FontSharedMaterialProp.objectReferenceValue.GetInstanceID(), out m_MaterialPresetSelectionIndex);
 
                 m_MaterialPresetSelectionIndex = EditorGUI.Popup(rect, k_MaterialPresetLabel, m_MaterialPresetSelectionIndex, m_MaterialPresetNames);
                 if (EditorGUI.EndChangeCheck())
@@ -1058,6 +1062,22 @@ namespace TMPro.EditorUtilities
 
             EditorGUILayout.Space();
         }
+
+        protected void DrawIsTextObjectScaleStatic()
+        {
+            EditorGUI.BeginChangeCheck();
+
+            EditorGUILayout.PropertyField(m_IsTextObjectScaleStaticProp, k_IsTextObjectScaleStatic);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                m_TextComponent.isTextObjectScaleStatic = m_IsTextObjectScaleStaticProp.boolValue;
+                m_HavePropertiesChanged = true;
+            }
+
+            EditorGUILayout.Space();
+        }
+
 
         protected void DrawRichText()
         {

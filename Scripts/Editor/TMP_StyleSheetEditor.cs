@@ -174,79 +174,68 @@ namespace TMPro.EditorUtilities
                     
                     // Handle Selection Highlighting
                     if (m_SelectedElement == i)
-                    {
                         TMP_EditorUtility.DrawBox(selectionArea, 2f, new Color32(40, 192, 255, 255));
-
-                        // Draw options to MoveUp, MoveDown, Add or Remove Sprites
-                        Rect controlRect = EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight * 1f);
-                        controlRect.width /= 6;
-
-                        // Move sprite up.
-                        bool guiEnabled = GUI.enabled;
-                        if (i == 0) { GUI.enabled = false; }
-                        if (GUI.Button(controlRect, "Up"))
-                        {
-                            SwapStyleElements(i, i - 1);
-                        }
-                        GUI.enabled = guiEnabled;
-
-                        // Move sprite down.
-                        controlRect.x += controlRect.width;
-                        if (i == arraySize - 1) { GUI.enabled = false; }
-                        if (GUI.Button(controlRect, "Down"))
-                        {
-                            SwapStyleElements(i, i + 1);
-                        }
-                        GUI.enabled = guiEnabled;
-
-                        /*
-                        // Move sprite to new index
-                        controlRect.x += controlRect.width * 2;
-                        //if (i == arraySize - 1) { GUI.enabled = false; }
-                        m_moveToIndex = EditorGUI.IntField(controlRect, m_moveToIndex);
-                        controlRect.x -= controlRect.width;
-                        if (GUI.Button(controlRect, "Goto"))
-                        {
-                            MoveGlyphToIndex(i, m_moveToIndex);
-                        }
-                        //controlRect.x += controlRect.width;
-                        GUI.enabled = guiEnabled;
-                        */
-
-                        // Add new Sprite
-                        controlRect.x += controlRect.width * 3;
-                        if (GUI.Button(controlRect, "+"))
-                        {
-                            // Copy selected element
-                            m_StyleListProp.InsertArrayElementAtIndex(m_SelectedElement);
-
-                            // Move copy of element to last index in the array.
-                            m_StyleListProp.MoveArrayElement(m_SelectedElement, arraySize);
-
-                            serializedObject.ApplyModifiedProperties();
-                            m_StyleSheet.RefreshStyles();
-                        }
-
-                        // Delete selected Sprite
-                        controlRect.x += controlRect.width;
-                        if (m_SelectedElement == -1) GUI.enabled = false;
-                        if (GUI.Button(controlRect, "-"))
-                        {
-                            m_StyleListProp.DeleteArrayElementAtIndex(m_SelectedElement);
-
-                            m_SelectedElement = -1;
-                            serializedObject.ApplyModifiedProperties();
-                            m_StyleSheet.RefreshStyles();
-                            return;
-                        }
-                    }
                 }
             }
 
-            int shiftMultiplier = currentEvent.shift ? 10 : 1; // Page + Shift goes 10 page forward
+            // STYLE LIST MANAGEMENT
+            Rect rect = EditorGUILayout.GetControlRect(false, 20);
+            rect.width /= 6;
+
+            // Move Style up.
+            bool guiEnabled = GUI.enabled;
+            if (m_SelectedElement == -1 || m_SelectedElement == 0) { GUI.enabled = false; }
+            if (GUI.Button(rect, "Up"))
+            {
+                SwapStyleElements(m_SelectedElement, m_SelectedElement - 1);
+            }
+            GUI.enabled = guiEnabled;
+
+            // Move Style down.
+            rect.x += rect.width;
+            if (m_SelectedElement == arraySize - 1) { GUI.enabled = false; }
+            if (GUI.Button(rect, "Down"))
+            {
+                SwapStyleElements(m_SelectedElement, m_SelectedElement + 1);
+            }
+            GUI.enabled = guiEnabled;
+
+            // Add Style
+            rect.x += rect.width * 3;
+            if (GUI.Button(rect, "+"))
+            {
+                int index = m_SelectedElement == -1 ? 0 : m_SelectedElement;
+                
+                // Copy selected element
+                m_StyleListProp.InsertArrayElementAtIndex(index);
+
+                // Select newly inserted element
+                m_SelectedElement = index + 1;
+
+                serializedObject.ApplyModifiedProperties();
+                m_StyleSheet.RefreshStyles();
+            }
+
+            // Delete style
+            rect.x += rect.width;
+            if (m_SelectedElement == -1) GUI.enabled = false;
+            if (GUI.Button(rect, "-"))
+            {
+                int index = m_SelectedElement == -1 ? 0 : m_SelectedElement;
+
+                m_StyleListProp.DeleteArrayElementAtIndex(index);
+
+                m_SelectedElement = -1;
+                serializedObject.ApplyModifiedProperties();
+                m_StyleSheet.RefreshStyles();
+                return;
+            }
 
             // Return if we can't display any items.
             if (itemsPerPage == 0) return;
+
+            // DISPLAY PAGE CONTROLS
+            int shiftMultiplier = currentEvent.shift ? 10 : 1; // Page + Shift goes 10 page forward
 
             Rect pagePos = EditorGUILayout.GetControlRect(false, 20);
             pagePos.width /= 3;

@@ -48,6 +48,8 @@ namespace TMPro.EditorUtilities
 
                 DrawGeometrySorting();
 
+                DrawIsTextObjectScaleStatic();
+
                 DrawOrthographicMode();
                 
                 DrawRichText();

@@ -26,6 +26,7 @@ namespace TMPro
         [SerializeField]
         private Renderer m_renderer;
         private MeshFilter m_meshFilter;
+        private CanvasRenderer m_CanvasRenderer;
 
         private bool m_isFirstAllocation; // Flag to determine if this is the first allocation of the buffers.
         private int m_max_characters = 8; // Determines the initial allocation and size of the character array / buffer.
@@ -81,14 +82,11 @@ namespace TMPro
             if (m_renderer == null)
                 m_renderer = gameObject.AddComponent<Renderer>();
 
-            // Make sure we have a CanvasRenderer for compatibility reasons and hide it
-            if (this.canvasRenderer != null)
-                this.canvasRenderer.hideFlags = HideFlags.HideInInspector;
-            else
-            {
-                CanvasRenderer canvasRenderer = gameObject.AddComponent<CanvasRenderer>();
-                canvasRenderer.hideFlags = HideFlags.HideInInspector;
-            }
+            // Get reference to CanvasRenderer (if one exists)
+            m_CanvasRenderer = GetComponent<CanvasRenderer>();
+
+            if (m_CanvasRenderer != null)
+                m_CanvasRenderer.hideFlags = HideFlags.HideInInspector;
 
             // Cache Reference to RectTransform
             m_rectTransform = this.rectTransform;
@@ -171,7 +169,9 @@ namespace TMPro
                 m_isRegisteredForEvents = true;
             }
 
-            TMP_UpdateManager.RegisterTextObjectForUpdate(this);
+            // Register text object for internal updates
+            if (m_IsTextObjectScaleStatic == false)
+                TMP_UpdateManager.RegisterTextObjectForUpdate(this);
 
             meshFilter.sharedMesh = mesh;
             SetActiveSubMeshes(true);
@@ -260,8 +260,8 @@ namespace TMPro
             if (meshFilter != null && m_meshFilter.hideFlags != (HideFlags.HideInInspector | HideFlags.HideAndDontSave))
                 m_meshFilter.hideFlags = HideFlags.HideInInspector | HideFlags.HideAndDontSave;
 
-            if (canvasRenderer != null)
-                canvasRenderer.hideFlags = HideFlags.HideInInspector;
+            if (m_CanvasRenderer != null)
+                m_CanvasRenderer.hideFlags = HideFlags.HideInInspector;
 
             // Additional Properties could be added to sync up Serialized Properties & Properties.
 
@@ -962,6 +962,7 @@ namespace TMPro
             m_isParsingText = false;
             tag_NoParsing = false;
             m_FontStyleInternal = m_fontStyle;
+            m_fontStyleStack.Clear();
 
             m_FontWeightInternal = (m_FontStyleInternal & FontStyles.Bold) == FontStyles.Bold ? FontWeight.Bold : m_fontWeight;
             m_FontWeightStack.SetDefault(m_FontWeightInternal);
@@ -1004,7 +1005,8 @@ namespace TMPro
                         int tagStartIndex = chars[i].stringIndex;
                         i = endTagIndex;
 
-                        if ((m_FontStyleInternal & FontStyles.Bold) == FontStyles.Bold) m_isUsingBold = true;
+                        if ((m_FontStyleInternal & FontStyles.Bold) == FontStyles.Bold)
+                            m_isUsingBold = true;
 
                         if (m_textElementType == TMP_TextElementType.Sprite)
                         {
@@ -1539,6 +1541,8 @@ namespace TMPro
 
                     ParseInputText();
 
+                    TMP_FontAsset.UpdateFontAssets();
+
                     #if TMP_PROFILE_ON
                     Profiler.EndSample();
                     #endif
@@ -1643,7 +1647,7 @@ namespace TMPro
             m_FontWeightStack.SetDefault(m_FontWeightInternal);
             m_fontStyleStack.Clear();
 
-            m_lineJustification = m_HorizontalAlignment; //   m_textAlignment; // Sets the line justification mode to match editor alignment.
+            m_lineJustification = m_HorizontalAlignment; // m_textAlignment; // Sets the line justification mode to match editor alignment.
             m_lineJustificationStack.SetDefault(m_lineJustification);
 
             float padding = 0;
@@ -1718,6 +1722,7 @@ namespace TMPro
             m_maxLineAscender = k_LargeNegativeFloat;
             m_maxLineDescender = k_LargePositiveFloat;
             m_lineNumber = 0;
+            m_startOfLineAscender = 0;
             m_lineVisibleCharacterCount = 0;
             bool isStartOfNewLine = true;
             bool isDrivenLineSpacing = false;
@@ -1755,7 +1760,7 @@ namespace TMPro
             bool isFirstWordOfLine = true;
             m_isNonBreakingSpace = false;
             bool ignoreNonBreakingSpace = false;
-            bool isLastBreakingChar = false;
+            bool isLastCharacterCJK = false;
 
             CharacterSubstitution characterToSubstitute = new CharacterSubstitution(-1, 0);
             bool isSoftHyphenIgnored = false;
@@ -2084,7 +2089,7 @@ namespace TMPro
                 #region Handle Style Padding
                 if (m_textElementType == TMP_TextElementType.Character && !isUsingAltTypeface && ((m_FontStyleInternal & FontStyles.Bold) == FontStyles.Bold)) // Checks for any combination of Bold Style.
                 {
-                    if (m_currentMaterial.HasProperty(ShaderUtilities.ID_GradientScale))
+                    if (m_currentMaterial != null && m_currentMaterial.HasProperty(ShaderUtilities.ID_GradientScale))
                     {
                         float gradientScale = m_currentMaterial.GetFloat(ShaderUtilities.ID_GradientScale);
                         style_padding = m_currentFontAsset.boldStyle / 4.0f * gradientScale * m_currentMaterial.GetFloat(ShaderUtilities.ID_ScaleRatio_A);
@@ -2100,7 +2105,7 @@ namespace TMPro
                 }
                 else
                 {
-                    if (m_currentMaterial.HasProperty(ShaderUtilities.ID_GradientScale))
+                    if (m_currentMaterial != null && m_currentMaterial.HasProperty(ShaderUtilities.ID_GradientScale))
                     {
                         float gradientScale = m_currentMaterial.GetFloat(ShaderUtilities.ID_GradientScale);
                         style_padding = m_currentFontAsset.normalStyle / 4.0f * gradientScale * m_currentMaterial.GetFloat(ShaderUtilities.ID_ScaleRatio_A);
@@ -2373,6 +2378,8 @@ namespace TMPro
                         switch (m_overflowMode)
                         {
                             case TextOverflowModes.Overflow:
+                            case TextOverflowModes.ScrollRect:
+                            case TextOverflowModes.Masking:
                                 // Nothing happens as vertical bounds are ignored in this mode.
                                 break;
 
@@ -2603,6 +2610,8 @@ namespace TMPro
                                 switch (m_overflowMode)
                                 {
                                     case TextOverflowModes.Overflow:
+                                    case TextOverflowModes.ScrollRect:
+                                    case TextOverflowModes.Masking:
                                         #if TMP_PROFILE_ON
                                             Profiler.BeginSample("TMP - InsertNewLine()");
                                         #endif
@@ -2775,6 +2784,8 @@ namespace TMPro
                             switch (m_overflowMode)
                             {
                                 case TextOverflowModes.Overflow:
+                                case TextOverflowModes.ScrollRect:
+                                case TextOverflowModes.Masking:
                                     // Nothing happens as horizontal bounds are ignored in this mode.
                                     break;
 
@@ -3209,30 +3220,51 @@ namespace TMPro
                         // We store the state of numerous variables for the most recent Space, LineFeed or Carriage Return to enable them to be restored 
                         // for Word Wrapping.
                         SaveWordWrappingState(ref m_SavedWordWrapState, i, m_characterCount);
-                        //m_isCharacterWrappingEnabled = false;
                         isFirstWordOfLine = false;
+                        isLastCharacterCJK = false;
                     }
-                    // Handling for East Asian languages
-                    else if ((  charCode > 0x1100 && charCode < 0x11ff || /* Hangul Jamo */
-                                charCode > 0x2E80 && charCode < 0x9FFF || /* CJK */
-                                charCode > 0xA960 && charCode < 0xA97F || /* Hangul Jamo Extended-A */
-                                charCode > 0xAC00 && charCode < 0xD7FF || /* Hangul Syllables */
-                                charCode > 0xF900 && charCode < 0xFAFF || /* CJK Compatibility Ideographs */
-                                charCode > 0xFE30 && charCode < 0xFE4F || /* CJK Compatibility Forms */
-                                charCode > 0xFF00 && charCode < 0xFFEF)   /* CJK Halfwidth */
-                                && !m_isNonBreakingSpace && !TMP_Settings.useModernHangulLineBreakingRules)
+                    // Handling for East Asian characters
+                    else if (!m_isNonBreakingSpace &&
+                             (charCode > 0x1100 && charCode < 0x11ff || /* Hangul Jamo */
+                              charCode > 0xA960 && charCode < 0xA97F || /* Hangul Jamo Extended-A */
+                              charCode > 0xAC00 && charCode < 0xD7FF)   /* Hangul Syllables */ &&
+                             !TMP_Settings.useModernHangulLineBreakingRules ||
+                             (charCode > 0x2E80 && charCode < 0x9FFF || /* CJK */
+                              charCode > 0xF900 && charCode < 0xFAFF || /* CJK Compatibility Ideographs */
+                              charCode > 0xFE30 && charCode < 0xFE4F || /* CJK Compatibility Forms */
+                              charCode > 0xFF00 && charCode < 0xFFEF))  /* CJK Halfwidth */
                     {
-                        if (isFirstWordOfLine || isLastBreakingChar || TMP_Settings.linebreakingRules.leadingCharacters.ContainsKey(charCode) == false &&
-                            (m_characterCount < totalCharacterCount - 1 &&
-                            TMP_Settings.linebreakingRules.followingCharacters.ContainsKey(m_textInfo.characterInfo[m_characterCount + 1].character) == false))
+                        bool isLeadingCharacter = TMP_Settings.linebreakingRules.leadingCharacters.ContainsKey(charCode);
+                        bool isFollowingCharacter = m_characterCount < totalCharacterCount - 1 && TMP_Settings.linebreakingRules.followingCharacters.ContainsKey(m_textInfo.characterInfo[m_characterCount + 1].character);
+
+                        if (isFirstWordOfLine || isLeadingCharacter == false)
                         {
-                            SaveWordWrappingState(ref m_SavedWordWrapState, i, m_characterCount);
-                            //m_isCharacterWrappingEnabled = false;
-                            isFirstWordOfLine = false;
+                            if (isFollowingCharacter == false)
+                            {
+                                SaveWordWrappingState(ref m_SavedWordWrapState, i, m_characterCount);
+                                isFirstWordOfLine = false;
+                            }
+
+                            if (isFirstWordOfLine)
+                                SaveWordWrappingState(ref m_SavedWordWrapState, i, m_characterCount);
                         }
+
+                        isLastCharacterCJK = true;
                     }
-                    else if ((isFirstWordOfLine /*|| m_isCharacterWrappingEnabled == true*/ || isLastBreakingChar))
+                    else if (isLastCharacterCJK)
+                    {
+                        bool isLeadingCharacter = TMP_Settings.linebreakingRules.leadingCharacters.ContainsKey(charCode);
+
+                        if (isLeadingCharacter == false)
+                            SaveWordWrappingState(ref m_SavedWordWrapState, i, m_characterCount);
+
+                        isLastCharacterCJK = false;
+                    }
+                    else if (isFirstWordOfLine)
+                    {
                         SaveWordWrappingState(ref m_SavedWordWrapState, i, m_characterCount);
+                        isLastCharacterCJK = false;
+                    }
 
                     #if TMP_PROFILE_ON
                     Profiler.EndSample();
@@ -3396,11 +3428,11 @@ namespace TMPro
                 switch (lineAlignment)
                 {
                     case HorizontalAlignmentOptions.Left:
-                            if (!m_isRightToLeft)
-                                justificationOffset = new Vector3(0 + lineInfo.marginLeft, 0, 0);
-                            else
-                                justificationOffset = new Vector3(0 - lineInfo.maxAdvance, 0, 0);
-                            break;
+                        if (!m_isRightToLeft)
+                            justificationOffset = new Vector3(0 + lineInfo.marginLeft, 0, 0);
+                        else
+                            justificationOffset = new Vector3(0 - lineInfo.maxAdvance, 0, 0);
+                        break;
 
                     case HorizontalAlignmentOptions.Center:
                         justificationOffset = new Vector3(lineInfo.marginLeft + lineInfo.width / 2 - lineInfo.maxAdvance / 2, 0, 0);
@@ -3541,10 +3573,10 @@ namespace TMPro
                                     switch (m_verticalMapping)
                                     {
                                         case TextureMappingOptions.Character:
-                                            characterInfos[i].vertex_BL.uv2.y = 0; //+ m_uvOffset.y;
-                                            characterInfos[i].vertex_TL.uv2.y = 1; //+ m_uvOffset.y;
-                                            characterInfos[i].vertex_TR.uv2.y = 0; //+ m_uvOffset.y;
-                                            characterInfos[i].vertex_BR.uv2.y = 1; //+ m_uvOffset.y;
+                                            characterInfos[i].vertex_BL.uv2.y = 0; // + m_uvOffset.y;
+                                            characterInfos[i].vertex_TL.uv2.y = 1; // + m_uvOffset.y;
+                                            characterInfos[i].vertex_TR.uv2.y = 0; // + m_uvOffset.y;
+                                            characterInfos[i].vertex_BR.uv2.y = 1; // + m_uvOffset.y;
                                             break;
 
                                         case TextureMappingOptions.Line:
@@ -3579,10 +3611,10 @@ namespace TMPro
                             switch (m_verticalMapping)
                             {
                                 case TextureMappingOptions.Character:
-                                    characterInfos[i].vertex_BL.uv2.y = 0; //+ m_uvOffset.y;
-                                    characterInfos[i].vertex_TL.uv2.y = 1; //+ m_uvOffset.y;
-                                    characterInfos[i].vertex_TR.uv2.y = 1; //+ m_uvOffset.y;
-                                    characterInfos[i].vertex_BR.uv2.y = 0; //+ m_uvOffset.y;
+                                    characterInfos[i].vertex_BL.uv2.y = 0; // + m_uvOffset.y;
+                                    characterInfos[i].vertex_TL.uv2.y = 1; // + m_uvOffset.y;
+                                    characterInfos[i].vertex_TR.uv2.y = 1; // + m_uvOffset.y;
+                                    characterInfos[i].vertex_BR.uv2.y = 0; // + m_uvOffset.y;
                                     break;
 
                                 case TextureMappingOptions.Line:
@@ -4075,7 +4107,7 @@ namespace TMPro
                             highlight_start.y = Mathf.Min(highlight_start.y, currentCharacter.descender - highlightState.padding.bottom);
 
                             highlight_end.x = Mathf.Max(highlight_end.x, currentCharacter.topRight.x + highlightState.padding.right);
-                            highlight_end.y = Mathf.Max(highlight_end.y, currentCharacter.ascender + highlightState.padding.top); 
+                            highlight_end.y = Mathf.Max(highlight_end.y, currentCharacter.ascender + highlightState.padding.top);
                         }
                     }
 

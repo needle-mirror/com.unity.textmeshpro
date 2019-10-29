@@ -70,10 +70,11 @@ namespace TMPro
         {
             int id = textObject.GetInstanceID();
 
-            if (this.m_InternalUpdateLookup.Contains(id))
+            if (m_InternalUpdateLookup.Contains(id))
                 return;
 
-            this.m_InternalUpdateQueue.Add(textObject);
+            m_InternalUpdateLookup.Add(id);
+            m_InternalUpdateQueue.Add(textObject);
 
             return;
         }
@@ -92,10 +93,11 @@ namespace TMPro
         {
             int id = element.GetInstanceID();
 
-            if (this.m_LayoutQueueLookup.Contains(id))
+            if (m_LayoutQueueLookup.Contains(id))
                 return false;
 
-            this.m_LayoutRebuildQueue.Add(element);
+            m_LayoutQueueLookup.Add(id);
+            m_LayoutRebuildQueue.Add(element);
 
             return true;
         }
@@ -114,10 +116,11 @@ namespace TMPro
         {
             int id = element.GetInstanceID();
 
-            if (this.m_GraphicQueueLookup.Contains(id))
+            if (m_GraphicQueueLookup.Contains(id))
                 return false;
 
-            this.m_GraphicRebuildQueue.Add(element);
+            m_GraphicQueueLookup.Add(id);
+            m_GraphicRebuildQueue.Add(element);
 
             return true;
         }

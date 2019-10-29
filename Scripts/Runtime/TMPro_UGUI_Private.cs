@@ -170,8 +170,9 @@ namespace TMPro
             // Register Graphic Component to receive event triggers
             GraphicRegistry.RegisterGraphicForCanvas(m_canvas, this);
 
-            // Register text object for updates
-            TMP_UpdateManager.RegisterTextObjectForUpdate(this);
+            // Register text object for internal updates
+            if (m_IsTextObjectScaleStatic == false)
+                TMP_UpdateManager.RegisterTextObjectForUpdate(this);
 
             ComputeMarginSize();
 
@@ -1020,6 +1021,7 @@ namespace TMPro
             m_isParsingText = false;
             tag_NoParsing = false;
             m_FontStyleInternal = m_fontStyle;
+            m_fontStyleStack.Clear();
 
             m_FontWeightInternal = (m_FontStyleInternal & FontStyles.Bold) == FontStyles.Bold ? FontWeight.Bold : m_fontWeight;
             m_FontWeightStack.SetDefault(m_FontWeightInternal);
@@ -1519,7 +1521,17 @@ namespace TMPro
         protected override void OnCanvasHierarchyChanged()
         {
             base.OnCanvasHierarchyChanged();
-            m_canvas = this.canvas;
+
+            m_canvas = canvas;
+
+            if (!m_isAwake || !isActiveAndEnabled)
+                return;
+
+            // Special handling to stop InternalUpdate calls when parent Canvas is disabled.
+            if (m_canvas == null || m_canvas.enabled == false)
+                TMP_UpdateManager.UnRegisterTextObjectForUpdate(this);
+            else
+                TMP_UpdateManager.RegisterTextObjectForUpdate(this);
         }
 
 
@@ -1633,6 +1645,8 @@ namespace TMPro
                     #endif
 
                     ParseInputText();
+
+                    TMP_FontAsset.UpdateFontAssets();
 
                     #if TMP_PROFILE_ON
                     Profiler.EndSample();
@@ -1813,6 +1827,7 @@ namespace TMPro
             m_maxLineAscender = k_LargeNegativeFloat;
             m_maxLineDescender = k_LargePositiveFloat;
             m_lineNumber = 0;
+            m_startOfLineAscender = 0;
             m_lineVisibleCharacterCount = 0;
             bool isStartOfNewLine = true;
             bool isDrivenLineSpacing = false;
@@ -1850,7 +1865,7 @@ namespace TMPro
             bool isFirstWordOfLine = true;
             m_isNonBreakingSpace = false;
             bool ignoreNonBreakingSpace = false;
-            bool isLastBreakingChar = false;
+            bool isLastCharacterCJK = false;
 
             CharacterSubstitution characterToSubstitute = new CharacterSubstitution(-1, 0);
             bool isSoftHyphenIgnored = false;
@@ -2057,7 +2072,7 @@ namespace TMPro
                     if (isInjectingCharacter)
                         m_cached_TextElement = m_textInfo.characterInfo[m_characterCount].fontAsset.characterLookupTable[(uint)charCode];
                     else
-                    m_cached_TextElement = m_textInfo.characterInfo[m_characterCount].textElement;
+                        m_cached_TextElement = m_textInfo.characterInfo[m_characterCount].textElement;
 
                     if (m_cached_TextElement == null) continue;
 
@@ -2179,7 +2194,7 @@ namespace TMPro
                 #region Handle Style Padding
                 if (m_textElementType == TMP_TextElementType.Character && !isUsingAltTypeface && ((m_FontStyleInternal & FontStyles.Bold) == FontStyles.Bold)) // Checks for any combination of Bold Style.
                 {
-                    if (m_currentMaterial.HasProperty(ShaderUtilities.ID_GradientScale))
+                    if (m_currentMaterial != null && m_currentMaterial.HasProperty(ShaderUtilities.ID_GradientScale))
                     {
                         float gradientScale = m_currentMaterial.GetFloat(ShaderUtilities.ID_GradientScale);
                         style_padding = m_currentFontAsset.boldStyle / 4.0f * gradientScale * m_currentMaterial.GetFloat(ShaderUtilities.ID_ScaleRatio_A);
@@ -2195,7 +2210,7 @@ namespace TMPro
                 }
                 else
                 {
-                    if (m_currentMaterial.HasProperty(ShaderUtilities.ID_GradientScale))
+                    if (m_currentMaterial != null && m_currentMaterial.HasProperty(ShaderUtilities.ID_GradientScale))
                     {
                         float gradientScale = m_currentMaterial.GetFloat(ShaderUtilities.ID_GradientScale);
                         style_padding = m_currentFontAsset.normalStyle / 4.0f * gradientScale * m_currentMaterial.GetFloat(ShaderUtilities.ID_ScaleRatio_A);
@@ -2247,7 +2262,7 @@ namespace TMPro
                 #region Handle Italic & Shearing
                 if (m_textElementType == TMP_TextElementType.Character && !isUsingAltTypeface && ((m_FontStyleInternal & FontStyles.Italic) == FontStyles.Italic))
                 {
-                    // Shift Top vertices forward by half (Shear Value * height of character) and Bottom vertices back by same amount. 
+                    // Shift Top vertices forward by half (Shear Value * height of character) and Bottom vertices back by same amount.
                     float shear_value = m_ItalicAngle * 0.01f;
                     Vector3 topShear = new Vector3(shear_value * ((currentGlyphMetrics.horizontalBearingY + padding + style_padding) * currentElementScale), 0, 0);
                     Vector3 bottomShear = new Vector3(shear_value * (((currentGlyphMetrics.horizontalBearingY - currentGlyphMetrics.height - padding - style_padding)) * currentElementScale), 0, 0);
@@ -2307,18 +2322,18 @@ namespace TMPro
                     : spriteAscentLine * spriteScale + m_baselineOffset;
 
                 m_textInfo.characterInfo[m_characterCount].ascender = elementAscender - m_lineOffset;
-                
+
                 // Compute and save text element Descender and maximum line Descender.
                 float elementDescender = m_textElementType == TMP_TextElementType.Character
                     ? m_currentFontAsset.m_FaceInfo.descentLine * currentElementScale / smallCapsMultiplier + m_baselineOffset
                     : spriteDescentLine * spriteScale + m_baselineOffset;
 
                 float elementDescenderII = m_textInfo.characterInfo[m_characterCount].descender = elementDescender - m_lineOffset;
-                
+
                 if (charCode != 0x0A || m_characterCount == m_firstCharacterOfLine)
                 {
                     m_maxLineAscender = elementAscender > m_maxLineAscender ? elementAscender : m_maxLineAscender;
-                m_maxLineDescender = elementDescender < m_maxLineDescender ? elementDescender : m_maxLineDescender;
+                    m_maxLineDescender = elementDescender < m_maxLineDescender ? elementDescender : m_maxLineDescender;
                 }
 
                 // Adjust maxLineAscender and maxLineDescender if style is superscript or subscript
@@ -2341,7 +2356,7 @@ namespace TMPro
                     }
                     else
                     {
-                    m_maxAscender = m_maxAscender > elementAscender ? m_maxAscender : elementAscender;
+                        m_maxAscender = m_maxAscender > elementAscender ? m_maxAscender : elementAscender;
                         m_maxCapHeight = Mathf.Max(m_maxCapHeight, m_currentFontAsset.m_FaceInfo.capLine * currentElementScale / smallCapsMultiplier);
                     }
                 }
@@ -2468,6 +2483,8 @@ namespace TMPro
                         switch (m_overflowMode)
                         {
                             case TextOverflowModes.Overflow:
+                            case TextOverflowModes.ScrollRect:
+                            case TextOverflowModes.Masking:
                                 // Nothing happens as vertical bounds are ignored in this mode.
                                 break;
 
@@ -2546,9 +2563,9 @@ namespace TMPro
                     #region Current Line Horizontal Bounds Check
                     if (textWidth > widthOfTextArea * (isJustifiedOrFlush ? 1.05f : 1.0f))
                     {
-#if TMP_PROFILE_ON
+                        #if TMP_PROFILE_ON
                             Profiler.BeginSample("TMP - Handle Horizontal Line Breaking");
-#endif
+                        #endif
 
                         // Handle Line Breaking (if still possible)
                         if (m_enableWordWrapping && m_characterCount != m_firstCharacterOfLine) // && isFirstWord == false)
@@ -2698,15 +2715,17 @@ namespace TMPro
                                 switch (m_overflowMode)
                                 {
                                     case TextOverflowModes.Overflow:
-#if TMP_PROFILE_ON
+                                    case TextOverflowModes.ScrollRect:
+                                    case TextOverflowModes.Masking:
+                                        #if TMP_PROFILE_ON
                                             Profiler.BeginSample("TMP - InsertNewLine()");
-#endif
+                                        #endif
 
                                         InsertNewLine(i, baseScale, currentEmScale, characterSpacingAdjustment, widthOfTextArea, lineGap, ref isMaxVisibleDescenderSet, ref maxVisibleDescender);
                                         isStartOfNewLine = true;
                                         isFirstWordOfLine = true;
 
-#if TMP_PROFILE_ON
+                                        #if TMP_PROFILE_ON
                                             // End Sampling of InsertNewLine()
                                             Profiler.EndSample();
 
@@ -2715,7 +2734,7 @@ namespace TMPro
 
                                             // End Sampling of Visible Character
                                             Profiler.EndSample();
-#endif
+                                        #endif
 
                                         continue;
 
@@ -2801,15 +2820,15 @@ namespace TMPro
                                 //    #endregion
                                 //}
 
-#if TMP_PROFILE_ON
+                                #if TMP_PROFILE_ON
                                     Profiler.BeginSample("TMP - InsertNewLine()");
-#endif
+                                #endif
                                 // New line of text does not exceed vertical bounds of text container
                                 InsertNewLine(i, baseScale, currentEmScale, characterSpacingAdjustment, widthOfTextArea, lineGap, ref isMaxVisibleDescenderSet, ref maxVisibleDescender);
                                 isStartOfNewLine = true;
                                 isFirstWordOfLine = true;
 
-#if TMP_PROFILE_ON
+                                #if TMP_PROFILE_ON
                                     // End Sampling of InsertNewLine()
                                     Profiler.EndSample();
 
@@ -2818,7 +2837,7 @@ namespace TMPro
 
                                     // End Sampling of Visible Character
                                     Profiler.EndSample();
-#endif
+                                #endif
                                 continue;
                             }
                         }
@@ -2870,6 +2889,8 @@ namespace TMPro
                             switch (m_overflowMode)
                             {
                                 case TextOverflowModes.Overflow:
+                                case TextOverflowModes.ScrollRect:
+                                case TextOverflowModes.Masking:
                                     // Nothing happens as horizontal bounds are ignored in this mode.
                                     break;
 
@@ -2917,10 +2938,10 @@ namespace TMPro
 
                         }
 
-#if TMP_PROFILE_ON
+                        #if TMP_PROFILE_ON
                             // End Sampling of Horizontal Line Breaking
                             Profiler.EndSample();
-#endif
+                        #endif
                     }
                     #endregion
 
@@ -3006,9 +3027,9 @@ namespace TMPro
                 #region Adjust Line Spacing
                 if (m_lineNumber > 0 && !TMP_Math.Approximately(m_maxLineAscender, m_startOfLineAscender) && /* m_lineHeight == TMP_Math.FLOAT_UNSET && */ isDrivenLineSpacing == false && !m_isNewPage && isInjectingCharacter == false)
                 {
-                #if TMP_PROFILE_ON
+                    #if TMP_PROFILE_ON
                     Profiler.BeginSample("TMP - Handle Line Spacing Adjustments");
-                #endif
+                    #endif
 
                     float offsetDelta = m_maxLineAscender - m_startOfLineAscender;
                     AdjustLineOffset(m_firstCharacterOfLine, m_characterCount, offsetDelta);
@@ -3019,17 +3040,17 @@ namespace TMPro
                     m_SavedWordWrapState.lineOffset = m_lineOffset;
                     m_SavedWordWrapState.previousLineAscender = m_startOfLineAscender;
 
-                #if TMP_PROFILE_ON
-                Profiler.EndSample();
-                #endif
-                    }
-                    #endregion
+                    #if TMP_PROFILE_ON
+                    Profiler.EndSample();
+                    #endif
+                }
+                #endregion
 
 
                 // Tracking of potential insertion positions for Ellipsis character
                 #region Track Potential Insertion Location for Ellipsis
                 if (m_overflowMode == TextOverflowModes.Ellipsis && isInjectingCharacter == false)
-                    {
+                {
                     float fontScale = m_currentFontSize * smallCapsMultiplier / m_fontAsset.m_FaceInfo.pointSize * m_fontAsset.m_FaceInfo.scale * (m_isOrthographic ? 1 : 0.1f);
                     float scale = fontScale * m_fontScaleMultiplier * m_cached_Ellipsis_Character.m_Scale * m_cached_Ellipsis_Character.m_Glyph.scale;
                     float marginLeft = m_marginLeft;
@@ -3037,11 +3058,11 @@ namespace TMPro
 
                     // Use the scale and margins of the previous character if Line Feed (LF) is not the first character of a line.
                     if (charCode == 0x0A && m_characterCount != m_firstCharacterOfLine)
-                                {
+                    {
                         scale = m_textInfo.characterInfo[m_characterCount - 1].scale;
                         marginLeft = m_textInfo.lineInfo[m_lineNumber].marginLeft;
                         marginRight = m_textInfo.lineInfo[m_lineNumber].marginRight;
-                                }
+                    }
 
                     float descender = m_fontAsset.m_FaceInfo.descentLine * scale / smallCapsMultiplier + m_baselineOffset;
                     float textHeight = m_maxAscender - (descender - m_lineOffset);
@@ -3051,7 +3072,7 @@ namespace TMPro
 
                     if (textWidth < widthOfTextAreaForEllipsis * (isJustifiedOrFlush ? 1.05f : 1.0f) && textHeight < marginHeight + 0.0001f)
                         SaveWordWrappingState(ref m_SavedEllipsisState, i, m_characterCount);
-                            }
+                }
                 #endregion
 
 
@@ -3127,9 +3148,9 @@ namespace TMPro
                 #region Check for Line Feed and Last Character
                 if (charCode == 10 || charCode == 11 || charCode == 0x03 || (charCode == 0x2D && isInjectingCharacter) || m_characterCount == totalCharacterCount - 1)
                 {
-                #if TMP_PROFILE_ON
+                    #if TMP_PROFILE_ON
                     Profiler.BeginSample("TMP - Handle Line & Text Termination");
-                #endif
+                    #endif
 
                     // Check if Line Spacing of previous line needs to be adjusted.
                     if (m_lineNumber > 0 && !TMP_Math.Approximately(m_maxLineAscender, m_startOfLineAscender) && isDrivenLineSpacing == false /* && m_lineHeight == TMP_Math.FLOAT_UNSET */ && !m_isNewPage && isInjectingCharacter == false)
@@ -3237,9 +3258,9 @@ namespace TMPro
                     if (charCode == 0x03)
                         i = m_TextParsingBuffer.Length;
 
-                #if TMP_PROFILE_ON
-                Profiler.EndSample();
-                #endif
+                    #if TMP_PROFILE_ON
+                    Profiler.EndSample();
+                    #endif
                 }
                 #endregion Check for Linefeed or Last Character
 
@@ -3295,43 +3316,64 @@ namespace TMPro
                 #region Save Word Wrapping State
                 if (m_enableWordWrapping || m_overflowMode == TextOverflowModes.Truncate || m_overflowMode == TextOverflowModes.Ellipsis || m_overflowMode == TextOverflowModes.Linked)
                 {
-                #if TMP_PROFILE_ON
+                    #if TMP_PROFILE_ON
                     Profiler.BeginSample("TMP - Save Word Wrapping State");
-                #endif
+                    #endif
 
                     if ((isWhiteSpace || charCode == 0x200B || charCode == 0x2D || charCode == 0xAD) && (!m_isNonBreakingSpace || ignoreNonBreakingSpace) && charCode != 0xA0 && charCode != 0x2007 && charCode != 0x2011 && charCode != 0x202F && charCode != 0x2060)
                     {
                         // We store the state of numerous variables for the most recent Space, LineFeed or Carriage Return to enable them to be restored 
                         // for Word Wrapping.
                         SaveWordWrappingState(ref m_SavedWordWrapState, i, m_characterCount);
-                        //m_isCharacterWrappingEnabled = false;
                         isFirstWordOfLine = false;
+                        isLastCharacterCJK = false;
                     }
-                    // Handling for East Asian languages
-                    else if ((  charCode > 0x1100 && charCode < 0x11ff || /* Hangul Jamo */
-                                charCode > 0x2E80 && charCode < 0x9FFF || /* CJK */
-                                charCode > 0xA960 && charCode < 0xA97F || /* Hangul Jamo Extended-A */
-                                charCode > 0xAC00 && charCode < 0xD7FF || /* Hangul Syllables */
-                                charCode > 0xF900 && charCode < 0xFAFF || /* CJK Compatibility Ideographs */
-                                charCode > 0xFE30 && charCode < 0xFE4F || /* CJK Compatibility Forms */
-                                charCode > 0xFF00 && charCode < 0xFFEF)   /* CJK Halfwidth */
-                                && !m_isNonBreakingSpace && !TMP_Settings.useModernHangulLineBreakingRules)
+                    // Handling for East Asian characters
+                    else if (!m_isNonBreakingSpace &&
+                             (charCode > 0x1100 && charCode < 0x11ff || /* Hangul Jamo */
+                              charCode > 0xA960 && charCode < 0xA97F || /* Hangul Jamo Extended-A */
+                              charCode > 0xAC00 && charCode < 0xD7FF)   /* Hangul Syllables */ &&
+                             !TMP_Settings.useModernHangulLineBreakingRules ||
+                             (charCode > 0x2E80 && charCode < 0x9FFF || /* CJK */
+                              charCode > 0xF900 && charCode < 0xFAFF || /* CJK Compatibility Ideographs */
+                              charCode > 0xFE30 && charCode < 0xFE4F || /* CJK Compatibility Forms */
+                              charCode > 0xFF00 && charCode < 0xFFEF))  /* CJK Halfwidth */
                     {
-                        if (isFirstWordOfLine || isLastBreakingChar || TMP_Settings.linebreakingRules.leadingCharacters.ContainsKey(charCode) == false &&
-                            (m_characterCount < totalCharacterCount - 1 &&
-                            TMP_Settings.linebreakingRules.followingCharacters.ContainsKey(m_textInfo.characterInfo[m_characterCount + 1].character) == false))
-                        {
-                            SaveWordWrappingState(ref m_SavedWordWrapState, i, m_characterCount);
-                            //m_isCharacterWrappingEnabled = false;
-                            isFirstWordOfLine = false;
-                        }
-                    }
-                    else if ((isFirstWordOfLine /*|| m_isCharacterWrappingEnabled == true*/ || isLastBreakingChar))
-                        SaveWordWrappingState(ref m_SavedWordWrapState, i, m_characterCount);
+                        bool isLeadingCharacter = TMP_Settings.linebreakingRules.leadingCharacters.ContainsKey(charCode);
+                        bool isFollowingCharacter = m_characterCount < totalCharacterCount - 1 && TMP_Settings.linebreakingRules.followingCharacters.ContainsKey(m_textInfo.characterInfo[m_characterCount + 1].character);
 
-                #if TMP_PROFILE_ON
-                Profiler.EndSample();
-                #endif
+                        if (isFirstWordOfLine || isLeadingCharacter == false)
+                        {
+                            if (isFollowingCharacter == false)
+                            {
+                                SaveWordWrappingState(ref m_SavedWordWrapState, i, m_characterCount);
+                                isFirstWordOfLine = false;
+                            }
+
+                            if (isFirstWordOfLine)
+                                SaveWordWrappingState(ref m_SavedWordWrapState, i, m_characterCount);
+                        }
+
+                        isLastCharacterCJK = true;
+                    }
+                    else if (isLastCharacterCJK)
+                    {
+                        bool isLeadingCharacter = TMP_Settings.linebreakingRules.leadingCharacters.ContainsKey(charCode);
+
+                        if (isLeadingCharacter == false)
+                            SaveWordWrappingState(ref m_SavedWordWrapState, i, m_characterCount);
+
+                        isLastCharacterCJK = false;
+                    }
+                    else if (isFirstWordOfLine)
+                    {
+                        SaveWordWrappingState(ref m_SavedWordWrapState, i, m_characterCount);
+                        isLastCharacterCJK = false;
+                    }
+
+                    #if TMP_PROFILE_ON
+                    Profiler.EndSample();
+                    #endif
                 }
                 #endregion Save Word Wrapping State
 
@@ -4234,7 +4276,7 @@ namespace TMPro
 
             #if TMP_PROFILE_ON
             // End Sampling of Phase II
-                Profiler.EndSample();
+            Profiler.EndSample();
 
             Profiler.BeginSample("TMP GenerateText() - Phase III");
             #endif
@@ -4313,7 +4355,7 @@ namespace TMPro
             Profiler.EndSample();
 
             // End Sampling of GenerateText()
-                Profiler.EndSample();
+            Profiler.EndSample();
             #endif
         }
 

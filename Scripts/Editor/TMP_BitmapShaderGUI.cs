@@ -77,6 +77,14 @@ namespace TMPro.EditorUtilities
                 DoFloat("_StencilComp", "Stencil Comp");
             }
 
+            if (m_Material.HasProperty(ShaderUtilities.ShaderTag_CullMode))
+            {
+                EditorGUILayout.Space();
+                DoPopup("_CullMode", "Cull Mode", s_CullingTypeLabels);
+            }
+
+            EditorGUILayout.Space();
+
             EditorGUI.indentLevel -= 1;
 
             EditorGUILayout.Space();

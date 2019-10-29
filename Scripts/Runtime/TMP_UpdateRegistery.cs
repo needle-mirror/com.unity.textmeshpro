@@ -60,10 +60,11 @@ namespace TMPro
         {
             int id = (element as Object).GetInstanceID();
 
-            if (this.m_LayoutQueueLookup.Contains(id))
+            if (m_LayoutQueueLookup.Contains(id))
                 return false;
 
-            this.m_LayoutRebuildQueue.Add(element);
+            m_LayoutQueueLookup.Add(id);
+            m_LayoutRebuildQueue.Add(element);
 
             return true;
         }
@@ -82,10 +83,11 @@ namespace TMPro
         {
             int id = (element as Object).GetInstanceID();
 
-            if (this.m_GraphicQueueLookup.Contains(id))
+            if (m_GraphicQueueLookup.Contains(id))
                 return false;
 
-            this.m_GraphicRebuildQueue.Add(element);
+            m_GraphicQueueLookup.Add(id);
+            m_GraphicRebuildQueue.Add(element);
 
             return true;
         }
