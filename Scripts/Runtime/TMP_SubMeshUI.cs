@@ -158,20 +158,6 @@ namespace TMPro
 
 
         /// <summary>
-        /// The Mesh Renderer of this text sub object.
-        /// </summary>
-        public new CanvasRenderer canvasRenderer
-        {
-            get { if (m_canvasRenderer == null) m_canvasRenderer = GetComponent<CanvasRenderer>();
-
-                return m_canvasRenderer;
-            }
-        }
-        [SerializeField]
-        private CanvasRenderer m_canvasRenderer;
-
-
-        /// <summary>
         /// The Mesh of this text sub object.
         /// </summary>
         public Mesh mesh
@@ -237,7 +223,7 @@ namespace TMPro
 
             TMP_SubMeshUI subMesh = go.AddComponent<TMP_SubMeshUI>();
 
-            subMesh.m_canvasRenderer = subMesh.canvasRenderer;
+            //subMesh.canvasRenderer = subMesh.canvasRenderer;
             subMesh.m_TextComponent = textComponent;
 
             subMesh.m_materialReferenceIndex = materialReference.index;
@@ -349,20 +335,26 @@ namespace TMPro
         void ON_MATERIAL_PROPERTY_CHANGED(bool isChanged, Material mat)
         {
             //Debug.Log("*** ON_MATERIAL_PROPERTY_CHANGED ***");
+            if (m_sharedMaterial == null)
+                return;
 
             int targetMaterialID = mat.GetInstanceID();
             int sharedMaterialID = m_sharedMaterial.GetInstanceID();
             int maskingMaterialID = m_MaskMaterial == null ? 0 : m_MaskMaterial.GetInstanceID();
             int fallbackSourceMaterialID = m_fallbackSourceMaterial == null ? 0 : m_fallbackSourceMaterial.GetInstanceID();
 
-            // Filter events and return if the affected material is not this object's material.
-            //if (targetMaterialID != sharedMaterialID && targetMaterialID != maskingMaterialID) return;
+            // Sync culling with parent text object
+            float cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
+            m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
 
             // Filter events and return if the affected material is not this object's material.
             if (m_fallbackMaterial != null && fallbackSourceMaterialID == targetMaterialID && TMP_Settings.matchMaterialPreset)
+            {
                 TMP_MaterialManager.CopyMaterialPresetProperties(mat, m_fallbackMaterial);
 
-            if (m_TextComponent == null) m_TextComponent = GetComponentInParent<TextMeshProUGUI>();
+                // Re-sync culling with parent text object
+                m_fallbackMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
+            }
 
             // Make sure material properties are synchronized between the assigned material and masking material.
             if (m_MaskMaterial != null)
@@ -401,6 +393,9 @@ namespace TMPro
                     m_MaskMaterial.SetFloat(ShaderUtilities.ID_StencilID, stencilID);
                     m_MaskMaterial.SetFloat(ShaderUtilities.ID_StencilComp, stencilComp);
                 }
+
+                // Re-sync culling with parent text object
+                m_MaskMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
             }
 
             m_padding = GetPaddingForMaterial();
@@ -425,10 +420,10 @@ namespace TMPro
                 if (!m_isDefaultMaterial) return;
 
                 // Make sure we have a valid reference to the renderer.
-                if (m_canvasRenderer == null) m_canvasRenderer = GetComponent<CanvasRenderer>();
+                //if (m_canvasRenderer == null) m_canvasRenderer = GetComponent<CanvasRenderer>();
 
                 UnityEditor.Undo.RecordObject(this, "Material Assignment");
-                UnityEditor.Undo.RecordObject(m_canvasRenderer, "Material Assignment");
+                UnityEditor.Undo.RecordObject(canvasRenderer, "Material Assignment");
 
                 SetSharedMaterial(newMaterial);
                 m_TextComponent.havePropertiesChanged = true;
@@ -457,8 +452,11 @@ namespace TMPro
                 // Copy Normal and Bold Weight
                 if (m_fallbackMaterial != null)
                 {
-                    m_fallbackMaterial.SetFloat(ShaderUtilities.ID_WeightNormal, m_fontAsset.normalStyle);
-                    m_fallbackMaterial.SetFloat(ShaderUtilities.ID_WeightBold, m_fontAsset.boldStyle);
+                    if (TMP_Settings.matchMaterialPreset)
+                    {
+                        TMP_MaterialManager.ReleaseFallbackMaterial(m_fallbackMaterial);
+                        TMP_MaterialManager.CleanupFallbackMaterials();
+                    }
                 }
             }
         }
@@ -631,7 +629,12 @@ namespace TMPro
         /// <param name="validRect"></param>
         public override void Cull(Rect clipRect, bool validRect)
         {
-            if (m_TextComponent.ignoreRectMaskCulling) return;
+            if (validRect)
+            {
+                canvasRenderer.cull = false;
+                CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(this);
+                return;
+            }
 
             base.Cull(clipRect, validRect);
         }
@@ -679,13 +682,17 @@ namespace TMPro
         {
             //Debug.Log("*** STO-UI - UpdateMaterial() *** FRAME (" + Time.frameCount + ")");
 
-            //if (!this.IsActive())
-            //    return;
+            if (m_sharedMaterial == null)
+                return;
 
-            if (m_canvasRenderer == null) m_canvasRenderer = this.canvasRenderer;
+            //if (canvasRenderer == null) m_canvasRenderer = this.canvasRenderer;
 
-            m_canvasRenderer.materialCount = 1;
-            m_canvasRenderer.SetMaterial(materialForRendering, 0);
+            // Special handling to keep the Culling of the material in sync with parent text object
+            float cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
+            m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
+
+            canvasRenderer.materialCount = 1;
+            canvasRenderer.SetMaterial(materialForRendering, 0);
             //m_canvasRenderer.SetTexture(mainTexture);
 
             #if UNITY_EDITOR
@@ -786,10 +793,10 @@ namespace TMPro
         /// <returns></returns>
         Material GetSharedMaterial()
         {
-            if (m_canvasRenderer == null)
-                m_canvasRenderer = GetComponent<CanvasRenderer>();
+            //if (canvasRenderer == null)
+            //    canvasRenderer = GetComponent<CanvasRenderer>();
 
-            return m_canvasRenderer.GetMaterial();
+            return canvasRenderer.GetMaterial();
         }
 
 

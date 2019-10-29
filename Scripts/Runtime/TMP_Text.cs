@@ -909,17 +909,6 @@ namespace TMPro
         [SerializeField]
         protected bool m_isCullingEnabled = false;
 
-        /// <summary>
-        /// Controls whether or not the text object will be culled when using a 2D Rect Mask.
-        /// </summary>
-        public bool ignoreRectMaskCulling
-        {
-            get { return m_ignoreRectMaskCulling; }
-            set { if (m_ignoreRectMaskCulling == value) return; m_ignoreRectMaskCulling = value; m_havePropertiesChanged = true; }
-        }
-        [SerializeField]
-        protected bool m_ignoreRectMaskCulling;
-
         // 
         protected bool m_isMaskingEnabled;
         protected bool isMaskUpdateRequired;
@@ -1007,6 +996,26 @@ namespace TMPro
         }
         [SerializeField]
         protected VertexSortingOrder m_geometrySortingOrder;
+
+
+        /// <summary>
+        /// Determines if a text object will be excluded from the InternalUpdate callback used to handle updates of SDF Scale when the scale of the text object or parent(s) changes.
+        /// </summary>
+        public bool isTextObjectScaleStatic
+        {
+            get { return m_IsTextObjectScaleStatic; }
+            set
+            {
+                m_IsTextObjectScaleStatic = value;
+
+                if (m_IsTextObjectScaleStatic)
+                    TMP_UpdateManager.UnRegisterTextObjectForUpdate(this);
+                else
+                    TMP_UpdateManager.RegisterTextObjectForUpdate(this);
+            }
+        }
+        [SerializeField]
+        protected bool m_IsTextObjectScaleStatic;
 
         /// <summary>
         /// Determines if the data structures allocated to contain the geometry of the text object will be reduced in size if the number of characters required to display the text is reduced by more than 256 characters.
@@ -2053,9 +2062,19 @@ namespace TMPro
                     {
                         if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
 
-                        m_TextParsingBuffer[writeIndex].unicode = 10; ;
+                        m_TextParsingBuffer[writeIndex].unicode = 10;
                         writeIndex += 1;
                         i += 3;
+
+                        continue;
+                    }
+                    else if (IsTagName(ref sourceText, "<NBSP>", i))
+                    {
+                        if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+
+                        m_TextParsingBuffer[writeIndex].unicode = 160;
+                        writeIndex += 1;
+                        i += 5;
 
                         continue;
                     }
@@ -2195,6 +2214,16 @@ namespace TMPro
 
                         continue;
                     }
+                    else if (IsTagName(ref sourceText, "<NBSP>", i))
+                    {
+                        if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+
+                        m_TextParsingBuffer[writeIndex].unicode = 160;
+                        writeIndex += 1;
+                        i += 5;
+
+                        continue;
+                    }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
                         m_TextStyleStackDepth += 1;
@@ -2329,6 +2358,16 @@ namespace TMPro
 
                         continue;
                     }
+                    else if (IsTagName(ref sourceText, "<NBSP>", i))
+                    {
+                        if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+
+                        m_TextParsingBuffer[writeIndex].unicode = 160;
+                        writeIndex += 1;
+                        i += 5;
+
+                        continue;
+                    }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
                         m_TextStyleStackDepth += 1;
@@ -2425,6 +2464,16 @@ namespace TMPro
                         charBuffer[writeIndex].unicode = 10;
                         writeIndex += 1;
                         i += 3;
+
+                        continue;
+                    }
+                    else if (IsTagName(ref sourceText, "<NBSP>", i))
+                    {
+                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                        charBuffer[writeIndex].unicode = 160;
+                        writeIndex += 1;
+                        i += 5;
 
                         continue;
                     }
@@ -2622,6 +2671,19 @@ namespace TMPro
 
                         continue;
                     }
+                    else if (IsTagName(ref sourceText, "<NBSP>", i))
+                    {
+                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                        charBuffer[writeIndex].unicode = 160;
+                        charBuffer[writeIndex].stringIndex = i;
+                        charBuffer[writeIndex].length = 1;
+
+                        writeIndex += 1;
+                        i += 5;
+
+                        continue;
+                    }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
                         m_TextStyleStackDepth += 1;
@@ -2789,6 +2851,16 @@ namespace TMPro
 
                         continue;
                     }
+                    else if (IsTagName(ref sourceText, "<NBSP>", i))
+                    {
+                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                        charBuffer[writeIndex].unicode = 160;
+                        writeIndex += 1;
+                        i += 5;
+
+                        continue;
+                    }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
                         m_TextStyleStackDepth += 1;
@@ -2909,6 +2981,16 @@ namespace TMPro
 
                         continue;
                     }
+                    else if (IsTagName(ref tagDefinition, "<NBSP>", i))
+                    {
+                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                        charBuffer[writeIndex].unicode = 160;
+                        writeIndex += 1;
+                        i += 5;
+
+                        continue;
+                    }
                     else if (IsTagName(ref tagDefinition, "<STYLE=", i))
                     {
                         m_TextStyleStackDepth += 1;
@@ -3019,6 +3101,16 @@ namespace TMPro
                         charBuffer[writeIndex].unicode = 10;
                         writeIndex += 1;
                         i += 3;
+
+                        continue;
+                    }
+                    else if (IsTagName(ref tagDefinition, "<NBSP>", i))
+                    {
+                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                        charBuffer[writeIndex].unicode = 160;
+                        writeIndex += 1;
+                        i += 5;
 
                         continue;
                     }
@@ -3136,6 +3228,16 @@ namespace TMPro
 
                         continue;
                     }
+                    else if (IsTagName(ref tagDefinition, "<NBSP>", i))
+                    {
+                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                        charBuffer[writeIndex].unicode = 160;
+                        writeIndex += 1;
+                        i += 5;
+
+                        continue;
+                    }
                     else if (IsTagName(ref tagDefinition, "<STYLE=", i))
                     {
                         m_TextStyleStackDepth += 1;
@@ -3250,6 +3352,16 @@ namespace TMPro
 
                         continue;
                     }
+                    else if (IsTagName(ref tagDefinition, "<NBSP>", i))
+                    {
+                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                        charBuffer[writeIndex].unicode = 160;
+                        writeIndex += 1;
+                        i += 5;
+
+                        continue;
+                    }
                     else if (IsTagName(ref tagDefinition, "<STYLE=", i))
                     {
                         m_TextStyleStackDepth += 1;
@@ -3354,6 +3466,16 @@ namespace TMPro
                         charBuffer[writeIndex].unicode = 10;
                         writeIndex += 1;
                         i += 3;
+
+                        continue;
+                    }
+                    else if (IsTagName(ref tagDefinition, "<NBSP>", i))
+                    {
+                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                        charBuffer[writeIndex].unicode = 160;
+                        writeIndex += 1;
+                        i += 5;
 
                         continue;
                     }
@@ -3462,6 +3584,16 @@ namespace TMPro
                         charBuffer[writeIndex].unicode = 10;
                         writeIndex += 1;
                         i += 3;
+
+                        continue;
+                    }
+                    else if (IsTagName(ref tagDefinition, "<NBSP>", i))
+                    {
+                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                        charBuffer[writeIndex].unicode = 160;
+                        writeIndex += 1;
+                        i += 5;
 
                         continue;
                     }
@@ -3574,6 +3706,16 @@ namespace TMPro
 
                         continue;
                     }
+                    else if (IsTagName(ref tagDefinition, "<NBSP>", i))
+                    {
+                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                        charBuffer[writeIndex].unicode = 160;
+                        writeIndex += 1;
+                        i += 5;
+
+                        continue;
+                    }
                     else if (IsTagName(ref tagDefinition, "<STYLE=", i))
                     {
                         m_TextStyleStackDepth += 1;
@@ -3679,6 +3821,16 @@ namespace TMPro
                         charBuffer[writeIndex].unicode = 10;
                         writeIndex += 1;
                         i += 3;
+
+                        continue;
+                    }
+                    else if (IsTagName(ref tagDefinition, "<NBSP>", i))
+                    {
+                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                        charBuffer[writeIndex].unicode = 160;
+                        writeIndex += 1;
+                        i += 5;
 
                         continue;
                     }
@@ -3802,6 +3954,16 @@ namespace TMPro
 
                         continue;
                     }
+                    else if (IsTagName(ref tagDefinition, "<NBSP>", i))
+                    {
+                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                        charBuffer[writeIndex].unicode = 160;
+                        writeIndex += 1;
+                        i += 5;
+
+                        continue;
+                    }
                     else if (IsTagName(ref tagDefinition, "<STYLE=", i))
                     {
                         m_TextStyleStackDepth += 1;
@@ -3897,6 +4059,16 @@ namespace TMPro
                         charBuffer[writeIndex].unicode = 10;
                         writeIndex += 1;
                         i += 3;
+
+                        continue;
+                    }
+                    else if (IsTagName(ref tagDefinition, "<NBSP>", i))
+                    {
+                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                        charBuffer[writeIndex].unicode = 160;
+                        writeIndex += 1;
+                        i += 5;
 
                         continue;
                     }
@@ -4561,7 +4733,7 @@ namespace TMPro
             m_maxLineAscender = k_LargeNegativeFloat;
             m_maxLineDescender = k_LargePositiveFloat;
             m_lineNumber = 0;
-            //bool isStartOfNewLine = true;
+            m_startOfLineAscender = 0;
             bool isDrivenLineSpacing = false;
 
 
@@ -5017,6 +5189,7 @@ namespace TMPro
                             {
                                 float ascender = m_internalCharacterInfo[m_characterCount].ascender - m_internalCharacterInfo[m_characterCount].baseLine;
                                 m_lineOffset += 0 - m_maxLineDescender + ascender + (lineGap + m_lineSpacingDelta) * baseScale + m_lineSpacing * currentEmScale;
+                                isDrivenLineSpacing = false;
                             }
                             else
                             {
@@ -5026,9 +5199,9 @@ namespace TMPro
 
                             m_maxLineAscender = k_LargeNegativeFloat;
                             m_maxLineDescender = k_LargePositiveFloat;
+                            m_startOfLineAscender = elementAscender;
 
                             m_xAdvance = 0 + tag_Indent;
-                            //isStartOfNewLine = true;
                             isFirstWordOfLine = true;
                             continue;
                         }
@@ -5140,9 +5313,13 @@ namespace TMPro
                         {
                             float lineOffsetDelta = 0 - m_maxLineDescender + elementAscender + (lineGap + m_lineSpacingDelta) * baseScale + (m_lineSpacing + (charCode == 10 ? m_paragraphSpacing : 0)) * currentEmScale;
                             m_lineOffset += lineOffsetDelta;
+                            isDrivenLineSpacing = false;
                         }
                         else
+                        {
                             m_lineOffset += m_lineHeight + (m_lineSpacing + (charCode == 10 ? m_paragraphSpacing : 0)) * currentEmScale;
+                            isDrivenLineSpacing = true;
+                        }
 
                         m_maxLineAscender = k_LargeNegativeFloat;
                         m_maxLineDescender = k_LargePositiveFloat;

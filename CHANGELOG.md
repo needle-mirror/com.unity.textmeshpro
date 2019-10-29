@@ -1,7 +1,32 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
-## [2.1.0-preview.1] - 2019-09-18
+## [2.1.0-preview.2] - 2019-10-30
+## [1.5.0-preview.2]
+### Changes
+- Fixed Input Field issue when Read Only flag is set preventing the initial setting of the text. Also fixed Read Only flag not being respected when using IME input.
+- Fixed potential infinite loop when using text overflow mode ScrollRect. See Case #1188867
+- Fixed Input Field culling related issue(s) where text would be incorrectly culled. See https://forum.unity.com/threads/version-1-5-0-2-1-0-preview-1-now-available-for-testing.753587/#post-5023700 
+- Revised handling and referencing of the CanvasRenderer in anticipation of an incoming change to the MaskableGraphic class where it will no longer automatically add a CanvasRenderer to components inheriting from it. As a result, <TextMeshPro> objects will no longer have a CanvasRenderer.
+- Fixed potential NRE when using Overflow Truncate mode with sprites. See https://forum.unity.com/threads/tmpro-stackoverflow-caused-by-tmpro-textmeshprougui-generatetextmesh.750398/page-2#post-5042822
+- Fixed issue when using font weights in combination of font styles in the editor.
+- Fixed for potential incorrect preferred height.
+- Improved handling of StyleSheet options to reorder, add or delete styles.
+- Fixed Input Field Caret & Selection Highlight potential culling issue when the object was instantiated outside the culling region.
+- Fixed potential issue with registration of text objects in the TMP_UpdateManager.
+- Optimization to suppress callback to InternalUpdate when parent Canvas is disabled. Case #1189820
+- Fixed Fallback material not getting updated correctly when changing Generation Settings on the Fallback Font Asset.
+- Fixed a typo in the Font Weight section of the Font Asset Editor.
+- Fixed potential ArgumentOutOfRangeException in the Input Field when using Hide Mobile Input and deleting a long string. Case #1162514
+- Added "Is Scale Static" option in the Extra Settings to exclude text objects from InternalUpdate callbacks to improve performance when the object's scale is static. This InternalUpdate callback is used to track potential changes to the scale of text objects to update their SDF Scale. 
+- Added the ability to control culling modes for the TMP Shaders. This new option is available in the Debug section of the Material Inspector. New feature requires updating the TMP Essential Resources. See the following post https://forum.unity.com/threads/not-see-textmeshpro-rendering-from-the-back.767510/#post-5112461.
+- Fixed Material Inspector issue when toggling the Record button in the Animation window. Case #1174960
+- Improved Line Breaking handling for CJK. This also addresses a few reported issues. Case #1171603
+- Added support for &ltNBSP&gt tag which is internally replaced by a non-breaking space or \u00A0.
+- Improved performance when retrieving glyph adjustment records when using dynamic font assets.
+- Fixed potential Null Reference Exception in the Editor when assigning new font asset to disabled game object when no previous font asset was assigned.
+
+## [2.1.0-preview.1] - 2019-09-30
 ## [1.5.0-preview.1]
 ### Changes
 - Fixed an issue when using Overflow Ellipsis mode where the Ellipsis character would not be displayed correctly when the preceding character is a sprite.

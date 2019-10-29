@@ -8,6 +8,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
+using UnityEditor.TextCore.LowLevel;
 using Object = UnityEngine.Object;
 
 namespace TMPro.EditorUtilities
@@ -1366,6 +1367,11 @@ namespace TMPro.EditorUtilities
                 Texture2D tex = fontAsset.atlasTextures[0];
                 tex.name = tex_FileName + " Atlas";
 
+                // Make texture readable to allow resizing
+                bool isReadableState = tex.isReadable;
+                if (isReadableState == false)
+                    FontEngineEditorUtilities.SetAtlasTextureIsReadable(tex, true);
+
                 if (tex.width != m_AtlasWidth || tex.height != m_AtlasHeight)
                 {
                     tex.Resize(m_AtlasWidth, m_AtlasHeight);
@@ -1374,6 +1380,9 @@ namespace TMPro.EditorUtilities
 
                 // Copy new texture data to existing texture
                 Graphics.CopyTexture(m_FontAtlasTexture, tex);
+
+                // Apply changes to the texture.
+                tex.Apply(false, !isReadableState);
 
                 // Special handling due to a bug in earlier versions of Unity.
                 m_FontAtlasTexture.hideFlags = HideFlags.None;
@@ -1547,6 +1556,11 @@ namespace TMPro.EditorUtilities
                 Texture2D tex = fontAsset.atlasTextures[0];
                 tex.name = tex_FileName + " Atlas";
 
+                // Make texture readable to allow resizing
+                bool isReadableState = tex.isReadable;
+                if (isReadableState == false)
+                    FontEngineEditorUtilities.SetAtlasTextureIsReadable(tex, true);
+
                 if (tex.width != m_AtlasWidth || tex.height != m_AtlasHeight)
                 {
                     tex.Resize(m_AtlasWidth, m_AtlasHeight);
@@ -1557,7 +1571,7 @@ namespace TMPro.EditorUtilities
                 Graphics.CopyTexture(m_FontAtlasTexture, tex);
 
                 // Apply changes to the texture.
-                tex.Apply();
+                tex.Apply(false, !isReadableState);
 
                 // Special handling due to a bug in earlier versions of Unity.
                 m_FontAtlasTexture.hideFlags = HideFlags.None;

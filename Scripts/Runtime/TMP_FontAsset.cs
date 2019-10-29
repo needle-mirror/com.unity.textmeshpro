@@ -1051,6 +1051,10 @@ namespace TMPro
         // tacking glyphs that need to be added to various font asset atlas textures.
         // ================================================================================
 
+        // List and HashSet used for tracking font assets whose font atlas texture and character data needs updating.
+        private static List<TMP_FontAsset> k_FontAssetsToUpdate = new List<TMP_FontAsset>();
+        private static HashSet<int> k_FontAssetsToUpdateLookup = new HashSet<int>();
+
         /// <summary>
         /// Determines if the font asset is already registered to be updated.
         /// </summary>
@@ -1659,7 +1663,10 @@ namespace TMPro
                 m_CharacterLookupDictionary.Add(unicode, character);
 
                 if (TMP_Settings.getFontFeaturesAtRuntime)
-                    UpdateGlyphAdjustmentRecords(unicode, glyphIndex);
+                {
+                    if (k_FontAssetsToUpdateLookup.Add(instanceID))
+                        k_FontAssetsToUpdate.Add(this);
+                }
 
                 #if UNITY_EDITOR
                 // Makes the changes to the font asset persistent.
@@ -1740,7 +1747,10 @@ namespace TMPro
                 m_GlyphIndexList.Add(glyphIndex);
 
                 if (TMP_Settings.getFontFeaturesAtRuntime)
-                    UpdateGlyphAdjustmentRecords(unicode, glyphIndex);
+                {
+                    if (k_FontAssetsToUpdateLookup.Add(instanceID))
+                        k_FontAssetsToUpdate.Add(this);
+                }
 
                 #if UNITY_EDITOR
                 // Makes the changes to the font asset persistent.
@@ -1782,7 +1792,10 @@ namespace TMPro
                     m_GlyphIndexList.Add(glyphIndex);
 
                     if (TMP_Settings.getFontFeaturesAtRuntime)
-                        UpdateGlyphAdjustmentRecords(unicode, glyphIndex);
+                    {
+                        if (k_FontAssetsToUpdateLookup.Add(instanceID))
+                            k_FontAssetsToUpdate.Add(this);
+                    }
 
                     #if UNITY_EDITOR
                     //SortGlyphTable();
@@ -1986,13 +1999,33 @@ namespace TMPro
         }
 
 
-        internal void UpdateGlyphAdjustmentRecords(uint unicode, uint glyphIndex)
+        /// <summary>
+        /// Function called to update the font atlas texture and character data of font assets to which
+        /// new characters were added.
+        /// </summary>
+        public static void UpdateFontAssets()
         {
-            //Profiler.BeginSample("TMP.UpdateGlyphAdjustmentRecords");
+            int count = k_FontAssetsToUpdate.Count;
+
+            for (int i = 0; i < count; i++)
+            {
+                k_FontAssetsToUpdate[i].UpdateGlyphAdjustmentRecords();
+            }
+
+            if (count > 0)
+            {
+                k_FontAssetsToUpdate.Clear();
+                k_FontAssetsToUpdateLookup.Clear();
+            }
+        }
+
+        internal void UpdateGlyphAdjustmentRecords()
+        {
+            Profiler.BeginSample("TMP.UpdateGlyphAdjustmentRecords");
 
             int glyphCount = m_GlyphIndexList.Count;
 
-            if (s_GlyphIndexArray.Length <= glyphCount)
+            if (s_GlyphIndexArray.Length < glyphCount)
                 s_GlyphIndexArray = new uint[Mathf.NextPowerOfTwo(glyphCount + 1)];
 
             for (int i = 0; i < glyphCount; i++)
@@ -2007,7 +2040,7 @@ namespace TMPro
 
             if (pairAdjustmentRecords == null || pairAdjustmentRecords.Length == 0)
             {
-                //Profiler.EndSample();
+                Profiler.EndSample();
                 return;
             }
 
@@ -2032,7 +2065,7 @@ namespace TMPro
             m_FontFeatureTable.SortGlyphPairAdjustmentRecords();
             #endif
 
-            //Profiler.EndSample();
+            Profiler.EndSample();
         }
 
 

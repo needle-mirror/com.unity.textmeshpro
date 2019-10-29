@@ -424,6 +424,14 @@ namespace TMPro.EditorUtilities
                 }
             }
 
+            if (m_Material.HasProperty(ShaderUtilities.ShaderTag_CullMode))
+            {
+                EditorGUILayout.Space();
+                DoPopup("_CullMode", "Cull Mode", s_CullingTypeLabels);
+            }
+
+            EditorGUILayout.Space();
+
             EditorGUI.BeginDisabledGroup(true);
             DoFloat("_ScaleRatioA", "Scale Ratio A");
             DoFloat("_ScaleRatioB", "Scale Ratio B");

@@ -303,21 +303,31 @@ namespace TMPro
         void ON_MATERIAL_PROPERTY_CHANGED(bool isChanged, Material mat)
         {
             //Debug.Log("*** ON_MATERIAL_PROPERTY_CHANGED ***");
+            if (m_sharedMaterial == null)
+                return;
+
             int targetMaterialID = mat.GetInstanceID();
             int sharedMaterialID = m_sharedMaterial.GetInstanceID();
             int fallbackSourceMaterialID = m_fallbackSourceMaterial == null ? 0 : m_fallbackSourceMaterial.GetInstanceID();
+
+            // Sync culling with parent text object
+            float cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
+            m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
 
             // Filter events and return if the affected material is not this object's material.
             if (targetMaterialID != sharedMaterialID)
             {
                 // Check if event applies to the source fallback material
                 if (m_fallbackMaterial != null && fallbackSourceMaterialID == targetMaterialID && TMP_Settings.matchMaterialPreset)
+                {
                     TMP_MaterialManager.CopyMaterialPresetProperties(mat, m_fallbackMaterial);
+
+                    // Re-sync culling with parent text object
+                    m_fallbackMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
+                }
                 else
                     return;
             }
-
-            if (m_TextComponent == null) m_TextComponent = GetComponentInParent<TextMeshPro>();
 
             m_padding = GetPaddingForMaterial();
 
@@ -372,8 +382,11 @@ namespace TMPro
                 // Copy Normal and Bold Weight
                 if (m_fallbackMaterial != null)
                 {
-                    m_fallbackMaterial.SetFloat(ShaderUtilities.ID_WeightNormal, m_fontAsset.normalStyle);
-                    m_fallbackMaterial.SetFloat(ShaderUtilities.ID_WeightBold, m_fontAsset.boldStyle);
+                    if (TMP_Settings.matchMaterialPreset)
+                    {
+                        TMP_MaterialManager.ReleaseFallbackMaterial(m_fallbackMaterial);
+                        TMP_MaterialManager.CleanupFallbackMaterials();
+                    }
                 }
             }
         }
@@ -560,12 +573,16 @@ namespace TMPro
         {
             //Debug.Log("*** STO - UpdateMaterial() *** FRAME (" + Time.frameCount + ")");
 
-            //if (!this.enabled)
-            //    return;
-
             if (m_renderer == null) m_renderer = this.renderer;
 
             m_renderer.sharedMaterial = m_sharedMaterial;
+
+            if (m_sharedMaterial == null)
+                return;
+
+            // Special handling to keep the Culling of the material in sync with parent text object
+            float cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
+            m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
 
             #if UNITY_EDITOR
             if (m_sharedMaterial != null && gameObject.name != "TMP SubMesh [" + m_sharedMaterial.name + "]")

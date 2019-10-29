@@ -349,6 +349,13 @@ namespace TMPro
             SetMaterialDirty();
         }
 
+        //public override void SetClipRect(Rect clipRect, bool validRect)
+        //{
+        //    //Debug.Log("***** SetClipRect (" + clipRect + ", " + validRect + ") *****");
+
+        //    base.SetClipRect(clipRect, validRect);
+        //}
+
         /// <summary>
         /// Override of the Cull function to provide for the ability to override the culling of the text object.
         /// </summary>
@@ -356,7 +363,14 @@ namespace TMPro
         /// <param name="validRect"></param>
         public override void Cull(Rect clipRect, bool validRect)
         {
-            if (m_ignoreRectMaskCulling) return;
+            //Debug.Log("***** Cull (" + clipRect + ", " + validRect + ")   Cull: " + m_canvasRenderer.cull + " *****");
+
+            if (validRect)
+            {
+                m_canvasRenderer.cull = false;
+                CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(this);
+                return;
+            }
 
             base.Cull(clipRect, validRect);
         }

@@ -11,6 +11,9 @@ using TMPro.EditorUtilities;
 
 namespace TMPro
 {
+    // Suppressing warnings related to the use of private structures which are confusing the compiler as these data structures are used by .json files.
+    #pragma warning disable 0649
+
     /// <summary>
     /// Data structure containing the target and replacement fileIDs and GUIDs which will require remapping from previous version of TextMesh Pro to the new TextMesh Pro UPM package.
     /// </summary>
@@ -480,21 +483,13 @@ namespace TMPro
             public string assetDataFile;
         }
 
-        // Create Sprite Asset Editor Window
-        //[MenuItem("Window/TextMeshPro/Generate New Package GUIDs", false, 1500)]
-        public static void GenerateNewPackageGUIDs_Menu()
-        {
-            GenerateNewPackageGUIDs();
-        }
-
-
         /// <summary>
         /// 
         /// </summary>
         [MenuItem("Window/TextMeshPro/Import TMP Essential Resources", false, 2050)]
         public static void ImportProjectResourcesMenu()
         {
-            ImportProjectResources();
+            ImportEssentialResources();
         }
 
 
@@ -504,45 +499,7 @@ namespace TMPro
         [MenuItem("Window/TextMeshPro/Import TMP Examples and Extras", false, 2051)]
         public static void ImportExamplesContentMenu()
         {
-            ImportExtraContent();
-        }
-
-
-        // Create Sprite Asset Editor Window
-        //[MenuItem("Window/TextMeshPro/Convert TMP Project Files to UPM", false, 1510)]
-        public static void ConvertProjectGUIDsMenu()
-        {
-            ConvertProjectGUIDsToUPM();
-
-            //GetVersionInfo();
-        }
-
-
-        // Create Sprite Asset Editor Window
-        //[MenuItem("Window/TextMeshPro/Convert GUID (Source to DLL)", false, 2010)]
-        public static void ConvertGUIDFromSourceToDLLMenu()
-        {
-            //ConvertGUIDFromSourceToDLL();
-
-            //GetVersionInfo();
-        }
-
-
-        // Create Sprite Asset Editor Window
-        //[MenuItem("Window/TextMeshPro/Convert GUID (DLL to Source)", false, 2020)]
-        public static void ConvertGUIDFromDllToSourceMenu()
-        {
-            //ConvertGUIDFromDLLToSource();
-
-            //GetVersionInfo();
-        }
-
-
-        // Create Sprite Asset Editor Window
-        //[MenuItem("Window/TextMeshPro/Extract Package GUIDs", false, 1530)]
-        public static void ExtractPackageGUIDMenu()
-        {
-            ExtractPackageGUIDs();
+            ImportExamplesAndExtras();
         }
 
 
@@ -556,7 +513,7 @@ namespace TMPro
         /// <summary>
         /// 
         /// </summary>
-        private static void ImportExtraContent()
+        private static void ImportExamplesAndExtras()
         {
             string packageFullPath = EditorUtilities.TMP_EditorUtility.packageFullPath;
 
@@ -567,355 +524,11 @@ namespace TMPro
         /// <summary>
         /// 
         /// </summary>
-        private static void ImportProjectResources()
+        private static void ImportEssentialResources()
         {
             string packageFullPath = EditorUtilities.TMP_EditorUtility.packageFullPath;
 
             AssetDatabase.ImportPackage(packageFullPath + "/Package Resources/TMP Essential Resources.unitypackage", true);
         }
-
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private static void GenerateNewPackageGUIDs()
-        {
-            // Make sure Asset Serialization mode is set to ForceText with Visible Meta Files.
-            SetProjectSerializationAndSourceControlModes();
-
-            string projectPath = Path.GetFullPath("Assets/..");
-
-            // Clear existing dictionary of AssetRecords
-            List<AssetRemappingRecord> assetRecords = new List<AssetRemappingRecord>();
-
-            // Get full list of GUIDs used in the package which including folders.
-            string[] packageGUIDs = AssetDatabase.FindAssets("t:Object", new string[] { "Assets/Packages/com.unity.TextMeshPro" });
-
-            for (int i = 0; i < packageGUIDs.Length; i++)
-            {
-                // Could add a progress bar for this process (if needed)
-
-                string guid = packageGUIDs[i];
-                string assetFilePath = AssetDatabase.GUIDToAssetPath(guid);
-                string assetMetaFilePath = AssetDatabase.GetTextMetaFilePathFromAssetPath(assetFilePath);
-                //System.Type assetType = AssetDatabase.GetMainAssetTypeAtPath(assetFilePath);
-
-                AssetRemappingRecord assetRecord;
-                assetRecord.oldGuid = guid;
-                assetRecord.assetPath = assetFilePath;
-
-                string newGUID = GenerateUniqueGUID();
-
-                assetRecord.newGuid = newGUID;
-
-                if (assetRecords.FindIndex(item => item.oldGuid == guid) != -1)
-                    continue;
-
-                assetRecords.Add(assetRecord);
-
-                // Read the meta file for the given asset.
-                string assetMetaFile = File.ReadAllText(projectPath + "/" + assetMetaFilePath);
-
-                assetMetaFile = assetMetaFile.Replace("guid: " + guid, "guid: " + newGUID);
-
-                File.WriteAllText(projectPath + "/" + assetMetaFilePath, assetMetaFile);
-
-                //Debug.Log("Asset: [" + assetFilePath + "]   Type: " + assetType + "   Current GUID: [" + guid + "]   New GUID: [" + newGUID + "]");
-            }
-
-            AssetDatabase.Refresh();
-
-            // Get list of GUIDs for assets that might need references to previous GUIDs which need to be updated.
-            packageGUIDs = AssetDatabase.FindAssets("t:Object"); //  ("t:Object", new string[] { "Assets/Asset Importer" });
-
-            for (int i = 0; i < packageGUIDs.Length; i++)
-            {
-                // Could add a progress bar for this process
-
-                string guid = packageGUIDs[i];
-                string assetFilePath = AssetDatabase.GUIDToAssetPath(guid);
-                System.Type assetType = AssetDatabase.GetMainAssetTypeAtPath(assetFilePath);
-
-                // Filter out file types we are not interested in
-                if (assetType == typeof(DefaultAsset) || assetType == typeof(MonoScript) || assetType == typeof(Texture2D) || assetType == typeof(TextAsset) || assetType == typeof(Shader))
-                    continue;
-
-                // Read the asset data file
-                string assetDataFile = File.ReadAllText(projectPath + "/" + assetFilePath);
-
-                //Debug.Log("Searching Asset: [" + assetFilePath + "] of type: " + assetType);
-
-                bool hasFileChanged = false;
-
-                foreach (AssetRemappingRecord record in assetRecords)
-                {
-                    if (assetDataFile.Contains(record.oldGuid))
-                    {
-                        hasFileChanged = true;
-
-                        assetDataFile = assetDataFile.Replace(record.oldGuid, record.newGuid);
-
-                        Debug.Log("Replacing old GUID: [" + record.oldGuid + "] by new GUID: [" + record.newGuid + "] in asset file: [" + assetFilePath + "].");
-                    }
-                }
-
-                if (hasFileChanged)
-                {
-                    // Add file to list of changed files
-                    File.WriteAllText(projectPath + "/" + assetFilePath, assetDataFile);
-                }
-
-            }
-
-            AssetDatabase.Refresh();
-
-            // Restore project Asset Serialization and Source Control modes.
-            RestoreProjectSerializationAndSourceControlModes();
-        }
-
-
-        private static void ExtractPackageGUIDs()
-        {
-            // Make sure Asset Serialization mode is set to ForceText with Visible Meta Files.
-            SetProjectSerializationAndSourceControlModes();
-
-            string projectPath = Path.GetFullPath("Assets/..");
-
-            // Create new instance of AssetConversionData file
-            AssetConversionData data = new AssetConversionData();
-            data.assetRecords = new List<AssetConversionRecord>();
-
-            // Get full list of GUIDs used in the package which including folders.
-            string[] packageGUIDs = AssetDatabase.FindAssets("t:Object", new string[] { "Assets/Packages/com.unity.TextMeshPro" });
-
-            for (int i = 0; i < packageGUIDs.Length; i++)
-            {
-                // Could add a progress bar for this process (if needed)
-
-                string guid = packageGUIDs[i];
-                string assetFilePath = AssetDatabase.GUIDToAssetPath(guid);
-                //string assetMetaFilePath = AssetDatabase.GetTextMetaFilePathFromAssetPath(assetFilePath);
-
-                //ObjectIdentifier[] localIdentifider = BundleBuildInterface.GetPlayerObjectIdentifiersInAsset(new GUID(guid), BuildTarget.NoTarget);
-                //System.Type[] types = BundleBuildInterface.GetTypeForObjects(localIdentifider);
-
-                System.Type assetType = AssetDatabase.GetMainAssetTypeAtPath(assetFilePath);
-
-                // Filter out file types we are not interested in
-                if (assetType == typeof(DefaultAsset))
-                    continue;
-
-                string newGuid = GenerateUniqueGUID();
-
-                AssetConversionRecord record;
-                record.referencedResource = Path.GetFileName(assetFilePath);
-                record.target = "fileID: 2108210716, guid: " + newGuid;
-
-                record.replacement = "fileID: 11500000, guid: " + guid;
-
-                //if (m_AssetRecords.FindIndex(item => item.oldGuid == guid) != -1)
-                //    continue;
-
-                data.assetRecords.Add(record);
-
-                // Read the meta file for the given asset.
-                //string assetMetaFile = File.ReadAllText(projectPath + "/" + assetMetaFilePath);
-
-                //assetMetaFile = assetMetaFile.Replace("guid: " + guid, "guid: " + newGUID);
-
-                //File.WriteAllText(projectPath + "/" + assetMetaFilePath, assetMetaFile);
-
-                Debug.Log("Asset: [" + Path.GetFileName(assetFilePath) + "]   Type: " + assetType + "   Current GUID: [" + guid + "]   New GUID: [" + newGuid + "]");
-            }
-
-            // Write new information into JSON file
-            string dataFile = JsonUtility.ToJson(data, true);
-
-            File.WriteAllText(projectPath + "/Assets/Packages/com.unity.TextMeshPro/PackageConversionData.json", dataFile);
-
-            // Restore project Asset Serialization and Source Control modes.
-            RestoreProjectSerializationAndSourceControlModes();
-        }
-
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private static void ConvertProjectGUIDsToUPM()
-        {
-            // Make sure Asset Serialization mode is set to ForceText with Visible Meta Files.
-            SetProjectSerializationAndSourceControlModes();
-
-            string projectPath = Path.GetFullPath("Assets/..");
-            string packageFullPath = EditorUtilities.TMP_EditorUtility.packageFullPath;
-
-            // List containing assets that have been modified.
-            List<AssetModificationRecord> modifiedAssetList = new List<AssetModificationRecord>();
-
-            // Read Conversion Data from Json file.
-            AssetConversionData conversionData = JsonUtility.FromJson<AssetConversionData>(File.ReadAllText(packageFullPath + "/PackageConversionData.json"));
-
-            // Get list of GUIDs for assets that might contain references to previous GUIDs that require updating.
-            string[] projectGUIDs = AssetDatabase.FindAssets("t:Object");
-
-            for (int i = 0; i < projectGUIDs.Length; i++)
-            {
-                // Could add a progress bar for this process
-
-                string guid = projectGUIDs[i];
-                string assetFilePath = AssetDatabase.GUIDToAssetPath(guid);
-                System.Type assetType = AssetDatabase.GetMainAssetTypeAtPath(assetFilePath);
-
-                // Filter out file types we are not interested in
-                if (assetType == typeof(DefaultAsset) || assetType == typeof(MonoScript) || assetType == typeof(Texture2D) || assetType == typeof(TextAsset) || assetType == typeof(Shader))
-                    continue;
-
-                // Read the asset data file
-                string assetDataFile = File.ReadAllText(projectPath + "/" + assetFilePath);
-
-                //Debug.Log("Searching Asset: [" + assetFilePath + "] of type: " + assetType);
-
-                bool hasFileChanged = false;
-
-                foreach (AssetConversionRecord record in conversionData.assetRecords)
-                {
-                    if (assetDataFile.Contains(record.target))
-                    {
-                        hasFileChanged = true;
-
-                        assetDataFile = assetDataFile.Replace(record.target, record.replacement);
-
-                        Debug.Log("Replacing Reference to [" + record.referencedResource + "] using [" + record.target + "] with [" + record.replacement + "] in asset file: [" + assetFilePath + "].");
-                    }
-                }
-
-                if (hasFileChanged)
-                {
-                    Debug.Log("Adding [" + assetFilePath + "] to list of assets to be modified.");
-
-                    AssetModificationRecord modifiedAsset;
-                    modifiedAsset.assetFilePath = assetFilePath;
-                    modifiedAsset.assetDataFile = assetDataFile;
-
-                    modifiedAssetList.Add(modifiedAsset);
-                }
-
-            }
-
-            // Scan project meta files to update GUIDs of assets whose GUID has changed.
-            projectGUIDs = AssetDatabase.FindAssets("t:Object");
-
-            for (int i = 0; i < projectGUIDs.Length; i++)
-            {
-                string guid = projectGUIDs[i];
-                string assetFilePath = AssetDatabase.GUIDToAssetPath(guid);
-                string assetMetaFilePath = AssetDatabase.GetTextMetaFilePathFromAssetPath(assetFilePath);
-
-                // Read the asset meta data file
-                string assetMetaFile = File.ReadAllText(projectPath + "/" + assetMetaFilePath);
-
-                bool hasFileChanged = false;
-
-                foreach (AssetConversionRecord record in conversionData.assetRecords)
-                {
-                    if (assetMetaFile.Contains(record.target))
-                    {
-                        hasFileChanged = true;
-
-                        assetMetaFile = assetMetaFile.Replace(record.target, record.replacement);
-
-                        Debug.Log("Replacing Reference to [" + record.referencedResource + "] using [" + record.target + "] with [" + record.replacement + "] in asset file: [" + assetMetaFilePath + "].");
-                    }
-                }
-
-                if (hasFileChanged)
-                {
-                    Debug.Log("Adding [" + assetMetaFilePath + "] to list of meta files to be modified.");
-
-                    AssetModificationRecord modifiedAsset;
-                    modifiedAsset.assetFilePath = assetMetaFilePath;
-                    modifiedAsset.assetDataFile = assetMetaFile;
-
-                    modifiedAssetList.Add(modifiedAsset);
-                }
-            }
-
-            // Display dialogue to show user a list of project files that will be modified upon their consent.
-            if (EditorUtility.DisplayDialog("Save Modified Asset(s)?", "Are you sure you want to save all modified assets?", "YES", "NO"))
-            {
-                for (int i = 0; i < modifiedAssetList.Count; i++)
-                {
-                    // Make sure all file streams that might have been opened by Unity are closed.
-                    //AssetDatabase.ReleaseCachedFileHandles();
-
-                    Debug.Log("Writing asset file [" + modifiedAssetList[i].assetFilePath + "].");
-
-                    //File.WriteAllText(projectPath + "/" + modifiedAssetList[i].assetFilePath, modifiedAssetList[i].assetDataFile);
-                }
-
-            }
-
-            AssetDatabase.Refresh();
-
-            // Restore project Asset Serialization and Source Control modes.
-            RestoreProjectSerializationAndSourceControlModes();
-        }
-
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        private static string GenerateUniqueGUID()
-        {
-            string monoGuid = System.Guid.NewGuid().ToString();
-
-            char[] charGuid = new char[32];
-            int index = 0;
-            for (int i = 0; i < monoGuid.Length; i++)
-            {
-                if (monoGuid[i] != '-')
-                    charGuid[index++] = monoGuid[i];
-            }
-
-            string guid = new string(charGuid);
-
-            // Make sure new GUID is not already used by some other asset.
-            if (AssetDatabase.GUIDToAssetPath(guid) != string.Empty)
-                guid = GenerateUniqueGUID();
-
-            return guid;
-        }
-
-
-        /// <summary>
-        /// Change project asset serialization mode to ForceText (if necessary)
-        /// </summary>
-        private static void SetProjectSerializationAndSourceControlModes()
-        {
-            // Make sure Asset Serialization mode is set to ForceText with Visible Meta Files.
-            m_ProjectAssetSerializationMode = EditorSettings.serializationMode;
-            if (m_ProjectAssetSerializationMode != SerializationMode.ForceText)
-                UnityEditor.EditorSettings.serializationMode = SerializationMode.ForceText;
-
-            m_ProjectExternalVersionControl = EditorSettings.externalVersionControl;
-            if (m_ProjectExternalVersionControl != "Visible Meta Files")
-                UnityEditor.EditorSettings.externalVersionControl = "Visible Meta Files";
-        }
-
-
-        /// <summary>
-        /// Revert potential change to asset serialization mode (if necessary)
-        /// </summary>
-        private static void RestoreProjectSerializationAndSourceControlModes()
-        {
-            // Make sure Asset Serialization mode is set to ForceText with Visible Meta Files.
-            if (m_ProjectAssetSerializationMode != EditorSettings.serializationMode)
-                EditorSettings.serializationMode = m_ProjectAssetSerializationMode;
-
-            if (m_ProjectExternalVersionControl != EditorSettings.externalVersionControl)
-                EditorSettings.externalVersionControl = m_ProjectExternalVersionControl;
-        }
-
     }
 }
