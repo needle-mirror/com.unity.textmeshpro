@@ -2,6 +2,10 @@
 using System.Collections;
 using UnityEngine.UI;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 
 namespace TMPro
 {
@@ -148,11 +152,19 @@ namespace TMPro
 
         public static GameObject CreateText(Resources resources)
         {
-            GameObject go = CreateUIElementRoot("Text (TMP)", s_TextElementSize);
+            GameObject go = null;
+            #if UNITY_EDITOR
+                go = ObjectFactory.CreateGameObject("Text (TMP)");
+            #else
+                go = CreateUIElementRoot("Text (TMP)", s_TextElementSize);
+            #endif
 
-            TextMeshProUGUI lbl = go.AddComponent<TextMeshProUGUI>();
-            lbl.text = "New Text";
-            SetDefaultTextValues(lbl);
+            TextMeshProUGUI textComponent = null;
+            #if UNITY_EDITOR
+                textComponent = ObjectFactory.AddComponent<TextMeshProUGUI>(go);
+            #else
+                textComponent = go.AddComponent<TextMeshProUGUI>();
+            #endif
 
             return go;
         }

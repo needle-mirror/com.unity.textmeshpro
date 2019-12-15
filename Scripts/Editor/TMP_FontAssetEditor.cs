@@ -5,10 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
-
-//#if UNITY_2018_4_5_OR_NEWER
 using UnityEditor.TextCore.LowLevel;
-//#endif
 
 
 namespace TMPro.EditorUtilities
@@ -382,11 +379,7 @@ namespace TMPro.EditorUtilities
                                 Texture2D tex = m_fontAsset.atlasTextures[i];
 
                                 if (tex != null && tex.isReadable)
-                                {
-                                    //#if UNITY_2018_4_5_OR_NEWER
                                     FontEngineEditorUtilities.SetAtlasTextureIsReadable(tex, false);
-                                    //#endif
-                                }
                             }
 
                             Debug.Log("Atlas Population mode set to [Static].");
@@ -410,11 +403,7 @@ namespace TMPro.EditorUtilities
                                     Texture2D tex = m_fontAsset.atlasTextures[i];
 
                                     if (tex != null && tex.isReadable == false)
-                                    {
-                                        //#if UNITY_2018_4_5_OR_NEWER
                                         FontEngineEditorUtilities.SetAtlasTextureIsReadable(tex, true);
-                                        //#endif
-                                    }
                                 }
 
                                 Debug.Log("Atlas Population mode set to [Dynamic].");

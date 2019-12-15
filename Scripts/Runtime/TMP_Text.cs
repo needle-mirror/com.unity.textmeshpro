@@ -131,7 +131,12 @@ namespace TMPro
         [SerializeField]
         [TextArea(5, 10)]
         protected string m_text;
-
+        
+        /// <summary>
+        /// Reference to potential text preprocessor component.
+        /// </summary>
+        [SerializeField]
+        protected ITextPreprocessor m_TextPreProcessor;
 
         /// <summary>
         /// 
@@ -1418,9 +1423,6 @@ namespace TMPro
         protected bool m_isCalculateSizeRequired = false;
         protected bool m_isLayoutDirty;
 
-        protected bool m_verticesAlreadyDirty;
-        protected bool m_layoutAlreadyDirty;
-
         protected bool m_isAwake;
         internal bool m_isWaitingOnResourceLoad;
 
@@ -1846,7 +1848,10 @@ namespace TMPro
             {
                 case TextInputSources.String:
                 case TextInputSources.Text:
-                    StringToCharArray(m_text, ref m_TextParsingBuffer);
+                    if (m_TextPreProcessor != null)
+                        StringToCharArray(m_TextPreProcessor.PreprocessText(m_text), ref m_TextParsingBuffer);
+                    else
+                        StringToCharArray(m_text, ref m_TextParsingBuffer);
                     break;
                 case TextInputSources.SetText:
                     SetTextArrayToCharArray(m_input_CharArray, ref m_TextParsingBuffer);
@@ -4505,7 +4510,7 @@ namespace TMPro
             }
 
             m_AutoSizeIterationCount = 0;
-            float preferredWidth = CalculatePreferredValues(fontSize, margin, true).x;
+            float preferredWidth = CalculatePreferredValues(fontSize, margin, true, false).x;
 
             m_isPreferredWidthDirty = false;
 
@@ -4530,7 +4535,7 @@ namespace TMPro
             m_charWidthAdjDelta = 0;
 
             m_AutoSizeIterationCount = 0;
-            float preferredWidth = CalculatePreferredValues(fontSize, margin, true).x;
+            float preferredWidth = CalculatePreferredValues(fontSize, margin, true, false).x;
 
             //Debug.Log("GetPreferredWidth() Called. Returning width of " + preferredWidth);
 
@@ -4562,7 +4567,7 @@ namespace TMPro
             }
 
             m_AutoSizeIterationCount = 0;
-            float preferredHeight = CalculatePreferredValues(fontSize, margin, !m_enableAutoSizing).y;
+            float preferredHeight = CalculatePreferredValues(fontSize, margin, !m_enableAutoSizing, true).y;
 
             m_isPreferredHeightDirty = false;
 
@@ -4587,7 +4592,7 @@ namespace TMPro
             m_charWidthAdjDelta = 0;
 
             m_AutoSizeIterationCount = 0;
-            float preferredHeight = CalculatePreferredValues(fontSize, margin, true).y;
+            float preferredHeight = CalculatePreferredValues(fontSize, margin, true, true).y;
 
             //Debug.Log("GetPreferredHeight() Called. Returning height of " + preferredHeight);
 
@@ -4656,7 +4661,7 @@ namespace TMPro
         /// Method to calculate the preferred width and height of the text object.
         /// </summary>
         /// <returns></returns>
-        protected virtual Vector2 CalculatePreferredValues(float defaultFontSize, Vector2 marginSize, bool ignoreTextAutoSizing)
+        protected virtual Vector2 CalculatePreferredValues(float defaultFontSize, Vector2 marginSize, bool ignoreTextAutoSizing, bool isWordWrappingEnabled)
         {
             //Debug.Log("*** CalculatePreferredValues() ***"); // ***** Frame: " + Time.frameCount);
 
@@ -5128,7 +5133,7 @@ namespace TMPro
                     if (textWidth > widthOfTextArea * (isJustifiedOrFlush ? 1.05f : 1.0f))
                     {
                         // Handle Line Breaking (if still possible)
-                        if (m_enableWordWrapping && m_characterCount != m_firstCharacterOfLine) // && isFirstWord == false)
+                        if (isWordWrappingEnabled && m_characterCount != m_firstCharacterOfLine) // && isFirstWord == false)
                         {
                             // Restore state to previous safe line breaking
                             i = RestoreWordWrappingState(ref internalWordWrapState);
@@ -5174,7 +5179,7 @@ namespace TMPro
                             // Compute Preferred Width & Height
                             renderedWidth += m_xAdvance;
 
-                            if (m_enableWordWrapping)
+                            if (isWordWrappingEnabled)
                                 renderedHeight = m_maxAscender - m_maxDescender;
                             else
                                 renderedHeight = Mathf.Max(renderedHeight, lineAscender - lineDescender);
@@ -5269,7 +5274,7 @@ namespace TMPro
 
                 // Handle Line Spacing Adjustments + Word Wrapping & special case for last line.
                 #region Check for Line Feed and Last Character
-                if (charCode == 10 || charCode == 11 || charCode == 0x03 || m_characterCount == totalCharacterCount - 1)
+                if (charCode == 10 || charCode == 11 || charCode == 0x03 || charCode == 0x2028 || charCode == 0x2029 || m_characterCount == totalCharacterCount - 1)
                 {
                     // Check if Line Spacing of previous line needs to be adjusted.
                     if (m_lineNumber > 0 && !TMP_Math.Approximately(m_maxLineAscender, m_startOfLineAscender) && isDrivenLineSpacing == false && !m_isNewPage && isInjectingCharacter == false)
@@ -5298,7 +5303,7 @@ namespace TMPro
                     renderedHeight = m_maxAscender - m_maxDescender;
 
                     // Add new line if not last lines or character.
-                    if (charCode == 10 || charCode == 11 || charCode == 0x2D)
+                    if (charCode == 10 || charCode == 11 || charCode == 0x2D || charCode == 0x2028 || charCode == 0x2029)
                     {
                         // Store the state of the line before starting on the new line.
                         SaveWordWrappingState(ref internalLineState, i, m_characterCount);
@@ -5311,13 +5316,13 @@ namespace TMPro
                         // Apply Line Spacing with special handling for VT char(11)
                         if (m_lineHeight == TMP_Math.FLOAT_UNSET)
                         {
-                            float lineOffsetDelta = 0 - m_maxLineDescender + elementAscender + (lineGap + m_lineSpacingDelta) * baseScale + (m_lineSpacing + (charCode == 10 ? m_paragraphSpacing : 0)) * currentEmScale;
+                            float lineOffsetDelta = 0 - m_maxLineDescender + elementAscender + (lineGap + m_lineSpacingDelta) * baseScale + (m_lineSpacing + (charCode == 10 || charCode == 0x2029 ? m_paragraphSpacing : 0)) * currentEmScale;
                             m_lineOffset += lineOffsetDelta;
                             isDrivenLineSpacing = false;
                         }
                         else
                         {
-                            m_lineOffset += m_lineHeight + (m_lineSpacing + (charCode == 10 ? m_paragraphSpacing : 0)) * currentEmScale;
+                            m_lineOffset += m_lineHeight + (m_lineSpacing + (charCode == 10 || charCode == 0x2029 ? m_paragraphSpacing : 0)) * currentEmScale;
                             isDrivenLineSpacing = true;
                         }
 
@@ -5340,7 +5345,7 @@ namespace TMPro
 
                 // Save State of Mesh Creation for handling of Word Wrapping
                 #region Save Word Wrapping State
-                if (m_enableWordWrapping || m_overflowMode == TextOverflowModes.Truncate || m_overflowMode == TextOverflowModes.Ellipsis)
+                if (isWordWrappingEnabled || m_overflowMode == TextOverflowModes.Truncate || m_overflowMode == TextOverflowModes.Ellipsis)
                 {
                     if ((char.IsWhiteSpace((char)charCode) || charCode == 0x200B || charCode == 0x2D || charCode == 0xAD) && !m_isNonBreakingSpace && charCode != 0xA0 && charCode != 0x2007 && charCode != 0x2011 && charCode != 0x202F && charCode != 0x2060)
                     {
@@ -6088,9 +6093,9 @@ namespace TMPro
             int materialIndex = m_textInfo.characterInfo[i].materialReferenceIndex;
             index_X4 = m_textInfo.meshInfo[materialIndex].vertexCount;
 
-            // Make sure buffers allocation are sufficient to hold the vertex data
-            //if (m_textInfo.meshInfo[materialIndex].vertices.Length < index_X4 + 4)
-            //    m_textInfo.meshInfo[materialIndex].ResizeMeshInfo(Mathf.NextPowerOfTwo(index_X4 + 4));
+            // Check to make sure our current mesh buffer allocations can hold these new Quads.
+            if (index_X4 >= m_textInfo.meshInfo[materialIndex].vertices.Length)
+                m_textInfo.meshInfo[materialIndex].ResizeMeshInfo(Mathf.NextPowerOfTwo((index_X4 + 4) / 4));
 
 
             TMP_CharacterInfo[] characterInfoArray = m_textInfo.characterInfo;
@@ -6138,6 +6143,10 @@ namespace TMPro
         {
             int materialIndex = m_textInfo.characterInfo[i].materialReferenceIndex;
             index_X4 = m_textInfo.meshInfo[materialIndex].vertexCount;
+
+            // Check to make sure our current mesh buffer allocations can hold these new Quads.
+            if (index_X4 >= m_textInfo.meshInfo[materialIndex].vertices.Length)
+                m_textInfo.meshInfo[materialIndex].ResizeMeshInfo(Mathf.NextPowerOfTwo((index_X4 + (isVolumetric ? 8 : 4)) / 4));
 
             TMP_CharacterInfo[] characterInfoArray = m_textInfo.characterInfo;
             m_textInfo.characterInfo[i].vertexIndex = index_X4;
@@ -6222,6 +6231,10 @@ namespace TMPro
         {
             int materialIndex = m_textInfo.characterInfo[i].materialReferenceIndex;
             index_X4 = m_textInfo.meshInfo[materialIndex].vertexCount;
+
+            // Check to make sure our current mesh buffer allocations can hold these new Quads.
+            if (index_X4 >= m_textInfo.meshInfo[materialIndex].vertices.Length)
+                m_textInfo.meshInfo[materialIndex].ResizeMeshInfo(Mathf.NextPowerOfTwo((index_X4 + 4) / 4));
 
             TMP_CharacterInfo[] characterInfoArray = m_textInfo.characterInfo;
             m_textInfo.characterInfo[i].vertexIndex = index_X4;
@@ -6509,7 +6522,9 @@ namespace TMPro
                 m_rectTransform = this.rectTransform;
 
                 if (TMP_Settings.autoSizeTextContainer)
+                {
                     autoSizeTextContainer = true;
+                }
                 else
                 {
                     if (GetType() == typeof(TextMeshPro))

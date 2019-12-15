@@ -44,7 +44,6 @@ namespace TMPro
                 if (this.sharedMaterial != null)
                     return this.sharedMaterial.GetTexture(ShaderUtilities.ID_MainTex);
 
-
                 return null;
             }
         }
@@ -221,6 +220,9 @@ namespace TMPro
             rectTransform.sizeDelta = Vector2.zero;
             rectTransform.pivot = textComponent.rectTransform.pivot;
 
+            LayoutElement layoutElement = go.AddComponent<LayoutElement>();
+            layoutElement.ignoreLayout = true;
+
             TMP_SubMeshUI subMesh = go.AddComponent<TMP_SubMeshUI>();
 
             //subMesh.canvasRenderer = subMesh.canvasRenderer;
@@ -344,8 +346,14 @@ namespace TMPro
             int fallbackSourceMaterialID = m_fallbackSourceMaterial == null ? 0 : m_fallbackSourceMaterial.GetInstanceID();
 
             // Sync culling with parent text object
-            float cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
-            m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
+            bool hasCullModeProperty = m_sharedMaterial.HasProperty(ShaderUtilities.ShaderTag_CullMode);
+            float cullMode = 0;
+
+            if (hasCullModeProperty)
+            {
+                cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
+                m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
+            }
 
             // Filter events and return if the affected material is not this object's material.
             if (m_fallbackMaterial != null && fallbackSourceMaterialID == targetMaterialID && TMP_Settings.matchMaterialPreset)
@@ -395,7 +403,8 @@ namespace TMPro
                 }
 
                 // Re-sync culling with parent text object
-                m_MaskMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
+                if (hasCullModeProperty)
+                    m_MaskMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
             }
 
             m_padding = GetPaddingForMaterial();
@@ -688,8 +697,11 @@ namespace TMPro
             //if (canvasRenderer == null) m_canvasRenderer = this.canvasRenderer;
 
             // Special handling to keep the Culling of the material in sync with parent text object
-            float cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
-            m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
+            if (m_sharedMaterial.HasProperty(ShaderUtilities.ShaderTag_CullMode))
+            {
+                float cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
+                m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
+            }
 
             canvasRenderer.materialCount = 1;
             canvasRenderer.SetMaterial(materialForRendering, 0);

@@ -141,7 +141,6 @@ namespace TMPro
         private void PerformUpdateForMeshRendererObjects()
         {
             Debug.Log("Perform update of MeshRenderer objects.");
-            
         }
 
 

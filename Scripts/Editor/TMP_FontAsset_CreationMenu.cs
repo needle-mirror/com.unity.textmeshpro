@@ -161,15 +161,22 @@ namespace TMPro
 
             string newAssetFilePathWithName = AssetDatabase.GenerateUniqueAssetPath(folderPath + "/" + assetName + " SDF.asset");
 
-            //// Create new TM Font Asset.
+            // Initialize FontEngine
+            FontEngine.InitializeFontEngine();
+
+            // Load Font Face
+            if (FontEngine.LoadFontFace(sourceFont, 90) != FontEngineError.Success)
+            {
+                Debug.LogWarning("Unable to load font face for [" + sourceFont.name + "]. Make sure \"Include Font Data\" is enabled in the Font Import Settings.", sourceFont);
+                return;
+            }
+
+            // Create new Font Asset
             TMP_FontAsset fontAsset = ScriptableObject.CreateInstance<TMP_FontAsset>();
             AssetDatabase.CreateAsset(fontAsset, newAssetFilePathWithName);
 
             fontAsset.version = "1.1.0";
 
-            // Set face information
-            FontEngine.InitializeFontEngine();
-            FontEngine.LoadFontFace(sourceFont, 90);
             fontAsset.faceInfo = FontEngine.GetFaceInfo();
 
             // Set font reference and GUID

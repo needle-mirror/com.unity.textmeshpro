@@ -176,8 +176,9 @@ namespace TMPro.EditorUtilities
 
         protected bool BeginPanel(string panel, bool expanded)
         {
+            EditorGUI.indentLevel = 0;
+            
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-
             Rect r = EditorGUI.IndentedRect(GUILayoutUtility.GetRect(20, 18));
             r.x += 20;
             r.width += 6;
@@ -197,6 +198,8 @@ namespace TMPro.EditorUtilities
 
         protected bool BeginPanel(string panel, ShaderFeature feature, bool expanded, bool readState = true)
         {
+            EditorGUI.indentLevel = 0;
+            
             if (readState)
             {
                 feature.ReadState(m_Material);

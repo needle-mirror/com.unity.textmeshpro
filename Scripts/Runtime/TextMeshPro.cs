@@ -21,8 +21,20 @@ namespace TMPro
         /// </summary>
         public int sortingLayerID
         {
-            get { return m_renderer.sortingLayerID; }
-            set { m_renderer.sortingLayerID = value; }
+            get
+            {
+                if (renderer == null)
+                    return 0;
+                
+                return m_renderer.sortingLayerID;
+            }
+            set
+            {
+                if (renderer == null)
+                    return;
+                
+                m_renderer.sortingLayerID = value;
+            }
         }
 
         /// <summary>
@@ -30,8 +42,20 @@ namespace TMPro
         /// </summary>
         public int sortingOrder
         {
-            get { return m_renderer.sortingOrder; }
-            set { m_renderer.sortingOrder = value; }
+            get
+            {
+                if (renderer == null)
+                    return 0;
+                
+                return m_renderer.sortingOrder;
+            }
+            set
+            {
+                if (renderer == null)
+                    return;
+
+                m_renderer.sortingOrder = value;
+            }
         }
 
         /// <summary>
@@ -164,13 +188,12 @@ namespace TMPro
         /// </summary>
         public override void SetVerticesDirty()
         {
-            if (m_verticesAlreadyDirty || this == null || !this.IsActive())
+            //Debug.Log("***** SetVerticesDirty() called on object [" + this.name + "] at frame [" + Time.frameCount + "] *****");
+
+            if (this == null || !this.IsActive())
                 return;
 
-            //Debug.Log("***** SetVerticesDirty() called on object ID " + GetInstanceID() + ". ***** Dirty = " + m_verticesAlreadyDirty);
-
             TMP_UpdateManager.RegisterTextElementForGraphicRebuild(this);
-            m_verticesAlreadyDirty = true;
         }
 
 
@@ -182,10 +205,9 @@ namespace TMPro
             m_isPreferredWidthDirty = true;
             m_isPreferredHeightDirty = true;
 
-            if (m_layoutAlreadyDirty || this == null || !this.IsActive())
+            if (this == null || !this.IsActive())
                 return;
 
-            m_layoutAlreadyDirty = true;
             m_isLayoutDirty = true;
         }
 
@@ -237,8 +259,6 @@ namespace TMPro
             else if (update == CanvasUpdate.PreRender)
             {
                 this.OnPreRenderObject();
-                m_verticesAlreadyDirty = false;
-                m_layoutAlreadyDirty = false;
 
                 if (!m_isMaterialDirty) return;
 
@@ -258,13 +278,11 @@ namespace TMPro
             //if (!this.IsActive())
             //    return;
 
-            if (m_sharedMaterial == null)
+            if (renderer == null || m_sharedMaterial == null)
                 return;
 
-            if (m_renderer == null) m_renderer = this.renderer;
-
             // Only update the material if it has changed.
-            if (m_renderer.sharedMaterial.GetInstanceID() != m_sharedMaterial.GetInstanceID())
+            if (m_renderer.sharedMaterial == null || m_renderer.sharedMaterial.GetInstanceID() != m_sharedMaterial.GetInstanceID())
                 m_renderer.sharedMaterial = m_sharedMaterial;
         }
 
@@ -299,9 +317,6 @@ namespace TMPro
             m_ignoreActiveState = ignoreActiveState;
             m_isInputParsingRequired = m_isInputParsingRequired ? true : forceTextReparsing;
             OnPreRenderObject();
-
-            m_verticesAlreadyDirty = false;
-            m_layoutAlreadyDirty = false;
         }
 
 

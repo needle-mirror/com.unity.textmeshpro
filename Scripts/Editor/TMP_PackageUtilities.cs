@@ -39,7 +39,7 @@ namespace TMPro
 
     public class TMP_ProjectConversionUtility : EditorWindow
     {
-        // Create Sprite Asset Editor Window
+        // Create Project Files GUID Remapping Tool window
         [MenuItem("Window/TextMeshPro/Project Files GUID Remapping Tool", false, 2100)]
         static void ShowConverterWindow()
         {
