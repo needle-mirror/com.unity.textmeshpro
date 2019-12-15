@@ -1,4 +1,4 @@
-//#define TMP_PROFILE_ON
+﻿//#define TMP_PROFILE_ON
 
 
 using UnityEngine;
@@ -126,6 +126,9 @@ namespace TMPro
                     m_subTextObjects[i + 1] = subTextObjects[i];
             }
 
+            // Get reference to potential text preprocessor component
+            m_TextPreProcessor = GetComponent<ITextPreprocessor>();
+
             // Set flags to ensure our text is parsed and redrawn.
             m_isInputParsingRequired = true;
             m_havePropertiesChanged = true;
@@ -176,8 +179,6 @@ namespace TMPro
 
             ComputeMarginSize();
 
-            m_verticesAlreadyDirty = false;
-            m_layoutAlreadyDirty = false;
             m_ShouldRecalculateStencil = true;
             m_isInputParsingRequired = true;
             SetAllDirty();
@@ -3010,7 +3011,7 @@ namespace TMPro
                     // This is white spacing / non visible characters.
 
                     // Track # of spaces per line which is used for line justification.
-                    if ((charCode == 10 || charCode == 11 || char.IsSeparator((char)charCode)) && charCode != 0xAD && charCode != 0x200B && charCode != 0x2060)
+                    if ((charCode == 10 || charCode == 11 || charCode == 0x2028 || charCode == 0x2029 || char.IsSeparator((char)charCode)) && charCode != 0xAD && charCode != 0x200B && charCode != 0x2060)
                     {
                         m_textInfo.lineInfo[m_lineNumber].spaceCount += 1;
                         m_textInfo.spaceCount += 1;
@@ -3051,7 +3052,7 @@ namespace TMPro
                 #region Track Potential Insertion Location for Ellipsis
                 if (m_overflowMode == TextOverflowModes.Ellipsis && isInjectingCharacter == false)
                 {
-                    float fontScale = m_currentFontSize * smallCapsMultiplier / m_fontAsset.m_FaceInfo.pointSize * m_fontAsset.m_FaceInfo.scale * (m_isOrthographic ? 1 : 0.1f);
+                    float fontScale = m_currentFontSize / m_fontAsset.m_FaceInfo.pointSize * m_fontAsset.m_FaceInfo.scale * (m_isOrthographic ? 1 : 0.1f);
                     float scale = fontScale * m_fontScaleMultiplier * m_cached_Ellipsis_Character.m_Scale * m_cached_Ellipsis_Character.m_Glyph.scale;
                     float marginLeft = m_marginLeft;
                     float marginRight = m_marginRight;
@@ -3064,7 +3065,7 @@ namespace TMPro
                         marginRight = m_textInfo.lineInfo[m_lineNumber].marginRight;
                     }
 
-                    float descender = m_fontAsset.m_FaceInfo.descentLine * scale / smallCapsMultiplier + m_baselineOffset;
+                    float descender = (m_fontAsset.m_FaceInfo.descentLine * scale) + m_baselineOffset;
                     float textHeight = m_maxAscender - (descender - m_lineOffset);
 
                     float textWidth = Mathf.Abs(m_xAdvance) + (!m_isRightToLeft ? m_cached_Ellipsis_Character.m_Glyph.metrics.horizontalAdvance : 0) * (1 - m_charWidthAdjDelta) * scale;
@@ -3146,7 +3147,7 @@ namespace TMPro
 
                 // Handle Line Spacing Adjustments + Word Wrapping & special case for last line.
                 #region Check for Line Feed and Last Character
-                if (charCode == 10 || charCode == 11 || charCode == 0x03 || (charCode == 0x2D && isInjectingCharacter) || m_characterCount == totalCharacterCount - 1)
+                if (charCode == 10 || charCode == 11 || charCode == 0x03 || charCode == 0x2028 || charCode == 0x2029 || (charCode == 0x2D && isInjectingCharacter) || m_characterCount == totalCharacterCount - 1)
                 {
                     #if TMP_PROFILE_ON
                     Profiler.BeginSample("TMP - Handle Line & Text Termination");
@@ -3202,7 +3203,7 @@ namespace TMPro
                     m_textInfo.lineInfo[m_lineNumber].lineHeight = lineAscender - lineDescender + lineGap * baseScale;
 
                     // Add new line if not last line or character.
-                    if (charCode == 10 || charCode == 11 || charCode == 0x2D)
+                    if (charCode == 10 || charCode == 11 || charCode == 0x2D || charCode == 0x2028 || charCode == 0x2029)
                     {
                         // Store the state of the line before starting on the new line.
                         SaveWordWrappingState(ref m_SavedLineState, i, m_characterCount);
@@ -3224,13 +3225,13 @@ namespace TMPro
                         // Apply Line Spacing with special handling for VT char(11)
                         if (m_lineHeight == TMP_Math.FLOAT_UNSET)
                         {
-                            float lineOffsetDelta = 0 - m_maxLineDescender + lastVisibleAscender + (lineGap + m_lineSpacingDelta) * baseScale + (m_lineSpacing + (charCode == 10 ? m_paragraphSpacing : 0)) * currentEmScale;
+                            float lineOffsetDelta = 0 - m_maxLineDescender + lastVisibleAscender + (lineGap + m_lineSpacingDelta) * baseScale + (m_lineSpacing + (charCode == 10 || charCode == 0x2029 ? m_paragraphSpacing : 0)) * currentEmScale;
                             m_lineOffset += lineOffsetDelta;
                             isDrivenLineSpacing = false;
                         }
                         else
                         {
-                            m_lineOffset += m_lineHeight + (m_lineSpacing + (charCode == 10 ? m_paragraphSpacing : 0)) * currentEmScale;
+                            m_lineOffset += m_lineHeight + (m_lineSpacing + (charCode == 10 || charCode == 0x2029 ? m_paragraphSpacing : 0)) * currentEmScale;
                             isDrivenLineSpacing = true;
                         }
 
@@ -3285,7 +3286,7 @@ namespace TMPro
 
 
                 // Save pageInfo Data
-                if (m_overflowMode == TextOverflowModes.Page && charCode != 10 && charCode != 11 && charCode != 13) // && m_pageNumber < 16)
+                if (m_overflowMode == TextOverflowModes.Page && charCode != 10 && charCode != 11 && charCode != 13 && charCode != 0x2028 && charCode != 0x2029) // && m_pageNumber < 16)
                 {
                     // Check if we need to increase allocations for the pageInfo array.
                     if (m_pageNumber + 1 > m_textInfo.pageInfo.Length)

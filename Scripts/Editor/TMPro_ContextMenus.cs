@@ -46,13 +46,18 @@ namespace TMPro.EditorUtilities
             Material source_Mat = (Material)command.context;
             if (!EditorUtility.IsPersistent(source_Mat))
             {
-                Debug.LogWarning("Material is an instance and cannot be converted into a permanent asset.");
+                Debug.LogWarning("Material is an instance and cannot be converted into a persistent asset.");
                 return;
             }
 
+            string assetPath = AssetDatabase.GetAssetPath(source_Mat).Split('.')[0];         
 
-            string assetPath = AssetDatabase.GetAssetPath(source_Mat).Split('.')[0];
-
+            if (assetPath.IndexOf("Assets/", System.StringComparison.InvariantCultureIgnoreCase) == -1)
+            {
+                Debug.LogWarning("Material Preset cannot be created from a material that is located outside the project.");
+                return;
+            }
+            
             Material duplicate = new Material(source_Mat);
 
             // Need to manually copy the shader keywords
@@ -93,7 +98,7 @@ namespace TMPro.EditorUtilities
         }
 
 
-        //[MenuItem("CONTEXT/MaterialComponent/Copy Material Properties", false)]
+        // COPY MATERIAL PROPERTIES
         [MenuItem("CONTEXT/Material/Copy Material Properties", false)]
         static void CopyMaterialProperties(MenuCommand command)
         {
@@ -118,7 +123,6 @@ namespace TMPro.EditorUtilities
         [MenuItem("CONTEXT/Material/Paste Material Properties", false)]
         static void PasteMaterialProperties(MenuCommand command)
         {
-
             if (m_copiedProperties == null)
             {
                 Debug.LogWarning("No Material Properties to Paste. Use Copy Material Properties first.");
@@ -159,7 +163,6 @@ namespace TMPro.EditorUtilities
         [MenuItem("CONTEXT/Material/Reset", false, 2100)]
         static void ResetSettings(MenuCommand command)
         {
-
             Material mat = null;
             if (command.context.GetType() == typeof(Material))
                 mat = (Material)command.context;
@@ -219,7 +222,6 @@ namespace TMPro.EditorUtilities
 
             TMPro_EventManager.ON_MATERIAL_PROPERTY_CHANGED(true, mat);
         }
-
 
 
         //This function is used for debugging and fixing potentially broken font atlas links.
@@ -320,7 +322,7 @@ namespace TMPro.EditorUtilities
 
 
         /// <summary>
-        /// Clear Font Asset Data
+        /// Clear Dynamic Font Asset data such as glyph, character and font features.
         /// </summary>
         /// <param name="command"></param>
         [MenuItem("CONTEXT/TMP_FontAsset/Reset", false, 100)]

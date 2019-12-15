@@ -427,14 +427,20 @@ namespace TMPro
         /// <returns></returns>
         public static TMP_FontAsset CreateFontAsset(Font font, int samplingPointSize, int atlasPadding, GlyphRenderMode renderMode, int atlasWidth, int atlasHeight, AtlasPopulationMode atlasPopulationMode = AtlasPopulationMode.Dynamic, bool enableMultiAtlasSupport = true)
         {
+            // Initialize FontEngine
+            FontEngine.InitializeFontEngine();
+
+            // Load Font Face
+            if (FontEngine.LoadFontFace(font, samplingPointSize) != FontEngineError.Success)
+            {
+                Debug.LogWarning("Unable to load font face for [" + font.name + "]. Make sure \"Include Font Data\" is enabled in the Font Import Settings.", font);
+                return null;
+            }
+            
+            // Create new font asset
             TMP_FontAsset fontAsset = ScriptableObject.CreateInstance<TMP_FontAsset>();
 
             fontAsset.m_Version = "1.1.0";
-
-            // Set face information
-            FontEngine.InitializeFontEngine();
-            FontEngine.LoadFontFace(font, samplingPointSize);
-
             fontAsset.faceInfo = FontEngine.GetFaceInfo();
 
             // Set font reference and GUID
@@ -646,12 +652,48 @@ namespace TMPro
                     m_CharacterLookupDictionary.Add(3, new TMP_Character(3, glyph));
             }
 
+            // Add Arabic Letter Mark (0x061C)
+            if (m_CharacterLookupDictionary.ContainsKey(0x061C) == false)
+            {
+                Glyph glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, 0), GlyphRect.zero, 1.0f, 0);
+                m_CharacterLookupDictionary.Add(0x061C, new TMP_Character(0x061C, glyph));
+            }
+
             // Add Zero Width Space 8203 (0x200B)
             if (m_CharacterLookupDictionary.ContainsKey(8203) == false)
             {
                 Glyph glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, 0), GlyphRect.zero, 1.0f, 0);
                 m_CharacterLookupDictionary.Add(8203, new TMP_Character(8203, glyph));
             }
+
+            // Add Left-To-Right Mark (0x200E)
+            if (m_CharacterLookupDictionary.ContainsKey(0x200E) == false)
+            {
+                Glyph glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, 0), GlyphRect.zero, 1.0f, 0);
+                m_CharacterLookupDictionary.Add(0x200E, new TMP_Character(0x200E, glyph));
+            }
+
+            // Add Right-To-Left Mark (0x200F)
+            if (m_CharacterLookupDictionary.ContainsKey(0x200F) == false)
+            {
+                Glyph glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, 0), GlyphRect.zero, 1.0f, 0);
+                m_CharacterLookupDictionary.Add(0x200F, new TMP_Character(0x200F, glyph));
+            }
+
+            // Add Line Separator 0x2028
+            if (m_CharacterLookupDictionary.ContainsKey(0x2028) == false)
+            {
+                Glyph glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, 0), GlyphRect.zero, 1.0f, 0);
+                m_CharacterLookupDictionary.Add(0x2028, new TMP_Character(0x2028, glyph));
+            }
+
+            // Add Line Separator 0x2029
+            if (m_CharacterLookupDictionary.ContainsKey(0x2029) == false)
+            {
+                Glyph glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, 0), GlyphRect.zero, 1.0f, 0);
+                m_CharacterLookupDictionary.Add(0x2029, new TMP_Character(0x2029, glyph));
+            }
+
 
             // Add Zero Width Non-Breaking Space 8288 (0x2060)
             if (m_CharacterLookupDictionary.ContainsKey(8288) == false)

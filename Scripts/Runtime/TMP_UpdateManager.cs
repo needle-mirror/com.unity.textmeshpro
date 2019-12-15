@@ -25,8 +25,7 @@ namespace TMPro
         private readonly List<TMP_Text> m_InternalUpdateQueue = new List<TMP_Text>();
         private HashSet<int> m_InternalUpdateLookup = new HashSet<int>();
 
-        //private bool m_PerformingGraphicRebuild;
-        //private bool m_PerformingLayoutRebuild;
+        private int m_LastFrame = 0;
 
         /// <summary>
         /// Get a singleton instance of the registry
@@ -136,12 +135,15 @@ namespace TMPro
         void OnBeginFrameRendering(Camera[] cameras)
         #endif
         {
-            // Exclude the PreRenderCamera
-            #if UNITY_EDITOR
-            if (cameras.Length == 1 && cameras[0].cameraType == CameraType.Preview) 
-                return;
-            #endif
-            DoRebuilds();
+            int currentFrame = Time.frameCount;
+
+            // Make sure we only rebuild text objects once per frame regardless of number of cameras in the scene.
+            if (currentFrame < 2 || currentFrame != m_LastFrame)
+            {
+                DoRebuilds();
+
+                m_LastFrame = currentFrame;
+            }
         }
 
         /// <summary>
@@ -150,14 +152,19 @@ namespace TMPro
         /// <param name="cam"></param>
         void OnCameraPreCull(Camera cam)
         {
-            // Exclude the PreRenderCamera
-            #if UNITY_EDITOR
-            if (cam.cameraType == CameraType.Preview) 
-                return;
-            #endif
-            DoRebuilds();
+            int currentFrame = Time.frameCount;
+
+            // Make sure we only rebuild text objects once per frame regardless of number of cameras in the scene.
+            if (currentFrame < 2 || currentFrame != m_LastFrame)
+            {
+                DoRebuilds();
+
+                m_LastFrame = currentFrame;
+                //Debug.Log("Updating text objects at frame:" + m_LastFrame);
+            }
         }
-        
+
+
         /// <summary>
         /// Process the rebuild requests in the rebuild queues.
         /// </summary>

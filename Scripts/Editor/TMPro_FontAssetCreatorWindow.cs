@@ -1769,7 +1769,7 @@ namespace TMPro.EditorUtilities
 
             TMP_FontFeatureTable fontFeatureTable = new TMP_FontFeatureTable();
 
-            for (int i = 0; i < adjustmentRecords.Length; i++)
+            for (int i = 0; i < adjustmentRecords.Length && adjustmentRecords[i].firstAdjustmentRecord.glyphIndex != 0; i++)
             {
                 fontFeatureTable.glyphPairAdjustmentRecords.Add(new TMP_GlyphPairAdjustmentRecord(adjustmentRecords[i]));
             }

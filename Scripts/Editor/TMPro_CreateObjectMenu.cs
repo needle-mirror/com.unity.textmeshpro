@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEditor;
+using UnityEditor.Presets;
 using UnityEditor.SceneManagement;
 using UnityEditor.Experimental.SceneManagement;
 using UnityEngine.SceneManagement;
@@ -19,18 +20,34 @@ namespace TMPro.EditorUtilities
         [MenuItem("GameObject/3D Object/Text - TextMeshPro", false, 30)]
         static void CreateTextMeshProObjectPerform(MenuCommand command)
         {
-            GameObject go = new GameObject("Text (TMP)");
+            GameObject go = ObjectFactory.CreateGameObject("Text (TMP)");
 
             // Add support for new prefab mode
             StageUtility.PlaceGameObjectInCurrentStage(go);
 
-            TextMeshPro textMeshPro = go.AddComponent<TextMeshPro>();
-            textMeshPro.text = "Sample text";
-            textMeshPro.alignment = TextAlignmentOptions.TopLeft;
+            TextMeshPro textComponent = ObjectFactory.AddComponent<TextMeshPro>(go);
 
-            
+            if (textComponent.m_isWaitingOnResourceLoad == false)
+            {
+                // Apply TMP Settings Defaults if no Preset is defined
+                if (Preset.GetDefaultForObject(textComponent) == null)
+                {            
+                    textComponent.text = "Sample text";
+                    textComponent.alignment = TextAlignmentOptions.TopLeft;
+                }
 
-            Undo.RegisterCreatedObjectUndo((Object)go, "Create " + go.name);
+                if (TMP_Settings.autoSizeTextContainer)
+                {
+                    Vector2 size = textComponent.GetPreferredValues(TMP_Math.FLOAT_MAX, TMP_Math.FLOAT_MAX);
+                    textComponent.rectTransform.sizeDelta = size;
+                }
+                else
+                {
+                    textComponent.rectTransform.sizeDelta = TMP_Settings.defaultTextMeshProTextContainerSize;
+                }
+            }
+
+            Undo.RegisterCreatedObjectUndo(go, "Create " + go.name);
 
             GameObject contextObject = command.context as GameObject;
             if (contextObject != null)
@@ -53,10 +70,28 @@ namespace TMPro.EditorUtilities
             GameObject go = TMP_DefaultControls.CreateText(GetStandardResources());
 
             // Override text color and font size
-            TMP_Text textComponent = go.GetComponent<TMP_Text>();
-            textComponent.color = Color.white;
+            TextMeshProUGUI textComponent = go.GetComponent<TextMeshProUGUI>();                   
+
             if (textComponent.m_isWaitingOnResourceLoad == false)
-                textComponent.fontSize = TMP_Settings.defaultFontSize;
+            {
+                // Apply TMP Settings Defaults if no Preset is defined
+                if (Preset.GetDefaultForObject(textComponent) == null)
+                {
+                    textComponent.fontSize = TMP_Settings.defaultFontSize;
+                    textComponent.color = Color.white;
+                    textComponent.text = "New Text";
+                }
+
+                if (TMP_Settings.autoSizeTextContainer)
+                {
+                    Vector2 size = textComponent.GetPreferredValues(TMP_Math.FLOAT_MAX, TMP_Math.FLOAT_MAX);
+                    textComponent.rectTransform.sizeDelta = size;
+                }
+                else
+                {
+                    textComponent.rectTransform.sizeDelta = TMP_Settings.defaultTextMeshProUITextContainerSize;
+                }
+            }
 
             PlaceUIElementRoot(go, menuCommand);
         }

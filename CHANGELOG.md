@@ -1,6 +1,28 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [1.5.0-preview.3] - 2019-12-16
+## [2.1.0-preview.3]
+### Changes
+- Fixed potential issue with TMP Dropdown where calling Show() and Hide() in very short interval could result in additional Blockers. Case #1194114
+- Fixed potential issues that could occur when upgrading to version 1.5.0-preview.2 or newer of the TMP package without also updating the TMP Essential Resources in the project.
+- Added check and warning when trying to create a font asset whose source font file has "Incl. Font Data" disabled in the Font Import Settings. Case #1198587 and #1198112
+- Fixed Ellipsis overflow mode issue when using small caps. Case #1198392
+- Fixed potential layout issue when adding a Layout Group to the text object itself. Case #1197614
+- Fixed Font Asset Creator issue where too many adjustment records with adjustment value of zero were added to the font asset.
+- Added support for Line Separator \u2028 and Paragraph Separator \u2029.
+- TMP shaders have been moved from "TextMesh Pro/Resources/Shaders" folder to "TextMesh Pro/Shaders" folder. See the following [post](https://forum.unity.com/threads/version-1-5-0-2-1-0-preview-2-now-available-for-testing.753587/#post-5206853) for details.
+- Added new experimental SDF and Mobile SDF Shaders that use Screen Space Derivatives (SSD) where these shaders no longer require SDF Scale to be passed via Vertex Attributes. These shaders have higher performance overhead but are more flexible. This overhead should only be noticeable on mobile platforms.
+- Fixed potential text alignment issue where upgrading from package version 1.4.1 to 1.5.0-preview.2 would result in incorrect alignment on prefabs. Case #1198833
+- Added \u061C Arabic Letter Mark, \u200E Left-to-Right Mark and \u200F Right-to-Left Mark to list of control and non renderable characters.
+- Fixed Missing Reference Exception that would appear when expanding the Extra Settings of a TextMeshPro Preset asset. Case #1201072
+- Fixed Missing Reference Exception that would appear when editing the Vertex Color or Color Gradient of a TMP component Preset asset. Case #1201069
+- Fixed Inspector layout issue preventing enabling or disabling the Outline, Underlay, Lighting and Glow features when selecting a Preset asset material. Case #1196963
+- Revised the Create Material Preset context menu option to issue a warning and ignore materials outside the project. Case #1200109
+- Added experimental ITextPreprocessor interface to allow users to create custom components to handle text preprocessing and shaping. This interface includes a PreprocessText(string text) function that is called when the object contains a component that inherits from this interface.   
+- Added support for Unity Presets in the Editor for both <TextMeshPro> and <TextMeshProUGUI> components. Case #1191793
+- Optimization to ensure the TMP Update Manager only rebuilds text objects once per frame regardless of the number of cameras in the scene.
+
 ## [1.5.0-preview.2] - 2019-10-30
 ## [2.1.0-preview.2]
 ### Changes

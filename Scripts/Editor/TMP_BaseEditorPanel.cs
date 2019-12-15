@@ -395,6 +395,8 @@ namespace TMPro.EditorUtilities
             Rect rect = EditorGUILayout.GetControlRect(false, 22);
             GUI.Label(rect, new GUIContent("<b>Text Input</b>"), TMP_UIStyleManager.sectionHeader);
 
+            EditorGUI.indentLevel = 0;
+
             // If the text component is linked, disable the text input box.
             if (m_ParentLinkedTextComponentProp.objectReferenceValue != null)
             {
@@ -425,7 +427,7 @@ namespace TMPro.EditorUtilities
                     }
                 }
 
-                // Toggle showing Rich Tags
+                // Toggle showing RTL mode
                 float labelWidth = EditorGUIUtility.labelWidth;
                 EditorGUIUtility.labelWidth = 110f;
                 m_IsRightToLeftProp.boolValue = EditorGUI.Toggle(new Rect(rect.width - 120, rect.y + 3, 130, 20), k_RtlToggleLabel, m_IsRightToLeftProp.boolValue);

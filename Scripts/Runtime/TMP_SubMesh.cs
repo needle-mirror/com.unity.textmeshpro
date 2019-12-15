@@ -311,8 +311,14 @@ namespace TMPro
             int fallbackSourceMaterialID = m_fallbackSourceMaterial == null ? 0 : m_fallbackSourceMaterial.GetInstanceID();
 
             // Sync culling with parent text object
-            float cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
-            m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
+            bool hasCullModeProperty = m_sharedMaterial.HasProperty(ShaderUtilities.ShaderTag_CullMode);
+            float cullMode = 0;
+
+            if (hasCullModeProperty)
+            {
+                cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
+                m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
+            }
 
             // Filter events and return if the affected material is not this object's material.
             if (targetMaterialID != sharedMaterialID)
@@ -323,7 +329,8 @@ namespace TMPro
                     TMP_MaterialManager.CopyMaterialPresetProperties(mat, m_fallbackMaterial);
 
                     // Re-sync culling with parent text object
-                    m_fallbackMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
+                    if (hasCullModeProperty)
+                        m_fallbackMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
                 }
                 else
                     return;
@@ -573,16 +580,16 @@ namespace TMPro
         {
             //Debug.Log("*** STO - UpdateMaterial() *** FRAME (" + Time.frameCount + ")");
 
-            if (m_renderer == null) m_renderer = this.renderer;
+            if (renderer == null || m_sharedMaterial == null) return;
 
             m_renderer.sharedMaterial = m_sharedMaterial;
 
-            if (m_sharedMaterial == null)
-                return;
-
             // Special handling to keep the Culling of the material in sync with parent text object
-            float cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
-            m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
+            if (m_sharedMaterial.HasProperty(ShaderUtilities.ShaderTag_CullMode))
+            {
+                float cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
+                m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
+            }
 
             #if UNITY_EDITOR
             if (m_sharedMaterial != null && gameObject.name != "TMP SubMesh [" + m_sharedMaterial.name + "]")
