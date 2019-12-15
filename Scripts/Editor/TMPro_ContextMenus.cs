@@ -118,8 +118,16 @@ namespace TMPro.EditorUtilities
         }
 
 
-        // PASTE MATERIAL
-        //[MenuItem("CONTEXT/MaterialComponent/Paste Material Properties", false)]
+        // PASTE MATERIAL PROPERTIES
+        [MenuItem("CONTEXT/Material/Paste Material Properties", true)]
+        static bool PasteMaterialPropertiesValidate(MenuCommand command)
+        {
+            if (m_copiedProperties == null)
+                return false;
+
+            return AssetDatabase.IsOpenForEdit(command.context);
+        }
+
         [MenuItem("CONTEXT/Material/Paste Material Properties", false)]
         static void PasteMaterialProperties(MenuCommand command)
         {
@@ -160,6 +168,12 @@ namespace TMPro.EditorUtilities
 
 
         // Enable Resetting of Material properties without losing unique properties of the font atlas.
+        [MenuItem("CONTEXT/Material/Reset", true, 2100)]
+        static bool ResetSettingsValidate(MenuCommand command)
+        {
+            return AssetDatabase.IsOpenForEdit(command.context);
+        }
+
         [MenuItem("CONTEXT/Material/Reset", false, 2100)]
         static void ResetSettings(MenuCommand command)
         {
@@ -236,6 +250,15 @@ namespace TMPro.EditorUtilities
 
 
         // This function is used for debugging and fixing potentially broken font atlas links
+        [MenuItem("CONTEXT/Material/Paste Atlas", true, 2001)]
+        static bool PasteAtlasValidate(MenuCommand command)
+        {
+            if (m_copiedAtlasProperties == null && m_copiedTexture == null)
+                return false;
+
+            return AssetDatabase.IsOpenForEdit(command.context);
+        }
+
         [MenuItem("CONTEXT/Material/Paste Atlas", false, 2001)]
         static void PasteAtlas(MenuCommand command)
         {
@@ -325,6 +348,12 @@ namespace TMPro.EditorUtilities
         /// Clear Dynamic Font Asset data such as glyph, character and font features.
         /// </summary>
         /// <param name="command"></param>
+        [MenuItem("CONTEXT/TMP_FontAsset/Reset", true, 100)]
+        static bool ClearFontAssetDataValidate(MenuCommand command)
+        {
+            return AssetDatabase.IsOpenForEdit(command.context);
+        }
+
         [MenuItem("CONTEXT/TMP_FontAsset/Reset", false, 100)]
         static void ClearFontAssetData(MenuCommand command)
         {

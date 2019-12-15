@@ -451,7 +451,7 @@ namespace TMPro
         private static bool CheckProjectSerializationAndSourceControlModes()
         {
             // Check Project Asset Serialization and Visible Meta Files mode.
-            if (EditorSettings.serializationMode != SerializationMode.ForceText || EditorSettings.externalVersionControl != "Visible Meta Files")
+            if (EditorSettings.serializationMode != SerializationMode.ForceText || VersionControlSettings.mode != "Visible Meta Files")
             {
                 return false;
             }

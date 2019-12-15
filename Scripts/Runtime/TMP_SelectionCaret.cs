@@ -7,6 +7,7 @@ namespace TMPro
     /// <summary>
     /// A simple component that can be added to a newly created object where inheriting from MaskableGraphic is needed.
     /// </summary>
+    [RequireComponent(typeof(CanvasRenderer))]
     public class TMP_SelectionCaret : MaskableGraphic
     {
         /// <summary>

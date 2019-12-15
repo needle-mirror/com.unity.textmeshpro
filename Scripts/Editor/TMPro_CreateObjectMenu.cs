@@ -29,8 +29,10 @@ namespace TMPro.EditorUtilities
 
             if (textComponent.m_isWaitingOnResourceLoad == false)
             {
-                // Apply TMP Settings Defaults if no Preset is defined
-                if (Preset.GetDefaultForObject(textComponent) == null)
+                // Get reference to potential Presets for <TextMeshPro> component
+                Preset[] presets = Preset.GetDefaultPresetsForObject(textComponent);
+
+                if (presets == null || presets.Length == 0)
                 {            
                     textComponent.text = "Sample text";
                     textComponent.alignment = TextAlignmentOptions.TopLeft;
@@ -74,8 +76,10 @@ namespace TMPro.EditorUtilities
 
             if (textComponent.m_isWaitingOnResourceLoad == false)
             {
-                // Apply TMP Settings Defaults if no Preset is defined
-                if (Preset.GetDefaultForObject(textComponent) == null)
+                // Get reference to potential Presets for <TextMeshPro> component
+                Preset[] presets = Preset.GetDefaultPresetsForObject(textComponent);
+
+                if (presets == null || presets.Length == 0)
                 {
                     textComponent.fontSize = TMP_Settings.defaultFontSize;
                     textComponent.color = Color.white;

@@ -26,7 +26,6 @@ namespace TMPro
         [SerializeField]
         private Renderer m_renderer;
         private MeshFilter m_meshFilter;
-        private CanvasRenderer m_CanvasRenderer;
 
         private bool m_isFirstAllocation; // Flag to determine if this is the first allocation of the buffers.
         private int m_max_characters = 8; // Determines the initial allocation and size of the character array / buffer.
@@ -82,11 +81,13 @@ namespace TMPro
             if (m_renderer == null)
                 m_renderer = gameObject.AddComponent<Renderer>();
 
-            // Get reference to CanvasRenderer (if one exists)
-            m_CanvasRenderer = GetComponent<CanvasRenderer>();
-
-            if (m_CanvasRenderer != null)
-                m_CanvasRenderer.hideFlags = HideFlags.HideInInspector;
+            // Remove CanvasRenderer from text object if one exists
+            CanvasRenderer canvasRenderer = GetComponent<CanvasRenderer>();
+            if (canvasRenderer != null)
+            {
+                Debug.Log("Removing unnecessary CanvasRenderer component from text object.", this);
+                DestroyImmediate(canvasRenderer);
+            }
 
             // Cache Reference to RectTransform
             m_rectTransform = this.rectTransform;
@@ -268,9 +269,6 @@ namespace TMPro
 
             if (meshFilter != null && m_meshFilter.hideFlags != (HideFlags.HideInInspector | HideFlags.HideAndDontSave))
                 m_meshFilter.hideFlags = HideFlags.HideInInspector | HideFlags.HideAndDontSave;
-
-            if (m_CanvasRenderer != null)
-                m_CanvasRenderer.hideFlags = HideFlags.HideInInspector;
 
             // Additional Properties could be added to sync up Serialized Properties & Properties.
 
