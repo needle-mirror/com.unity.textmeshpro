@@ -15,7 +15,7 @@ namespace TMPro
         /// <summary>
         /// List that contains the glyph pair adjustment records.
         /// </summary>
-        internal List<TMP_GlyphPairAdjustmentRecord> glyphPairAdjustmentRecords
+        public List<TMP_GlyphPairAdjustmentRecord> glyphPairAdjustmentRecords
         {
             get { return m_GlyphPairAdjustmentRecords; }
             set { m_GlyphPairAdjustmentRecords = value; }

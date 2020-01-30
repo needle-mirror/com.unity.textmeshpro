@@ -112,8 +112,8 @@ namespace TMPro
             LoadFontAsset();
 
             // Allocate our initial buffers.
-            if (m_TextParsingBuffer == null)
-                m_TextParsingBuffer = new UnicodeChar[m_max_characters];
+            if (m_InternalParsingBuffer == null)
+                m_InternalParsingBuffer = new UnicodeChar[m_max_characters];
 
             m_cached_TextElement = new TMP_Character();
             m_isFirstAllocation = true;
@@ -125,9 +125,6 @@ namespace TMPro
                 for (int i = 0; i < subTextObjects.Length; i++)
                     m_subTextObjects[i + 1] = subTextObjects[i];
             }
-
-            // Get reference to potential text preprocessor component
-            m_TextPreProcessor = GetComponent<ITextPreprocessor>();
 
             // Set flags to ensure our text is parsed and redrawn.
             m_isInputParsingRequired = true;
@@ -313,6 +310,13 @@ namespace TMPro
         /// <param name="go">The affected GameObject</param>
         void OnPrefabInstanceUpdate(GameObject go)
         {
+            // Remove Callback if this prefab has been deleted.
+            if (this == null)
+            {
+                UnityEditor.PrefabUtility.prefabInstanceUpdated -= OnPrefabInstanceUpdate;
+                return;
+            }
+
             if (go == this.gameObject)
             {
                 TMP_SubMeshUI[] subTextObjects = GetComponentsInChildren<TMP_SubMeshUI>();
@@ -1008,7 +1012,7 @@ namespace TMPro
 
 
         // This function parses through the Char[] to determine how many characters will be visible. It then makes sure the arrays are large enough for all those characters.
-        protected override int SetArraySizes(UnicodeChar[] chars)
+        protected override int SetArraySizes(UnicodeChar[] unicodeChars)
         {
             #if TMP_PROFILE_ON
             Profiler.BeginSample("TMP SetArraySizes()");
@@ -1036,7 +1040,12 @@ namespace TMPro
             m_materialReferenceIndexLookup.Clear();
             MaterialReference.AddMaterialReference(m_currentMaterial, m_currentFontAsset, m_materialReferences, m_materialReferenceIndexLookup);
 
-            if (m_textInfo == null) m_textInfo = new TMP_TextInfo();
+            // Set allocations for the text object's TextInfo 
+            if (m_textInfo == null)
+                m_textInfo = new TMP_TextInfo(m_InternalParsingBufferSize);
+            else if (m_textInfo.characterInfo.Length < m_InternalParsingBufferSize)
+                TMP_TextInfo.Resize(ref m_textInfo.characterInfo, m_InternalParsingBufferSize, false);
+
             m_textElementType = TMP_TextElementType.Character;
 
             // Clear Linked Text object if we have one.
@@ -1046,15 +1055,14 @@ namespace TMPro
                 m_linkedTextComponent.ClearMesh();
             }
 
-
             // Parsing XML tags in the text
-            for (int i = 0; i < chars.Length && chars[i].unicode != 0; i++)
+            for (int i = 0; i < unicodeChars.Length && unicodeChars[i].unicode != 0; i++)
             {
                 //Make sure the characterInfo array can hold the next text element.
                 if (m_textInfo.characterInfo == null || m_totalCharacterCount >= m_textInfo.characterInfo.Length)
                     TMP_TextInfo.Resize(ref m_textInfo.characterInfo, m_totalCharacterCount + 1, true);
 
-                int unicode = chars[i].unicode;
+                int unicode = unicodeChars[i].unicode;
 
                 // PARSE XML TAGS
                 #region PARSE XML TAGS
@@ -1064,9 +1072,9 @@ namespace TMPro
                     int endTagIndex;
 
                     // Check if Tag is Valid
-                    if (ValidateHtmlTag(chars, i + 1, out endTagIndex))
+                    if (ValidateHtmlTag(unicodeChars, i + 1, out endTagIndex))
                     {
-                        int tagStartIndex = chars[i].stringIndex;
+                        int tagStartIndex = unicodeChars[i].stringIndex;
                         i = endTagIndex;
 
                         if ((m_FontStyleInternal & FontStyles.Bold) == FontStyles.Bold) m_isUsingBold = true;
@@ -1083,7 +1091,7 @@ namespace TMPro
                             m_textInfo.characterInfo[m_totalCharacterCount].textElement = m_currentSpriteAsset.spriteCharacterTable[m_spriteIndex];
                             m_textInfo.characterInfo[m_totalCharacterCount].elementType = m_textElementType;
                             m_textInfo.characterInfo[m_totalCharacterCount].index = tagStartIndex;
-                            m_textInfo.characterInfo[m_totalCharacterCount].stringLength = chars[i].stringIndex - tagStartIndex + 1;
+                            m_textInfo.characterInfo[m_totalCharacterCount].stringLength = unicodeChars[i].stringIndex - tagStartIndex + 1;
 
                             // Restore element type and material index to previous values.
                             m_textElementType = TMP_TextElementType.Character;
@@ -1172,8 +1180,8 @@ namespace TMPro
                             m_textInfo.characterInfo[m_totalCharacterCount].spriteAsset = spriteAsset;
                             m_textInfo.characterInfo[m_totalCharacterCount].textElement = spriteAsset.spriteCharacterTable[spriteIndex];
                             m_textInfo.characterInfo[m_totalCharacterCount].materialReferenceIndex = m_currentMaterialIndex;
-                            m_textInfo.characterInfo[m_totalCharacterCount].index = chars[i].stringIndex;
-                            m_textInfo.characterInfo[m_totalCharacterCount].stringLength = chars[i].length;
+                            m_textInfo.characterInfo[m_totalCharacterCount].index = unicodeChars[i].stringIndex;
+                            m_textInfo.characterInfo[m_totalCharacterCount].stringLength = unicodeChars[i].length;
 
                             // Restore element type and material index to previous values.
                             m_textElementType = TMP_TextElementType.Character;
@@ -1228,8 +1236,8 @@ namespace TMPro
                             m_textInfo.characterInfo[m_totalCharacterCount].spriteAsset = spriteAsset;
                             m_textInfo.characterInfo[m_totalCharacterCount].textElement = spriteAsset.spriteCharacterTable[spriteIndex];
                             m_textInfo.characterInfo[m_totalCharacterCount].materialReferenceIndex = m_currentMaterialIndex;
-                            m_textInfo.characterInfo[m_totalCharacterCount].index = chars[i].stringIndex;
-                            m_textInfo.characterInfo[m_totalCharacterCount].stringLength = chars[i].length;
+                            m_textInfo.characterInfo[m_totalCharacterCount].index = unicodeChars[i].stringIndex;
+                            m_textInfo.characterInfo[m_totalCharacterCount].stringLength = unicodeChars[i].length;
 
                             // Restore element type and material index to previous values.
                             m_textElementType = TMP_TextElementType.Character;
@@ -1267,7 +1275,7 @@ namespace TMPro
                     int srcGlyph = unicode;
 
                     // Try replacing the missing glyph character by TMP Settings Missing Glyph or Square (9633) character.
-                    unicode = chars[i].unicode = TMP_Settings.missingGlyphCharacter == 0 ? 9633 : TMP_Settings.missingGlyphCharacter;
+                    unicode = unicodeChars[i].unicode = TMP_Settings.missingGlyphCharacter == 0 ? 9633 : TMP_Settings.missingGlyphCharacter;
 
                     // Check for the missing glyph character in the currently assigned font asset and its fallbacks
                     character = TMP_FontAssetUtilities.GetCharacterFromFontAsset((uint)unicode, m_currentFontAsset, true, m_FontStyleInternal, m_FontWeightInternal, out isUsingAlternativeTypeface, out tempFontAsset);
@@ -1289,7 +1297,7 @@ namespace TMPro
                     if (character == null)
                     {
                         // Use Space (32) Glyph from the currently assigned font asset.
-                        unicode = chars[i].unicode = 32;
+                        unicode = unicodeChars[i].unicode = 32;
                         character = TMP_FontAssetUtilities.GetCharacterFromFontAsset((uint)unicode, m_currentFontAsset, true, m_FontStyleInternal, m_FontWeightInternal, out isUsingAlternativeTypeface, out tempFontAsset);
                         if (!TMP_Settings.warningsDisabled)
                             Debug.LogWarning("Character with ASCII value of " + srcGlyph + " was not found in the Font Asset Glyph Table. It was replaced by a space.", this);
@@ -1312,8 +1320,8 @@ namespace TMPro
                 m_textInfo.characterInfo[m_totalCharacterCount].isUsingAlternateTypeface = isUsingAlternativeTypeface;
                 m_textInfo.characterInfo[m_totalCharacterCount].character = (char)unicode;
                 m_textInfo.characterInfo[m_totalCharacterCount].fontAsset = m_currentFontAsset;
-                m_textInfo.characterInfo[m_totalCharacterCount].index = chars[i].stringIndex;
-                m_textInfo.characterInfo[m_totalCharacterCount].stringLength = chars[i].length;
+                m_textInfo.characterInfo[m_totalCharacterCount].index = unicodeChars[i].stringIndex;
+                m_textInfo.characterInfo[m_totalCharacterCount].stringLength = unicodeChars[i].length;
 
                 if (isUsingFallbackOrAlternativeTypeface)
                 {
@@ -1412,17 +1420,9 @@ namespace TMPro
                     // Check if the material has changed.
                     if (m_subTextObjects[i].sharedMaterial == null || m_subTextObjects[i].sharedMaterial.GetInstanceID() != m_materialReferences[i].material.GetInstanceID())
                     {
-                        bool isDefaultMaterial = m_materialReferences[i].isDefaultMaterial;
-
-                        m_subTextObjects[i].isDefaultMaterial = isDefaultMaterial;
-
-                        // Assign new material if we are not using the default material or if the font asset has changed.
-                        if (!isDefaultMaterial || m_subTextObjects[i].sharedMaterial == null || m_subTextObjects[i].sharedMaterial.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID() != m_materialReferences[i].material.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID())
-                        {
-                            m_subTextObjects[i].sharedMaterial = m_materialReferences[i].material;
-                            m_subTextObjects[i].fontAsset = m_materialReferences[i].fontAsset;
-                            m_subTextObjects[i].spriteAsset = m_materialReferences[i].spriteAsset;
-                        }
+                        m_subTextObjects[i].sharedMaterial = m_materialReferences[i].material;
+                        m_subTextObjects[i].fontAsset = m_materialReferences[i].fontAsset;
+                        m_subTextObjects[i].spriteAsset = m_materialReferences[i].spriteAsset;
                     }
 
                     // Check if we need to use a Fallback Material
@@ -1707,7 +1707,7 @@ namespace TMPro
                 m_textInfo.Clear();
 
             // Early exit if we don't have any Text to generate.
-            if (m_TextParsingBuffer == null || m_TextParsingBuffer.Length == 0 || m_TextParsingBuffer[0].unicode == (char)0)
+            if (m_InternalParsingBuffer == null || m_InternalParsingBuffer.Length == 0 || m_InternalParsingBuffer[0].unicode == (char)0)
             {
                 // Clear mesh and upload changes to the mesh.
                 ClearMesh();
@@ -1883,9 +1883,9 @@ namespace TMPro
             #endif
 
             // Parse through Character buffer to read HTML tags and begin creating mesh.
-            for (int i = 0; i < m_TextParsingBuffer.Length && m_TextParsingBuffer[i].unicode != 0; i++)
+            for (int i = 0; i < m_InternalParsingBuffer.Length && m_InternalParsingBuffer[i].unicode != 0; i++)
             {
-                charCode = m_TextParsingBuffer[i].unicode;
+                charCode = m_InternalParsingBuffer[i].unicode;
 
                 // Parse Rich Text Tag
                 #region Parse Rich Text Tag
@@ -1900,7 +1900,7 @@ namespace TMPro
                     int endTagIndex;
 
                     // Check if Tag is valid. If valid, skip to the end of the validated tag.
-                    if (ValidateHtmlTag(m_TextParsingBuffer, i + 1, out endTagIndex))
+                    if (ValidateHtmlTag(m_InternalParsingBuffer, i + 1, out endTagIndex))
                     {
                         i = endTagIndex;
 
@@ -2082,7 +2082,7 @@ namespace TMPro
                     m_currentMaterialIndex = m_textInfo.characterInfo[m_characterCount].materialReferenceIndex;
 
                     // Re-calculate font scale as the font asset may have changed.
-                    if (isInjectingCharacter && m_TextParsingBuffer[i].unicode == 0x0A && m_characterCount != m_firstCharacterOfLine)
+                    if (isInjectingCharacter && m_InternalParsingBuffer[i].unicode == 0x0A && m_characterCount != m_firstCharacterOfLine)
                         m_fontScale = m_textInfo.characterInfo[m_characterCount - 1].scale;
                     else
                         m_fontScale = m_currentFontSize * smallCapsMultiplier / m_currentFontAsset.m_FaceInfo.pointSize * m_currentFontAsset.m_FaceInfo.scale * (m_isOrthographic ? 1 : 0.1f);
@@ -3257,7 +3257,7 @@ namespace TMPro
 
                     // If End of Text
                     if (charCode == 0x03)
-                        i = m_TextParsingBuffer.Length;
+                        i = m_InternalParsingBuffer.Length;
 
                     #if TMP_PROFILE_ON
                     Profiler.EndSample();
