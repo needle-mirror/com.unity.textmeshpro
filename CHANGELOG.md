@@ -1,6 +1,21 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [1.5.0-preview.4] - 2020-01-31
+## [2.1.0-preview.4]
+## [3.0.0-preview.4]
+### Changes
+- Fixed Input Field issue where scrolling events could prevent OnEndEdit event from firing. See [forum post](https://forum.unity.com/threads/mouse-wheel-on-multiline-input-field-with-no-scrollbar-hangs-input-field-stops-event-firing.794607/) for details.
+- Improved Input Field handling of Vertical Scrollbar in conjunction with the ResetOnDeActivation property. Using the Vertical Scrollbar no longer triggers OnEndEdit event.
+- Fixed MissingReferenceException when deleting a TMP prefab that is part of a nested prefab. Case #1207793
+- Improved handling of allocations of newly created text objects with large amount of text. As a result of these revisions, allocations will potentially be reduce by 10X. See #1205923
+- Fixed potential Null Reference Exception with the TMP DropDown that could occur when using the experimental Editor "Enter Play Mode" feature. Case #1207915
+- Fixed potential issue with the assignment of sub text object materials.
+- Add support for hiding the soft keyboard for Switch in the TMP Input Field.
+- Fixed incorrect Preferred Height when Word Wrapping is disabled on text objects. See [forum post](https://forum.unity.com/threads/incorrect-wordwrapping-preferredsize-textmespro-2-1-preview-3.812376/) for details.
+- Fixed additional instances of TMP Resource Importer window being created when deleting the "TextMesh Pro" folder just after having imported them. Case #1205848
+- Added public ITextPreprocessor textPreprocessor; property to allow setting the text preprocessor for a given text component.
+
 ## [1.5.0-preview.3] - 2019-12-16
 ## [2.1.0-preview.3]
 ### Changes

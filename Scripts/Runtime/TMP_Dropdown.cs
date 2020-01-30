@@ -438,10 +438,10 @@ namespace TMPro
 
         protected override void Awake()
         {
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-                return;
-#endif
+//#if UNITY_EDITOR
+//            if (!Application.isPlaying)
+//                return;
+//#endif
 
             m_AlphaTweenRunner = new TweenRunner<FloatTween>();
             m_AlphaTweenRunner.Init(this);
