@@ -423,6 +423,7 @@ namespace TMPro
                     case RuntimePlatform.WSAPlayerX64:
                     case RuntimePlatform.WSAPlayerARM:
                     case RuntimePlatform.Stadia:
+                    case RuntimePlatform.Switch:
                         return m_HideSoftKeyboard;
                     default:
                         return true;
@@ -440,6 +441,7 @@ namespace TMPro
                     case RuntimePlatform.WSAPlayerX64:
                     case RuntimePlatform.WSAPlayerARM:
                     case RuntimePlatform.Stadia:
+                    case RuntimePlatform.Switch:
                         SetPropertyUtility.SetStruct(ref m_HideSoftKeyboard, value);
                         break;
                     default:
@@ -462,6 +464,7 @@ namespace TMPro
                 case RuntimePlatform.Android:
                 case RuntimePlatform.IPhonePlayer:
                 case RuntimePlatform.tvOS:
+                case RuntimePlatform.Switch:
                     return false;
                 default:
                     return true;
@@ -732,7 +735,7 @@ namespace TMPro
         private bool m_SelectionStillActive = false;
         private bool m_ReleaseSelection = false;
 
-        private GameObject m_SelectedObject;
+        private GameObject m_PreviouslySelectedObject;
 
         /// <summary>
         /// Controls whether the original text is restored when pressing "ESC".
@@ -1417,19 +1420,36 @@ namespace TMPro
             {
                 GameObject selectedObject = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
 
+                if (selectedObject == null && m_ResetOnDeActivation)
+                {
+                    ReleaseSelection();
+                    return;
+                }
+
                 if (selectedObject != null && selectedObject != this.gameObject)
                 {
-                    if (selectedObject != m_SelectedObject)
+                    if (selectedObject != m_PreviouslySelectedObject)
                     {
-                        m_SelectedObject = selectedObject;
+                        m_PreviouslySelectedObject = selectedObject;
 
-                        // Release current selection of the newly selected object is another Input Field
-                        if (selectedObject.GetComponent<TMP_InputField>() != null)
+                        // Special handling for Vertical Scrollbar
+                        if (m_VerticalScrollbar && selectedObject == m_VerticalScrollbar.gameObject)
                         {
-                            // Release selection
-                            m_SelectionStillActive = false;
-                            MarkGeometryAsDirty();
-                            m_SelectedObject = null;
+                            // Do not release selection
+                            return;
+                        }
+                        else
+                        {
+                            // Release selection for all objects when ResetOnDeActivation is true
+                            if (m_ResetOnDeActivation)
+                            {
+                                ReleaseSelection();
+                                return;
+                            }
+
+                            // Release current selection of selected object is another Input Field
+                            if (selectedObject.GetComponent<TMP_InputField>() != null)
+                                ReleaseSelection();
                         }
                     }
 
@@ -1456,9 +1476,7 @@ namespace TMPro
                         //if (caretRectTrans != null)
                         //    caretRectTrans.localPosition = Vector3.zero;
 
-                        m_SelectionStillActive = false;
-
-                        MarkGeometryAsDirty();
+                        ReleaseSelection();
 
                         return;
                     }
@@ -2120,7 +2138,12 @@ namespace TMPro
         /// <param name="eventData"></param>
         public virtual void OnScroll(PointerEventData eventData)
         {
-            if (m_TextComponent.preferredHeight < m_TextViewport.rect.height) return;
+            // Return if Single Line
+            if (m_LineType == LineType.SingleLine)
+                return;
+
+            if (m_TextComponent.preferredHeight < m_TextViewport.rect.height)
+                return;
 
             float scrollDirection = -eventData.scrollDelta.y;
 
@@ -2129,9 +2152,6 @@ namespace TMPro
             m_ScrollPosition = Mathf.Clamp01(m_ScrollPosition);
 
             AdjustTextPositionRelativeToViewport(m_ScrollPosition);
-
-            // Disable focus until user re-selected the input field.
-            m_AllowInput = false;
 
             if (m_VerticalScrollbar)
             {
@@ -3948,7 +3968,13 @@ namespace TMPro
         public void ReleaseSelection()
         {
             m_SelectionStillActive = false;
+            m_ReleaseSelection = false;
+            m_PreviouslySelectedObject = null;
+
             MarkGeometryAsDirty();
+
+            SendOnEndEdit();
+            SendOnEndTextSelection();
         }
 
         public void DeactivateInputField(bool clearSelection = false)
@@ -3983,17 +4009,10 @@ namespace TMPro
                     //m_StringPosition = m_StringSelectPosition = 0;
                     //m_CaretPosition = m_CaretSelectPosition = 0;
                     //m_TextComponent.rectTransform.localPosition = m_DefaultTransformPosition;
-
-                    //if (caretRectTrans != null)
-                    //    caretRectTrans.localPosition = Vector3.zero;
-
-                    m_SelectionStillActive = false;
-                    m_ReleaseSelection = false;
-                    m_SelectedObject = null;
+                    
+                    if (m_VerticalScrollbar == null)
+                        ReleaseSelection();
                 }
-
-                SendOnEndEdit();
-                SendOnEndTextSelection();
 
                 inputSystem.imeCompositionMode = IMECompositionMode.Auto;
             }
@@ -4173,7 +4192,7 @@ namespace TMPro
         protected override void DoStateTransition(SelectionState state, bool instant)
         {
             if (m_HasDoneFocusTransition)
-                state = SelectionState.Highlighted;
+                state = SelectionState.Selected;
             else if (state == SelectionState.Pressed)
                 m_HasDoneFocusTransition = true;
 

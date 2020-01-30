@@ -12,6 +12,7 @@ namespace TMPro
     [RequireComponent(typeof(CanvasRenderer))]
     [AddComponentMenu("UI/TextMeshPro - Text (UI)", 11)]
     [ExecuteAlways]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.0")]
     public partial class TextMeshProUGUI : TMP_Text, ILayoutElement
     {
         /// <summary>
@@ -283,10 +284,6 @@ namespace TMPro
                 m_ShouldRecalculateStencil = false;
             }
 
-            // Release masking material
-            //if (m_MaskMaterial != null)
-            //    MaterialManager.ReleaseStencilMaterial(m_MaskMaterial);
-
             if (m_stencilID > 0)
             {
                 mat = TMP_MaterialManager.GetStencilMaterial(baseMaterial, m_stencilID);
@@ -295,6 +292,8 @@ namespace TMPro
 
                 m_MaskMaterial = mat;
             }
+            else if (m_MaskMaterial != null)
+                TMP_MaterialManager.ReleaseStencilMaterial(m_MaskMaterial);
 
             return mat;
         }
@@ -544,8 +543,8 @@ namespace TMPro
         /// <returns></returns>
         public override TMP_TextInfo GetTextInfo(string text)
         {
-            StringToCharArray(text, ref m_TextParsingBuffer);
-            SetArraySizes(m_TextParsingBuffer);
+            StringToInternalParsingBuffer(text, ref m_InternalParsingBuffer);
+            SetArraySizes(m_InternalParsingBuffer);
 
             m_renderMode = TextRenderFlags.DontRender;
 

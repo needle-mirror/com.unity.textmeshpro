@@ -160,11 +160,17 @@ namespace TMPro
         [SerializeField]
         TMP_PackageResourceImporter m_ResourceImporter;
 
+        static TMP_PackageResourceImporterWindow m_ImporterWindow;
+
         public static void ShowPackageImporterWindow()
         {
-            var window = GetWindow<TMP_PackageResourceImporterWindow>();
-            window.titleContent = new GUIContent("TMP Importer");
-            window.Focus();
+            if (m_ImporterWindow == null)
+            {
+                m_ImporterWindow = GetWindow<TMP_PackageResourceImporterWindow>();
+                m_ImporterWindow.titleContent = new GUIContent("TMP Importer");
+            }
+
+            m_ImporterWindow.Focus();
         }
 
         void OnEnable()

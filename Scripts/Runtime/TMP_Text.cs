@@ -131,12 +131,17 @@ namespace TMPro
         [SerializeField]
         [TextArea(5, 10)]
         protected string m_text;
-        
+
         /// <summary>
-        /// Reference to potential text preprocessor component.
+        /// The ITextPreprocessor component referenced by the text object (if any) 
         /// </summary>
+        public ITextPreprocessor textPreprocessor
+        {
+            get { return m_TextPreprocessor; }
+            set { m_TextPreprocessor = value; }
+        }
         [SerializeField]
-        protected ITextPreprocessor m_TextPreProcessor;
+        protected ITextPreprocessor m_TextPreprocessor;
 
         /// <summary>
         /// 
@@ -1470,8 +1475,15 @@ namespace TMPro
         protected Matrix4x4 m_FXMatrix;
         protected bool m_isFXMatrixSet;
 
+        /// <summary>
+        /// Array containing the Unicode characters to be parsed.
+        /// </summary>
+        protected UnicodeChar[] m_InternalParsingBuffer = new UnicodeChar[8];
 
-        protected UnicodeChar[] m_TextParsingBuffer; // This array holds the characters to be processed by GenerateMesh();
+        /// <summary>
+        /// The number of Unicode characters that have been parsed and contained in the m_InternalParsingBuffer
+        /// </summary>
+        protected int m_InternalParsingBufferSize;
 
         protected struct UnicodeChar
         {
@@ -1848,19 +1860,19 @@ namespace TMPro
             {
                 case TextInputSources.String:
                 case TextInputSources.Text:
-                    if (m_TextPreProcessor != null)
-                        StringToCharArray(m_TextPreProcessor.PreprocessText(m_text), ref m_TextParsingBuffer);
+                    if (m_TextPreprocessor != null)
+                        m_InternalParsingBufferSize = StringToInternalParsingBuffer(m_TextPreprocessor.PreprocessText(m_text), ref m_InternalParsingBuffer);
                     else
-                        StringToCharArray(m_text, ref m_TextParsingBuffer);
+                        m_InternalParsingBufferSize = StringToInternalParsingBuffer(m_text, ref m_InternalParsingBuffer);
                     break;
                 case TextInputSources.SetText:
-                    SetTextArrayToCharArray(m_input_CharArray, ref m_TextParsingBuffer);
+                    m_InternalParsingBufferSize = CharArrayToInternalParsingBuffer(m_input_CharArray, ref m_InternalParsingBuffer);
                     break;
                 case TextInputSources.SetCharArray:
                     break;
             }
 
-            SetArraySizes(m_TextParsingBuffer);
+            SetArraySizes(m_InternalParsingBuffer);
             ////Profiler.EndSample();
         }
 
@@ -1984,7 +1996,7 @@ namespace TMPro
             m_text = text.ToString();
             #endif
 
-            StringBuilderToIntArray(text, ref m_TextParsingBuffer);
+            m_InternalParsingBufferSize = StringBuilderToInternalParsingBuffer(text, ref m_InternalParsingBuffer);
 
             m_isInputParsingRequired = true;
             m_havePropertiesChanged = true;
@@ -1996,21 +2008,54 @@ namespace TMPro
 
 
         /// <summary>
+        /// Set the text using a char array.
+        /// </summary>
+        /// <param name="text"></param>
+        public void SetText(char[] text)
+        {
+            SetCharArray(text);
+        }
+
+
+        /// <summary>
+        /// Set the text using a char array with specified starting character and length.
+        /// </summary>
+        /// <param name="text">Source char array that contains the Unicode characters</param>
+        /// <param name="start">The starting character index in the array.</param>
+        /// <param name="length">The number of characters to be set.</param>
+        public void SetText(char[] text, int start, int length)
+        {
+            SetCharArray(text, start, length);
+        }
+
+
+        /// <summary>
         /// Character array containing the text to be displayed.
         /// </summary>
         /// <param name="sourceText"></param>
         public void SetCharArray(char[] sourceText)
         {
-            // Initialize internal character buffer if necessary
-            if (m_TextParsingBuffer == null) m_TextParsingBuffer = new UnicodeChar[8];
+            int characterCount = sourceText == null ? 0 : sourceText.Length;
 
             #if UNITY_EDITOR
             // Create new string to be displayed in the Input Text Box of the Editor Panel.
-            if (sourceText == null || sourceText.Length == 0)
+            if (characterCount == 0)
                 m_text = string.Empty;
             else
                 m_text = new string(sourceText);
             #endif
+
+            // Early exit if string is null or empty
+            if (characterCount == 0)
+            {
+                m_InternalParsingBuffer[0].unicode = 0;
+                m_InternalParsingBufferSize = 0;
+                return;
+            }
+
+            // Make sure parsing buffer is large enough to handle the required text.
+            if (m_InternalParsingBuffer.Length < characterCount)
+                ResizeInternalArray(ref m_InternalParsingBuffer, characterCount);
 
             // Clear Style stacks.
             for (int i = 0; i < m_TextStyleStacks.Length; i++)
@@ -2021,7 +2066,7 @@ namespace TMPro
 
             // Insert Opening Style
             if (textStyle.hashCode != (int)TagHashCode.NORMAL)
-                InsertOpeningStyleTag(m_TextStyle, 0, ref m_TextParsingBuffer, ref writeIndex);
+                InsertOpeningStyleTag(m_TextStyle, 0, ref m_InternalParsingBuffer, ref writeIndex);
 
             for (int i = 0; sourceText != null && i < sourceText.Length; i++)
             {
@@ -2030,30 +2075,30 @@ namespace TMPro
                     switch ((int)sourceText[i + 1])
                     {
                         case 110: // \n LineFeed
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 10;
+                            m_InternalParsingBuffer[writeIndex].unicode = 10;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 114: // \r LineFeed
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 13;
+                            m_InternalParsingBuffer[writeIndex].unicode = 13;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 116: // \t Tab
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 9;
+                            m_InternalParsingBuffer[writeIndex].unicode = 9;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 118: // \v Vertical tab used as soft line break
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 11;
+                            m_InternalParsingBuffer[writeIndex].unicode = 11;
                             i += 1;
                             writeIndex += 1;
                             continue;
@@ -2065,9 +2110,9 @@ namespace TMPro
                 {
                     if (IsTagName(ref sourceText, "<BR>", i))
                     {
-                        if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                        if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                        m_TextParsingBuffer[writeIndex].unicode = 10;
+                        m_InternalParsingBuffer[writeIndex].unicode = 10;
                         writeIndex += 1;
                         i += 3;
 
@@ -2075,9 +2120,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<NBSP>", i))
                     {
-                        if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                        if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                        m_TextParsingBuffer[writeIndex].unicode = 160;
+                        m_InternalParsingBuffer[writeIndex].unicode = 160;
                         writeIndex += 1;
                         i += 5;
 
@@ -2088,7 +2133,7 @@ namespace TMPro
                         m_TextStyleStackDepth += 1;
 
                         int srcOffset;
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref m_TextParsingBuffer, ref writeIndex))
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref m_InternalParsingBuffer, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2098,7 +2143,7 @@ namespace TMPro
                     {
                         m_TextStyleStackDepth += 1;
 
-                        ReplaceClosingStyleTag(ref sourceText, i, ref m_TextParsingBuffer, ref writeIndex);
+                        ReplaceClosingStyleTag(ref sourceText, i, ref m_InternalParsingBuffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
                         i += 7;
@@ -2106,9 +2151,9 @@ namespace TMPro
                     }
                 }
 
-                if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                m_TextParsingBuffer[writeIndex].unicode = sourceText[i];
+                m_InternalParsingBuffer[writeIndex].unicode = sourceText[i];
                 writeIndex += 1;
             }
 
@@ -2116,11 +2161,12 @@ namespace TMPro
 
             // Insert Closing Style
             if (textStyle.hashCode != (int)TagHashCode.NORMAL)
-                InsertClosingStyleTag(ref m_TextParsingBuffer, ref writeIndex);
+                InsertClosingStyleTag(ref m_InternalParsingBuffer, ref writeIndex);
 
-            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+            if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-            m_TextParsingBuffer[writeIndex].unicode = 0;
+            m_InternalParsingBuffer[writeIndex].unicode = 0;
+            m_InternalParsingBufferSize = writeIndex;
 
             m_inputSource = TextInputSources.SetCharArray;
             m_isInputParsingRequired = true;
@@ -2138,23 +2184,36 @@ namespace TMPro
         /// <param name="sourceText"></param>
         public void SetCharArray(char[] sourceText, int start, int length)
         {
-            // Initialize internal character buffer if necessary
-            if (m_TextParsingBuffer == null) m_TextParsingBuffer = new UnicodeChar[8];
+            int characterCount = 0;
+
+            // Range check
+            if (sourceText != null)
+            {
+                start = Mathf.Clamp(start, 0, sourceText.Length);
+                length = Mathf.Clamp(length, 0, start + length < sourceText.Length ? length : sourceText.Length - start);
+
+                characterCount = length;
+            }
 
             #if UNITY_EDITOR
             // Create new string to be displayed in the Input Text Box of the Editor Panel.
-            if (sourceText == null || sourceText.Length == 0 || length == 0)
-            {
+            if (characterCount == 0)
                 m_text = string.Empty;
-                start = 0;
-                length = 0;
-            }
             else
-            {
-                // TODO: Add potential range check on start + length relative to array size.
                 m_text = new string(sourceText, start, length);
-            }
             #endif
+
+            // Early exit if string is null or empty
+            if (characterCount == 0)
+            {
+                m_InternalParsingBuffer[0].unicode = 0;
+                m_InternalParsingBufferSize = 0;
+                return;
+            }
+
+            // Make sure parsing buffer is large enough to handle the required text.
+            if (m_InternalParsingBuffer.Length < characterCount)
+                ResizeInternalArray(ref m_InternalParsingBuffer, characterCount);
 
             // Clear Style stacks.
             for (int j = 0; j < m_TextStyleStacks.Length; j++)
@@ -2165,7 +2224,7 @@ namespace TMPro
 
             // Insert Opening Style
             if (textStyle.hashCode != (int)TagHashCode.NORMAL)
-                InsertOpeningStyleTag(m_TextStyle, 0, ref m_TextParsingBuffer, ref writeIndex);
+                InsertOpeningStyleTag(m_TextStyle, 0, ref m_InternalParsingBuffer, ref writeIndex);
 
             int i = start;
             int end = start + length;
@@ -2176,30 +2235,30 @@ namespace TMPro
                     switch ((int)sourceText[i + 1])
                     {
                         case 110: // \n LineFeed
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 10;
+                            m_InternalParsingBuffer[writeIndex].unicode = 10;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 114: // \r Carriage Return
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 13;
+                            m_InternalParsingBuffer[writeIndex].unicode = 13;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 116: // \t Tab
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 9;
+                            m_InternalParsingBuffer[writeIndex].unicode = 9;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 118: // \v Vertical tab used as soft line break
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 11;
+                            m_InternalParsingBuffer[writeIndex].unicode = 11;
                             i += 1;
                             writeIndex += 1;
                             continue;
@@ -2211,9 +2270,9 @@ namespace TMPro
                 {
                     if (IsTagName(ref sourceText, "<BR>", i))
                     {
-                        if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                        if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                        m_TextParsingBuffer[writeIndex].unicode = 10;
+                        m_InternalParsingBuffer[writeIndex].unicode = 10;
                         writeIndex += 1;
                         i += 3;
 
@@ -2221,9 +2280,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<NBSP>", i))
                     {
-                        if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                        if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                        m_TextParsingBuffer[writeIndex].unicode = 160;
+                        m_InternalParsingBuffer[writeIndex].unicode = 160;
                         writeIndex += 1;
                         i += 5;
 
@@ -2234,7 +2293,7 @@ namespace TMPro
                         m_TextStyleStackDepth += 1;
 
                         int srcOffset;
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref m_TextParsingBuffer, ref writeIndex))
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref m_InternalParsingBuffer, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2244,7 +2303,7 @@ namespace TMPro
                     {
                         m_TextStyleStackDepth += 1;
 
-                        ReplaceClosingStyleTag(ref sourceText, i, ref m_TextParsingBuffer, ref writeIndex);
+                        ReplaceClosingStyleTag(ref sourceText, i, ref m_InternalParsingBuffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
                         i += 7;
@@ -2252,9 +2311,9 @@ namespace TMPro
                     }
                 }
 
-                if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                m_TextParsingBuffer[writeIndex].unicode = sourceText[i];
+                m_InternalParsingBuffer[writeIndex].unicode = sourceText[i];
                 writeIndex += 1;
             }
 
@@ -2262,11 +2321,11 @@ namespace TMPro
 
             // Insert Closing Style
             if (textStyle.hashCode != (int)TagHashCode.NORMAL)
-                InsertClosingStyleTag(ref m_TextParsingBuffer, ref writeIndex);
+                InsertClosingStyleTag(ref m_InternalParsingBuffer, ref writeIndex);
 
-            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+            if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-            m_TextParsingBuffer[writeIndex].unicode = 0;
+            m_InternalParsingBuffer[writeIndex].unicode = 0;
 
             m_inputSource = TextInputSources.SetCharArray;
             m_havePropertiesChanged = true;
@@ -2285,7 +2344,7 @@ namespace TMPro
         public void SetCharArray(int[] sourceText, int start, int length)
         {
             // Initialize internal character buffer if necessary
-            if (m_TextParsingBuffer == null) m_TextParsingBuffer = new UnicodeChar[8];
+            if (m_InternalParsingBuffer == null) m_InternalParsingBuffer = new UnicodeChar[8];
 
             #if UNITY_EDITOR
             // Create new string to be displayed in the Input Text Box of the Editor Panel.
@@ -2310,7 +2369,7 @@ namespace TMPro
 
             // Insert Opening Style
             if (textStyle.hashCode != (int)TagHashCode.NORMAL)
-                InsertOpeningStyleTag(m_TextStyle, 0, ref m_TextParsingBuffer, ref writeIndex);
+                InsertOpeningStyleTag(m_TextStyle, 0, ref m_InternalParsingBuffer, ref writeIndex);
 
             int end = start + length;
             for (int i = start; i < end && i < sourceText.Length; i++)
@@ -2320,30 +2379,30 @@ namespace TMPro
                     switch ((int)sourceText[i + 1])
                     {
                         case 110: // \n LineFeed
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 10;
+                            m_InternalParsingBuffer[writeIndex].unicode = 10;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 114: // \r LineFeed
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 13;
+                            m_InternalParsingBuffer[writeIndex].unicode = 13;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 116: // \t Tab
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 9;
+                            m_InternalParsingBuffer[writeIndex].unicode = 9;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 118: // \v Vertical tab used as soft line break
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 11;
+                            m_InternalParsingBuffer[writeIndex].unicode = 11;
                             i += 1;
                             writeIndex += 1;
                             continue;
@@ -2355,9 +2414,9 @@ namespace TMPro
                 {
                     if (IsTagName(ref sourceText, "<BR>", i))
                     {
-                        if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                        if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                        m_TextParsingBuffer[writeIndex].unicode = 10;
+                        m_InternalParsingBuffer[writeIndex].unicode = 10;
                         writeIndex += 1;
                         i += 3;
 
@@ -2365,9 +2424,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<NBSP>", i))
                     {
-                        if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                        if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                        m_TextParsingBuffer[writeIndex].unicode = 160;
+                        m_InternalParsingBuffer[writeIndex].unicode = 160;
                         writeIndex += 1;
                         i += 5;
 
@@ -2378,7 +2437,7 @@ namespace TMPro
                         m_TextStyleStackDepth += 1;
 
                         int srcOffset;
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref m_TextParsingBuffer, ref writeIndex))
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref m_InternalParsingBuffer, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2388,7 +2447,7 @@ namespace TMPro
                     {
                         m_TextStyleStackDepth += 1;
 
-                        ReplaceClosingStyleTag(ref sourceText, i, ref m_TextParsingBuffer, ref writeIndex);
+                        ReplaceClosingStyleTag(ref sourceText, i, ref m_InternalParsingBuffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
                         i += 7;
@@ -2396,9 +2455,9 @@ namespace TMPro
                     }
                 }
 
-                if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-                m_TextParsingBuffer[writeIndex].unicode = sourceText[i];
+                m_InternalParsingBuffer[writeIndex].unicode = sourceText[i];
                 writeIndex += 1;
             }
 
@@ -2406,11 +2465,11 @@ namespace TMPro
 
             // Insert Closing Style
             if (textStyle.hashCode != (int)TagHashCode.NORMAL)
-                InsertClosingStyleTag(ref m_TextParsingBuffer, ref writeIndex);
+                InsertClosingStyleTag(ref m_InternalParsingBuffer, ref writeIndex);
 
-            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+            if (writeIndex == m_InternalParsingBuffer.Length) ResizeInternalArray(ref m_InternalParsingBuffer);
 
-            m_TextParsingBuffer[writeIndex].unicode = 0;
+            m_InternalParsingBuffer[writeIndex].unicode = 0;
 
             m_inputSource = TextInputSources.SetCharArray;
             m_havePropertiesChanged = true;
@@ -2426,14 +2485,34 @@ namespace TMPro
         /// Copies Content of formatted SetText() to charBuffer.
         /// </summary>
         /// <param name="sourceText"></param>
-        /// <param name="charBuffer"></param>
-        protected void SetTextArrayToCharArray(char[] sourceText, ref UnicodeChar[] charBuffer)
+        /// <param name="internalParsingArray"></param>
+        protected int CharArrayToInternalParsingBuffer(char[] sourceText, ref UnicodeChar[] internalParsingArray)
         {
-            //Debug.Log("SetText Array to Char called.");
-            if (sourceText == null || m_charArray_Length == 0)
-                return;
+            int characterCount = sourceText == null ? 0 : sourceText.Length;
 
-            if (charBuffer == null) charBuffer = new UnicodeChar[8];
+            #if UNITY_EDITOR
+            // Create new string to be displayed in the Input Text Box of the Editor Panel.
+            // This results in allocations in the Unity Editor only
+            if (characterCount == 0)
+                m_text = string.Empty;
+            else
+                m_text = new string(sourceText);
+            #endif
+
+            // Early exit if string is null or empty
+            if (characterCount == 0)
+            {
+                if (internalParsingArray != null)
+                    internalParsingArray[0].unicode = 0;
+
+                return 0;
+            }
+
+            // Make sure parsing buffer is large enough to handle the required text.
+            if (internalParsingArray == null)
+                internalParsingArray = new UnicodeChar[characterCount];
+            else if (internalParsingArray.Length < characterCount)
+                ResizeInternalArray(ref internalParsingArray, characterCount);
 
             // Clear Style stacks.
             for (int j = 0; j < m_TextStyleStacks.Length; j++)
@@ -2444,16 +2523,16 @@ namespace TMPro
 
             // Insert Opening Style
             if (textStyle.hashCode != (int)TagHashCode.NORMAL)
-                InsertOpeningStyleTag(m_TextStyle, 0, ref m_TextParsingBuffer, ref writeIndex);
+                InsertOpeningStyleTag(m_TextStyle, 0, ref internalParsingArray, ref writeIndex);
 
             for (int i = 0; i < m_charArray_Length; i++)
             {
                 // Handle UTF-32 in the input text (string).
                 if (char.IsHighSurrogate(sourceText[i]) && char.IsLowSurrogate(sourceText[i + 1]))
                 {
-                    if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                    if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                    charBuffer[writeIndex].unicode = char.ConvertToUtf32(sourceText[i], sourceText[i + 1]);
+                    internalParsingArray[writeIndex].unicode = char.ConvertToUtf32(sourceText[i], sourceText[i + 1]);
                     i += 1;
                     writeIndex += 1;
                     continue;
@@ -2464,9 +2543,9 @@ namespace TMPro
                 {
                     if (IsTagName(ref sourceText, "<BR>", i))
                     {
-                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                        if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                        charBuffer[writeIndex].unicode = 10;
+                        internalParsingArray[writeIndex].unicode = 10;
                         writeIndex += 1;
                         i += 3;
 
@@ -2474,9 +2553,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<NBSP>", i))
                     {
-                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                        if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                        charBuffer[writeIndex].unicode = 160;
+                        internalParsingArray[writeIndex].unicode = 160;
                         writeIndex += 1;
                         i += 5;
 
@@ -2487,7 +2566,7 @@ namespace TMPro
                         m_TextStyleStackDepth += 1;
 
                         int srcOffset;
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref charBuffer, ref writeIndex))
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref internalParsingArray, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2497,7 +2576,7 @@ namespace TMPro
                     {
                         m_TextStyleStackDepth += 1;
 
-                        ReplaceClosingStyleTag(ref sourceText, i, ref charBuffer, ref writeIndex);
+                        ReplaceClosingStyleTag(ref sourceText, i, ref internalParsingArray, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
                         i += 7;
@@ -2505,9 +2584,9 @@ namespace TMPro
                     }
                 }
 
-                if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                charBuffer[writeIndex].unicode = sourceText[i];
+                internalParsingArray[writeIndex].unicode = sourceText[i];
                 writeIndex += 1;
             }
 
@@ -2515,11 +2594,13 @@ namespace TMPro
 
             // Insert Closing Style
             if (textStyle.hashCode != (int)TagHashCode.NORMAL)
-                InsertClosingStyleTag(ref m_TextParsingBuffer, ref writeIndex);
+                InsertClosingStyleTag(ref internalParsingArray, ref writeIndex);
 
-            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+            if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-            charBuffer[writeIndex].unicode = 0;
+            internalParsingArray[writeIndex].unicode = 0;
+
+            return writeIndex;
         }
 
 
@@ -2527,16 +2608,25 @@ namespace TMPro
         /// Method to store the content of a string into an integer array.
         /// </summary>
         /// <param name="sourceText"></param>
-        /// <param name="charBuffer"></param>
-        protected void StringToCharArray(string sourceText, ref UnicodeChar[] charBuffer)
+        /// <param name="internalParsingArray"></param>
+        protected int StringToInternalParsingBuffer(string sourceText, ref UnicodeChar[] internalParsingArray)
         {
-            if (sourceText == null)
+            int characterCount = sourceText == null ? 0 : sourceText.Length;
+
+            // Early exit if string is null or empty
+            if (characterCount == 0)
             {
-                charBuffer[0].unicode = 0;
-                return;
+                if (internalParsingArray != null)
+                    internalParsingArray[0].unicode = 0;
+
+                return 0;
             }
 
-            if (charBuffer == null) charBuffer = new UnicodeChar[8];
+            // Allocate internal buffers that are large enough to handle the required text.
+            if (internalParsingArray == null)
+                internalParsingArray = new UnicodeChar[characterCount];
+            else if (internalParsingArray.Length < characterCount)
+                ResizeInternalArray(ref internalParsingArray, characterCount);
 
             // Clear Style stacks.
             for (int j = 0; j < m_TextStyleStacks.Length; j++)
@@ -2547,7 +2637,7 @@ namespace TMPro
 
             // Insert Opening Style
             if (textStyle.hashCode != (int)TagHashCode.NORMAL)
-                InsertOpeningStyleTag(m_TextStyle, 0, ref charBuffer, ref writeIndex);
+                InsertOpeningStyleTag(m_TextStyle, 0, ref internalParsingArray, ref writeIndex);
 
             for (int i = 0; i < sourceText.Length; i++)
             {
@@ -2558,11 +2648,11 @@ namespace TMPro
                         case 85: // \U00000000 for UTF-32 Unicode
                             if (sourceText.Length > i + 9)
                             {
-                                if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                                if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                                charBuffer[writeIndex].unicode = GetUTF32(sourceText, i + 2);
-                                charBuffer[writeIndex].stringIndex = i;
-                                charBuffer[writeIndex].length = 10;
+                                internalParsingArray[writeIndex].unicode = GetUTF32(sourceText, i + 2);
+                                internalParsingArray[writeIndex].stringIndex = i;
+                                internalParsingArray[writeIndex].length = 10;
 
                                 i += 9;
                                 writeIndex += 1;
@@ -2574,21 +2664,21 @@ namespace TMPro
 
                             if (sourceText.Length <= i + 2) break;
 
-                            if (writeIndex + 2 > charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                            if (writeIndex + 2 > internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                            charBuffer[writeIndex].unicode = sourceText[i + 1];
-                            charBuffer[writeIndex + 1].unicode = sourceText[i + 2];
+                            internalParsingArray[writeIndex].unicode = sourceText[i + 1];
+                            internalParsingArray[writeIndex + 1].unicode = sourceText[i + 2];
                             i += 2;
                             writeIndex += 2;
                             continue;
                         case 110: // \n LineFeed
                             if (!m_parseCtrlCharacters) break;
 
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                            if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                            charBuffer[writeIndex].unicode = 10;
-                            charBuffer[writeIndex].stringIndex = i;
-                            charBuffer[writeIndex].length = 1;
+                            internalParsingArray[writeIndex].unicode = 10;
+                            internalParsingArray[writeIndex].stringIndex = i;
+                            internalParsingArray[writeIndex].length = 1;
 
                             i += 1;
                             writeIndex += 1;
@@ -2596,11 +2686,11 @@ namespace TMPro
                         case 114: // \r
                             if (!m_parseCtrlCharacters) break;
 
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                            if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                            charBuffer[writeIndex].unicode = 13;
-                            charBuffer[writeIndex].stringIndex = i;
-                            charBuffer[writeIndex].length = 1;
+                            internalParsingArray[writeIndex].unicode = 13;
+                            internalParsingArray[writeIndex].stringIndex = i;
+                            internalParsingArray[writeIndex].length = 1;
 
                             i += 1;
                             writeIndex += 1;
@@ -2608,11 +2698,11 @@ namespace TMPro
                         case 116: // \t Tab
                             if (!m_parseCtrlCharacters) break;
 
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                            if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                            charBuffer[writeIndex].unicode = 9;
-                            charBuffer[writeIndex].stringIndex = i;
-                            charBuffer[writeIndex].length = 1;
+                            internalParsingArray[writeIndex].unicode = 9;
+                            internalParsingArray[writeIndex].stringIndex = i;
+                            internalParsingArray[writeIndex].length = 1;
 
                             i += 1;
                             writeIndex += 1;
@@ -2620,11 +2710,11 @@ namespace TMPro
                         case 117: // \u0000 for UTF-16 Unicode
                             if (sourceText.Length > i + 5)
                             {
-                                if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                                if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                                charBuffer[writeIndex].unicode = GetUTF16(sourceText, i + 2);
-                                charBuffer[writeIndex].stringIndex = i;
-                                charBuffer[writeIndex].length = 6;
+                                internalParsingArray[writeIndex].unicode = GetUTF16(sourceText, i + 2);
+                                internalParsingArray[writeIndex].stringIndex = i;
+                                internalParsingArray[writeIndex].length = 6;
 
                                 i += 5;
                                 writeIndex += 1;
@@ -2634,11 +2724,11 @@ namespace TMPro
                         case 118: // \v Vertical tab used as soft line break
                             if (!m_parseCtrlCharacters) break;
 
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                            if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                            charBuffer[writeIndex].unicode = 11;
-                            charBuffer[writeIndex].stringIndex = i;
-                            charBuffer[writeIndex].length = 1;
+                            internalParsingArray[writeIndex].unicode = 11;
+                            internalParsingArray[writeIndex].stringIndex = i;
+                            internalParsingArray[writeIndex].length = 1;
 
                             i += 1;
                             writeIndex += 1;
@@ -2649,11 +2739,11 @@ namespace TMPro
                 // Handle UTF-32 in the input text (string). // Not sure this is needed //
                 if (char.IsHighSurrogate(sourceText[i]) && char.IsLowSurrogate(sourceText[i + 1]))
                 {
-                    if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                    if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                    charBuffer[writeIndex].unicode = char.ConvertToUtf32(sourceText[i], sourceText[i + 1]);
-                    charBuffer[writeIndex].stringIndex = i;
-                    charBuffer[writeIndex].length = 2;
+                    internalParsingArray[writeIndex].unicode = char.ConvertToUtf32(sourceText[i], sourceText[i + 1]);
+                    internalParsingArray[writeIndex].stringIndex = i;
+                    internalParsingArray[writeIndex].length = 2;
 
                     i += 1;
                     writeIndex += 1;
@@ -2665,11 +2755,11 @@ namespace TMPro
                 {
                     if (IsTagName(ref sourceText, "<BR>", i))
                     {
-                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                        if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                        charBuffer[writeIndex].unicode = 10;
-                        charBuffer[writeIndex].stringIndex = i;
-                        charBuffer[writeIndex].length = 1;
+                        internalParsingArray[writeIndex].unicode = 10;
+                        internalParsingArray[writeIndex].stringIndex = i;
+                        internalParsingArray[writeIndex].length = 1;
 
                         writeIndex += 1;
                         i += 3;
@@ -2678,11 +2768,11 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<NBSP>", i))
                     {
-                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                        if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                        charBuffer[writeIndex].unicode = 160;
-                        charBuffer[writeIndex].stringIndex = i;
-                        charBuffer[writeIndex].length = 1;
+                        internalParsingArray[writeIndex].unicode = 160;
+                        internalParsingArray[writeIndex].stringIndex = i;
+                        internalParsingArray[writeIndex].length = 1;
 
                         writeIndex += 1;
                         i += 5;
@@ -2694,7 +2784,7 @@ namespace TMPro
                         m_TextStyleStackDepth += 1;
 
                         int srcOffset;
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref charBuffer, ref writeIndex))
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref internalParsingArray, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2704,18 +2794,18 @@ namespace TMPro
                     {
                         m_TextStyleStackDepth += 1;
 
-                        ReplaceClosingStyleTag(ref sourceText, i, ref charBuffer, ref writeIndex);
+                        ReplaceClosingStyleTag(ref sourceText, i, ref internalParsingArray, ref writeIndex);
 
                         i += 7;
                         continue;
                     }
                 }
 
-                if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                charBuffer[writeIndex].unicode = sourceText[i];
-                charBuffer[writeIndex].stringIndex = writeIndex;
-                charBuffer[writeIndex].length = 1;
+                internalParsingArray[writeIndex].unicode = sourceText[i];
+                internalParsingArray[writeIndex].stringIndex = writeIndex;
+                internalParsingArray[writeIndex].length = 1;
 
                 writeIndex += 1;
             }
@@ -2724,11 +2814,12 @@ namespace TMPro
 
             // Insert Closing Style
             if (textStyle.hashCode != (int)TagHashCode.NORMAL)
-                InsertClosingStyleTag(ref charBuffer, ref writeIndex);
+                InsertClosingStyleTag(ref internalParsingArray, ref writeIndex);
 
-            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+            if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-            charBuffer[writeIndex].unicode = 0;
+            internalParsingArray[writeIndex].unicode = 0;
+            return writeIndex;
         }
 
 
@@ -2736,21 +2827,34 @@ namespace TMPro
         /// Copy contents of StringBuilder into int array.
         /// </summary>
         /// <param name="sourceText">Text to copy.</param>
-        /// <param name="charBuffer">Array to store contents.</param>
-        protected void StringBuilderToIntArray(StringBuilder sourceText, ref UnicodeChar[] charBuffer)
+        /// <param name="internalParsingArray">Array to store contents.</param>
+        protected int StringBuilderToInternalParsingBuffer(StringBuilder sourceText, ref UnicodeChar[] internalParsingArray)
         {
-            if (sourceText == null)
-            {
-                charBuffer[0].unicode = 0;
-                return;
-            }
-
-            if (charBuffer == null) charBuffer = new UnicodeChar[8];
+            int characterCount = sourceText == null ? 0 : sourceText.Length;
 
             #if UNITY_EDITOR
             // Create new string to be displayed in the Input Text Box of the Editor Panel.
-            m_text = sourceText.ToString();
+            // This results in allocations in the Unity Editor only
+            if (characterCount == 0)
+                m_text = string.Empty;
+            else
+                m_text = sourceText.ToString();
             #endif
+
+            // Early exit if string is null or empty
+            if (characterCount == 0)
+            {
+                if (internalParsingArray != null)
+                    internalParsingArray[0].unicode = 0;
+
+                return 0;
+            }
+
+            // Make sure parsing buffer is large enough to handle the required text.
+            if (internalParsingArray == null)
+                internalParsingArray = new UnicodeChar[characterCount];
+            else if (internalParsingArray.Length < characterCount)
+                ResizeInternalArray(ref internalParsingArray, characterCount);
 
             // Clear Style stacks.
             for (int j = 0; j < m_TextStyleStacks.Length; j++)
@@ -2761,7 +2865,7 @@ namespace TMPro
 
             // Insert Opening Style
             if (textStyle.hashCode != (int)TagHashCode.NORMAL)
-                InsertOpeningStyleTag(m_TextStyle, 0, ref charBuffer, ref writeIndex);
+                InsertOpeningStyleTag(m_TextStyle, 0, ref internalParsingArray, ref writeIndex);
 
             for (int i = 0; i < sourceText.Length; i++)
             {
@@ -2772,9 +2876,9 @@ namespace TMPro
                         case 85: // \U00000000 for UTF-32 Unicode
                             if (sourceText.Length > i + 9)
                             {
-                                if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                                if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                                charBuffer[writeIndex].unicode = GetUTF32(sourceText, i + 2);
+                                internalParsingArray[writeIndex].unicode = GetUTF32(sourceText, i + 2);
                                 i += 9;
                                 writeIndex += 1;
                                 continue;
@@ -2783,49 +2887,49 @@ namespace TMPro
                         case 92: // \ escape
                             if (sourceText.Length <= i + 2) break;
 
-                            if (writeIndex + 2 > charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                            if (writeIndex + 2 > internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                            charBuffer[writeIndex].unicode = sourceText[i + 1];
-                            charBuffer[writeIndex + 1].unicode = sourceText[i + 2];
+                            internalParsingArray[writeIndex].unicode = sourceText[i + 1];
+                            internalParsingArray[writeIndex + 1].unicode = sourceText[i + 2];
                             i += 2;
                             writeIndex += 2;
                             continue;
                         case 110: // \n LineFeed
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                            if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                            charBuffer[writeIndex].unicode = 10;
+                            internalParsingArray[writeIndex].unicode = 10;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 114: // \r
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                            if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                            charBuffer[writeIndex].unicode = 13;
+                            internalParsingArray[writeIndex].unicode = 13;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 116: // \t Tab
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                            if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                            charBuffer[writeIndex].unicode = 9;
+                            internalParsingArray[writeIndex].unicode = 9;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 117: // \u0000 for UTF-16 Unicode
                             if (sourceText.Length > i + 5)
                             {
-                                if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                                if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                                charBuffer[writeIndex].unicode = GetUTF16(sourceText, i + 2);
+                                internalParsingArray[writeIndex].unicode = GetUTF16(sourceText, i + 2);
                                 i += 5;
                                 writeIndex += 1;
                                 continue;
                             }
                             break;
                         case 118: // \v Vertical tab used as soft line break
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                            if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                            charBuffer[writeIndex].unicode = 11;
+                            internalParsingArray[writeIndex].unicode = 11;
                             i += 1;
                             writeIndex += 1;
                             continue;
@@ -2835,9 +2939,9 @@ namespace TMPro
                 // Handle UTF-32 in the input text (string).
                 if (char.IsHighSurrogate(sourceText[i]) && char.IsLowSurrogate(sourceText[i + 1]))
                 {
-                    if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                    if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                    charBuffer[writeIndex].unicode = char.ConvertToUtf32(sourceText[i], sourceText[i + 1]);
+                    internalParsingArray[writeIndex].unicode = char.ConvertToUtf32(sourceText[i], sourceText[i + 1]);
                     i += 1;
                     writeIndex += 1;
                     continue;
@@ -2848,9 +2952,9 @@ namespace TMPro
                 {
                     if (IsTagName(ref sourceText, "<BR>", i))
                     {
-                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                        if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                        charBuffer[writeIndex].unicode = 10;
+                        internalParsingArray[writeIndex].unicode = 10;
                         writeIndex += 1;
                         i += 3;
 
@@ -2858,9 +2962,9 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<NBSP>", i))
                     {
-                        if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                        if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                        charBuffer[writeIndex].unicode = 160;
+                        internalParsingArray[writeIndex].unicode = 160;
                         writeIndex += 1;
                         i += 5;
 
@@ -2871,7 +2975,7 @@ namespace TMPro
                         m_TextStyleStackDepth += 1;
 
                         int srcOffset;
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref charBuffer, ref writeIndex))
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref internalParsingArray, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2881,7 +2985,7 @@ namespace TMPro
                     {
                         m_TextStyleStackDepth += 1;
 
-                        ReplaceClosingStyleTag(ref sourceText, i, ref charBuffer, ref writeIndex);
+                        ReplaceClosingStyleTag(ref sourceText, i, ref internalParsingArray, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
                         i += 7;
@@ -2889,9 +2993,9 @@ namespace TMPro
                     }
                 }
 
-                if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-                charBuffer[writeIndex].unicode = sourceText[i];
+                internalParsingArray[writeIndex].unicode = sourceText[i];
                 writeIndex += 1;
             }
 
@@ -2899,11 +3003,12 @@ namespace TMPro
 
             // Insert Closing Style
             if (textStyle.hashCode != (int)TagHashCode.NORMAL)
-                InsertClosingStyleTag(ref charBuffer, ref writeIndex);
+                InsertClosingStyleTag(ref internalParsingArray, ref writeIndex);
 
-            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+            if (writeIndex == internalParsingArray.Length) ResizeInternalArray(ref internalParsingArray);
 
-            charBuffer[writeIndex].unicode = 0;
+            internalParsingArray[writeIndex].unicode = 0;
+            return writeIndex;
         }
 
 
@@ -4300,6 +4405,12 @@ namespace TMPro
             System.Array.Resize(ref array, size);
         }
 
+        void ResizeInternalArray<T>(ref T[] array, int size)
+        {
+            size = Mathf.NextPowerOfTwo(size + 1);
+
+            System.Array.Resize(ref array, size);
+        }
 
         private readonly float[] k_Power = { 5e-1f, 5e-2f, 5e-3f, 5e-4f, 5e-5f, 5e-6f, 5e-7f, 5e-8f, 5e-9f, 5e-10f }; // Used by FormatText to enable rounding and avoid using Mathf.Pow.
 
@@ -4380,9 +4491,9 @@ namespace TMPro
         /// <summary>
         /// Method used to determine the number of visible characters and required buffer allocations.
         /// </summary>
-        /// <param name="chars"></param>
+        /// <param name="unicodeChars"></param>
         /// <returns></returns>
-        protected virtual int SetArraySizes(UnicodeChar[] chars) { return 0; }
+        protected virtual int SetArraySizes(UnicodeChar[] unicodeChars) { return 0; }
 
 
         /// <summary>
@@ -4446,8 +4557,8 @@ namespace TMPro
         {
             m_isCalculatingPreferredValues = true;
 
-            StringToCharArray(text, ref m_TextParsingBuffer);
-            SetArraySizes(m_TextParsingBuffer);
+            StringToInternalParsingBuffer(text, ref m_InternalParsingBuffer);
+            SetArraySizes(m_InternalParsingBuffer);
 
             Vector2 margin = k_LargePositiveVector2;
 
@@ -4470,8 +4581,8 @@ namespace TMPro
         {
             m_isCalculatingPreferredValues = true;
 
-            StringToCharArray(text, ref m_TextParsingBuffer);
-            SetArraySizes(m_TextParsingBuffer);
+            StringToInternalParsingBuffer(text, ref m_InternalParsingBuffer);
+            SetArraySizes(m_InternalParsingBuffer);
 
             Vector2 margin = new Vector2(width, height);
 
@@ -4567,7 +4678,7 @@ namespace TMPro
             }
 
             m_AutoSizeIterationCount = 0;
-            float preferredHeight = CalculatePreferredValues(fontSize, margin, !m_enableAutoSizing, true).y;
+            float preferredHeight = CalculatePreferredValues(fontSize, margin, !m_enableAutoSizing, m_enableWordWrapping).y;
 
             m_isPreferredHeightDirty = false;
 
@@ -4592,7 +4703,7 @@ namespace TMPro
             m_charWidthAdjDelta = 0;
 
             m_AutoSizeIterationCount = 0;
-            float preferredHeight = CalculatePreferredValues(fontSize, margin, true, true).y;
+            float preferredHeight = CalculatePreferredValues(fontSize, margin, true, m_enableWordWrapping).y;
 
             //Debug.Log("GetPreferredHeight() Called. Returning height of " + preferredHeight);
 
@@ -4676,7 +4787,7 @@ namespace TMPro
             }
 
             // Early exit if we don't have any Text to generate.
-            if (m_TextParsingBuffer == null || m_TextParsingBuffer.Length == 0 || m_TextParsingBuffer[0].unicode == (char)0)
+            if (m_InternalParsingBuffer == null || m_InternalParsingBuffer.Length == 0 || m_InternalParsingBuffer[0].unicode == (char)0)
             {
                 return Vector2.zero;
             }
@@ -4782,9 +4893,9 @@ namespace TMPro
             m_AutoSizeIterationCount += 1;
 
             // Parse through Character buffer to read HTML tags and begin creating mesh.
-            for (int i = 0; i < m_TextParsingBuffer.Length && m_TextParsingBuffer[i].unicode != 0; i++)
+            for (int i = 0; i < m_InternalParsingBuffer.Length && m_InternalParsingBuffer[i].unicode != 0; i++)
             {
-                charCode = m_TextParsingBuffer[i].unicode;
+                charCode = m_InternalParsingBuffer[i].unicode;
 
                 // Parse Rich Text Tag
                 #region Parse Rich Text Tag
@@ -4795,7 +4906,7 @@ namespace TMPro
                     int endTagIndex;
 
                     // Check if Tag is valid. If valid, skip to the end of the validated tag.
-                    if (ValidateHtmlTag(m_TextParsingBuffer, i + 1, out endTagIndex))
+                    if (ValidateHtmlTag(m_InternalParsingBuffer, i + 1, out endTagIndex))
                     {
                         i = endTagIndex;
 
@@ -5338,7 +5449,7 @@ namespace TMPro
 
                     // If End of Text
                     if (charCode == 0x03)
-                        i = m_TextParsingBuffer.Length;
+                        i = m_InternalParsingBuffer.Length;
                 }
                 #endregion Check for Linefeed or Last Character
 
@@ -6583,7 +6694,7 @@ namespace TMPro
                 m_cached_Underline_Character = TMP_FontAssetUtilities.GetCharacterFromFontAsset(95,fontAsset, false, m_FontStyleInternal, (FontWeight)m_FontWeightInternal, out isUsingAlternativeTypeface, out tempFontAsset);
 
                 if (m_cached_Underline_Character == null)
-            {
+                {
                     if (!TMP_Settings.warningsDisabled)
                         Debug.LogWarning("The character used for Underline and Strikethrough is not available in font asset [" + fontAsset.name + "].", this);
                 }
@@ -6595,7 +6706,7 @@ namespace TMPro
                 m_cached_Ellipsis_Character = TMP_FontAssetUtilities.GetCharacterFromFontAsset(8230, fontAsset, false, m_FontStyleInternal, (FontWeight)m_FontWeightInternal, out isUsingAlternativeTypeface, out tempFontAsset);
 
                 if (m_cached_Ellipsis_Character == null)
-            {
+                {
                     if (!TMP_Settings.warningsDisabled)
                         Debug.LogWarning("The character used for Ellipsis is not available in font asset [" + fontAsset.name + "].", this);
                 }

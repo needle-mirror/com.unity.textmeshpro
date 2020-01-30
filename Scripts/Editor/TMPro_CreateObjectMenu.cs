@@ -72,7 +72,7 @@ namespace TMPro.EditorUtilities
             GameObject go = TMP_DefaultControls.CreateText(GetStandardResources());
 
             // Override text color and font size
-            TextMeshProUGUI textComponent = go.GetComponent<TextMeshProUGUI>();                   
+            TextMeshProUGUI textComponent = go.GetComponent<TextMeshProUGUI>();
 
             if (textComponent.m_isWaitingOnResourceLoad == false)
             {

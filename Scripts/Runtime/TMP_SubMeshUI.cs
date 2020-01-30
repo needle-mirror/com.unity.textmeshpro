@@ -8,6 +8,7 @@ using System.Collections.Generic;
 namespace TMPro
 {
     [ExecuteAlways]
+    [RequireComponent(typeof(CanvasRenderer))]
     public class TMP_SubMeshUI : MaskableGraphic, IClippable, IMaskable, IMaterialModifier
     {
         /// <summary>
@@ -274,9 +275,13 @@ namespace TMPro
         protected override void OnDisable()
         {
             //Debug.Log("*** SubObject OnDisable() ***");
+            //base.OnDisable();
 
             //m_canvasRenderer.Clear();
-            TMP_UpdateRegistry.UnRegisterCanvasElementForRebuild(this);
+            //TMP_UpdateRegistry.UnRegisterCanvasElementForRebuild(this);
+
+            if (canvasRenderer != null)
+                canvasRenderer.Clear();
 
             if (m_MaskMaterial != null)
             {
@@ -289,8 +294,6 @@ namespace TMPro
                 TMP_MaterialManager.ReleaseFallbackMaterial(m_fallbackMaterial);
                 m_fallbackMaterial = null;
             }
-
-            base.OnDisable();
         }
 
 
@@ -518,6 +521,8 @@ namespace TMPro
 
                 m_MaskMaterial = mat;
             }
+            else if (m_MaskMaterial != null)
+                TMP_MaterialManager.ReleaseStencilMaterial(m_MaskMaterial);
 
             return mat;
         }
