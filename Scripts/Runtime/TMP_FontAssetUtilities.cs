@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System.Collections.Generic;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
 
@@ -270,7 +267,7 @@ namespace TMPro
 
         private static bool k_IsFontEngineInitialized;
 
-
+        /*
         private static bool TryGetCharacterFromFontFile(uint unicode, TMP_FontAsset fontAsset, out TMP_Character character)
         {
             character = null;
@@ -342,6 +339,6 @@ namespace TMPro
 
             return false;
         }
-
+        */
     }
 }

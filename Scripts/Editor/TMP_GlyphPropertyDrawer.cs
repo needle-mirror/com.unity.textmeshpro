@@ -1,4 +1,4 @@
-﻿ using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
 using UnityEditor;
@@ -11,6 +11,8 @@ namespace TMPro.EditorUtilities
     [CustomPropertyDrawer(typeof(Glyph))]
     public class TMP_GlyphPropertyDrawer : PropertyDrawer
     {
+        private string k_ColorProperty = "_Color";
+
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             SerializedProperty prop_GlyphIndex = property.FindPropertyRelative("m_Index");
@@ -73,7 +75,7 @@ namespace TMPro.EditorUtilities
                     return;
 
                 mat.mainTexture = atlasTexture;
-                mat.SetColor("_Color", Color.white);
+                mat.SetColor(k_ColorProperty, Color.white);
             }
             else
             {
@@ -89,12 +91,14 @@ namespace TMPro.EditorUtilities
             // Draw glyph from atlas texture.
             Rect glyphDrawPosition = new Rect(position.x, position.y + 2, 64, 80);
 
-            SerializedProperty prop_GlyphRect = property.FindPropertyRelative("m_GlyphRect");
+            SerializedProperty glyphRectProperty = property.FindPropertyRelative("m_GlyphRect");
 
-            int glyphOriginX = prop_GlyphRect.FindPropertyRelative("m_X").intValue;
-            int glyphOriginY = prop_GlyphRect.FindPropertyRelative("m_Y").intValue;
-            int glyphWidth = prop_GlyphRect.FindPropertyRelative("m_Width").intValue;
-            int glyphHeight = prop_GlyphRect.FindPropertyRelative("m_Height").intValue;
+            int padding = fontAsset.atlasPadding;
+
+            int glyphOriginX = glyphRectProperty.FindPropertyRelative("m_X").intValue - padding;
+            int glyphOriginY = glyphRectProperty.FindPropertyRelative("m_Y").intValue - padding;
+            int glyphWidth = glyphRectProperty.FindPropertyRelative("m_Width").intValue + padding * 2;
+            int glyphHeight = glyphRectProperty.FindPropertyRelative("m_Height").intValue + padding * 2;
 
             float normalizedHeight = fontAsset.faceInfo.ascentLine - fontAsset.faceInfo.descentLine;
             float scale = glyphDrawPosition.width / normalizedHeight;

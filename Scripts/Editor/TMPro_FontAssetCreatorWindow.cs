@@ -1294,7 +1294,7 @@ namespace TMPro.EditorUtilities
                 fontAsset.characterTable = m_FontCharacterTable;
 
                 // Sort glyph and character tables.
-                fontAsset.SortGlyphAndCharacterTables();
+                fontAsset.SortAllTables();
 
                 // Get and Add Kerning Pairs to Font Asset
                 if (m_IncludeFontFeatures)
@@ -1345,7 +1345,7 @@ namespace TMPro.EditorUtilities
                 fontAsset.characterTable = m_FontCharacterTable;
 
                 // Sort glyph and character tables.
-                fontAsset.SortGlyphAndCharacterTables();
+                fontAsset.SortAllTables();
 
                 // Get and Add Kerning Pairs to Font Asset
                 if (m_IncludeFontFeatures)
@@ -1473,7 +1473,7 @@ namespace TMPro.EditorUtilities
                 fontAsset.characterTable = m_FontCharacterTable;
 
                 // Sort glyph and character tables.
-                fontAsset.SortGlyphAndCharacterTables();
+                fontAsset.SortAllTables();
 
                 // Get and Add Kerning Pairs to Font Asset
                 if (m_IncludeFontFeatures)
@@ -1533,7 +1533,7 @@ namespace TMPro.EditorUtilities
                 fontAsset.characterTable = m_FontCharacterTable;
 
                 // Sort glyph and character tables.
-                fontAsset.SortGlyphAndCharacterTables();
+                fontAsset.SortAllTables();
 
                 // Get and Add Kerning Pairs to Font Asset
                 // TODO: Check and preserve existing adjustment pairs.
