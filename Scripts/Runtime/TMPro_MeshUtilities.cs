@@ -279,9 +279,10 @@ namespace TMPro
         public float maxCapHeight;
         public float maxAscender;
         public float maxDescender;
+        public float startOfLineAscender;
         public float maxLineAscender;
         public float maxLineDescender;
-        public float previousLineAscender;
+        public float pageAscender;
         
         public HorizontalAlignmentOptions horizontalAlignment;
         public float marginLeft;
@@ -302,6 +303,7 @@ namespace TMPro
         public float currentFontSize;
         public float baselineOffset;
         public float lineOffset;
+        public bool isDrivenLineSpacing;
 
         public float cSpace;
         public float mSpace;

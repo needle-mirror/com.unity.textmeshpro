@@ -12,10 +12,10 @@ namespace TMPro
         private static TMP_EditorResourceManager s_Instance;
 
         private readonly List<Object> m_ObjectUpdateQueue = new List<Object>();
-        private Dictionary<int, int> m_ObjectUpdateQueueLookup = new Dictionary<int, int>();
+        private HashSet<int> m_ObjectUpdateQueueLookup = new HashSet<int>();
 
         private readonly List<Object> m_ObjectReImportQueue = new List<Object>();
-        private Dictionary<int, int> m_ObjectReImportQueueLookup = new Dictionary<int, int>();
+        private HashSet<int> m_ObjectReImportQueueLookup = new HashSet<int>();
 
         /// <summary>
         /// Get a singleton instance of the manager.
@@ -62,10 +62,10 @@ namespace TMPro
         {
             int id = obj.GetInstanceID();
 
-            if (m_ObjectReImportQueueLookup.ContainsKey(id))
+            if (m_ObjectReImportQueueLookup.Contains(id))
                 return;
 
-            m_ObjectReImportQueueLookup[id] = id;
+            m_ObjectReImportQueueLookup.Add(id);
             m_ObjectReImportQueue.Add(obj);
 
             return;
@@ -84,10 +84,10 @@ namespace TMPro
         {
             int id = obj.GetInstanceID();
 
-            if (m_ObjectUpdateQueueLookup.ContainsKey(id))
+            if (m_ObjectUpdateQueueLookup.Contains(id))
                 return;
 
-            m_ObjectUpdateQueueLookup[id] = id;
+            m_ObjectUpdateQueueLookup.Add(id);
             m_ObjectUpdateQueue.Add(obj);
 
             return;

@@ -132,7 +132,7 @@ namespace TMPro
         private float m_ScrollPosition;
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         [SerializeField]
         protected float m_ScrollSensitivity = 1.0f;
@@ -446,7 +446,7 @@ namespace TMPro
                         m_HideSoftKeyboard = true;
                         break;
                 }
-                
+
                 if (m_HideSoftKeyboard == true && m_SoftKeyboard != null && TouchScreenKeyboard.isSupported && m_SoftKeyboard.active)
                 {
                     m_SoftKeyboard.active = false;
@@ -628,7 +628,7 @@ namespace TMPro
                 if (m_VerticalScrollbar)
                 {
                     m_VerticalScrollbar.onValueChanged.AddListener(OnScrollbarValueChange);
-                    
+
                 }
             }
         }
@@ -681,13 +681,14 @@ namespace TMPro
         public float pointSize
         {
             get { return m_GlobalPointSize; }
-            set {
-                    if (SetPropertyUtility.SetStruct(ref m_GlobalPointSize, Math.Max(0, value)))
-                    {
-                        SetGlobalPointSize(m_GlobalPointSize);
-                        UpdateLabel();
-                    }
+            set
+            {
+                if (SetPropertyUtility.SetStruct(ref m_GlobalPointSize, Math.Max(0, value)))
+                {
+                    SetGlobalPointSize(m_GlobalPointSize);
+                    UpdateLabel();
                 }
+            }
         }
 
         /// <summary>
@@ -815,7 +816,7 @@ namespace TMPro
             set {  if (SetPropertyUtility.SetClass(ref m_InputValidator, value)) SetToCustom(CharacterValidation.CustomValidator); }
         }
         [SerializeField]
-        protected TMP_InputValidator m_InputValidator = null; 
+        protected TMP_InputValidator m_InputValidator = null;
 
         public bool readOnly { get { return m_ReadOnly; } set { m_ReadOnly = value; } }
 
@@ -914,7 +915,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public int stringPosition
         {
@@ -1426,34 +1427,59 @@ namespace TMPro
 
                 if (selectedObject != null && selectedObject != this.gameObject)
                 {
-                    if (selectedObject != m_PreviouslySelectedObject)
+                    if (selectedObject == m_PreviouslySelectedObject)
+                        return;
+
+                    m_PreviouslySelectedObject = selectedObject;
+
+                    // Special handling for Vertical Scrollbar
+                    if (m_VerticalScrollbar && selectedObject == m_VerticalScrollbar.gameObject)
                     {
-                        m_PreviouslySelectedObject = selectedObject;
-
-                        // Special handling for Vertical Scrollbar
-                        if (m_VerticalScrollbar && selectedObject == m_VerticalScrollbar.gameObject)
-                        {
-                            // Do not release selection
-                            return;
-                        }
-                        else
-                        {
-                            // Release selection for all objects when ResetOnDeActivation is true
-                            if (m_ResetOnDeActivation)
-                            {
-                                ReleaseSelection();
-                                return;
-                            }
-
-                            // Release current selection of selected object is another Input Field
-                            if (selectedObject.GetComponent<TMP_InputField>() != null)
-                                ReleaseSelection();
-                        }
+                        // Do not release selection
+                        return;
                     }
+
+                    // Release selection for all objects when ResetOnDeActivation is true
+                    if (m_ResetOnDeActivation)
+                    {
+                        ReleaseSelection();
+                        return;
+                    }
+
+                    // Release current selection of selected object is another Input Field
+                    if (selectedObject.GetComponent<TMP_InputField>() != null)
+                        ReleaseSelection();
 
                     return;
                 }
 
+                #if ENABLE_INPUT_SYSTEM
+                if (m_ProcessingEvent != null && m_ProcessingEvent.rawType == EventType.MouseDown && m_ProcessingEvent.button == 0)
+                {
+                    // Check for Double Click
+                    bool isDoubleClick = false;
+                    float timeStamp = Time.unscaledTime;
+
+                    if (m_KeyDownStartTime + m_DoubleClickDelay > timeStamp)
+                        isDoubleClick = true;
+
+                    m_KeyDownStartTime = timeStamp;
+
+                    if (isDoubleClick)
+                    {
+                        //m_StringPosition = m_StringSelectPosition = 0;
+                        //m_CaretPosition = m_CaretSelectPosition = 0;
+                        //m_TextComponent.rectTransform.localPosition = m_DefaultTransformPosition;
+
+                        //if (caretRectTrans != null)
+                        //    caretRectTrans.localPosition = Vector3.zero;
+
+                        ReleaseSelection();
+
+                        return;
+                    }
+                }
+                #else
                 if (Input.GetKeyDown(KeyCode.Mouse0))
                 {
                     // Check for Double Click
@@ -1479,6 +1505,7 @@ namespace TMPro
                         return;
                     }
                 }
+                #endif
             }
 
             UpdateMaskRegions();
@@ -1726,7 +1753,12 @@ namespace TMPro
                 }
             }
 
+            #if ENABLE_INPUT_SYSTEM
+            Event.PopEvent(m_ProcessingEvent);
+            bool shift = m_ProcessingEvent != null && (m_ProcessingEvent.modifiers & EventModifiers.Shift) != 0;
+            #else
             bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            #endif
 
             // Check for Double Click
             bool isDoubleClick = false;
@@ -1819,7 +1851,7 @@ namespace TMPro
                     else
                     {
                         // Select current character
-                        caretPositionInternal = insertionIndex; 
+                        caretPositionInternal = insertionIndex;
                         caretSelectPositionInternal = caretPositionInternal + 1;
 
                         stringPositionInternal = m_TextComponent.textInfo.characterInfo[insertionIndex].index;
@@ -2025,7 +2057,7 @@ namespace TMPro
             // Null character
             if (c == 0)
                 return false;
-            
+
             // Delete key on mac
             if (c == 127)
                 return false;
@@ -2052,7 +2084,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="eventData"></param>
         public virtual void OnUpdateSelected(BaseEventData eventData)
@@ -2131,7 +2163,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="eventData"></param>
         public virtual void OnScroll(PointerEventData eventData)
@@ -2316,7 +2348,7 @@ namespace TMPro
             {
                 stringSelectPositionInternal = stringPositionInternal = position;
 
-                // Only decrease caret position as we cross character boundary. 
+                // Only decrease caret position as we cross character boundary.
                 if (caretPositionInternal > 0 && stringPositionInternal <= m_TextComponent.textInfo.characterInfo[caretPositionInternal - 1].index)
                     caretSelectPositionInternal = caretPositionInternal = GetCaretPositionFromStringIndex(stringSelectPositionInternal);
             }
@@ -3205,7 +3237,7 @@ namespace TMPro
         void UpdateMaskRegions()
         {
             // TODO: Figure out a better way to handle adding an offset to the masking region
-            // This region is defined by the RectTransform of the GameObject that contains the RectMask2D component. 
+            // This region is defined by the RectTransform of the GameObject that contains the RectMask2D component.
             /*
             // Update Masking Region
             if (m_TextViewportRectMask != null)
@@ -3458,14 +3490,23 @@ namespace TMPro
             if (caretPositionInternal == m_TextComponent.textInfo.lineInfo[currentLine].firstCharacterIndex)
             {
                 currentCharacter = m_TextComponent.textInfo.characterInfo[caretPositionInternal];
-                startPosition = new Vector2(currentCharacter.origin, currentCharacter.descender);
                 height = currentCharacter.ascender - currentCharacter.descender;
+
+                if (m_TextComponent.verticalAlignment == VerticalAlignmentOptions.Geometry)
+                    startPosition = new Vector2(currentCharacter.origin, 0 - height / 2);
+                else
+                    startPosition = new Vector2(currentCharacter.origin, currentCharacter.descender);
             }
             else
             {
                 currentCharacter = m_TextComponent.textInfo.characterInfo[caretPositionInternal - 1];
-                startPosition = new Vector2(currentCharacter.xAdvance, currentCharacter.descender);
                 height = currentCharacter.ascender - currentCharacter.descender;
+
+                if (m_TextComponent.verticalAlignment == VerticalAlignmentOptions.Geometry)
+                    startPosition = new Vector2(currentCharacter.xAdvance, 0 - height / 2);
+                else
+                    startPosition = new Vector2(currentCharacter.xAdvance, currentCharacter.descender);
+
             }
 
             if (m_SoftKeyboard != null)
@@ -3525,7 +3566,8 @@ namespace TMPro
                 Vector2 screenPosition = RectTransformUtility.WorldToScreenPoint(cameraRef, cursorPosition);
                 screenPosition.y = Screen.height - screenPosition.y;
 
-                inputSystem.compositionCursorPos = screenPosition;
+                if (inputSystem != null)
+                    inputSystem.compositionCursorPos = screenPosition;
 
                 //Debug.Log("[" + Time.frameCount + "] Updating IME Window position（" + screenPosition + ") with Composition Length: " + compositionLength);
             }
@@ -3660,7 +3702,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="startPosition"></param>
         /// <param name="height"></param>
@@ -3907,7 +3949,7 @@ namespace TMPro
 
                     OnFocus();
 
-                    // Opening the soft keyboard sets its selection to the end of the text. 
+                    // Opening the soft keyboard sets its selection to the end of the text.
                     // As such, we set the selection to match the Input Field's internal selection.
                     if (m_SoftKeyboard != null)
                     {
@@ -4007,12 +4049,13 @@ namespace TMPro
                     //m_StringPosition = m_StringSelectPosition = 0;
                     //m_CaretPosition = m_CaretSelectPosition = 0;
                     //m_TextComponent.rectTransform.localPosition = m_DefaultTransformPosition;
-                    
+
                     if (m_VerticalScrollbar == null)
                         ReleaseSelection();
                 }
 
-                inputSystem.imeCompositionMode = IMECompositionMode.Auto;
+                if (inputSystem != null)
+                    inputSystem.imeCompositionMode = IMECompositionMode.Auto;
             }
 
             MarkGeometryAsDirty();
