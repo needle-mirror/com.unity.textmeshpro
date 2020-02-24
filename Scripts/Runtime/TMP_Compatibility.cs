@@ -7,8 +7,8 @@ namespace TMPro
     // Class used to convert scenes and objects saved in version 0.1.44 to the new Text Container
     public static class TMP_Compatibility
     {
-        public enum AnchorPositions { TopLeft, Top, TopRight, Left, Center, Right, BottomLeft, Bottom, BottomRight, BaseLine, None };  
-        
+        public enum AnchorPositions { TopLeft, Top, TopRight, Left, Center, Right, BottomLeft, Bottom, BottomRight, BaseLine, None };
+
         /// <summary>
         /// Function used to convert text alignment option enumeration format.
         /// </summary>

@@ -1,6 +1,20 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [3.0.0-preview.5] - 2020-02-25
+## [2.1.0-preview.5]
+## [1.5.0-preview.5]
+### Changes
+- Revised SetText function formatting options to including ability to specify padding for integral part of the value. Revised format is as follows: {Arg Index:Integral Padding.Decimal Precision} Example: TMP_Text.SetText("Value = {0:000.00}", 10.375f); result in "Value = 010.38".
+- Fixed issue where <TextMeshProUGUI> text objects isTextObjectScaleStatic property would be ignored when OnCanvasHierarchyChanged() is called.
+- Added a Character, Glyph and Record count to those respective tables in the Font Asset Inspector.
+- Fixed potential Null Reference Exception that would occur when using text Overflow Ellipsis mode with a primary font asset that doesn't contain the Ellipsis character. Case #1209771
+- Fixed a potential Editor lockup when using text Overflow Page mode. Case #1219055
+- Fixed Input Field incorrect caret vertical alignment when using the Midline / Vertical Geometry alignment option.
+- Added initial / minimal support for the New Input System. Please use with caution and report any issues.
+- Changes to Font Asset Generation Settings via the Font Asset Inspector will now update the existing glyphs and characters for the new settings instead of clearing them.
+- Text object InternalUpdate() used to handle potential scale changes of text objects now uses willRenderCanvases event instead of onPreCull. This avoids a potential one frame delay in updating of <TextMeshProUGUI> objects and no impact on <TextMeshPro> objects. Case #1216007
+
 ## [3.0.0-preview.4] - 2020-01-31
 ## [2.1.0-preview.4]
 ## [1.5.0-preview.4]
