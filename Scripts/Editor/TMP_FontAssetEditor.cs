@@ -419,7 +419,7 @@ namespace TMPro.EditorUtilities
                                     {
                                         #if UNITY_EDITOR && UNITY_2018_4_OR_NEWER
                                             #if !(UNITY_2018_4_0 || UNITY_2018_4_1 || UNITY_2018_4_2 || UNITY_2018_4_3 || UNITY_2018_4_4)
-                                            FontEngineEditorUtilities.SetAtlasTextureIsReadable(tex, false);
+                                            FontEngineEditorUtilities.SetAtlasTextureIsReadable(tex, true);
                                             #endif
                                         #endif
                                     }
