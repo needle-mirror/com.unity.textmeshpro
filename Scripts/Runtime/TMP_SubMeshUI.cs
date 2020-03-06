@@ -35,7 +35,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public override Texture mainTexture
         {
@@ -88,7 +88,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public Material fallbackMaterial
         {
@@ -240,7 +240,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         protected override void OnEnable()
         {
@@ -274,13 +274,7 @@ namespace TMPro
         protected override void OnDisable()
         {
             //Debug.Log("*** SubObject OnDisable() ***");
-            //base.OnDisable();
-
-            //m_canvasRenderer.Clear();
-            //TMP_UpdateRegistry.UnRegisterCanvasElementForRebuild(this);
-
-            if (canvasRenderer != null)
-                canvasRenderer.Clear();
+            base.OnDisable();
 
             if (m_MaskMaterial != null)
             {
@@ -385,7 +379,7 @@ namespace TMPro
                 }
                 else if (targetMaterialID == maskingMaterialID)
                 {
-                    // Update the padding 
+                    // Update the padding
                     GetPaddingForMaterial(mat);
 
                     m_sharedMaterial.CopyPropertiesFromMaterial(mat);
@@ -484,7 +478,7 @@ namespace TMPro
 #endif
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         protected override void OnTransformParentChanged()
         {
@@ -552,7 +546,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="isExtraPadding"></param>
         /// <param name="isBold"></param>
@@ -563,7 +557,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public override void SetAllDirty()
         {
@@ -574,7 +568,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public override void SetVerticesDirty()
         {
@@ -591,7 +585,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public override void SetLayoutDirty()
         {
@@ -600,7 +594,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public override void SetMaterialDirty()
         {
@@ -624,7 +618,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public void SetPivotDirty()
         {
@@ -654,7 +648,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         protected override void UpdateGeometry()
         {
@@ -664,7 +658,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="update"></param>
         public override void Rebuild(CanvasUpdate update)
@@ -689,7 +683,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         protected override void UpdateMaterial()
         {
@@ -730,7 +724,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public override void RecalculateMasking()
         {
@@ -778,7 +772,7 @@ namespace TMPro
 
             m_sharedMaterial = m_material;
 
-            // Compute and Set new padding values for this new material. 
+            // Compute and Set new padding values for this new material.
             m_padding = GetPaddingForMaterial();
 
             SetVerticesDirty();

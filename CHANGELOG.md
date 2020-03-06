@@ -1,6 +1,25 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [2.1.0-preview.7] - 2020-03-07
+## [1.5.0-preview.7]
+## [3.0.0-preview.7]
+### Changes
+- Reverted recent change to the TMP_SubMeshUI OnDisable() function that could result in a Missing Reference Exception in the GraphicRaycaster.cs script. See the following [forum post](https://forum.unity.com/threads/version-1-5-0-2-1-0-preview-5-now-available-for-testing.753587/page-2#post-5523412).
+- Added support for Stadia for Unity 2019.3 or newer.
+- Addressed warning that would appear in the console in Unity 2019.3 related to recent Preset API changes. Case #1223257
+- Fixed glyph drawing issue in the Font Asset Inspector Glyph Adjustment Table when Multi Atlas Texture is enabled and the glyph is not located in the main atlas texture or at atlasTextures[0].
+- Added support for &ltZWSP&gt tag which is internally replaced by a zero width space or \u200B.
+- Improved line breaking handling when using &ltNBSP&gt and / or &ltNOBR&gt tags where instead of breaking these line segments per character, they will break at any possible soft breaking space when these segments exceed the width of the text container.
+- Improved PreferredHeight calculations and handling when using Text Auto Size.
+- Fixed incorrect color being applied to the underline or strikethrough line segments when using <u> and / or <s> tags along with a <color> tag while at the same time applying an Underline or Strikethrough font style on the whole text object.
+- Fixed SDF Scale not getting updated when using SetText() with StringBuilder when the lossyScale of the text object changes. Case #1216007
+- Added Non Breaking Space \u00A0 and Soft Hyphen \u00AD to list of synthesized characters in the event they are not present in the source font file.
+- Fixed stack overflow issue when using TMP_FontAsset.HasCharacter and TMP_FontAsset.HasCharacters function on font assets that have circular fallback references. Case #1222574
+- Fixed atlas texture not getting set correctly to IsReadable when switching a static font asset to dynamic in the Generation Settings of the Font Asset Inspector.
+- Added check for RectTransform.sizeDelta change when OnRectTransformDimensionsChange() is called by the Canvas system to get around potential rounding error that erroneously trigger this callback when the RectTransform is using Stretch Anchor mode.
+- As requested by a few users, TMP_FontAsset.faceInfo setter is now public instead of internal.
+
 ## [2.1.0-preview.5] - 2020-02-25
 ## [1.5.0-preview.5]
 ## [3.0.0-preview.5]

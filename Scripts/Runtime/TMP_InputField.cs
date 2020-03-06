@@ -422,6 +422,9 @@ namespace TMPro
                     case RuntimePlatform.WSAPlayerX86:
                     case RuntimePlatform.WSAPlayerX64:
                     case RuntimePlatform.WSAPlayerARM:
+                    #if UNITY_2019_3_OR_NEWER
+                    case RuntimePlatform.Stadia:
+                    #endif
                     case RuntimePlatform.Switch:
                         return m_HideSoftKeyboard;
                     default:
@@ -439,6 +442,9 @@ namespace TMPro
                     case RuntimePlatform.WSAPlayerX86:
                     case RuntimePlatform.WSAPlayerX64:
                     case RuntimePlatform.WSAPlayerARM:
+                    #if UNITY_2019_3_OR_NEWER
+                    case RuntimePlatform.Stadia:
+                    #endif
                     case RuntimePlatform.Switch:
                         SetPropertyUtility.SetStruct(ref m_HideSoftKeyboard, value);
                         break;

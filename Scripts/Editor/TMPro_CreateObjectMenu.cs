@@ -29,12 +29,22 @@ namespace TMPro.EditorUtilities
 
             if (textComponent.m_isWaitingOnResourceLoad == false)
             {
-                // Apply TMP Settings Defaults if no Preset is defined
+                // Get reference to potential Presets for <TextMeshPro> component
+                #if UNITY_2019_3_OR_NEWER
+                Preset[] presets = Preset.GetDefaultPresetsForObject(textComponent);
+
+                if (presets == null || presets.Length == 0)
+                {            
+                    textComponent.text = "Sample text";
+                    textComponent.alignment = TextAlignmentOptions.TopLeft;
+                }
+                #else           
                 if (Preset.GetDefaultForObject(textComponent) == null)
                 {            
                     textComponent.text = "Sample text";
                     textComponent.alignment = TextAlignmentOptions.TopLeft;
                 }
+                #endif
 
                 if (TMP_Settings.autoSizeTextContainer)
                 {
@@ -74,13 +84,24 @@ namespace TMPro.EditorUtilities
 
             if (textComponent.m_isWaitingOnResourceLoad == false)
             {
-                // Apply TMP Settings Defaults if no Preset is defined
+                // Get reference to potential Presets for <TextMeshProUGUI> component
+                #if UNITY_2019_3_OR_NEWER
+                Preset[] presets = Preset.GetDefaultPresetsForObject(textComponent);
+
+                if (presets == null || presets.Length == 0)
+                {
+                    textComponent.fontSize = TMP_Settings.defaultFontSize;
+                    textComponent.color = Color.white;
+                    textComponent.text = "New Text";
+                }
+                #else
                 if (Preset.GetDefaultForObject(textComponent) == null)
                 {
                     textComponent.fontSize = TMP_Settings.defaultFontSize;
                     textComponent.color = Color.white;
                     textComponent.text = "New Text";
                 }
+                #endif
 
                 if (TMP_Settings.autoSizeTextContainer)
                 {
