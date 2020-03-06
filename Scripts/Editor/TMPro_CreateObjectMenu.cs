@@ -76,7 +76,7 @@ namespace TMPro.EditorUtilities
 
             if (textComponent.m_isWaitingOnResourceLoad == false)
             {
-                // Get reference to potential Presets for <TextMeshPro> component
+                // Get reference to potential Presets for <TextMeshProUGUI> component
                 Preset[] presets = Preset.GetDefaultPresetsForObject(textComponent);
 
                 if (presets == null || presets.Length == 0)

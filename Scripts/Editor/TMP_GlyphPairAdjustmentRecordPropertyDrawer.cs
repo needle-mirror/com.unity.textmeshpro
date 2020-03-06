@@ -316,7 +316,7 @@ namespace TMPro.EditorUtilities
 
         void DrawGlyph(uint glyphIndex, Rect position, SerializedProperty property)
         {
-            // Get a reference to the sprite texture
+            // Get a reference to the font asset
             TMP_FontAsset fontAsset = property.serializedObject.targetObject as TMP_FontAsset;
 
             if (fontAsset == null)
@@ -324,12 +324,12 @@ namespace TMPro.EditorUtilities
 
             Glyph glyph;
 
-            // Check if glyph currently exists in the atlas texture.
+            // Check if glyph is present in the atlas texture.
             if (!fontAsset.glyphLookupTable.TryGetValue(glyphIndex, out glyph))
                 return;
 
-            // Get reference to atlas texture.
-            int atlasIndex = fontAsset.m_AtlasTextureIndex;
+            // Get the atlas index of the glyph and lookup its atlas texture
+            int atlasIndex = glyph.atlasIndex;
             Texture2D atlasTexture = fontAsset.atlasTextures.Length > atlasIndex ? fontAsset.atlasTextures[atlasIndex] : null;
 
             if (atlasTexture == null)
@@ -361,18 +361,25 @@ namespace TMPro.EditorUtilities
 
             GlyphRect glyphRect = glyph.glyphRect;
 
+            int padding = fontAsset.atlasPadding;
+
+            int glyphOriginX = glyphRect.x - padding;
+            int glyphOriginY = glyphRect.y - padding;
+            int glyphWidth = glyphRect.width + padding * 2;
+            int glyphHeight = glyphRect.height + padding * 2;
+
             float normalizedHeight = fontAsset.faceInfo.ascentLine - fontAsset.faceInfo.descentLine;
             float scale = glyphDrawPosition.width / normalizedHeight;
 
             // Compute the normalized texture coordinates
-            Rect texCoords = new Rect((float)glyphRect.x / atlasTexture.width, (float)glyphRect.y / atlasTexture.height, (float)glyphRect.width / atlasTexture.width, (float)glyphRect.height / atlasTexture.height);
+            Rect texCoords = new Rect((float)glyphOriginX / atlasTexture.width, (float)glyphOriginY / atlasTexture.height, (float)glyphWidth / atlasTexture.width, (float)glyphHeight / atlasTexture.height);
 
             if (Event.current.type == EventType.Repaint)
             {
-                glyphDrawPosition.x += (glyphDrawPosition.width - glyphRect.width * scale) / 2;
-                glyphDrawPosition.y += (glyphDrawPosition.height - glyphRect.height * scale) / 2;
-                glyphDrawPosition.width = glyphRect.width * scale;
-                glyphDrawPosition.height = glyphRect.height * scale;
+                glyphDrawPosition.x += (glyphDrawPosition.width - glyphWidth * scale) / 2;
+                glyphDrawPosition.y += (glyphDrawPosition.height - glyphHeight * scale) / 2;
+                glyphDrawPosition.width = glyphWidth * scale;
+                glyphDrawPosition.height = glyphHeight * scale;
 
                 // Could switch to using the default material of the font asset which would require passing scale to the shader.
                 Graphics.DrawTexture(glyphDrawPosition, atlasTexture, texCoords, 0, 0, 0, 0, new Color(1f, 1f, 1f), mat);
