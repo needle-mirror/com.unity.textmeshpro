@@ -1,9 +1,9 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
-## [1.5.0-preview.6] - 2020-03-06
-## [2.1.0-preview.6]
-## [3.0.0-preview.6]
+## [1.5.0-preview.7] - 2020-03-07
+## [2.1.0-preview.7]
+## [3.0.0-preview.7]
 ### Changes
 - Reverted recent change to the TMP_SubMeshUI OnDisable() function that could result in a Missing Reference Exception in the GraphicRaycaster.cs script. See the following [forum post](https://forum.unity.com/threads/version-1-5-0-2-1-0-preview-5-now-available-for-testing.753587/page-2#post-5523412).
 - Fixed glyph drawing issue in the Font Asset Inspector Glyph Adjustment Table when Multi Atlas Texture is enabled and the glyph is not located in the main atlas texture or at atlasTextures[0]. 

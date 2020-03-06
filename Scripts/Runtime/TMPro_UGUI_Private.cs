@@ -1609,10 +1609,10 @@ namespace TMPro
                 return;
 
             // Ignore changes to RectTransform SizeDelta that are very small and typically the result of rounding errors when using RectTransform in Anchor Stretch mode.
-            if (rectTransform != null && Mathf.Abs(m_rectTransform.sizeDelta.x - m_RectTransformSizeDelta.x) < 0.0001f && Mathf.Abs(m_rectTransform.sizeDelta.y - m_RectTransformSizeDelta.y) < 0.0001f)
+            if (rectTransform != null && Mathf.Abs(m_rectTransform.rect.width - m_RectTransformRect.width) < 0.0001f && Mathf.Abs(m_rectTransform.rect.height - m_RectTransformRect.height) < 0.0001f)
                 return;
 
-            m_RectTransformSizeDelta = m_rectTransform.sizeDelta;
+            m_RectTransformRect = m_rectTransform.rect;
 
             ComputeMarginSize();
 

@@ -1189,7 +1189,7 @@ namespace TMPro
         /// <summary>
         /// Used to track potential changes in RectTransform size to allow us to ignore OnRectTransformDimensionsChange getting called due to rounding errors when using Stretch Anchors.
         /// </summary>
-        protected Vector2 m_RectTransformSizeDelta;
+        protected Rect m_RectTransformRect;
 
 
         /// <summary>
