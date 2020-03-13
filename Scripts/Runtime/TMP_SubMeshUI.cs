@@ -210,6 +210,7 @@ namespace TMPro
         public static TMP_SubMeshUI AddSubTextObject(TextMeshProUGUI textComponent, MaterialReference materialReference)
         {
             GameObject go = new GameObject("TMP UI SubObject [" + materialReference.material.name + "]", typeof(RectTransform));
+            go.hideFlags = HideFlags.DontSave;
 
             go.transform.SetParent(textComponent.transform, false);
             go.layer = textComponent.gameObject.layer;
@@ -636,7 +637,7 @@ namespace TMPro
         /// <param name="validRect"></param>
         public override void Cull(Rect clipRect, bool validRect)
         {
-            if (validRect)
+            if (validRect && m_TextComponent.ignoreClipping)
             {
                 canvasRenderer.cull = false;
                 CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(this);

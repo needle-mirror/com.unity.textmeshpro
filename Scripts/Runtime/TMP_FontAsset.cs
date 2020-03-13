@@ -8,7 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
-
+using UnityEditor;
 #if UNITY_EDITOR && UNITY_2018_4_OR_NEWER
     #if !(UNITY_2018_4_0 || UNITY_2018_4_1 || UNITY_2018_4_2 || UNITY_2018_4_3 || UNITY_2018_4_4)
     using UnityEditor.TextCore.LowLevel;
@@ -692,100 +692,49 @@ namespace TMPro
 
         internal void AddSynthesizedCharactersAndFaceMetrics()
         {
-            if (m_CharacterLookupDictionary.ContainsKey(9) == false)
-            {
-                Glyph glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, m_FaceInfo.tabWidth * tabSize), GlyphRect.zero, 1.0f, 0);
-                m_CharacterLookupDictionary.Add(9, new TMP_Character(9, glyph));
-            }
+            Profiler.BeginSample("TMP.AddSynthesizedCharacters");
 
-            // Add Linefeed LF char(10), VT char(11) and Carriage Return CR char(13)
-            if (m_CharacterLookupDictionary.ContainsKey(10) == false)
-            {
-                Glyph glyph = new Glyph(0, new GlyphMetrics(10, 0, 0, 0, 0), GlyphRect.zero, 1.0f, 0);
-                m_CharacterLookupDictionary.Add(10, new TMP_Character(10, glyph));
+            if (m_AtlasPopulationMode == AtlasPopulationMode.Dynamic)
+                FontEngine.LoadFontFace(sourceFontFile, m_FaceInfo.pointSize);
 
-                if (!m_CharacterLookupDictionary.ContainsKey(11))
-                    m_CharacterLookupDictionary.Add(11, new TMP_Character(11, glyph));
+            // Only characters not present in the source font file will be synthesized.
 
-                if (!m_CharacterLookupDictionary.ContainsKey(13))
-                    m_CharacterLookupDictionary.Add(13, new TMP_Character(13, glyph));
+            // Non visible and control characters with no metrics
+            // Add End of Text \u0003
+            AddSynthesizedCharacter(0x03, true);
 
-                if (!m_CharacterLookupDictionary.ContainsKey(3))
-                    m_CharacterLookupDictionary.Add(3, new TMP_Character(3, glyph));
-            }
+            // Add Tab \u0009
+            AddSynthesizedCharacter(0x09, true);
 
-            // Add Non Breaking Space \u00A0
-            if (m_CharacterLookupDictionary.ContainsKey(0x00A0) == false)
-            {
-                TMP_Character character;
-                if (m_CharacterLookupDictionary.TryGetValue(0x0020, out character))
-                    m_CharacterLookupDictionary.Add(0x00A0, new TMP_Character(0x00A0, character.glyph));
-            }
+            // Add Line Feed (LF) \u000A
+            AddSynthesizedCharacter(0x0A);
 
-            // Add Soft Hyphen \u00AD
-            if (m_CharacterLookupDictionary.ContainsKey(0x00AD) == false)
-            {
-                TMP_Character character;
-                if (m_CharacterLookupDictionary.TryGetValue(0x002D, out character))
-                    m_CharacterLookupDictionary.Add(0x00AD, new TMP_Character(0x00AD, character.glyph));
-            }
+            // Add Vertical Tab (VT) \u000B
+            AddSynthesizedCharacter(0x0B);
+
+            // Add Carriage Return (CR) \u000D
+            AddSynthesizedCharacter(0x0D);
 
             // Add Arabic Letter Mark \u061C
-            if (m_CharacterLookupDictionary.ContainsKey(0x061C) == false)
-            {
-                Glyph glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, 0), GlyphRect.zero, 1.0f, 0);
-                m_CharacterLookupDictionary.Add(0x061C, new TMP_Character(0x061C, glyph));
-            }
+            AddSynthesizedCharacter(0x061C);
 
-            // Add Zero Width Space \u200B
-            if (m_CharacterLookupDictionary.ContainsKey(0x200B) == false)
-            {
-                Glyph glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, 0), GlyphRect.zero, 1.0f, 0);
-                m_CharacterLookupDictionary.Add(0x200B, new TMP_Character(0x200B, glyph));
-            }
+            // Add Zero Width Space <ZWSP> \u2000B
+            AddSynthesizedCharacter(0x200B);
 
             // Add Left-To-Right Mark \u200E
-            if (m_CharacterLookupDictionary.ContainsKey(0x200E) == false)
-            {
-                Glyph glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, 0), GlyphRect.zero, 1.0f, 0);
-                m_CharacterLookupDictionary.Add(0x200E, new TMP_Character(0x200E, glyph));
-            }
+            AddSynthesizedCharacter(0x200E);
 
             // Add Right-To-Left Mark \u200F
-            if (m_CharacterLookupDictionary.ContainsKey(0x200F) == false)
-            {
-                Glyph glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, 0), GlyphRect.zero, 1.0f, 0);
-                m_CharacterLookupDictionary.Add(0x200F, new TMP_Character(0x200F, glyph));
-            }
+            AddSynthesizedCharacter(0x200F);
 
             // Add Line Separator \u2028
-            if (m_CharacterLookupDictionary.ContainsKey(0x2028) == false)
-            {
-                Glyph glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, 0), GlyphRect.zero, 1.0f, 0);
-                m_CharacterLookupDictionary.Add(0x2028, new TMP_Character(0x2028, glyph));
-            }
+            AddSynthesizedCharacter(0x2028);
 
-            // Add Line Separator \u2029
-            if (m_CharacterLookupDictionary.ContainsKey(0x2029) == false)
-            {
-                Glyph glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, 0), GlyphRect.zero, 1.0f, 0);
-                m_CharacterLookupDictionary.Add(0x2029, new TMP_Character(0x2029, glyph));
-            }
+            // Add Paragraph Separator \u2029
+            AddSynthesizedCharacter(0x2029);
 
-            // Add Zero Width Non-Breaking Space \u2060
-            if (m_CharacterLookupDictionary.ContainsKey(0x2060) == false)
-            {
-                Glyph glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, 0), GlyphRect.zero, 1.0f, 0);
-                m_CharacterLookupDictionary.Add(0x2060, new TMP_Character(0x2060, glyph));
-            }
-
-            // Add Non-Breaking Hyphen \u2011
-            if (m_CharacterLookupDictionary.ContainsKey(0x2011) == false)
-            {
-                TMP_Character character;
-                if (m_CharacterLookupDictionary.TryGetValue(0x002D, out character))
-                    m_CharacterLookupDictionary.Add(0x2011, new TMP_Character(0x2011, character.glyph));
-            }
+            // Add Word Joiner <WJ> / Zero Width Non-Breaking Space \u2060
+            AddSynthesizedCharacter(0x2060);
 
             // Set Cap Line using the capital letter 'X'
             if (m_FaceInfo.capLine == 0 && m_CharacterLookupDictionary.ContainsKey('X'))
@@ -800,8 +749,43 @@ namespace TMPro
                 uint glyphIndex = m_CharacterLookupDictionary['x'].glyphIndex;
                 m_FaceInfo.meanLine = m_GlyphLookupDictionary[glyphIndex].metrics.horizontalBearingY;
             }
+
+            Profiler.EndSample();
         }
 
+        void AddSynthesizedCharacter(uint unicode, bool addImmediately = false)
+        {
+            // Check if unicode is already present in the font asset
+            if (m_CharacterLookupDictionary.ContainsKey(unicode))
+                return;
+
+            Glyph glyph;
+
+            if (m_AtlasPopulationMode == AtlasPopulationMode.Dynamic)
+            {
+                // Check if unicode is present in font file
+                if (FontEngine.GetGlyphIndex(unicode) != 0)
+                {
+                    if (addImmediately == false)
+                        return;
+
+                    //Debug.Log("Adding Unicode [" + unicode.ToString("X4") + "].");
+
+                    GlyphLoadFlags glyphLoadFlags = ((GlyphRasterModes)m_AtlasRenderMode & GlyphRasterModes.RASTER_MODE_NO_HINTING) == GlyphRasterModes.RASTER_MODE_NO_HINTING ? GlyphLoadFlags.LOAD_NO_BITMAP | GlyphLoadFlags.LOAD_NO_HINTING : GlyphLoadFlags.LOAD_NO_BITMAP;
+
+                    if (FontEngine.TryGetGlyphWithUnicodeValue(unicode, glyphLoadFlags, out glyph))
+                        m_CharacterLookupDictionary.Add(unicode, new TMP_Character(unicode, glyph));
+
+                    return;
+                }
+            }
+
+            //Debug.Log("Synthesizing Unicode [" + unicode.ToString("X4") + "].");
+
+            // Synthesize and add missing glyph and character
+            glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, 0), GlyphRect.zero, 1.0f, 0);
+            m_CharacterLookupDictionary.Add(unicode, new TMP_Character(unicode, glyph));
+        }
 
         /// <summary>
         /// Sort the Character table by Unicode values.
@@ -1420,11 +1404,29 @@ namespace TMPro
                 // Skip missing glyphs
                 if (glyphIndex == 0)
                 {
-                    // Add character to list of missing characters.
-                    s_MissingCharacterList.Add(unicode);
+                    // Special handling for characters with potential alternative glyph representations
+                    switch (unicode)
+                    {
+                        case 0xA0: // Non Breaking Space <NBSP>
+                            // Use Space
+                            glyphIndex = FontEngine.GetGlyphIndex(0x20);
+                            break;
+                        case 0xAD: // Soft Hyphen <SHY>
+                        case 0x2011: // Non Breaking Hyphen
+                            // Use Hyphen Minus
+                            glyphIndex = FontEngine.GetGlyphIndex(0x2D);
+                            break;
+                    }
 
-                    isMissingCharacters = true;
-                    continue;
+                    // Skip to next character if no potential alternative glyph representation is present in font file.
+                    if (glyphIndex == 0)
+                    {
+                        // Add character to list of missing characters.
+                        s_MissingCharacterList.Add(unicode);
+
+                        isMissingCharacters = true;
+                        continue;
+                    }
                 }
 
                 TMP_Character character = new TMP_Character(unicode, glyphIndex);
@@ -1614,11 +1616,29 @@ namespace TMPro
                 // Skip missing glyphs
                 if (glyphIndex == 0)
                 {
-                    // Add character to list of missing characters.
-                    s_MissingCharacterList.Add(unicode);
+                    // Special handling for characters with potential alternative glyph representations
+                    switch (unicode)
+                    {
+                        case 0xA0: // Non Breaking Space <NBSP>
+                            // Use Space
+                            glyphIndex = FontEngine.GetGlyphIndex(0x20);
+                            break;
+                        case 0xAD: // Soft Hyphen <SHY>
+                        case 0x2011: // Non Breaking Hyphen
+                            // Use Hyphen Minus
+                            glyphIndex = FontEngine.GetGlyphIndex(0x2D);
+                            break;
+                    }
 
-                    isMissingCharacters = true;
-                    continue;
+                    // Skip to next character if no potential alternative glyph representation is present in font file.
+                    if (glyphIndex == 0)
+                    {
+                        // Add character to list of missing characters.
+                        s_MissingCharacterList.Add(unicode);
+
+                        isMissingCharacters = true;
+                        continue;
+                    }
                 }
 
                 TMP_Character character = new TMP_Character(unicode, glyphIndex);
@@ -1904,10 +1924,28 @@ namespace TMPro
             uint glyphIndex = FontEngine.GetGlyphIndex(unicode);
             if (glyphIndex == 0)
             {
-                m_MissingUnicodesFromFontFile.Add(unicode);
+                // Special handling for characters with potential alternative glyph representations
+                switch (unicode)
+                {
+                    case 0xA0: // Non Breaking Space <NBSP>
+                        // Use Space
+                        glyphIndex = FontEngine.GetGlyphIndex(0x20);
+                        break;
+                    case 0xAD: // Soft Hyphen <SHY>
+                    case 0x2011: // Non Breaking Hyphen
+                        // Use Hyphen Minus
+                        glyphIndex = FontEngine.GetGlyphIndex(0x2D);
+                        break;
+                }
 
-                Profiler.EndSample();
-                return false;
+                // Return if no potential alternative glyph representation is present in font file.
+                if (glyphIndex == 0)
+                {
+                    m_MissingUnicodesFromFontFile.Add(unicode);
+
+                    Profiler.EndSample();
+                    return false;
+                }
             }
 
             // Check if glyph is already contained in the font asset as the same glyph might be referenced by multiple characters.
@@ -2086,10 +2124,28 @@ namespace TMPro
             uint glyphIndex = FontEngine.GetGlyphIndex(unicode);
             if (glyphIndex == 0)
             {
-                m_MissingUnicodesFromFontFile.Add(unicode);
+                // Special handling for characters with potential alternative glyph representations
+                switch (unicode)
+                {
+                    case 0xA0: // Non Breaking Space <NBSP>
+                        // Use Space
+                        glyphIndex = FontEngine.GetGlyphIndex(0x20);
+                        break;
+                    case 0xAD: // Soft Hyphen <SHY>
+                    case 0x2011: // Non Breaking Hyphen
+                        // Use Hyphen Minus
+                        glyphIndex = FontEngine.GetGlyphIndex(0x2D);
+                        break;
+                }
 
-                Profiler.EndSample();
-                return false;
+                // Return if no potential alternative glyph representation is present in font file.
+                if (glyphIndex == 0)
+                {
+                    m_MissingUnicodesFromFontFile.Add(unicode);
+
+                    Profiler.EndSample();
+                    return false;
+                }
             }
 
             // Check if glyph is already contained in the font asset as the same glyph might be referenced by multiple characters.
@@ -2388,11 +2444,11 @@ namespace TMPro
             Profiler.BeginSample("TMP.UpdateGlyphAdjustmentRecords");
 
             // TODO: This copying of glyph index from list to array is temporary and will be replaced once an updated version of the FontEngine is released.
-            // Copy glyph index to array
             CopyListDataToArray(m_GlyphIndexList, ref k_GlyphIndexArray);
 
             // Get glyph pair adjustment records from font file.
             GlyphPairAdjustmentRecord[] pairAdjustmentRecords = FontEngine.GetGlyphPairAdjustmentTable(k_GlyphIndexArray);
+            // TODO: The GetGlyphPairAdjustmentTable will be replaced by the more efficient GetGlyphPairAdjustmentRecords once the updated version of the FontEngine is released.
             //GlyphPairAdjustmentRecord[] pairAdjustmentRecords = FontEngine.GetGlyphPairAdjustmentRecords(m_GlyphIndexListNewlyAdded, m_GlyphIndexList);
 
             // Clear newly added glyph list
@@ -2566,23 +2622,16 @@ namespace TMPro
         /// <typeparam name="T">Element type</typeparam>
         void CopyListDataToArray<T>(List<T> srcList, ref T[] dstArray)
         {
+            int size = srcList.Count;
+
             // Make sure destination array is appropriately sized.
-            if (dstArray == null || dstArray.Length < srcList.Count + 1)
-            {
-                int newSize = Mathf.NextPowerOfTwo(srcList.Count + 1);
+            if (dstArray == null)
+                dstArray = new T[size];
+            else
+                Array.Resize(ref dstArray, size);
 
-                if (dstArray == null)
-                    dstArray = new T[newSize];
-                else
-                    Array.Resize(ref dstArray, newSize);
-            }
-
-            int count = srcList.Count;
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < size; i++)
                 dstArray[i] = srcList[i];
-
-            // Terminate last array element with default value
-            dstArray[count] = default(T);
         }
 
         /// <summary>
@@ -2605,14 +2654,12 @@ namespace TMPro
             // Clear atlas textures
             ClearAtlasTextures(setAtlasSizeToZero);
 
-            #if UNITY_EDITOR
-            if (UnityEditor.EditorUtility.IsPersistent(this))
-            {
-                TMP_EditorResourceManager.RegisterResourceForReimport(this);
-            }
-            #endif
-
             ReadFontAssetDefinition();
+
+            #if UNITY_EDITOR
+            // Makes the changes to the font asset persistent.
+            TMP_EditorResourceManager.RegisterResourceForUpdate(this);
+            #endif
 
             Profiler.EndSample();
         }
@@ -2640,13 +2687,6 @@ namespace TMPro
 
             // Add glyphs
             TryAddCharacters(unicodeCharacters, true);
-
-            #if UNITY_EDITOR
-            if (UnityEditor.EditorUtility.IsPersistent(this))
-            {
-                TMP_EditorResourceManager.RegisterResourceForReimport(this);
-            }
-            #endif
 
             Profiler.EndSample();
         }
@@ -2702,8 +2742,15 @@ namespace TMPro
             {
                 Texture2D texture = m_AtlasTextures[i];
 
-                if (i > 0)
+                if (i > 0 && texture != null)
+                {
                     DestroyImmediate(texture, true);
+
+                    #if UNITY_EDITOR
+                    if (UnityEditor.EditorUtility.IsPersistent(this))
+                        TMP_EditorResourceManager.RegisterResourceForReimport(this);
+                    #endif
+                }
 
                 if (texture == null)
                     continue;

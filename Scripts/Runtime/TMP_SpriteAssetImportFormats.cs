@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
 
@@ -50,9 +49,22 @@ namespace TMPro.SpriteAssetUtilities
         }
 
         [System.Serializable]
+        public struct Meta
+        {
+            public string app;
+            public string version;
+            public string image;
+            public string format;
+            public SpriteSize size;
+            public float scale;
+            public string smartupdate;
+        }
+
+        [System.Serializable]
         public class SpriteDataObject
         {
             public List<Frame> frames;
+            public Meta meta;
         }
     }
 }

@@ -1,7 +1,7 @@
 {
   "name": "com.unity.textmeshpro",
   "displayName": "TextMeshPro",
-  "version": "1.5.0-preview.7",
+  "version": "1.5.0-preview.8",
   "unity": "2018.3",
   "description": "TextMeshPro is the ultimate text solution for Unity. It's the perfect replacement for Unity's UI Text and the legacy Text Mesh.\n\nPowerful and easy to use, TextMeshPro (also known as TMP) uses Advanced Text Rendering techniques along with a set of custom shaders; delivering substantial visual quality improvements while giving users incredible flexibility when it comes to text styling and texturing.\n\nTextMeshPro provides Improved Control over text formatting and layout with features like character, word, line and paragraph spacing, kerning, justified text, Links, over 30 Rich Text Tags available, support for Multi Font & Sprites, Custom Styles and more.\n\nGreat performance. Since the geometry created by TextMeshPro uses two triangles per character just like Unity's text components, this improved visual quality and flexibility comes at no additional performance cost.",
   "keywords": [
@@ -14,9 +14,9 @@
   "category": "Text Rendering",
   "dependencies": {},
   "repository": {
-    "footprint": "a5c559ea6c1d68ebbb03641b12b8637c8408cfb3",
+    "footprint": "b7c92170340265a4df546a3cbf496f74800249df",
     "type": "git",
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.textmeshpro.git",
-    "revision": "b28ea54edbf8a098c0e560c7d0d1c70b36122aef"
+    "revision": "5b7f0f0a256afd59f753efd7b22b0a2f8fcc6e85"
   }
 }

@@ -1035,6 +1035,13 @@ namespace TMPro
                         m_materialReferences[m_Ellipsis.materialIndex].referenceCount = 0;
                     }
                 }
+                else
+                {
+                    m_overflowMode = TextOverflowModes.Truncate;
+
+                    if (!TMP_Settings.warningsDisabled)
+                        Debug.LogWarning("The character used for Ellipsis is not available in font asset [" + m_currentFontAsset.name + "] or any potential fallbacks. Switching Text Overflow mode to Truncate.", this);
+                }
             }
             #endregion
 
@@ -1141,6 +1148,30 @@ namespace TMPro
                 {
                     if (m_currentFontAsset.m_FallbackFontAssetTable != null && m_currentFontAsset.m_FallbackFontAssetTable.Count > 0)
                         character = TMP_FontAssetUtilities.GetCharacterFromFontAssets((uint)unicode, m_currentFontAsset.m_FallbackFontAssetTable, true, m_FontStyleInternal, m_FontWeightInternal, out isUsingAlternativeTypeface, out tempFontAsset);
+                }
+
+                // Search for the glyph in the primary font asset if not the current font asset
+                if (character == null)
+                {
+                    if (m_currentFontAsset.instanceID != m_fontAsset.instanceID)
+                    {
+                        // Search primary font asset
+                        character = TMP_FontAssetUtilities.GetCharacterFromFontAsset((uint)unicode, m_fontAsset, false, m_FontStyleInternal, m_FontWeightInternal, out isUsingAlternativeTypeface, out tempFontAsset);
+
+                        // Use material and index of primary font asset.
+                        if (character != null)
+                        {
+                            m_currentMaterialIndex = 0;
+                            m_currentMaterial = m_materialReferences[0].material;
+                        }
+
+                        // Search list of potential fallback font assets assigned to the primary font asset.
+                        if (character == null)
+                        {
+                            if (m_fontAsset.m_FallbackFontAssetTable != null && m_fontAsset.m_FallbackFontAssetTable.Count > 0)
+                                character = TMP_FontAssetUtilities.GetCharacterFromFontAssets((uint)unicode, m_fontAsset.m_FallbackFontAssetTable, true, m_FontStyleInternal, m_FontWeightInternal, out isUsingAlternativeTypeface, out tempFontAsset);
+                        }
+                    }
                 }
 
                 // Search for the glyph in the Sprite Asset assigned to the text object.
@@ -1290,11 +1321,11 @@ namespace TMPro
                         character = TMP_FontAssetUtilities.GetCharacterFromFontAsset((uint)unicode, m_currentFontAsset, true, m_FontStyleInternal, m_FontWeightInternal, out isUsingAlternativeTypeface, out tempFontAsset);
                         if (!TMP_Settings.warningsDisabled)
                         {
-                            string formatWarning = srcGlyph > 0xFFFF
-                                ? "The character with Unicode value \\U{0:X8} was not found in {1}'s Glyph Table. It was replaced by a space in text object {2}."
-                                : "The character with Unicode value \\u{0:X4} was not found in {1}'s Glyph Table. It was replaced by a space in text object {2}.";
+                            string formattedWarning = srcGlyph > 0xFFFF
+                                ? string.Format("The character with Unicode value \\U{0:X8} was not found in the [{1}] font asset or any potential fallbacks. It was replaced by a space in the text object [{2}].", srcGlyph, m_fontAsset.name, this.name)
+                                : string.Format("The character with Unicode value \\u{0:X4} was not found in the [{1}] font asset or any potential fallbacks. It was replaced by a space in the text object [{2}].", srcGlyph, m_fontAsset.name, this.name);
 
-                            Debug.LogWarningFormat(formatWarning, srcGlyph, m_fontAsset.name, this);
+                            Debug.LogWarning(formattedWarning, this);
                         }
                     }
                 }
@@ -1318,7 +1349,7 @@ namespace TMPro
                 m_textInfo.characterInfo[m_totalCharacterCount].index = unicodeChars[i].stringIndex;
                 m_textInfo.characterInfo[m_totalCharacterCount].stringLength = unicodeChars[i].length;
 
-                if (isUsingFallbackOrAlternativeTypeface)
+                if (isUsingFallbackOrAlternativeTypeface && m_currentFontAsset.instanceID != m_fontAsset.instanceID)
                 {
                     // Create Fallback material instance matching current material preset if necessary
                     if (TMP_Settings.matchMaterialPreset)
@@ -3056,7 +3087,7 @@ namespace TMPro
                         marginRight = m_textInfo.lineInfo[m_lineNumber].marginRight;
                     }
 
-                    float textHeight = m_maxAscender - m_ElementDescender + (m_lineOffset > 0 && m_IsDrivenLineSpacing == false ? m_maxLineAscender - m_startOfLineAscender : 0); // m_maxAscender - (m_maxLineDescender - m_lineOffset);
+                    float textHeight = m_maxAscender - m_ElementDescender + (m_lineOffset > 0 && m_IsDrivenLineSpacing == false ? m_maxLineAscender - m_startOfLineAscender : 0);
                     float textWidth = Mathf.Abs(m_xAdvance) + (!m_isRightToLeft ? m_Ellipsis.character.m_Glyph.metrics.horizontalAdvance : 0) * (1 - m_charWidthAdjDelta) * scale;
                     float widthOfTextAreaForEllipsis = m_width != -1 ? Mathf.Min(marginWidth + 0.0001f - marginLeft - marginRight, m_width) : marginWidth + 0.0001f - marginLeft - marginRight;
 
