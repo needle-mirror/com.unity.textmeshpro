@@ -1698,6 +1698,12 @@ namespace TMPro
         protected virtual void SetCulling() { }
 
         /// <summary>
+        /// Used to prevent clipping of text objects using nested RectMasks unless the compounded clip rect is no longer valid.
+        /// This is used by the TMP Input Field to prevent clipping when the RectTransform of the text ends up outside of the viewport RectMask.
+        /// </summary>
+        internal bool ignoreClipping;
+
+        /// <summary>
         /// Get the padding value for the currently assigned material
         /// </summary>
         /// <returns></returns>
@@ -5408,8 +5414,6 @@ namespace TMPro
                     if (charCode == 60)
                         charCode = 57344 + m_spriteIndex;
 
-                    m_currentFontAsset = m_fontAsset;
-
                     // The sprite scale calculations are based on the font asset assigned to the text object.
                     if (m_currentSpriteAsset.faceInfo.pointSize > 0)
                     {
@@ -7256,11 +7260,6 @@ namespace TMPro
                 m_Ellipsis.material = tempFontAsset.material;
                 m_Ellipsis.materialIndex = 0;
             }
-            else
-            {
-                if (!TMP_Settings.warningsDisabled)
-                    Debug.LogWarning("The character used for Ellipsis is not available in font asset [" + fontAsset.name + "].", this);
-            }
         }
 
 
@@ -8899,8 +8898,16 @@ namespace TMPro
                                 m_htmlColor = Color.red;
                                 m_colorStack.Add(m_htmlColor);
                                 return true;
+                            case -992792864: // <color=lightblue>
+                                m_htmlColor = new Color32(173, 216, 230, 255);
+                                m_colorStack.Add(m_htmlColor);
+                                return true;
                             case 3573310: // <color=blue>
                                 m_htmlColor = Color.blue;
+                                m_colorStack.Add(m_htmlColor);
+                                return true;
+                            case 3680713: // <color=grey>
+                                m_htmlColor = new Color32(128, 128, 128, 255);
                                 m_colorStack.Add(m_htmlColor);
                                 return true;
                             case 117905991: // <color=black>

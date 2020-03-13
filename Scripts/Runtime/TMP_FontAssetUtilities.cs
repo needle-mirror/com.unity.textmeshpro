@@ -119,7 +119,8 @@ namespace TMPro
 
                         return characterData;
                     }
-                    else if (fontAsset.atlasPopulationMode == AtlasPopulationMode.Dynamic)
+
+                    if (fontAsset.atlasPopulationMode == AtlasPopulationMode.Dynamic)
                     {
                         if (fontAsset.TryAddCharacterInternal(unicode, out characterData))
                         {
@@ -158,7 +159,8 @@ namespace TMPro
 
                 return characterData;
             }
-            else if (sourceFontAsset.atlasPopulationMode == AtlasPopulationMode.Dynamic)
+
+            if (sourceFontAsset.atlasPopulationMode == AtlasPopulationMode.Dynamic)
             {
                 if (sourceFontAsset.TryAddCharacterInternal(unicode, out characterData))
                 {
@@ -168,7 +170,6 @@ namespace TMPro
                 }
 
                 // Unable to add character and glyph to font asset
-
             }
 
             // Search fallback font assets if we still don't have a valid character and include fallback is set to true.

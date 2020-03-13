@@ -1,6 +1,23 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [2.1.0-preview.8] - 2020-03-14
+## [1.5.0-preview.8]
+## [3.0.0-preview.8]
+### Changes
+- Fixed a minor issue where the preferred width of a text object can be incorrect when using multiple font assets, fallbacks and sprites in the same line of text.
+- Added Alpha Fade Speed property to the TMP_DropDown inspector.
+- Minor improvements to the LogWarning related to missing characters in a font asset or fallback being replaced by a space character.
+- Fixed text object geometry not getting clipped when object is outside of RectMask2D.
+- Improved search for potential missing character to include the primary font asset and potential fallbacks when the current font asset is not the primary. 
+- Ignorable / Synthesized characters in font assets will only be created if they do not exist in the source font file.
+- Trying to use Text Overflow Ellipsis mode when no Ellipsis character is available in the primary font asset or potential fallbacks will now issue a warning and switch Text Overflow mode to Truncate. 
+- Added &ltcolor=lightblue&gt and &ltcolor=grey&gt to pre-defined rich text tag colors.
+- Fixed compatibility issue when using TexturePacker - JSON (Array) mode and the TMP Sprite Asset Importer to create SpriteAssets.
+- Simple fix to prevent the underline rich text tag becoming visible in the TMP Input Field when in IME composition mode with Rich Text disabled on the TMP Input Field. This is a temporary fix until a more robust and flexible solution is implemented. Case #1219969
+- Sub Text Objects which are created when the text requires the use of a fallback font asset or sprite asset will now use HideFlags.DontSave to prevent them from being save with Prefabs as they are created on demand.
+- Fix incorrect material reference when current font asset is not the primary or a fallback that is missing a character which is present in the primary font asset.
+
 ## [2.1.0-preview.7] - 2020-03-07
 ## [1.5.0-preview.7]
 ## [3.0.0-preview.7]

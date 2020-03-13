@@ -142,7 +142,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="spriteDataObject"></param>
         /// <param name="spriteCharacterTable"></param>
@@ -150,6 +150,8 @@ namespace TMPro
         private static void PopulateSpriteTables(TexturePacker_JsonArray.SpriteDataObject spriteDataObject, List<TMP_SpriteCharacter> spriteCharacterTable, List<TMP_SpriteGlyph> spriteGlyphTable)
         {
             List<TexturePacker_JsonArray.Frame> importedSprites = spriteDataObject.frames;
+
+            float atlasHeight = spriteDataObject.meta.size.h;
 
             for (int i = 0; i < importedSprites.Count; i++)
             {
@@ -159,7 +161,7 @@ namespace TMPro
                 spriteGlyph.index = (uint)i;
 
                 spriteGlyph.metrics = new GlyphMetrics((int)spriteData.frame.w, (int)spriteData.frame.h, -spriteData.frame.w * spriteData.pivot.x, spriteData.frame.h * spriteData.pivot.y, (int)spriteData.frame.w);
-                spriteGlyph.glyphRect = new GlyphRect((int)spriteData.frame.x, (int)spriteData.frame.y, (int)spriteData.frame.w, (int)spriteData.frame.h);
+                spriteGlyph.glyphRect = new GlyphRect((int)spriteData.frame.x, (int)(atlasHeight - spriteData.frame.h - spriteData.frame.y), (int)spriteData.frame.w, (int)spriteData.frame.h);
                 spriteGlyph.scale = 1.0f;
 
                 spriteGlyphTable.Add(spriteGlyph);
@@ -174,7 +176,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="filePath"></param>
         void SaveSpriteAsset(string filePath)

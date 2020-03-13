@@ -79,7 +79,7 @@ namespace TMPro
         public void CalculateLayoutInputHorizontal()
         {
             //Debug.Log("*** CalculateLayoutHorizontal() ***"); // at Frame: " + Time.frameCount); // called on Object ID " + GetInstanceID());
-            
+
             //// Check if object is active
             if (!this.gameObject.activeInHierarchy)
                 return;
@@ -101,7 +101,7 @@ namespace TMPro
         public void CalculateLayoutInputVertical()
         {
             //Debug.Log("*** CalculateLayoutInputVertical() ***"); // at Frame: " + Time.frameCount); // called on Object ID " + GetInstanceID());
-            
+
             //// Check if object is active
             if (!this.gameObject.activeInHierarchy) // || IsRectTransformDriven == false)
                 return;
@@ -140,7 +140,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public override void SetLayoutDirty()
         {
@@ -160,7 +160,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public override void SetMaterialDirty()
         {
@@ -184,7 +184,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public override void SetAllDirty()
         {
@@ -228,7 +228,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="update"></param>
         public override void Rebuild(CanvasUpdate update)
@@ -270,7 +270,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="baseMaterial"></param>
         /// <returns></returns>
@@ -300,7 +300,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         protected override void UpdateMaterial()
         {
@@ -344,7 +344,7 @@ namespace TMPro
         }
 
 
-        //public override Material defaultMaterial 
+        //public override Material defaultMaterial
         //{
         //    get { Debug.Log("Default Material called."); return m_sharedMaterial; }
         //}
@@ -399,7 +399,7 @@ namespace TMPro
         {
             //Debug.Log("***** Cull (" + clipRect + ", " + validRect + ")   Cull: " + m_canvasRenderer.cull + " *****");
 
-            if (validRect)
+            if (validRect && ignoreClipping)
             {
                 m_canvasRenderer.cull = false;
                 CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(this);
@@ -426,7 +426,7 @@ namespace TMPro
 
         /*
         /// <summary>
-        /// Sets the mask type 
+        /// Sets the mask type
         /// </summary>
         public MaskingTypes mask
         {

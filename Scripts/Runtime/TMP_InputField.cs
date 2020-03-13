@@ -1054,6 +1054,7 @@ namespace TMPro
             {
                 m_TextComponent.RegisterDirtyVerticesCallback(MarkGeometryAsDirty);
                 m_TextComponent.RegisterDirtyVerticesCallback(UpdateLabel);
+                m_TextComponent.ignoreClipping = true;
 
                 // Cache reference to Vertical Scrollbar RectTransform and add listener.
                 if (m_VerticalScrollbar != null)
@@ -1078,6 +1079,7 @@ namespace TMPro
             {
                 m_TextComponent.UnregisterDirtyVerticesCallback(MarkGeometryAsDirty);
                 m_TextComponent.UnregisterDirtyVerticesCallback(UpdateLabel);
+                m_TextComponent.ignoreClipping = false;
 
                 if (m_VerticalScrollbar != null)
                     m_VerticalScrollbar.onValueChanged.RemoveListener(OnScrollbarValueChange);
@@ -3135,7 +3137,10 @@ namespace TMPro
                     // Handle selections
                     Delete();
 
-                    fullText = text.Substring(0, m_StringPosition) +  "<u>" + compositionString + "</u>" + text.Substring(m_StringPosition);
+                    if (m_RichText)
+                        fullText = text.Substring(0, m_StringPosition) +  "<u>" + compositionString + "</u>" + text.Substring(m_StringPosition);
+                    else
+                        fullText = text.Substring(0, m_StringPosition) +  compositionString + text.Substring(m_StringPosition);
 
                     m_IsCompositionActive = true;
 

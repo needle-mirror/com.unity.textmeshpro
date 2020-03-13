@@ -2,7 +2,7 @@
 using System;
 using System.Collections;
 
-#pragma warning disable 0109 // Disable warning due to conflict between Unity Editor DLL and Runtime DLL related to .renderer property being available in one but not the other. 
+#pragma warning disable 0109 // Disable warning due to conflict between Unity Editor DLL and Runtime DLL related to .renderer property being available in one but not the other.
 
 namespace TMPro
 {
@@ -178,7 +178,7 @@ namespace TMPro
         private Mesh m_mesh;
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         //public BoxCollider boxCollider
         //{
@@ -414,6 +414,7 @@ namespace TMPro
         public static TMP_SubMesh AddSubTextObject(TextMeshPro textComponent, MaterialReference materialReference)
         {
             GameObject go = new GameObject("TMP SubMesh [" + materialReference.material.name + "]", typeof(TMP_SubMesh));
+            go.hideFlags = HideFlags.DontSave;
 
             TMP_SubMesh subMesh = go.GetComponent<TMP_SubMesh>();
 
@@ -457,7 +458,7 @@ namespace TMPro
 
             m_sharedMaterial = m_material;
 
-            // Compute and Set new padding values for this new material. 
+            // Compute and Set new padding values for this new material.
             m_padding = GetPaddingForMaterial();
 
             SetVerticesDirty();
@@ -506,7 +507,7 @@ namespace TMPro
             // Assign new material.
             m_sharedMaterial = mat;
 
-            // Compute and Set new padding values for this new material. 
+            // Compute and Set new padding values for this new material.
             m_padding = GetPaddingForMaterial();
 
             SetMaterialDirty();
@@ -542,7 +543,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public void SetVerticesDirty()
         {
@@ -559,7 +560,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public void SetMaterialDirty()
         {
@@ -574,7 +575,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         protected void UpdateMaterial()
         {
@@ -598,7 +599,7 @@ namespace TMPro
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         //public void UpdateColliders(int vertexCount)
         //{
