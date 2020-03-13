@@ -31,7 +31,7 @@ namespace TMPro
 
         protected override void UpdateGeometry()
         {
-            // Function overridden as Caret and text Selection Highlight is controlled by the Input Field. 
+            // Function overridden as Caret and text Selection Highlight is controlled by the Input Field.
         }
     }
 }
