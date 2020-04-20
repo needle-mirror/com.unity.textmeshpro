@@ -81,7 +81,7 @@ namespace TMPro.EditorUtilities
                     if (elementIndex == -1)
                         prop_GlyphIndex.intValue = currentGlyphIndex;
                     else
-                        fontAsset.m_IsFontAssetLookupTablesDirty = true;
+                        fontAsset.IsFontAssetLookupTablesDirty = true;
                 }
 
                 int glyphIndex = prop_GlyphIndex.intValue;

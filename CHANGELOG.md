@@ -1,6 +1,34 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [3.0.0-preview.10] - 2020-04-21
+## [2.1.0-preview.10]
+## [1.5.0-preview.10]
+### Changes
+- Revised caching of Preferred Width and Height to further reduce the amount of time it has to be recomputed when using a complex structure of Layout components.
+- Fixed potential issue when using Text Overflow Ellipsis and Truncate modes when the text contains characters using superscript, subscript or using the &lt;voffset&gt; tag.
+- Revised culling of text objects when using a RectMask2D where the bounds of the text geometry instead of the RectTransform define the culling rect.
+- Added HDR support to material preset colors.
+- Fixed various formatting issues in this ChangeLog.
+- Added the ability to define a unicode value for a missing sprite character in the TMP Settings.
+- Added support for displaying a missing sprite character when the requested sprite character is not present in the sprite asset or potential fallback(s). This new functionality is only available when trying to reference a sprite by name.
+- Sprite Characters will now have a default Unicode value of 0xFFFE (Private NonCharacter) instead of a Unicode value of 0x0 (default unicode value for missing character).  
+- Using the sprite asset context menu option "Update Sprite Asset" will now remap sprite characters with unicode value of 0x0 to 0xFFFE in addition to its currently functionality.
+- Updating TMP Essential Resources via the "Window - TextMeshPro - Import TMP Essential Resources" menu option will no longer override existing TMP Settings.
+- Minor optimization where SDF Scale on some text objects could be unnecessarily updated due to floating point rounding errors in their lossy scale. Case #1230799
+- Fixed minor issue where text objects created before importing the required TMP Essential Resources would have no default text.
+- Improvements to line breaking for CJK and mixed Latin and CJK characters. See the following [forum post](https://forum.unity.com/threads/tmp-bug.852733/#post-5688274) for more details. 
+- Fixed potential NullReferenceException that could occur in the TMP InputField on some platforms if the InputSystem reference is null. Case #1232433
+- Added small padding to bitmap character geometry to prevent potential clipping.
+- Added optimization to ignore very small RectTransform pivot changes that are usually the result of rounding errors when using Layout Components. Case #1237700
+- Sorting Layer ID and Sorting Order properties located in the Extra Settings of &lt;TextMeshPro&gt; text objects will now serialized when creating Editor Presets. Case #1215750 
+- TextMeshProUGUI sub text objects will now be set as first sibling of their parent to prevent them from being rendered over other non text object child in the scene hierarchy.
+- Fixed text objects becoming visible when set to empty or null as a result of a scale change. Case #1238408
+- Fixed useMaxVisibleDescender property now getting set properly via scripting. Case #1218526
+- Fixed SortingLayerID and SortingOrder not getting set correctly when multiple &lt;TextMeshPro&gt; objects are selected. Case #1171272
+- Fixed default settings getting applied to disabled text objects in the scene hierarchy whose text property was set to null. Case #1151621
+- Fixed mouse cursor flickering when hovering the Text Input Box of a text prefab with RTL enabled. Case #1206395
+
 ## [3.0.0-preview.8] - 2020-03-14
 ## [2.1.0-preview.8]
 ## [1.5.0-preview.8]

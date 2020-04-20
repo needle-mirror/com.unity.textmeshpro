@@ -25,9 +25,9 @@ namespace TMPro
 
 
         /// <summary>
-        /// List containing instance ID of font assets already searched.
+        /// HashSet containing instance ID of font assets already searched.
         /// </summary>
-        private static List<int> k_SearchedFontAssets;
+        private static HashSet<int> k_SearchedAssets;
 
 
         /// <summary>
@@ -41,20 +41,20 @@ namespace TMPro
         /// <param name="includeFallbacks">Include the fallback font assets in the search</param>
         /// <param name="fontStyle">The font style</param>
         /// <param name="fontWeight">The font weight</param>
-        /// <param name="type">Indicates if the OUT font asset is an alternative typeface or fallback font asset</param>
+        /// <param name="isAlternativeTypeface">Indicates if the OUT font asset is an alternative typeface or fallback font asset</param>
         /// <param name="fontAsset">The font asset that contains the requested character</param>
         /// <returns></returns>
-        public static TMP_Character GetCharacterFromFontAsset(uint unicode, TMP_FontAsset sourceFontAsset, bool includeFallbacks, FontStyles fontStyle, FontWeight fontWeight, out bool isAlternativeTypeface, out TMP_FontAsset fontAsset)
+        public static TMP_Character GetCharacterFromFontAsset(uint unicode, TMP_FontAsset sourceFontAsset, bool includeFallbacks, FontStyles fontStyle, FontWeight fontWeight, out bool isAlternativeTypeface)
         {
             if (includeFallbacks)
             {
-                if (k_SearchedFontAssets == null)
-                    k_SearchedFontAssets = new List<int>();
+                if (k_SearchedAssets == null)
+                    k_SearchedAssets = new HashSet<int>();
                 else
-                    k_SearchedFontAssets.Clear();
+                    k_SearchedAssets.Clear();
             }
 
-            return GetCharacterFromFontAsset_Internal(unicode, sourceFontAsset, includeFallbacks, fontStyle, fontWeight, out isAlternativeTypeface, out fontAsset);
+            return GetCharacterFromFontAsset_Internal(unicode, sourceFontAsset, includeFallbacks, fontStyle, fontWeight, out isAlternativeTypeface);
         }
 
 
@@ -62,11 +62,10 @@ namespace TMPro
         /// Internal function returning the text element character for the given unicode value taking into consideration the font style and weight.
         /// Function searches the source font asset, list of font assets assigned as alternative typefaces and list of fallback font assets.
         /// </summary>
-        private static TMP_Character GetCharacterFromFontAsset_Internal(uint unicode, TMP_FontAsset sourceFontAsset, bool includeFallbacks, FontStyles fontStyle, FontWeight fontWeight, out bool isAlternativeTypeface, out TMP_FontAsset fontAsset)
+        private static TMP_Character GetCharacterFromFontAsset_Internal(uint unicode, TMP_FontAsset sourceFontAsset, bool includeFallbacks, FontStyles fontStyle, FontWeight fontWeight, out bool isAlternativeTypeface)
         {
-            fontAsset = null;
             isAlternativeTypeface = false;
-            TMP_Character characterData = null;
+            TMP_Character character = null;
 
             #region FONT WEIGHT AND FONT STYLE HANDLING
             // Determine if a font weight or style is used. If so check if an alternative typeface is assigned for the given weight and / or style.
@@ -109,24 +108,24 @@ namespace TMPro
                         break;
                 }
 
-                fontAsset = isItalic ? fontWeights[fontWeightIndex].italicTypeface : fontWeights[fontWeightIndex].regularTypeface;
+                TMP_FontAsset temp = isItalic ? fontWeights[fontWeightIndex].italicTypeface : fontWeights[fontWeightIndex].regularTypeface;
 
-                if (fontAsset != null)
+                if (temp != null)
                 {
-                    if (fontAsset.characterLookupTable.TryGetValue(unicode, out characterData))
+                    if (temp.characterLookupTable.TryGetValue(unicode, out character))
                     {
                         isAlternativeTypeface = true;
 
-                        return characterData;
+                        return character;
                     }
 
-                    if (fontAsset.atlasPopulationMode == AtlasPopulationMode.Dynamic)
+                    if (temp.atlasPopulationMode == AtlasPopulationMode.Dynamic)
                     {
-                        if (fontAsset.TryAddCharacterInternal(unicode, out characterData))
+                        if (temp.TryAddCharacterInternal(unicode, out character))
                         {
                             isAlternativeTypeface = true;
 
-                            return characterData;
+                            return character;
                         }
 
                         // Check if the source font file contains the requested character.
@@ -152,28 +151,17 @@ namespace TMPro
             #endregion
 
             // Search the source font asset for the requested character.
-            if (sourceFontAsset.characterLookupTable.TryGetValue(unicode, out characterData))
-            {
-                // We were able to locate the requested character in the given font asset.
-                fontAsset = sourceFontAsset;
-
-                return characterData;
-            }
+            if (sourceFontAsset.characterLookupTable.TryGetValue(unicode, out character))
+                return character;
 
             if (sourceFontAsset.atlasPopulationMode == AtlasPopulationMode.Dynamic)
             {
-                if (sourceFontAsset.TryAddCharacterInternal(unicode, out characterData))
-                {
-                    fontAsset = sourceFontAsset;
-
-                    return characterData;
-                }
-
-                // Unable to add character and glyph to font asset
+                if (sourceFontAsset.TryAddCharacterInternal(unicode, out character))
+                    return character;
             }
 
             // Search fallback font assets if we still don't have a valid character and include fallback is set to true.
-            if (characterData == null && includeFallbacks && sourceFontAsset.fallbackFontAssetTable != null)
+            if (character == null && includeFallbacks && sourceFontAsset.fallbackFontAssetTable != null)
             {
                 // Get reference to the list of fallback font assets.
                 List<TMP_FontAsset> fallbackFontAssets = sourceFontAsset.fallbackFontAssetTable;
@@ -181,30 +169,28 @@ namespace TMPro
 
                 if (fallbackFontAssets != null && fallbackCount > 0)
                 {
-                    for (int i = 0; i < fallbackCount && characterData == null; i++)
+                    for (int i = 0; i < fallbackCount; i++)
                     {
                         TMP_FontAsset temp = fallbackFontAssets[i];
 
-                        if (temp == null) continue;
-
-                        int id = temp.GetInstanceID();
-
-                        // Skip over the fallback font asset in the event it is null or if already searched.
-                        if (k_SearchedFontAssets.Contains(id))
+                        if (temp == null)
                             continue;
 
-                        // Add to list of font assets already searched.
-                        k_SearchedFontAssets.Add(id);
+                        int id = temp.instanceID;
 
-                        characterData = GetCharacterFromFontAsset_Internal(unicode, temp, includeFallbacks, fontStyle, fontWeight, out isAlternativeTypeface, out fontAsset);
+                        // Try adding font asset to search list. If already present skip to the next one otherwise check if it contains the requested character.
+                        if (k_SearchedAssets.Add(id) == false)
+                            continue;
 
-                        if (characterData != null)
-                        {
-                            return characterData;
-                        }
+                        // Add reference to this search query
+                        sourceFontAsset.FallbackSearchQueryLookup.Add(id);
+
+                        character = GetCharacterFromFontAsset_Internal(unicode, temp, true, fontStyle, fontWeight, out isAlternativeTypeface);
+
+                        if (character != null)
+                            return character;
                     }
                 }
-
             }
 
             return null;
@@ -218,45 +204,156 @@ namespace TMPro
         /// The typeface type indicates whether the returned font asset is the source font asset, an alternative typeface or fallback font asset.
         /// </summary>
         /// <param name="unicode">The unicode value of the requested character</param>
+        /// <param name="sourceFontAsset">The font asset originating the search query</param>
         /// <param name="fontAssets">The list of font assets to search</param>
         /// <param name="includeFallbacks">Determines if the fallback of each font assets on the list will be searched</param>
         /// <param name="fontStyle">The font style</param>
         /// <param name="fontWeight">The font weight</param>
-        /// <param name="type">Determines if the OUT font asset is an alternative typeface or fallback font asset</param>
-        /// <param name="fontAsset">The font asset that contains the requested character</param>
+        /// <param name="isAlternativeTypeface">Determines if the OUT font asset is an alternative typeface or fallback font asset</param>
         /// <returns></returns>
-        public static TMP_Character GetCharacterFromFontAssets(uint unicode, List<TMP_FontAsset> fontAssets, bool includeFallbacks, FontStyles fontStyle, FontWeight fontWeight, out bool isAlternativeTypeface, out TMP_FontAsset fontAsset)
+        public static TMP_Character GetCharacterFromFontAssets(uint unicode, TMP_FontAsset sourceFontAsset, List<TMP_FontAsset> fontAssets, bool includeFallbacks, FontStyles fontStyle, FontWeight fontWeight, out bool isAlternativeTypeface)
         {
             isAlternativeTypeface = false;
 
             // Make sure font asset list is valid
             if (fontAssets == null || fontAssets.Count == 0)
-            {
-                fontAsset = null;
                 return null;
-            }
 
             if (includeFallbacks)
             {
-                if (k_SearchedFontAssets == null)
-                    k_SearchedFontAssets = new List<int>();
+                if (k_SearchedAssets == null)
+                    k_SearchedAssets = new HashSet<int>();
                 else
-                    k_SearchedFontAssets.Clear();
+                    k_SearchedAssets.Clear();
             }
 
             int fontAssetCount = fontAssets.Count;
 
             for (int i = 0; i < fontAssetCount; i++)
             {
-                if (fontAssets[i] == null) continue;
+                TMP_FontAsset fontAsset = fontAssets[i];
 
-                TMP_Character characterData = GetCharacterFromFontAsset_Internal(unicode, fontAssets[i], includeFallbacks, fontStyle, fontWeight, out isAlternativeTypeface, out fontAsset);
+                if (fontAsset == null) continue;
 
-                if (characterData != null)
-                    return characterData;
+                // Add reference to this search query
+                sourceFontAsset.FallbackSearchQueryLookup.Add(fontAsset.instanceID);
+
+                TMP_Character character = GetCharacterFromFontAsset_Internal(unicode, fontAsset, includeFallbacks, fontStyle, fontWeight, out isAlternativeTypeface);
+
+                if (character != null)
+                    return character;
             }
 
-            fontAsset = null;
+            return null;
+        }
+
+        // =====================================================================
+        // SPRITE ASSET - Functions
+        // =====================================================================
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="unicode"></param>
+        /// <param name="spriteAsset"></param>
+        /// <param name="includeFallbacks"></param>
+        /// <returns></returns>
+        public static TMP_SpriteCharacter GetSpriteCharacterFromSpriteAsset(uint unicode, TMP_SpriteAsset spriteAsset, bool includeFallbacks)
+        {
+            // Make sure we have a valid sprite asset to search
+            if (spriteAsset == null)
+                return null;
+
+            TMP_SpriteCharacter spriteCharacter;
+
+             // Search sprite asset for potential sprite character for the given unicode value
+            if (spriteAsset.spriteCharacterLookupTable.TryGetValue(unicode, out spriteCharacter))
+                return spriteCharacter;
+
+            if (includeFallbacks)
+            {
+                // Clear searched assets
+                if (k_SearchedAssets == null)
+                    k_SearchedAssets = new HashSet<int>();
+                else
+                    k_SearchedAssets.Clear();
+
+                // Add current sprite asset to already searched assets.
+                k_SearchedAssets.Add(spriteAsset.instanceID);
+
+                List<TMP_SpriteAsset> fallbackSpriteAsset = spriteAsset.fallbackSpriteAssets;
+
+                if (fallbackSpriteAsset != null && fallbackSpriteAsset.Count > 0)
+                {
+                    int fallbackCount = fallbackSpriteAsset.Count;
+
+                    for (int i = 0; i < fallbackCount; i++)
+                    {
+                        TMP_SpriteAsset temp = fallbackSpriteAsset[i];
+
+                        if (temp == null)
+                            continue;
+
+                        int id = temp.instanceID;
+
+                        // Try adding asset to search list. If already present skip to the next one otherwise check if it contains the requested character.
+                        if (k_SearchedAssets.Add(id) == false)
+                            continue;
+
+                        spriteCharacter = GetSpriteCharacterFromSpriteAsset_Internal(unicode, temp, true);
+
+                        if (spriteCharacter != null)
+                            return spriteCharacter;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="unicode"></param>
+        /// <param name="spriteAsset"></param>
+        /// <param name="includeFallbacks"></param>
+        /// <returns></returns>
+        static TMP_SpriteCharacter GetSpriteCharacterFromSpriteAsset_Internal(uint unicode, TMP_SpriteAsset spriteAsset, bool includeFallbacks)
+        {
+            TMP_SpriteCharacter spriteCharacter;
+
+             // Search sprite asset for potential sprite character for the given unicode value
+            if (spriteAsset.spriteCharacterLookupTable.TryGetValue(unicode, out spriteCharacter))
+                return spriteCharacter;
+
+            if (includeFallbacks)
+            {
+                List<TMP_SpriteAsset> fallbackSpriteAsset = spriteAsset.fallbackSpriteAssets;
+
+                if (fallbackSpriteAsset != null && fallbackSpriteAsset.Count > 0)
+                {
+                    int fallbackCount = fallbackSpriteAsset.Count;
+
+                    for (int i = 0; i < fallbackCount; i++)
+                    {
+                        TMP_SpriteAsset temp = fallbackSpriteAsset[i];
+
+                        if (temp == null)
+                            continue;
+
+                        int id = temp.instanceID;
+
+                        // Try adding asset to search list. If already present skip to the next one otherwise check if it contains the requested character.
+                        if (k_SearchedAssets.Add(id) == false)
+                            continue;
+
+                        spriteCharacter = GetSpriteCharacterFromSpriteAsset_Internal(unicode, temp, true);
+
+                        if (spriteCharacter != null)
+                            return spriteCharacter;
+                    }
+                }
+            }
 
             return null;
         }
