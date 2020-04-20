@@ -20,7 +20,7 @@ namespace TMPro
     }
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public struct TMP_Offset
     {
@@ -37,7 +37,7 @@ namespace TMPro
         public float vertical { get { return m_Top; } set { m_Top = value; m_Bottom = value; } }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public static TMP_Offset zero { get { return k_ZeroOffset; } }
 
@@ -53,7 +53,7 @@ namespace TMPro
         static readonly TMP_Offset k_ZeroOffset = new TMP_Offset(0F, 0F, 0F, 0F);
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="left"></param>
         /// <param name="right"></param>
@@ -68,7 +68,7 @@ namespace TMPro
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="horizontal"></param>
         /// <param name="vertical"></param>
@@ -116,7 +116,7 @@ namespace TMPro
 
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public struct HighlightState
     {
@@ -193,12 +193,15 @@ namespace TMPro
         public Vector3 bottomLeft;
         public Vector3 topRight;
         public Vector3 bottomRight;
+
         public float origin;
+        public float xAdvance;
         public float ascender;
         public float baseLine;
         public float descender;
+        internal float adjustedAscender;
+        internal float adjustedDescender;
 
-        public float xAdvance;
         public float aspectRatio;
         public float scale;
         public Color32 color;

@@ -213,6 +213,7 @@ namespace TMPro
             go.hideFlags = HideFlags.DontSave;
 
             go.transform.SetParent(textComponent.transform, false);
+            go.transform.SetAsFirstSibling();
             go.layer = textComponent.gameObject.layer;
 
             RectTransform rectTransform = go.GetComponent<RectTransform>();
@@ -629,6 +630,14 @@ namespace TMPro
             this.rectTransform.pivot = m_TextComponent.rectTransform.pivot;
         }
 
+        Transform GetRootCanvasTransform()
+        {
+            if (m_RootCanvasTransform == null)
+                m_RootCanvasTransform = m_TextComponent.canvas.rootCanvas.transform;
+
+            return m_RootCanvasTransform;
+        }
+        private Transform m_RootCanvasTransform;
 
         /// <summary>
         /// Override to Cull function of MaskableGraphic to prevent Culling.
@@ -637,14 +646,16 @@ namespace TMPro
         /// <param name="validRect"></param>
         public override void Cull(Rect clipRect, bool validRect)
         {
-            if (validRect && m_TextComponent.ignoreClipping)
-            {
-                canvasRenderer.cull = false;
-                CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(this);
-                return;
-            }
+            // Get compound rect for the text object and sub text objects in local canvas space.
+            Rect rect = m_TextComponent.GetCanvasSpaceClippingRect();
 
-            base.Cull(clipRect, validRect);
+            var cull = !validRect || !clipRect.Overlaps(rect, true);
+            if (canvasRenderer.cull != cull)
+            {
+                canvasRenderer.cull = cull;
+                onCullStateChanged.Invoke(cull);
+                OnCullingChanged();
+            }
         }
 
 

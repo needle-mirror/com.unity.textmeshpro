@@ -1054,7 +1054,6 @@ namespace TMPro
             {
                 m_TextComponent.RegisterDirtyVerticesCallback(MarkGeometryAsDirty);
                 m_TextComponent.RegisterDirtyVerticesCallback(UpdateLabel);
-                m_TextComponent.ignoreClipping = true;
 
                 // Cache reference to Vertical Scrollbar RectTransform and add listener.
                 if (m_VerticalScrollbar != null)
@@ -1079,7 +1078,6 @@ namespace TMPro
             {
                 m_TextComponent.UnregisterDirtyVerticesCallback(MarkGeometryAsDirty);
                 m_TextComponent.UnregisterDirtyVerticesCallback(UpdateLabel);
-                m_TextComponent.ignoreClipping = false;
 
                 if (m_VerticalScrollbar != null)
                     m_VerticalScrollbar.onValueChanged.RemoveListener(OnScrollbarValueChange);
@@ -3947,7 +3945,7 @@ namespace TMPro
 
             if (TouchScreenKeyboard.isSupported && shouldHideSoftKeyboard == false)
             {
-                if (inputSystem.touchSupported)
+                if (inputSystem != null && inputSystem.touchSupported)
                 {
                     TouchScreenKeyboard.hideInput = shouldHideMobileInput;
                 }
@@ -3978,7 +3976,7 @@ namespace TMPro
             }
             else
             {
-                if (!TouchScreenKeyboard.isSupported && m_ReadOnly == false)
+                if (!TouchScreenKeyboard.isSupported && m_ReadOnly == false && inputSystem != null)
                     inputSystem.imeCompositionMode = IMECompositionMode.On;
 
                 OnFocus();

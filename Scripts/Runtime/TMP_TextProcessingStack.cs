@@ -1,4 +1,8 @@
-﻿namespace TMPro
+﻿using System;
+using System.Diagnostics;
+using UnityEngine;
+
+namespace TMPro
 {
     /// <summary>
     /// Structure used to track basic XML tags which are binary (on / off)
@@ -120,15 +124,72 @@
     /// Structure used to track XML tags of various types.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public struct TMP_RichTextTagStack<T>
+    [DebuggerDisplay("Item count = {m_Count}")]
+    public struct TMP_TextProcessingStack<T>
     {
         public T[] itemStack;
         public int index;
 
-        int m_Capacity;
         T m_DefaultItem;
+        int m_Capacity;
+        int m_RolloverSize;
+        int m_Count;
 
         const int k_DefaultCapacity = 4;
+
+
+        /// <summary>
+        /// Constructor to create a new item stack.
+        /// </summary>
+        /// <param name="stack"></param>
+        public TMP_TextProcessingStack(T[] stack)
+        {
+            itemStack = stack;
+            m_Capacity = stack.Length;
+            index = 0;
+            m_RolloverSize = 0;
+
+            m_DefaultItem = default;
+            m_Count = 0;
+        }
+
+
+        /// <summary>
+        /// Constructor for a new item stack with the given capacity.
+        /// </summary>
+        /// <param name="capacity"></param>
+        public TMP_TextProcessingStack(int capacity)
+        {
+            itemStack = new T[capacity];
+            m_Capacity = capacity;
+            index = 0;
+            m_RolloverSize = 0;
+
+            m_DefaultItem = default;
+            m_Count = 0;
+        }
+
+
+        public TMP_TextProcessingStack(int capacity, int rolloverSize)
+        {
+            itemStack = new T[capacity];
+            m_Capacity = capacity;
+            index = 0;
+            m_RolloverSize = rolloverSize;
+
+            m_DefaultItem = default;
+            m_Count = 0;
+        }
+
+
+        /// <summary>
+        ///
+        /// </summary>
+        public int Count
+        {
+            get { return m_Count; }
+        }
+
 
         /// <summary>
         /// Returns the current item on the stack.
@@ -144,30 +205,20 @@
             }
         }
 
-        /// <summary>
-        /// Constructor to create a new item stack.
-        /// </summary>
-        /// <param name="tagStack"></param>
-        public TMP_RichTextTagStack(T[] tagStack)
-        {
-            itemStack = tagStack;
-            m_Capacity = tagStack.Length;
-            index = 0;
-
-            m_DefaultItem = default(T);
-        }
 
         /// <summary>
-        /// Constructor for a new item stack with the given capacity.
+        ///
         /// </summary>
-        /// <param name="capacity"></param>
-        public TMP_RichTextTagStack(int capacity)
+        public int rolloverSize
         {
-            itemStack = new T[capacity];
-            m_Capacity = capacity;
-            index = 0;
+            get { return m_RolloverSize; }
+            set
+            {
+                m_RolloverSize = value;
 
-            m_DefaultItem = default(T);
+                //if (m_Capacity < m_RolloverSize)
+                //    Array.Resize(ref itemStack, m_RolloverSize);
+            }
         }
 
 
@@ -177,6 +228,7 @@
         public void Clear()
         {
             index = 0;
+            m_Count = 0;
         }
 
 
@@ -190,7 +242,7 @@
             {
                 m_Capacity = k_DefaultCapacity;
                 itemStack = new T[m_Capacity];
-                m_DefaultItem = default(T);
+                m_DefaultItem = default;
             }
 
             itemStack[0] = item;
@@ -238,27 +290,47 @@
                 if (m_Capacity == 0)
                     m_Capacity = k_DefaultCapacity;
 
-                System.Array.Resize(ref itemStack, m_Capacity);
+                Array.Resize(ref itemStack, m_Capacity);
             }
 
             itemStack[index] = item;
-            index += 1;
+
+            if (m_RolloverSize == 0)
+            {
+                index += 1;
+                m_Count += 1;
+            }
+            else
+            {
+                index = (index + 1) % m_RolloverSize;
+                m_Count = m_Count < m_RolloverSize ? m_Count + 1 : m_RolloverSize;
+            }
+
         }
 
         public T Pop()
         {
-            if (index == 0)
-                return default(T);
+            if (index == 0 && m_RolloverSize == 0)
+                return default;
 
-            index -= 1;
+            if (m_RolloverSize == 0)
+                index -= 1;
+            else
+            {
+                index = (index - 1) % m_RolloverSize;
+                index = index < 0 ? index + m_RolloverSize : index;
+            }
+
             T item = itemStack[index];
             itemStack[index] = m_DefaultItem;
+
+            m_Count = m_Count > 0 ? m_Count - 1 : 0;
 
             return item;
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <returns></returns>
         public T Peek()

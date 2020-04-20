@@ -168,6 +168,7 @@ namespace TMPro
 
                 TMP_SpriteCharacter spriteCharacter = new TMP_SpriteCharacter(0, spriteGlyph);
                 spriteCharacter.name = spriteData.filename.Split('.')[0];
+                spriteCharacter.unicode = 0xFFFE;
                 spriteCharacter.scale = 1.0f;
 
                 spriteCharacterTable.Add(spriteCharacter);

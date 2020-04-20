@@ -9,7 +9,6 @@ namespace TMPro
 
     public class TMP_SpriteAsset : TMP_Asset
     {
-        internal Dictionary<uint, int> m_UnicodeLookup;
         internal Dictionary<int, int> m_NameLookup;
         internal Dictionary<uint, int> m_GlyphIndexLookup;
 
@@ -39,6 +38,9 @@ namespace TMPro
         // The texture which contains the sprites.
         public Texture spriteSheet;
 
+        /// <summary>
+        ///
+        /// </summary>
         public List<TMP_SpriteCharacter> spriteCharacterTable
         {
             get
@@ -54,6 +56,22 @@ namespace TMPro
         private List<TMP_SpriteCharacter> m_SpriteCharacterTable = new List<TMP_SpriteCharacter>();
 
 
+        /// <summary>
+        /// Dictionary used to lookup sprite characters by their unicode value.
+        /// </summary>
+        public Dictionary<uint, TMP_SpriteCharacter> spriteCharacterLookupTable
+        {
+            get
+            {
+                if (m_SpriteCharacterLookup == null)
+                    UpdateLookupTables();
+
+                return m_SpriteCharacterLookup;
+            }
+            internal set { m_SpriteCharacterLookup = value; }
+        }
+        internal Dictionary<uint, TMP_SpriteCharacter> m_SpriteCharacterLookup;
+
         public List<TMP_SpriteGlyph> spriteGlyphTable
         {
             get { return m_SpriteGlyphTable; }
@@ -62,14 +80,10 @@ namespace TMPro
         [SerializeField]
         private List<TMP_SpriteGlyph> m_SpriteGlyphTable = new List<TMP_SpriteGlyph>();
 
+        internal Dictionary<uint, TMP_SpriteGlyph> m_SpriteGlyphLookup;
+
         // List which contains the SpriteInfo for the sprites contained in the sprite sheet.
         public List<TMP_Sprite> spriteInfoList;
-
-        /// <summary>
-        /// Dictionary used to lookup the index of a given sprite based on a Unicode value.
-        /// </summary>
-        //private Dictionary<int, int> m_SpriteUnicodeLookup;
-
 
         /// <summary>
         /// List which contains the Fallback font assets for this font.
@@ -79,27 +93,13 @@ namespace TMPro
 
         internal bool m_IsSpriteAssetLookupTablesDirty = false;
 
+
         void Awake()
         {
             // Check version number of sprite asset to see if it needs to be upgraded.
             if (this.material != null && string.IsNullOrEmpty(m_Version))
                 UpgradeSpriteAsset();
         }
-
-
-        #if UNITY_EDITOR
-        /// <summary>
-        /// 
-        /// </summary>
-        void OnValidate()
-        {
-            //Debug.Log("Sprite Asset [" + name + "] has changed.");
-
-            //UpdateLookupTables();
-
-            //TMPro_EventManager.ON_SPRITE_ASSET_PROPERTY_CHANGED(true, this);
-        }
-        #endif
 
 
         /// <summary>
@@ -145,26 +145,58 @@ namespace TMPro
             else
                 m_GlyphIndexLookup.Clear();
 
+            //
+            if (m_SpriteGlyphLookup == null)
+                m_SpriteGlyphLookup = new Dictionary<uint, TMP_SpriteGlyph>();
+            else
+                m_SpriteGlyphLookup.Clear();
+
+            // Initialize SpriteGlyphLookup
             for (int i = 0; i < m_SpriteGlyphTable.Count; i++)
             {
-                uint glyphIndex = m_SpriteGlyphTable[i].index;
+                TMP_SpriteGlyph spriteGlyph = m_SpriteGlyphTable[i];
+                uint glyphIndex = spriteGlyph.index;
 
                 if (m_GlyphIndexLookup.ContainsKey(glyphIndex) == false)
                     m_GlyphIndexLookup.Add(glyphIndex, i);
+
+                if (m_SpriteGlyphLookup.ContainsKey(glyphIndex) == false)
+                    m_SpriteGlyphLookup.Add(glyphIndex, spriteGlyph);
             }
 
+            // Initialize name lookup
             if (m_NameLookup == null)
                 m_NameLookup = new Dictionary<int, int>();
             else
                 m_NameLookup.Clear();
 
-            if (m_UnicodeLookup == null)
-                m_UnicodeLookup = new Dictionary<uint, int>();
-            else
-                m_UnicodeLookup.Clear();
 
+            // Initialize character lookup
+            if (m_SpriteCharacterLookup == null)
+                m_SpriteCharacterLookup = new Dictionary<uint, TMP_SpriteCharacter>();
+            else
+                m_SpriteCharacterLookup.Clear();
+
+
+            // Populate Sprite Character lookup tables
             for (int i = 0; i < m_SpriteCharacterTable.Count; i++)
             {
+                TMP_SpriteCharacter spriteCharacter = m_SpriteCharacterTable[i];
+
+                // Make sure sprite character is valid
+                if (spriteCharacter == null)
+                    continue;
+
+                uint glyphIndex = spriteCharacter.glyphIndex;
+
+                // Lookup the glyph for this character
+                if (m_SpriteGlyphLookup.ContainsKey(glyphIndex) == false)
+                    continue;
+
+                // Assign glyph and text asset to this character
+                spriteCharacter.glyph = m_SpriteGlyphLookup[glyphIndex];
+                spriteCharacter.textAsset = this;
+
                 int nameHashCode = m_SpriteCharacterTable[i].hashCode;
 
                 if (m_NameLookup.ContainsKey(nameHashCode) == false)
@@ -172,15 +204,8 @@ namespace TMPro
 
                 uint unicode = m_SpriteCharacterTable[i].unicode;
 
-                if (m_UnicodeLookup.ContainsKey(unicode) == false)
-                    m_UnicodeLookup.Add(unicode, i);
-
-                // Update glyph reference which is not serialized
-                uint glyphIndex = m_SpriteCharacterTable[i].glyphIndex;
-                int index;
-
-                if (m_GlyphIndexLookup.TryGetValue(glyphIndex, out index))
-                    m_SpriteCharacterTable[i].glyph = m_SpriteGlyphTable[index];
+                if (unicode != 0xFFFE && m_SpriteCharacterLookup.ContainsKey(unicode) == false)
+                    m_SpriteCharacterLookup.Add(unicode, spriteCharacter);
             }
 
             m_IsSpriteAssetLookupTablesDirty = false;
@@ -213,13 +238,13 @@ namespace TMPro
         /// <returns></returns>
         public int GetSpriteIndexFromUnicode (uint unicode)
         {
-            if (m_UnicodeLookup == null)
+            if (m_SpriteCharacterLookup == null)
                 UpdateLookupTables();
 
-            int index;
+            TMP_SpriteCharacter spriteCharacter;
 
-            if (m_UnicodeLookup.TryGetValue(unicode, out index))
-                return index;
+            if (m_SpriteCharacterLookup.TryGetValue(unicode, out spriteCharacter))
+                return (int)spriteCharacter.glyphIndex;
 
             return -1;
         }
@@ -244,7 +269,7 @@ namespace TMPro
         /// <summary>
         /// Used to keep track of which Sprite Assets have been searched.
         /// </summary>
-        private static List<int> k_searchedSpriteAssets;
+        private static HashSet<int> k_searchedSpriteAssets;
 
         /// <summary>
         /// Search through the given sprite asset and its fallbacks for the specified sprite matching the given unicode character.
@@ -265,9 +290,9 @@ namespace TMPro
 
             // Initialize list to track instance of Sprite Assets that have already been searched.
             if (k_searchedSpriteAssets == null)
-                k_searchedSpriteAssets = new List<int>();
-
-            k_searchedSpriteAssets.Clear();
+                k_searchedSpriteAssets = new HashSet<int>();
+            else
+                k_searchedSpriteAssets.Clear();
 
             // Get instance ID of sprite asset and add to list.
             int id = spriteAsset.GetInstanceID();
@@ -275,11 +300,11 @@ namespace TMPro
 
             // Search potential fallback sprite assets if includeFallbacks is true.
             if (includeFallbacks && spriteAsset.fallbackSpriteAssets != null && spriteAsset.fallbackSpriteAssets.Count > 0)
-                return SearchForSpriteByUnicodeInternal(spriteAsset.fallbackSpriteAssets, unicode, includeFallbacks, out spriteIndex);
+                return SearchForSpriteByUnicodeInternal(spriteAsset.fallbackSpriteAssets, unicode, true, out spriteIndex);
 
             // Search default sprite asset potentially assigned in the TMP Settings.
             if (includeFallbacks && TMP_Settings.defaultSpriteAsset != null)
-                return SearchForSpriteByUnicodeInternal(TMP_Settings.defaultSpriteAsset, unicode, includeFallbacks, out spriteIndex);
+                return SearchForSpriteByUnicodeInternal(TMP_Settings.defaultSpriteAsset, unicode, true, out spriteIndex);
 
             spriteIndex = -1;
             return null;
@@ -303,11 +328,9 @@ namespace TMPro
 
                 int id = temp.GetInstanceID();
 
-                // Skip over the fallback sprite asset if it has already been searched.
-                if (k_searchedSpriteAssets.Contains(id)) continue;
-
-                // Add to list of font assets already searched.
-                k_searchedSpriteAssets.Add(id);
+                // Skip sprite asset if it has already been searched.
+                if (k_searchedSpriteAssets.Add(id) == false)
+                    continue;
 
                 temp = SearchForSpriteByUnicodeInternal(temp, unicode, includeFallbacks, out spriteIndex);
 
@@ -332,11 +355,12 @@ namespace TMPro
         {
             // Get sprite index for the given unicode
             spriteIndex = spriteAsset.GetSpriteIndexFromUnicode(unicode);
+
             if (spriteIndex != -1)
                 return spriteAsset;
 
             if (includeFallbacks && spriteAsset.fallbackSpriteAssets != null && spriteAsset.fallbackSpriteAssets.Count > 0)
-                return SearchForSpriteByUnicodeInternal(spriteAsset.fallbackSpriteAssets, unicode, includeFallbacks, out spriteIndex);
+                return SearchForSpriteByUnicodeInternal(spriteAsset.fallbackSpriteAssets, unicode, true, out spriteIndex);
 
             spriteIndex = -1;
             return null;
@@ -360,22 +384,66 @@ namespace TMPro
             if (spriteIndex != -1)
                 return spriteAsset;
 
-            // Initialize list to track instance of Sprite Assets that have already been searched.
+            // Initialize or clear list to Sprite Assets that have already been searched.
             if (k_searchedSpriteAssets == null)
-                k_searchedSpriteAssets = new List<int>();
+                k_searchedSpriteAssets = new HashSet<int>();
+            else
+                k_searchedSpriteAssets.Clear();
 
-            k_searchedSpriteAssets.Clear();
+            int id = spriteAsset.instanceID;
 
-            int id = spriteAsset.GetInstanceID();
             // Add to list of font assets already searched.
             k_searchedSpriteAssets.Add(id);
 
+            TMP_SpriteAsset tempSpriteAsset;
+
+            // Search potential fallbacks assigned to local sprite asset.
             if (includeFallbacks && spriteAsset.fallbackSpriteAssets != null && spriteAsset.fallbackSpriteAssets.Count > 0)
-                return SearchForSpriteByHashCodeInternal(spriteAsset.fallbackSpriteAssets, hashCode, includeFallbacks, out spriteIndex);
+            {
+                tempSpriteAsset = SearchForSpriteByHashCodeInternal(spriteAsset.fallbackSpriteAssets, hashCode, true, out spriteIndex);
+
+                if (spriteIndex != -1)
+                    return tempSpriteAsset;
+            }
 
             // Search default sprite asset potentially assigned in the TMP Settings.
             if (includeFallbacks && TMP_Settings.defaultSpriteAsset != null)
-                return SearchForSpriteByHashCodeInternal(TMP_Settings.defaultSpriteAsset, hashCode, includeFallbacks, out spriteIndex);
+            {
+                tempSpriteAsset = SearchForSpriteByHashCodeInternal(TMP_Settings.defaultSpriteAsset, hashCode, true, out spriteIndex);
+
+                if (spriteIndex != -1)
+                    return tempSpriteAsset;
+            }
+
+            // Clear search list since we are now looking for the missing sprite character.
+            k_searchedSpriteAssets.Clear();
+
+            uint missingSpriteCharacterUnicode = TMP_Settings.missingCharacterSpriteUnicode;
+
+            // Get sprite index for the given unicode
+            spriteIndex = spriteAsset.GetSpriteIndexFromUnicode(missingSpriteCharacterUnicode);
+            if (spriteIndex != -1)
+                return spriteAsset;
+
+            // Add current sprite asset to list of assets already searched.
+            k_searchedSpriteAssets.Add(id);
+
+            // Search for the missing sprite character in the local sprite asset and potential fallbacks.
+            if (includeFallbacks && spriteAsset.fallbackSpriteAssets != null && spriteAsset.fallbackSpriteAssets.Count > 0)
+            {
+                tempSpriteAsset = SearchForSpriteByUnicodeInternal(spriteAsset.fallbackSpriteAssets, missingSpriteCharacterUnicode, true, out spriteIndex);
+
+                if (spriteIndex != -1)
+                    return tempSpriteAsset;
+            }
+
+            // Search for the missing sprite character in the default sprite asset and potential fallbacks.
+            if (includeFallbacks && TMP_Settings.defaultSpriteAsset != null)
+            {
+                tempSpriteAsset = SearchForSpriteByUnicodeInternal(TMP_Settings.defaultSpriteAsset, missingSpriteCharacterUnicode, true, out spriteIndex);
+                if (spriteIndex != -1)
+                    return tempSpriteAsset;
+            }
 
             spriteIndex = -1;
             return null;
@@ -398,13 +466,11 @@ namespace TMPro
                 TMP_SpriteAsset temp = spriteAssets[i];
                 if (temp == null) continue;
 
-                int id = temp.GetInstanceID();
+                int id = temp.instanceID;
 
-                // Skip over the fallback sprite asset if it has already been searched.
-                if (k_searchedSpriteAssets.Contains(id)) continue;
-
-                // Add to list of font assets already searched.
-                k_searchedSpriteAssets.Add(id);
+                // Skip sprite asset if it has already been searched.
+                if (k_searchedSpriteAssets.Add(id) == false)
+                    continue;
 
                 temp = SearchForSpriteByHashCodeInternal(temp, hashCode, searchFallbacks, out spriteIndex);
 
@@ -433,7 +499,7 @@ namespace TMPro
                 return spriteAsset;
 
             if (searchFallbacks && spriteAsset.fallbackSpriteAssets != null && spriteAsset.fallbackSpriteAssets.Count > 0)
-                return SearchForSpriteByHashCodeInternal(spriteAsset.fallbackSpriteAssets, hashCode, searchFallbacks, out spriteIndex);
+                return SearchForSpriteByHashCodeInternal(spriteAsset.fallbackSpriteAssets, hashCode, true, out spriteIndex);
 
             spriteIndex = -1;
             return null;
@@ -487,7 +553,7 @@ namespace TMPro
                 TMP_Sprite oldSprite = spriteInfoList[i];
 
                 TMP_SpriteGlyph spriteGlyph = new TMP_SpriteGlyph();
-                spriteGlyph.index = (uint)i; 
+                spriteGlyph.index = (uint)i;
                 spriteGlyph.sprite = oldSprite.sprite;
                 spriteGlyph.metrics = new GlyphMetrics(oldSprite.width, oldSprite.height, oldSprite.xOffset, oldSprite.yOffset, oldSprite.xAdvance);
                 spriteGlyph.glyphRect = new GlyphRect((int)oldSprite.x, (int)oldSprite.y, (int)oldSprite.width, (int)oldSprite.height);
@@ -497,7 +563,9 @@ namespace TMPro
 
                 m_SpriteGlyphTable.Add(spriteGlyph);
 
-                TMP_SpriteCharacter spriteCharacter = new TMP_SpriteCharacter((uint)oldSprite.unicode, spriteGlyph);
+                TMP_SpriteCharacter spriteCharacter = new TMP_SpriteCharacter();
+                spriteCharacter.glyph = spriteGlyph;
+                spriteCharacter.unicode = oldSprite.unicode == 0x0 ? 0xFFFE : (uint)oldSprite.unicode;
                 spriteCharacter.name = oldSprite.name;
                 spriteCharacter.scale = oldSprite.scale;
 

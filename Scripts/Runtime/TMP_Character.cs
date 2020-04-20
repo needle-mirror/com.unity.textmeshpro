@@ -28,6 +28,24 @@ namespace TMPro
             m_ElementType = TextElementType.Character;
 
             this.unicode = unicode;
+            this.textAsset = null;
+            this.glyph = glyph;
+            this.glyphIndex = glyph.index;
+            this.scale = 1.0f;
+        }
+
+        /// <summary>
+        /// Constructor for new character
+        /// </summary>
+        /// <param name="unicode">Unicode value.</param>
+        /// <param name="fontAsset">The font asset to which this character belongs.</param>
+        /// <param name="glyph">Glyph</param>
+        public TMP_Character(uint unicode, TMP_FontAsset fontAsset, Glyph glyph)
+        {
+            m_ElementType = TextElementType.Character;
+
+            this.unicode = unicode;
+            this.textAsset = fontAsset;
             this.glyph = glyph;
             this.glyphIndex = glyph.index;
             this.scale = 1.0f;
@@ -43,6 +61,7 @@ namespace TMPro
             m_ElementType = TextElementType.Character;
 
             this.unicode = unicode;
+            this.textAsset = null;
             this.glyph = null;
             this.glyphIndex = glyphIndex;
             this.scale = 1.0f;

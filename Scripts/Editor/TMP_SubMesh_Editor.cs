@@ -15,12 +15,14 @@ namespace TMPro.EditorUtilities
             //public static bool shadowSetting = false;
             //public static bool materialEditor = true;
         }
-        
+
         private SerializedProperty fontAsset_prop;
         private SerializedProperty spriteAsset_prop;
 
         private TMP_SubMesh m_SubMeshComponent;
         private Renderer m_Renderer;
+
+        private string[] m_SortingLayerNames;
 
         public void OnEnable()
         {
@@ -30,47 +32,40 @@ namespace TMPro.EditorUtilities
             m_SubMeshComponent = target as TMP_SubMesh;
 
             m_Renderer = m_SubMeshComponent.renderer;
+
+            m_SortingLayerNames = SortingLayerHelper.sortingLayerNames;
         }
 
 
         public override void OnInspectorGUI()
         {
             EditorGUI.indentLevel = 0;
-            
+
             GUI.enabled = false;
             EditorGUILayout.PropertyField(fontAsset_prop);
             EditorGUILayout.PropertyField(spriteAsset_prop);
             GUI.enabled = true;
-            
+
             EditorGUI.BeginChangeCheck();
 
-            // SORTING LAYERS
-            var sortingLayerNames = SortingLayerHelper.sortingLayerNames;
-
             // Look up the layer name using the current layer ID
-            string oldName = SortingLayerHelper.GetSortingLayerNameFromID(m_Renderer.sortingLayerID);
+            string oldName = SortingLayer.IDToName(m_Renderer.sortingLayerID);
 
             // Use the name to look up our array index into the names list
-            int oldLayerIndex = System.Array.IndexOf(sortingLayerNames, oldName);
+            int oldLayerIndex = System.Array.IndexOf(m_SortingLayerNames, oldName);
 
             // Show the pop-up for the names
-            int newLayerIndex = EditorGUILayout.Popup("Sorting Layer", oldLayerIndex, sortingLayerNames);
+            int newLayerIndex = EditorGUILayout.Popup("Sorting Layer", oldLayerIndex, m_SortingLayerNames);
 
             // If the index changes, look up the ID for the new index to store as the new ID
             if (newLayerIndex != oldLayerIndex)
-            {
-                //Undo.RecordObject(renderer, "Edit Sorting Layer");
-                m_Renderer.sortingLayerID = SortingLayerHelper.GetSortingLayerIDForIndex(newLayerIndex);
-                //EditorUtility.SetDirty(renderer);
-            }
+                m_Renderer.sortingLayerID = SortingLayer.NameToID(m_SortingLayerNames[newLayerIndex]);
 
             // Expose the manual sorting order
             int newSortingLayerOrder = EditorGUILayout.IntField("Order in Layer", m_Renderer.sortingOrder);
             if (newSortingLayerOrder != m_Renderer.sortingOrder)
-            {
-                //Undo.RecordObject(renderer, "Edit Sorting Order");
                 m_Renderer.sortingOrder = newSortingLayerOrder;
-            }
+
         }
     }
 }

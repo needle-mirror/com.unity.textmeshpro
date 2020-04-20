@@ -67,7 +67,7 @@ namespace TMPro
         public static int FindInstanceID <T> (this List<T> list, T target) where T : Object
         {
             int targetID = target.GetInstanceID();
-            
+
             for (int i = 0; i < list.Count; i++)
             {
                 if (list[i].GetInstanceID() == targetID)
@@ -238,6 +238,12 @@ namespace TMPro
         public static bool Approximately(float a, float b)
         {
             return (b - 0.0001f) < a && a < (b + 0.0001f);
+        }
+
+        public static int Mod(int a, int b)
+        {
+            int r = a % b;
+            return r < 0 ? r + b : r;
         }
     }
 }

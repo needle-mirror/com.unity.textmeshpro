@@ -7,7 +7,6 @@ using System.Collections;
 namespace TMPro
 {
     [RequireComponent(typeof(MeshRenderer))]
-    [RequireComponent(typeof(MeshFilter))]
     [ExecuteAlways]
     public class TMP_SubMesh : MonoBehaviour
     {
@@ -149,11 +148,22 @@ namespace TMPro
         /// </summary>
         public MeshFilter meshFilter
         {
-            get { if (m_meshFilter == null) m_meshFilter = GetComponent<MeshFilter>();
+            get
+            {
+                if (m_meshFilter == null)
+                {
+                    m_meshFilter = GetComponent<MeshFilter>();
+
+                    if (m_meshFilter == null)
+                    {
+                        m_meshFilter = gameObject.AddComponent<MeshFilter>();
+                        m_meshFilter.hideFlags = HideFlags.HideInInspector | HideFlags.HideAndDontSave;
+                    }
+                }
+
                 return m_meshFilter;
             }
         }
-        [SerializeField]
         private MeshFilter m_meshFilter;
 
 
@@ -168,7 +178,6 @@ namespace TMPro
                 {
                     m_mesh = new Mesh();
                     m_mesh.hideFlags = HideFlags.HideAndDontSave;
-                    this.meshFilter.mesh = m_mesh;
                 }
 
                 return m_mesh;
@@ -423,8 +432,6 @@ namespace TMPro
             go.transform.localRotation = Quaternion.identity;
             go.transform.localScale = Vector3.one;
             go.layer = textComponent.gameObject.layer;
-
-            subMesh.m_meshFilter = go.GetComponent<MeshFilter>();
 
             subMesh.m_TextComponent = textComponent;
             subMesh.m_fontAsset = materialReference.fontAsset;

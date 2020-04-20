@@ -72,26 +72,12 @@ namespace TMPro
         private Coroutine m_DelayedGraphicRebuild;
         private Coroutine m_DelayedMaterialRebuild;
 
-
         /// <summary>
         /// Function called by Unity when the horizontal layout needs to be recalculated.
         /// </summary>
         public void CalculateLayoutInputHorizontal()
         {
-            //Debug.Log("*** CalculateLayoutHorizontal() ***"); // at Frame: " + Time.frameCount); // called on Object ID " + GetInstanceID());
-
-            //// Check if object is active
-            if (!this.gameObject.activeInHierarchy)
-                return;
-
-            if (m_isCalculateSizeRequired || m_rectTransform.hasChanged)
-            {
-                m_preferredWidth = GetPreferredWidth();
-
-                ComputeMarginSize();
-
-                m_isLayoutDirty = true;
-            }
+            //Debug.Log("*** CalculateLayoutHorizontal() on Object ID: " + GetInstanceID() + " at frame: " + Time.frameCount + "***");
         }
 
 
@@ -100,22 +86,7 @@ namespace TMPro
         /// </summary>
         public void CalculateLayoutInputVertical()
         {
-            //Debug.Log("*** CalculateLayoutInputVertical() ***"); // at Frame: " + Time.frameCount); // called on Object ID " + GetInstanceID());
-
-            //// Check if object is active
-            if (!this.gameObject.activeInHierarchy) // || IsRectTransformDriven == false)
-                return;
-
-            if (m_isCalculateSizeRequired || m_rectTransform.hasChanged)
-            {
-                m_preferredHeight = GetPreferredHeight();
-
-                ComputeMarginSize();
-
-                m_isLayoutDirty = true;
-            }
-
-            m_isCalculateSizeRequired = false;
+            //Debug.Log("*** CalculateLayoutInputVertical() on Object ID: " + GetInstanceID() + " at frame: " + Time.frameCount + "***");
         }
 
 
@@ -399,14 +370,16 @@ namespace TMPro
         {
             //Debug.Log("***** Cull (" + clipRect + ", " + validRect + ")   Cull: " + m_canvasRenderer.cull + " *****");
 
-            if (validRect && ignoreClipping)
-            {
-                m_canvasRenderer.cull = false;
-                CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(this);
-                return;
-            }
+            // Get compound rect for the text object and sub text objects in local canvas space.
+            Rect rect = GetCanvasSpaceClippingRect();
 
-            base.Cull(clipRect, validRect);
+            var cull = !validRect || !clipRect.Overlaps(rect, true);
+            if (m_canvasRenderer.cull != cull)
+            {
+                m_canvasRenderer.cull = cull;
+                onCullStateChanged.Invoke(cull);
+                OnCullingChanged();
+            }
         }
 
 
@@ -689,7 +662,7 @@ namespace TMPro
 
 
         public void UpdateFontAsset()
-        {        
+        {
             LoadFontAsset();
         }
 
