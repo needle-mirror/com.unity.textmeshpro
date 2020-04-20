@@ -60,7 +60,7 @@ namespace TMPro
 
 
     //public struct TMP_VertexInfo
-    //{      
+    //{
     //    public TMP_Vertex topLeft;
     //    public TMP_Vertex bottomLeft;
     //    public TMP_Vertex topRight;
@@ -193,7 +193,7 @@ namespace TMPro
         {
             string word = string.Empty;
             TMP_CharacterInfo[] charInfo = textComponent.textInfo.characterInfo;
-            
+
             for (int i = firstCharacterIndex; i < lastCharacterIndex + 1; i++)
             {
                 word += charInfo[i].character;
@@ -214,7 +214,7 @@ namespace TMPro
 
     //public struct SpriteInfo
     //{
-    //    
+    //
     //}
 
 
@@ -234,7 +234,7 @@ namespace TMPro
 
         public override string ToString()
         {
-            string s = "Min (" + min.x.ToString("f2") + ", " + min.y.ToString("f2") + ")   Max (" + max.x.ToString("f2") + ", " + max.y.ToString("f2") + ")";           
+            string s = "Min (" + min.x.ToString("f2") + ", " + min.y.ToString("f2") + ")   Max (" + max.x.ToString("f2") + ", " + max.y.ToString("f2") + ")";
             return s;
         }
     }
@@ -245,8 +245,8 @@ namespace TMPro
     {
         public Vector2 min;
         public Vector2 max;
-      
-     
+
+
         public Mesh_Extents(Vector2 min, Vector2 max)
         {
             this.min = min;
@@ -261,8 +261,88 @@ namespace TMPro
         }
     }
 
+    // internal struct TMP_TextProcessingState
+    // {
+    //         // Multi Font & Material support related
+    //         public TMP_FontAsset CurrentFontAsset;
+    //         public TMP_SpriteAsset CurrentSpriteAsset;
+    //         public Material CurrentMaterial;
+    //         public int CurrentMaterialIndex;
+    //
+    //         public float CurrentFontSize;
+    //         public float FontScale;
+    //         public float FontScaleMultiplier;
+    //         public FontStyles FontStyle;
+    //         public int ItalicAngle;
+    //
+    //         public float CharacterSpacing;
+    //         public float CharacterMonoSpacing;
+    //         public bool TagNoParsing;
+    //
+    //         public float HorizontalAdvance;
+    //         public float MaxCapHeight;
+    //         public float MaxTextAscender;
+    //         public float MaxTextDescender;
+    //         public float MaxElementAscender;
+    //         public float MaxElementDescender;
+    //         public float StartOfLineAscender;
+    //         public float MaxLineAscender;
+    //         public float MaxLineDescender;
+    //         public float PageAscender;
+    //
+    //         public int PreviousWordBreak;
+    //         public int TotalCharacterCount;
+    //         //public int VisibleCharacterCount;
+    //         //public int VisibleSpriteCount;
+    //         public int VisibleLinkCount;
+    //         public int FirstCharacterIndex;
+    //         public int FirstVisibleCharacterIndex;
+    //         public int LastCharacterIndex;
+    //         public int LastVisibleCharIndex;
+    //
+    //         public int LineNumber;
+    //         public float baselineOffset;
+    //         public float lineOffset;
+    //         public bool isDrivenLineSpacing;
+    //         public bool IsNonBreakingSpace;
+    //
+    //         public HorizontalAlignmentOptions HorizontalAlignment;
+    //         public float MarginLeft;
+    //         public float MarginRight;
+    //
+    //         public float PreferredWidth;
+    //         public float PreferredHeight;
+    //
+    //         public Color32 VertexColor;
+    //         public Color32 UnderlineColor;
+    //         public Color32 StrikethroughColor;
+    //         //public Color32 HighlightColor;
+    //
+    //         public Extents MeshExtents;
+    //         public TMP_LineInfo lineInfo;
+    //
+    //         public int spriteAnimationID;
+    //
+    //         public TMP_FontStyleStack BasicStyleStack;
+    //         public TMP_RichTextTagStack<int> ItalicAngleStack;
+    //         public TMP_RichTextTagStack<Color32> ColorStack;
+    //         public TMP_RichTextTagStack<Color32> UnderlineColorStack;
+    //         public TMP_RichTextTagStack<Color32> StrikethroughColorStack;
+    //         public TMP_RichTextTagStack<Color32> HighlightColorStack;
+    //         public TMP_RichTextTagStack<HighlightState> HighlightStateStack;
+    //         public TMP_RichTextTagStack<TMP_ColorGradient> ColorGradientStack;
+    //         public TMP_RichTextTagStack<float> SizeStack;
+    //         public TMP_RichTextTagStack<float> IndentStack;
+    //         public TMP_RichTextTagStack<FontWeight> FontWeightStack;
+    //
+    //         public TMP_RichTextTagStack<float> BaselineStack;
+    //         //public TMP_RichTextTagStack<int> ActionStack;
+    //         public TMP_RichTextTagStack<MaterialReference> MaterialReferenceStack;
+    //         public TMP_RichTextTagStack<HorizontalAlignmentOptions> LineJustificationStack;
+    // }
 
-    // Structure used for Word Wrapping which tracks the state of execution when the last space or carriage return character was encountered. 
+
+    // Structure used for Word Wrapping which tracks the state of execution when the last space or carriage return character was encountered.
     public struct WordWrapState
     {
         public int previous_WordBreak;
@@ -283,7 +363,7 @@ namespace TMPro
         public float maxLineAscender;
         public float maxLineDescender;
         public float pageAscender;
-        
+
         public HorizontalAlignmentOptions horizontalAlignment;
         public float marginLeft;
         public float marginRight;
@@ -293,13 +373,13 @@ namespace TMPro
         public float preferredHeight;
         //public float maxFontScale;
         public float previousLineScale;
-      
+
         public int wordCount;
         public FontStyles fontStyle;
         public int italicAngle;
         public float fontScale;
         public float fontScaleMultiplier;
-      
+
         public float currentFontSize;
         public float baselineOffset;
         public float lineOffset;
@@ -309,30 +389,28 @@ namespace TMPro
         public float mSpace;
 
         public TMP_TextInfo textInfo;
-        //public TMPro_CharacterInfo[] characterInfo;
         public TMP_LineInfo lineInfo;
-        
+
         public Color32 vertexColor;
         public Color32 underlineColor;
         public Color32 strikethroughColor;
         public Color32 highlightColor;
         public TMP_FontStyleStack basicStyleStack;
-        public TMP_RichTextTagStack<int> italicAngleStack;
-        public TMP_RichTextTagStack<Color32> colorStack;
-        public TMP_RichTextTagStack<Color32> underlineColorStack;
-        public TMP_RichTextTagStack<Color32> strikethroughColorStack;
-        public TMP_RichTextTagStack<Color32> highlightColorStack;
-        public TMP_RichTextTagStack<HighlightState> highlightStateStack;
-        public TMP_RichTextTagStack<TMP_ColorGradient> colorGradientStack;
-        public TMP_RichTextTagStack<float> sizeStack;
-        public TMP_RichTextTagStack<float> indentStack;
-        public TMP_RichTextTagStack<FontWeight> fontWeightStack;
-        public TMP_RichTextTagStack<int> styleStack;
-        public TMP_RichTextTagStack<float> baselineStack;
-        public TMP_RichTextTagStack<int> actionStack;
-        public TMP_RichTextTagStack<MaterialReference> materialReferenceStack;
-        public TMP_RichTextTagStack<HorizontalAlignmentOptions> lineJustificationStack;
-        //public TMP_XmlTagStack<int> spriteAnimationStack;
+        public TMP_TextProcessingStack<int> italicAngleStack;
+        public TMP_TextProcessingStack<Color32> colorStack;
+        public TMP_TextProcessingStack<Color32> underlineColorStack;
+        public TMP_TextProcessingStack<Color32> strikethroughColorStack;
+        public TMP_TextProcessingStack<Color32> highlightColorStack;
+        public TMP_TextProcessingStack<HighlightState> highlightStateStack;
+        public TMP_TextProcessingStack<TMP_ColorGradient> colorGradientStack;
+        public TMP_TextProcessingStack<float> sizeStack;
+        public TMP_TextProcessingStack<float> indentStack;
+        public TMP_TextProcessingStack<FontWeight> fontWeightStack;
+        public TMP_TextProcessingStack<int> styleStack;
+        public TMP_TextProcessingStack<float> baselineStack;
+        public TMP_TextProcessingStack<int> actionStack;
+        public TMP_TextProcessingStack<MaterialReference> materialReferenceStack;
+        public TMP_TextProcessingStack<HorizontalAlignmentOptions> lineJustificationStack;
         public int spriteAnimationID;
 
         public TMP_FontAsset currentFontAsset;
@@ -344,7 +422,6 @@ namespace TMPro
 
         public bool tagNoParsing;
         public bool isNonBreakingSpace;
-        //public Mesh_Extents lineExtents;
     }
 
 

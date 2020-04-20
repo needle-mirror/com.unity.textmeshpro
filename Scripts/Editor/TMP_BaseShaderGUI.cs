@@ -177,7 +177,7 @@ namespace TMPro.EditorUtilities
         protected bool BeginPanel(string panel, bool expanded)
         {
             EditorGUI.indentLevel = 0;
-            
+
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             Rect r = EditorGUI.IndentedRect(GUILayoutUtility.GetRect(20, 18));
             r.x += 20;
@@ -199,7 +199,7 @@ namespace TMPro.EditorUtilities
         protected bool BeginPanel(string panel, ShaderFeature feature, bool expanded, bool readState = true)
         {
             EditorGUI.indentLevel = 0;
-            
+
             if (readState)
             {
                 feature.ReadState(m_Material);
@@ -286,7 +286,7 @@ namespace TMPro.EditorUtilities
         {
             MaterialProperty property = FindProperty(name, m_Properties);
             m_Editor.BeginAnimatedCheck(Rect.zero, property);
- 
+
             Rect rect = EditorGUILayout.GetControlRect(true, 60f);
             float totalWidth = rect.width;
             rect.width = EditorGUIUtility.labelWidth + 60f;
@@ -414,7 +414,7 @@ namespace TMPro.EditorUtilities
         {
             MaterialProperty property = BeginProperty(name);
             s_TempLabel.text = label;
-            Color value = EditorGUI.ColorField(EditorGUILayout.GetControlRect(), s_TempLabel, property.colorValue);
+            Color value = EditorGUI.ColorField(EditorGUILayout.GetControlRect(), s_TempLabel, property.colorValue, false, true, true);
             if (EndProperty())
             {
                 property.colorValue = value;

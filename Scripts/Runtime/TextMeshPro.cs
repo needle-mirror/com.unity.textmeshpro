@@ -9,7 +9,6 @@ namespace TMPro
 
     [DisallowMultipleComponent]
     [RequireComponent(typeof(MeshRenderer))]
-    [RequireComponent(typeof(MeshFilter))] 
     [AddComponentMenu("Mesh/TextMeshPro - Text")]
     [ExecuteAlways]
     [HelpURL("https://docs.unity3d.com/Packages/com.unity.textmeshpro@1.5")]
@@ -26,17 +25,20 @@ namespace TMPro
             {
                 if (renderer == null)
                     return 0;
-                
+
                 return m_renderer.sortingLayerID;
             }
             set
             {
                 if (renderer == null)
                     return;
-                
+
                 m_renderer.sortingLayerID = value;
+                _SortingLayerID = value;
             }
         }
+        [SerializeField]
+        internal int _SortingLayerID;
 
         /// <summary>
         /// Sets the Renderer's sorting order within the assigned layer.
@@ -47,7 +49,7 @@ namespace TMPro
             {
                 if (renderer == null)
                     return 0;
-                
+
                 return m_renderer.sortingOrder;
             }
             set
@@ -56,8 +58,11 @@ namespace TMPro
                     return;
 
                 m_renderer.sortingOrder = value;
+                _SortingOrder = value;
             }
         }
+        [SerializeField]
+        internal int _SortingOrder;
 
         /// <summary>
         /// Determines if the size of the text container will be adjusted to fit the text object when it is first created.
@@ -92,7 +97,7 @@ namespace TMPro
             {
                 if (m_transform == null)
                     m_transform = GetComponent<Transform>();
-                
+
                 return m_transform;
             }
         }
@@ -125,7 +130,6 @@ namespace TMPro
                 {
                     m_mesh = new Mesh();
                     m_mesh.hideFlags = HideFlags.HideAndDontSave;
-                    this.meshFilter.mesh = m_mesh;
                 }
 
                 return m_mesh;
@@ -140,7 +144,15 @@ namespace TMPro
             get
             {
                 if (m_meshFilter == null)
+                {
                     m_meshFilter = GetComponent<MeshFilter>();
+
+                    if (m_meshFilter == null)
+                    {
+                        m_meshFilter = gameObject.AddComponent<MeshFilter>();
+                        m_meshFilter.hideFlags = HideFlags.HideInInspector | HideFlags.HideAndDontSave;
+                    }
+                }
 
                 return m_meshFilter;
             }
@@ -148,7 +160,7 @@ namespace TMPro
 
         // MASKING RELATED PROPERTIES
         /// <summary>
-        /// Sets the mask type 
+        /// Sets the mask type
         /// </summary>
         public MaskingTypes maskType
         {
@@ -199,7 +211,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public override void SetLayoutDirty()
         {
@@ -208,6 +220,8 @@ namespace TMPro
 
             if (this == null || !this.IsActive())
                 return;
+
+            LayoutRebuilder.MarkLayoutForRebuild(this.rectTransform);
 
             m_isLayoutDirty = true;
         }
@@ -230,7 +244,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public override void SetAllDirty()
         {
@@ -243,7 +257,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="update"></param>
         public override void Rebuild(CanvasUpdate update)
@@ -270,7 +284,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         protected override void UpdateMaterial()
         {
@@ -458,102 +472,8 @@ namespace TMPro
         private bool m_currentAutoSizeMode;
 
 
-        public void CalculateLayoutInputHorizontal()
-        {
-            //Debug.Log("*** CalculateLayoutInputHorizontal() ***");
+        public void CalculateLayoutInputHorizontal() { }
 
-            if (!this.gameObject.activeInHierarchy)
-                return;
-
-            //IsRectTransformDriven = true;
-
-            m_currentAutoSizeMode = m_enableAutoSizing;
-
-            if (m_isCalculateSizeRequired || m_rectTransform.hasChanged)
-            {
-                //Debug.Log("Calculating Layout Horizontal");
-
-                //m_LayoutPhase = AutoLayoutPhase.Horizontal;
-                //m_isRebuildingLayout = true;
-
-                m_minWidth = 0;
-                m_flexibleWidth = 0;
-
-                //m_renderMode = TextRenderFlags.GetPreferredSizes; // Set Text to not Render and exit early once we have new width values.
-
-                if (m_enableAutoSizing)
-                {
-                    m_fontSize = m_fontSizeMax;
-                }
-
-                // Set Margins to Infinity
-                m_marginWidth = k_LargePositiveFloat;
-                m_marginHeight = k_LargePositiveFloat;
-
-                if (m_isInputParsingRequired || m_isTextTruncated)
-                    ParseInputText();
-
-                GenerateTextMesh();
-
-                m_renderMode = TextRenderFlags.Render;
-
-                //m_preferredWidth = (int)m_preferredWidth + 1f;
-
-                ComputeMarginSize();
-
-                //Debug.Log("Preferred Width: " + m_preferredWidth + "  Margin Width: " + m_marginWidth + "  Preferred Height: " + m_preferredHeight + "  Margin Height: " + m_marginHeight + "  Rendered Width: " + m_renderedWidth + "  Height: " + m_renderedHeight + "  RectTransform Width: " + m_rectTransform.rect);
-
-                m_isLayoutDirty = true;
-            }
-        }
-
-
-        public void CalculateLayoutInputVertical()
-        {
-            //Debug.Log("*** CalculateLayoutInputVertical() ***");
-
-            // Check if object is active
-            if (!this.gameObject.activeInHierarchy) // || IsRectTransformDriven == false)
-                return;
-
-            //IsRectTransformDriven = true;
-
-            if (m_isCalculateSizeRequired || m_rectTransform.hasChanged)
-            {
-                //Debug.Log("Calculating Layout InputVertical");
-
-                //m_LayoutPhase = AutoLayoutPhase.Vertical;
-                //m_isRebuildingLayout = true;
-
-                m_minHeight = 0;
-                m_flexibleHeight = 0;
-
-                //m_renderMode = TextRenderFlags.GetPreferredSizes;
-
-                if (m_enableAutoSizing)
-                {
-                    m_currentAutoSizeMode = true;
-                    m_enableAutoSizing = false;
-                }
-
-                m_marginHeight = k_LargePositiveFloat;
-
-                GenerateTextMesh();
-
-                m_enableAutoSizing = m_currentAutoSizeMode;
-
-                m_renderMode = TextRenderFlags.Render;
-
-                //m_preferredHeight = (int)m_preferredHeight + 1f;
-
-                ComputeMarginSize();
-
-                //Debug.Log("Preferred Height: " + m_preferredHeight + "  Margin Height: " + m_marginHeight + "  Preferred Width: " + m_preferredWidth + "  Margin Width: " + m_marginWidth + "  Rendered Width: " + m_renderedWidth + "  Height: " + m_renderedHeight + "  RectTransform Width: " + m_rectTransform.rect);
-
-                m_isLayoutDirty = true;
-            }
-
-            m_isCalculateSizeRequired = false;
-        }
+        public void CalculateLayoutInputVertical() { }
     }
 }

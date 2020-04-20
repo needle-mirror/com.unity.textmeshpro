@@ -4,11 +4,9 @@ using UnityEngine.Serialization;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
 using UnityEngine.Profiling;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
-using UnityEditor;
+
 #if UNITY_EDITOR && UNITY_2018_4_OR_NEWER
     #if !(UNITY_2018_4_0 || UNITY_2018_4_1 || UNITY_2018_4_2 || UNITY_2018_4_3 || UNITY_2018_4_4)
     using UnityEditor.TextCore.LowLevel;
@@ -406,8 +404,7 @@ namespace TMPro
 
         public byte tabSize = 10;
 
-        private byte m_oldTabSize;
-        internal bool m_IsFontAssetLookupTablesDirty = false;
+        internal bool IsFontAssetLookupTablesDirty;
 
         /// <summary>
         /// Create new instance of a font asset using default settings.
@@ -541,7 +538,7 @@ namespace TMPro
         {
             Profiler.BeginSample("TMP.ReadFontAssetDefinition");
 
-            //Debug.Log("Reading Font Definition for " + this.name + ".");
+            //Debug.Log("Reading Font Asset Definition for " + this.name + ".");
 
             // Check version number of font asset to see if it needs to be upgraded.
             if (this.material != null && string.IsNullOrEmpty(m_Version))
@@ -577,7 +574,7 @@ namespace TMPro
             // Add reference to font asset in TMP Resource Manager
             //TMP_ResourceManager.AddFontAsset(this);
 
-            m_IsFontAssetLookupTablesDirty = false;
+            IsFontAssetLookupTablesDirty = false;
 
             Profiler.EndSample();
         }
@@ -645,7 +642,7 @@ namespace TMPro
             else
                 m_CharacterLookupDictionary.Clear();
 
-            // Add the characters contained in the character table into the dictionary for faster lookup.
+            // Add the characters contained in the character table to the dictionary for faster lookup.
             for (int i = 0; i < m_CharacterTable.Count; i++)
             {
                 TMP_Character character = m_CharacterTable[i];
@@ -653,14 +650,20 @@ namespace TMPro
                 uint unicode = character.unicode;
                 uint glyphIndex = character.glyphIndex;
 
+                // Add character along with reference to text asset and glyph
                 if (m_CharacterLookupDictionary.ContainsKey(unicode) == false)
-                    m_CharacterLookupDictionary.Add(unicode, character);
-
-                if (m_GlyphLookupDictionary.ContainsKey(glyphIndex))
                 {
+                    m_CharacterLookupDictionary.Add(unicode, character);
+                    character.textAsset = this;
                     character.glyph = m_GlyphLookupDictionary[glyphIndex];
                 }
             }
+
+            // Clear internal fallback references
+            if (FallbackSearchQueryLookup == null)
+                FallbackSearchQueryLookup = new HashSet<int>();
+            else
+                FallbackSearchQueryLookup.Clear();
         }
 
         internal void InitializeGlyphPaidAdjustmentRecordsLookupDictionary()
@@ -771,10 +774,12 @@ namespace TMPro
 
                     //Debug.Log("Adding Unicode [" + unicode.ToString("X4") + "].");
 
-                    GlyphLoadFlags glyphLoadFlags = ((GlyphRasterModes)m_AtlasRenderMode & GlyphRasterModes.RASTER_MODE_NO_HINTING) == GlyphRasterModes.RASTER_MODE_NO_HINTING ? GlyphLoadFlags.LOAD_NO_BITMAP | GlyphLoadFlags.LOAD_NO_HINTING : GlyphLoadFlags.LOAD_NO_BITMAP;
+                    GlyphLoadFlags glyphLoadFlags = ((GlyphRasterModes)m_AtlasRenderMode & GlyphRasterModes.RASTER_MODE_NO_HINTING) == GlyphRasterModes.RASTER_MODE_NO_HINTING
+                        ? GlyphLoadFlags.LOAD_NO_BITMAP | GlyphLoadFlags.LOAD_NO_HINTING
+                        : GlyphLoadFlags.LOAD_NO_BITMAP;
 
                     if (FontEngine.TryGetGlyphWithUnicodeValue(unicode, glyphLoadFlags, out glyph))
-                        m_CharacterLookupDictionary.Add(unicode, new TMP_Character(unicode, glyph));
+                        m_CharacterLookupDictionary.Add(unicode, new TMP_Character(unicode, this, glyph));
 
                     return;
                 }
@@ -784,7 +789,17 @@ namespace TMPro
 
             // Synthesize and add missing glyph and character
             glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, 0), GlyphRect.zero, 1.0f, 0);
-            m_CharacterLookupDictionary.Add(unicode, new TMP_Character(unicode, glyph));
+            m_CharacterLookupDictionary.Add(unicode, new TMP_Character(unicode, this, glyph));
+        }
+
+        internal HashSet<int> FallbackSearchQueryLookup = new HashSet<int>();
+
+        internal void AddCharacterToLookupCache(uint unicode, TMP_Character character)
+        {
+            m_CharacterLookupDictionary.Add(unicode, character);
+
+            // Add font asset to fallback references.
+            FallbackSearchQueryLookup.Add(character.textAsset.instanceID);
         }
 
         /// <summary>
@@ -1434,7 +1449,10 @@ namespace TMPro
                 // Check if glyph is already contained in the font asset as the same glyph might be referenced by multiple characters.
                 if (m_GlyphLookupDictionary.ContainsKey(glyphIndex))
                 {
+                    // Add a reference to the source text asset and glyph
                     character.glyph = m_GlyphLookupDictionary[glyphIndex];
+                    character.textAsset = this;
+
                     m_CharacterTable.Add(character);
                     m_CharacterLookupDictionary.Add(unicode, character);
                     continue;
@@ -1498,7 +1516,10 @@ namespace TMPro
                     continue;
                 }
 
+                // Add a reference to the source text asset and glyph
                 character.glyph = glyph;
+                character.textAsset = this;
+
                 m_CharacterTable.Add(character);
                 m_CharacterLookupDictionary.Add(character.unicode, character);
 
@@ -1646,7 +1667,10 @@ namespace TMPro
                 // Check if glyph is already contained in the font asset as the same glyph might be referenced by multiple characters.
                 if (m_GlyphLookupDictionary.ContainsKey(glyphIndex))
                 {
+                    // Add a reference to the source text asset and glyph
                     character.glyph = m_GlyphLookupDictionary[glyphIndex];
+                    character.textAsset = this;
+
                     m_CharacterTable.Add(character);
                     m_CharacterLookupDictionary.Add(unicode, character);
                     continue;
@@ -1710,7 +1734,10 @@ namespace TMPro
                     continue;
                 }
 
+                // Add a reference to the source text asset and glyph
                 character.glyph = glyph;
+                character.textAsset = this;
+
                 m_CharacterTable.Add(character);
                 m_CharacterLookupDictionary.Add(character.unicode, character);
 
@@ -1951,7 +1978,7 @@ namespace TMPro
             // Check if glyph is already contained in the font asset as the same glyph might be referenced by multiple characters.
             if (m_GlyphLookupDictionary.ContainsKey(glyphIndex))
             {
-                character = new TMP_Character(unicode, m_GlyphLookupDictionary[glyphIndex]);
+                character = new TMP_Character(unicode, this, m_GlyphLookupDictionary[glyphIndex]);
                 m_CharacterTable.Add(character);
                 m_CharacterLookupDictionary.Add(unicode, character);
 
@@ -2030,7 +2057,7 @@ namespace TMPro
                 m_GlyphLookupDictionary.Add(glyphIndex, glyph);
 
                 // Add new character
-                character = new TMP_Character(unicode, glyph);
+                character = new TMP_Character(unicode, this, glyph);
                 m_CharacterTable.Add(character);
                 m_CharacterLookupDictionary.Add(unicode, character);
 
@@ -2073,7 +2100,7 @@ namespace TMPro
                     m_GlyphLookupDictionary.Add(glyphIndex, glyph);
 
                     // Add new character
-                    character = new TMP_Character(unicode, glyph);
+                    character = new TMP_Character(unicode, this, glyph);
                     m_CharacterTable.Add(character);
                     m_CharacterLookupDictionary.Add(unicode, character);
 
@@ -2151,7 +2178,7 @@ namespace TMPro
             // Check if glyph is already contained in the font asset as the same glyph might be referenced by multiple characters.
             if (m_GlyphLookupDictionary.ContainsKey(glyphIndex))
             {
-                character = new TMP_Character(unicode, m_GlyphLookupDictionary[glyphIndex]);
+                character = new TMP_Character(unicode, this, m_GlyphLookupDictionary[glyphIndex]);
                 m_CharacterTable.Add(character);
                 m_CharacterLookupDictionary.Add(unicode, character);
 
@@ -2171,7 +2198,10 @@ namespace TMPro
                 return true;
             }
 
-            GlyphLoadFlags glyphLoadFlags = ((GlyphRasterModes)m_AtlasRenderMode & GlyphRasterModes.RASTER_MODE_NO_HINTING) == GlyphRasterModes.RASTER_MODE_NO_HINTING ? GlyphLoadFlags.LOAD_NO_BITMAP | GlyphLoadFlags.LOAD_NO_HINTING : GlyphLoadFlags.LOAD_NO_BITMAP;
+            GlyphLoadFlags glyphLoadFlags = (GlyphRasterModes.RASTER_MODE_NO_HINTING & (GlyphRasterModes)m_AtlasRenderMode) == GlyphRasterModes.RASTER_MODE_NO_HINTING
+                ? GlyphLoadFlags.LOAD_NO_BITMAP | GlyphLoadFlags.LOAD_NO_HINTING
+                : GlyphLoadFlags.LOAD_NO_BITMAP;
+
             Glyph glyph = null;
 
             if (FontEngine.TryGetGlyphWithIndexValue(glyphIndex, glyphLoadFlags, out glyph))
@@ -2181,7 +2211,7 @@ namespace TMPro
                 m_GlyphLookupDictionary.Add(glyphIndex, glyph);
 
                 // Add new character
-                character = new TMP_Character(unicode, glyph);
+                character = new TMP_Character(unicode, this, glyph);
                 m_CharacterTable.Add(character);
                 m_CharacterLookupDictionary.Add(unicode, character);
 
@@ -2318,7 +2348,10 @@ namespace TMPro
                     continue;
                 }
 
+                // Add a reference to the source text asset and glyph
                 character.glyph = glyph;
+                character.textAsset = this;
+
                 m_CharacterTable.Add(character);
                 m_CharacterLookupDictionary.Add(character.unicode, character);
 
@@ -2656,6 +2689,8 @@ namespace TMPro
 
             ReadFontAssetDefinition();
 
+            //TMP_ResourceManager.RebuildFontAssetCache(instanceID);
+
             #if UNITY_EDITOR
             // Makes the changes to the font asset persistent.
             TMP_EditorResourceManager.RegisterResourceForUpdate(this);
@@ -2684,6 +2719,8 @@ namespace TMPro
             ClearAtlasTextures(true);
 
             ReadFontAssetDefinition();
+
+            //TMP_ResourceManager.RebuildFontAssetCache(instanceID);
 
             // Add glyphs
             TryAddCharacters(unicodeCharacters, true);
@@ -2928,7 +2965,7 @@ namespace TMPro
 
                 m_GlyphTable.Add(glyph);
 
-                TMP_Character character = new TMP_Character((uint)oldGlyph.id, glyph);
+                TMP_Character character = new TMP_Character((uint)oldGlyph.id, this, glyph);
 
                 if (oldGlyph.id == 32)
                     isSpaceCharacterPresent = true;
@@ -2942,7 +2979,7 @@ namespace TMPro
                 Debug.Log("Synthesizing Space for [" + this.name + "]");
                 Glyph glyph = new Glyph(0, new GlyphMetrics(0, 0, 0, 0, m_FaceInfo.ascentLine / 5), GlyphRect.zero, 1.0f, 0);
                 m_GlyphTable.Add(glyph);
-                m_CharacterTable.Add(new TMP_Character(32, glyph));
+                m_CharacterTable.Add(new TMP_Character(32, this, glyph));
             }
 
             // Clear legacy glyph info list.

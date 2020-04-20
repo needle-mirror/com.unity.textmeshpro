@@ -1280,7 +1280,7 @@ namespace TMPro.EditorUtilities
                 if (m_DisplayDestructiveChangeWarning == false)
                     TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, m_fontAsset);
 
-                if (m_fontAsset.m_IsFontAssetLookupTablesDirty || evt_cmd == k_UndoRedo)
+                if (m_fontAsset.IsFontAssetLookupTablesDirty || evt_cmd == k_UndoRedo)
                     m_fontAsset.ReadFontAssetDefinition();
 
                 isAssetDirty = false;

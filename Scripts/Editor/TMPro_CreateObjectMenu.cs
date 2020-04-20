@@ -31,9 +31,14 @@ namespace TMPro.EditorUtilities
             {
                 // Apply TMP Settings Defaults if no Preset is defined
                 if (Preset.GetDefaultForObject(textComponent) == null)
-                {            
+                {
                     textComponent.text = "Sample text";
                     textComponent.alignment = TextAlignmentOptions.TopLeft;
+                }
+                else
+                {
+                    textComponent.renderer.sortingLayerID = textComponent._SortingLayerID;
+                    textComponent.renderer.sortingOrder = textComponent._SortingOrder;
                 }
 
                 if (TMP_Settings.autoSizeTextContainer)
@@ -45,6 +50,11 @@ namespace TMPro.EditorUtilities
                 {
                     textComponent.rectTransform.sizeDelta = TMP_Settings.defaultTextMeshProTextContainerSize;
                 }
+            }
+            else
+            {
+                textComponent.text = "Sample text";
+                textComponent.alignment = TextAlignmentOptions.TopLeft;
             }
 
             Undo.RegisterCreatedObjectUndo(go, "Create " + go.name);
@@ -92,12 +102,18 @@ namespace TMPro.EditorUtilities
                     textComponent.rectTransform.sizeDelta = TMP_Settings.defaultTextMeshProUITextContainerSize;
                 }
             }
+            else
+            {
+                textComponent.fontSize = 36;
+                textComponent.color = Color.white;
+                textComponent.text = "New Text";
+            }
 
             PlaceUIElementRoot(go, menuCommand);
         }
 
         [MenuItem("GameObject/UI/Button - TextMeshPro", false, 2031)]
-        static public void AddButton(MenuCommand menuCommand)
+        public static void AddButton(MenuCommand menuCommand)
         {
             GameObject go = TMP_DefaultControls.CreateButton(GetStandardResources());
 
@@ -119,7 +135,7 @@ namespace TMPro.EditorUtilities
 
 
         [MenuItem("GameObject/UI/Dropdown - TextMeshPro", false, 2036)]
-        static public void AddDropdown(MenuCommand menuCommand)
+        public static void AddDropdown(MenuCommand menuCommand)
         {
             GameObject go = TMP_DefaultControls.CreateDropdown(GetStandardResources());
             PlaceUIElementRoot(go, menuCommand);
@@ -136,10 +152,10 @@ namespace TMPro.EditorUtilities
         private const string kDropdownArrowPath = "UI/Skin/DropdownArrow.psd";
         private const string kMaskPath = "UI/Skin/UIMask.psd";
 
-        static private TMP_DefaultControls.Resources s_StandardResources;
+        private static TMP_DefaultControls.Resources s_StandardResources;
 
 
-        static private TMP_DefaultControls.Resources GetStandardResources()
+        private static TMP_DefaultControls.Resources GetStandardResources()
         {
             if (s_StandardResources.standard == null)
             {
@@ -252,7 +268,7 @@ namespace TMPro.EditorUtilities
         }
 
 
-        static public GameObject CreateNewUI()
+        public static GameObject CreateNewUI()
         {
             // Root for the UI
             var root = new GameObject("Canvas");
@@ -311,7 +327,7 @@ namespace TMPro.EditorUtilities
 
 
         // Helper function that returns a Canvas GameObject; preferably a parent of the selection, or other existing Canvas.
-        static public GameObject GetOrCreateCanvasGameObject()
+        public static GameObject GetOrCreateCanvasGameObject()
         {
             GameObject selectedGo = Selection.activeGameObject;
 
