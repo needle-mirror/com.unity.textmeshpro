@@ -505,6 +505,11 @@ namespace TMPro
             m_havePropertiesChanged = true;
             m_ignoreActiveState = ignoreActiveState;
             m_isInputParsingRequired = m_isInputParsingRequired ? true : forceTextReparsing;
+
+            // Special handling in the event the Canvas is only disabled
+            if (m_canvas == null)
+                m_canvas = GetComponentInParent<Canvas>();
+
             OnPreRenderCanvas();
         }
 
