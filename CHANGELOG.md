@@ -1,6 +1,13 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [3.0.0-preview.11] - 2020-04-22
+## [2.1.0-preview.11]
+## [1.5.0-preview.11]
+### Changes
+- Fixed incorrect culling of text object by RectMask2D component when the parent Canvas Render Mode is set to Screen Space - Camera or World Space. Case #1240595
+- Added special handling to ForceMeshUpdate() when the parent Canvas is disabled. 
+
 ## [3.0.0-preview.10] - 2020-04-21
 ## [2.1.0-preview.10]
 ## [1.5.0-preview.10]

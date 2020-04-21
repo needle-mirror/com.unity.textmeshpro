@@ -4499,7 +4499,9 @@ namespace TMPro
             Transform rootCanvasTransform = m_canvas.rootCanvas.transform;
             Bounds compoundBounds = GetCompoundBounds();
 
-            return new Rect(rootCanvasTransform.InverseTransformPoint(m_rectTransform.position + compoundBounds.min), compoundBounds.size);
+            Vector3 position =  rootCanvasTransform.InverseTransformPoint(m_rectTransform.position);
+
+            return new Rect(position + compoundBounds.min, compoundBounds.size);
         }
 
 
