@@ -11,21 +11,21 @@ namespace TMPro
         public static int ID_MainTex;
 
         public static int ID_FaceTex;
-        public static int ID_FaceColor;
+        public static int ID_FaceColor; 
         public static int ID_FaceDilate;
         public static int ID_Shininess;
 
         public static int ID_UnderlayColor;
-        public static int ID_UnderlayOffsetX;
-        public static int ID_UnderlayOffsetY;
+        public static int ID_UnderlayOffsetX; 
+        public static int ID_UnderlayOffsetY; 
         public static int ID_UnderlayDilate;
         public static int ID_UnderlaySoftness;
 
-        public static int ID_WeightNormal;
+        public static int ID_WeightNormal; 
         public static int ID_WeightBold;
 
         public static int ID_OutlineTex;
-        public static int ID_OutlineWidth;
+        public static int ID_OutlineWidth; 
         public static int ID_OutlineSoftness;
         public static int ID_OutlineColor;
 
@@ -33,20 +33,20 @@ namespace TMPro
         public static int ID_Outline2Width;
 
         public static int ID_Padding;
-        public static int ID_GradientScale;
-        public static int ID_ScaleX;
-        public static int ID_ScaleY;
+        public static int ID_GradientScale; 
+        public static int ID_ScaleX; 
+        public static int ID_ScaleY; 
         public static int ID_PerspectiveFilter;
         public static int ID_Sharpness;
 
-        public static int ID_TextureWidth;
-        public static int ID_TextureHeight;
+        public static int ID_TextureWidth; 
+        public static int ID_TextureHeight; 
 
-        public static int ID_BevelAmount;
+        public static int ID_BevelAmount; 
 
-        public static int ID_GlowColor;
+        public static int ID_GlowColor; 
         public static int ID_GlowOffset;
-        public static int ID_GlowPower;
+        public static int ID_GlowPower;  
         public static int ID_GlowOuter;
         public static int ID_GlowInner;
 
@@ -58,10 +58,10 @@ namespace TMPro
 
         //public static int ID_MaskID;
         public static int ID_MaskCoord;
-        public static int ID_ClipRect;
-        public static int ID_MaskSoftnessX;
-        public static int ID_MaskSoftnessY;
-        public static int ID_VertexOffsetX;
+        public static int ID_ClipRect; 
+        public static int ID_MaskSoftnessX; 
+        public static int ID_MaskSoftnessY; 
+        public static int ID_VertexOffsetX; 
         public static int ID_VertexOffsetY;
         public static int ID_UseClipRect;
 
@@ -70,12 +70,12 @@ namespace TMPro
         public static int ID_StencilComp;
         public static int ID_StencilReadMask;
         public static int ID_StencilWriteMask;
-
-        public static int ID_ShaderFlags;
+        
+        public static int ID_ShaderFlags; 
         public static int ID_ScaleRatio_A;
         public static int ID_ScaleRatio_B;
         public static int ID_ScaleRatio_C;
-
+        
         public static string Keyword_Bevel = "BEVEL_ON";
         public static string Keyword_Glow = "GLOW_ON";
         public static string Keyword_Underlay = "UNDERLAY_ON";
@@ -125,7 +125,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         static ShaderUtilities()
         {
@@ -133,7 +133,7 @@ namespace TMPro
         }
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         public static void GetShaderPropertyIDs()
         {
@@ -148,7 +148,7 @@ namespace TMPro
                 ID_FaceColor = Shader.PropertyToID("_FaceColor");
                 ID_FaceDilate = Shader.PropertyToID("_FaceDilate");
                 ID_Shininess = Shader.PropertyToID("_FaceShininess");
-
+            
                 ID_UnderlayColor = Shader.PropertyToID("_UnderlayColor");
                 ID_UnderlayOffsetX = Shader.PropertyToID("_UnderlayOffsetX");
                 ID_UnderlayOffsetY = Shader.PropertyToID("_UnderlayOffsetY");
@@ -222,7 +222,7 @@ namespace TMPro
 
 
 
-        // Scale Ratios to ensure property ranges are optimum in Material Editor
+        // Scale Ratios to ensure property ranges are optimum in Material Editor  
         public static void UpdateShaderRatios(Material mat)
         {
             //Debug.Log("UpdateShaderRatios() called.");
@@ -232,9 +232,6 @@ namespace TMPro
             float ratio_C = 1;
 
             bool isRatioEnabled = !mat.shaderKeywords.Contains(Keyword_Ratios);
-
-            if (!mat.HasProperty(ID_GradientScale) || !mat.HasProperty(ID_FaceDilate))
-                return;
 
             // Compute Ratio A
             float scale = mat.GetFloat(ID_GradientScale);
@@ -304,7 +301,7 @@ namespace TMPro
             /*
             if (material == null || !material.HasProperty(ShaderUtilities.ID_GradientScale))
                 return Vector4.zero;   // We are using an non SDF Shader.
-
+            
             float scaleRatioA = material.GetFloat(ID_ScaleRatio_A);
             float faceDilate = material.GetFloat(ID_FaceDilate) * scaleRatioA;
             float outlineThickness = material.GetFloat(ID_OutlineWidth) * scaleRatioA;
@@ -349,7 +346,7 @@ namespace TMPro
                 if (material.HasProperty(ID_Padding))
                     extraPadding += (int)material.GetFloat(ID_Padding);
 
-                return extraPadding + 1.0f;
+                return extraPadding;
             }
 
             Vector4 padding = Vector4.zero;
@@ -368,7 +365,7 @@ namespace TMPro
 
             float uniformPadding = 0;
             // Iterate through each of the assigned materials to find the max values to set the padding.
-
+           
             // Update Shader Ratios prior to computing padding
             UpdateShaderRatios(material);
 
@@ -451,17 +448,19 @@ namespace TMPro
         }
 
 
+
+
         // Function to determine how much extra padding is required as a result of material properties like dilate, outline thickness, softness, glow, etc...
         public static float GetPadding(Material[] materials, bool enableExtraPadding, bool isBold)
         {
             //Debug.Log("GetPadding() called.");
-
+            
             if (isInitialized == false)
                 GetShaderPropertyIDs();
 
             // Return if Material is null
             if (materials == null) return 0;
-
+            
             int extraPadding = enableExtraPadding ? 4 : 0;
 
             // Check if we are using a Bitmap Shader

@@ -48,16 +48,6 @@ namespace TMPro
             meshInfo = new TMP_MeshInfo[1];
         }
 
-        internal TMP_TextInfo(int characterCount)
-        {
-            characterInfo = new TMP_CharacterInfo[characterCount];
-            wordInfo = new TMP_WordInfo[16];
-            linkInfo = new TMP_LinkInfo[0];
-            lineInfo = new TMP_LineInfo[2];
-            pageInfo = new TMP_PageInfo[4];
-
-            meshInfo = new TMP_MeshInfo[1];
-        }
 
         public TMP_TextInfo(TMP_Text textComponent)
         {
@@ -161,9 +151,6 @@ namespace TMPro
 
                 this.lineInfo[i].ascender = k_InfinityVectorNegative.x;
                 this.lineInfo[i].descender = k_InfinityVectorPositive.x;
-
-                this.lineInfo[i].marginLeft = 0;
-                this.lineInfo[i].marginRight = 0;
 
                 this.lineInfo[i].lineExtents.min = k_InfinityVectorPositive;
                 this.lineInfo[i].lineExtents.max = k_InfinityVectorNegative;
@@ -274,11 +261,11 @@ namespace TMPro
         /// <param name="isFixedSize"></param>
         public static void Resize<T>(ref T[] array, int size, bool isBlockAllocated)
         {
+            //if (size <= array.Length) return;
+
             if (isBlockAllocated) size = size > 1024 ? size + 256 : Mathf.NextPowerOfTwo(size);
 
             if (size == array.Length) return;
-
-            //Debug.Log("Resizing TextInfo from [" + array.Length + "] to [" + size + "]");
 
             Array.Resize(ref array, size);
         }

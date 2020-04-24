@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using UnityEditor;
-using UnityEditor.Presets;
 using UnityEditor.SceneManagement;
 using UnityEditor.Experimental.SceneManagement;
 using UnityEngine.SceneManagement;
@@ -20,59 +19,18 @@ namespace TMPro.EditorUtilities
         [MenuItem("GameObject/3D Object/Text - TextMeshPro", false, 30)]
         static void CreateTextMeshProObjectPerform(MenuCommand command)
         {
-            GameObject go = ObjectFactory.CreateGameObject("Text (TMP)");
+            GameObject go = new GameObject("Text (TMP)");
 
             // Add support for new prefab mode
             StageUtility.PlaceGameObjectInCurrentStage(go);
 
-            TextMeshPro textComponent = ObjectFactory.AddComponent<TextMeshPro>(go);
+            TextMeshPro textMeshPro = go.AddComponent<TextMeshPro>();
+            textMeshPro.text = "Sample text";
+            textMeshPro.alignment = TextAlignmentOptions.TopLeft;
 
-            if (textComponent.m_isWaitingOnResourceLoad == false)
-            {
-                // Get reference to potential Presets for <TextMeshPro> component
-                #if UNITY_2019_3_OR_NEWER
-                Preset[] presets = Preset.GetDefaultPresetsForObject(textComponent);
+            
 
-                if (presets == null || presets.Length == 0)
-                {            
-                    textComponent.text = "Sample text";
-                    textComponent.alignment = TextAlignmentOptions.TopLeft;
-                }
-                else
-                {
-                    textComponent.renderer.sortingLayerID = textComponent._SortingLayerID;
-                    textComponent.renderer.sortingOrder = textComponent._SortingOrder;
-                }
-                #else           
-                if (Preset.GetDefaultForObject(textComponent) == null)
-                {
-                    textComponent.text = "Sample text";
-                    textComponent.alignment = TextAlignmentOptions.TopLeft;
-                }
-                else
-                {
-                    textComponent.renderer.sortingLayerID = textComponent._SortingLayerID;
-                    textComponent.renderer.sortingOrder = textComponent._SortingOrder;
-                }
-                #endif
-
-                if (TMP_Settings.autoSizeTextContainer)
-                {
-                    Vector2 size = textComponent.GetPreferredValues(TMP_Math.FLOAT_MAX, TMP_Math.FLOAT_MAX);
-                    textComponent.rectTransform.sizeDelta = size;
-                }
-                else
-                {
-                    textComponent.rectTransform.sizeDelta = TMP_Settings.defaultTextMeshProTextContainerSize;
-                }
-            }
-            else
-            {
-                textComponent.text = "Sample text";
-                textComponent.alignment = TextAlignmentOptions.TopLeft;
-            }
-
-            Undo.RegisterCreatedObjectUndo(go, "Create " + go.name);
+            Undo.RegisterCreatedObjectUndo((Object)go, "Create " + go.name);
 
             GameObject contextObject = command.context as GameObject;
             if (contextObject != null)
@@ -95,51 +53,16 @@ namespace TMPro.EditorUtilities
             GameObject go = TMP_DefaultControls.CreateText(GetStandardResources());
 
             // Override text color and font size
-            TextMeshProUGUI textComponent = go.GetComponent<TextMeshProUGUI>();
-
+            TMP_Text textComponent = go.GetComponent<TMP_Text>();
+            textComponent.color = Color.white;
             if (textComponent.m_isWaitingOnResourceLoad == false)
-            {
-                // Get reference to potential Presets for <TextMeshProUGUI> component
-                #if UNITY_2019_3_OR_NEWER
-                Preset[] presets = Preset.GetDefaultPresetsForObject(textComponent);
-
-                if (presets == null || presets.Length == 0)
-                {
-                    textComponent.fontSize = TMP_Settings.defaultFontSize;
-                    textComponent.color = Color.white;
-                    textComponent.text = "New Text";
-                }
-                #else
-                if (Preset.GetDefaultForObject(textComponent) == null)
-                {
-                    textComponent.fontSize = TMP_Settings.defaultFontSize;
-                    textComponent.color = Color.white;
-                    textComponent.text = "New Text";
-                }
-                #endif
-
-                if (TMP_Settings.autoSizeTextContainer)
-                {
-                    Vector2 size = textComponent.GetPreferredValues(TMP_Math.FLOAT_MAX, TMP_Math.FLOAT_MAX);
-                    textComponent.rectTransform.sizeDelta = size;
-                }
-                else
-                {
-                    textComponent.rectTransform.sizeDelta = TMP_Settings.defaultTextMeshProUITextContainerSize;
-                }
-            }
-            else
-            {
-                textComponent.fontSize = 36;
-                textComponent.color = Color.white;
-                textComponent.text = "New Text";
-            }
+                textComponent.fontSize = TMP_Settings.defaultFontSize;
 
             PlaceUIElementRoot(go, menuCommand);
         }
 
         [MenuItem("GameObject/UI/Button - TextMeshPro", false, 2031)]
-        public static void AddButton(MenuCommand menuCommand)
+        static public void AddButton(MenuCommand menuCommand)
         {
             GameObject go = TMP_DefaultControls.CreateButton(GetStandardResources());
 
@@ -161,7 +84,7 @@ namespace TMPro.EditorUtilities
 
 
         [MenuItem("GameObject/UI/Dropdown - TextMeshPro", false, 2036)]
-        public static void AddDropdown(MenuCommand menuCommand)
+        static public void AddDropdown(MenuCommand menuCommand)
         {
             GameObject go = TMP_DefaultControls.CreateDropdown(GetStandardResources());
             PlaceUIElementRoot(go, menuCommand);
@@ -178,10 +101,10 @@ namespace TMPro.EditorUtilities
         private const string kDropdownArrowPath = "UI/Skin/DropdownArrow.psd";
         private const string kMaskPath = "UI/Skin/UIMask.psd";
 
-        private static TMP_DefaultControls.Resources s_StandardResources;
+        static private TMP_DefaultControls.Resources s_StandardResources;
 
 
-        private static TMP_DefaultControls.Resources GetStandardResources()
+        static private TMP_DefaultControls.Resources GetStandardResources()
         {
             if (s_StandardResources.standard == null)
             {
@@ -294,7 +217,7 @@ namespace TMPro.EditorUtilities
         }
 
 
-        public static GameObject CreateNewUI()
+        static public GameObject CreateNewUI()
         {
             // Root for the UI
             var root = new GameObject("Canvas");
@@ -353,7 +276,7 @@ namespace TMPro.EditorUtilities
 
 
         // Helper function that returns a Canvas GameObject; preferably a parent of the selection, or other existing Canvas.
-        public static GameObject GetOrCreateCanvasGameObject()
+        static public GameObject GetOrCreateCanvasGameObject()
         {
             GameObject selectedGo = Selection.activeGameObject;
 

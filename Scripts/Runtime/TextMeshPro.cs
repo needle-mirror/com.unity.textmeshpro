@@ -9,9 +9,9 @@ namespace TMPro
 
     [DisallowMultipleComponent]
     [RequireComponent(typeof(MeshRenderer))]
+    [RequireComponent(typeof(MeshFilter))] 
     [AddComponentMenu("Mesh/TextMeshPro - Text")]
     [ExecuteAlways]
-    [HelpURL("https://docs.unity3d.com/Packages/com.unity.textmeshpro@2.1")]
     public partial class TextMeshPro : TMP_Text, ILayoutElement
     {
         // Public Properties and Serializable Properties
@@ -21,48 +21,18 @@ namespace TMPro
         /// </summary>
         public int sortingLayerID
         {
-            get
-            {
-                if (renderer == null)
-                    return 0;
-
-                return m_renderer.sortingLayerID;
-            }
-            set
-            {
-                if (renderer == null)
-                    return;
-
-                m_renderer.sortingLayerID = value;
-                _SortingLayerID = value;
-            }
+            get { return m_renderer.sortingLayerID; }
+            set { m_renderer.sortingLayerID = value; }
         }
-        [SerializeField]
-        internal int _SortingLayerID;
 
         /// <summary>
         /// Sets the Renderer's sorting order within the assigned layer.
         /// </summary>
         public int sortingOrder
         {
-            get
-            {
-                if (renderer == null)
-                    return 0;
-
-                return m_renderer.sortingOrder;
-            }
-            set
-            {
-                if (renderer == null)
-                    return;
-
-                m_renderer.sortingOrder = value;
-                _SortingOrder = value;
-            }
+            get { return m_renderer.sortingOrder; }
+            set { m_renderer.sortingOrder = value; }
         }
-        [SerializeField]
-        internal int _SortingOrder;
 
         /// <summary>
         /// Determines if the size of the text container will be adjusted to fit the text object when it is first created.
@@ -97,7 +67,7 @@ namespace TMPro
             {
                 if (m_transform == null)
                     m_transform = GetComponent<Transform>();
-
+                
                 return m_transform;
             }
         }
@@ -130,6 +100,7 @@ namespace TMPro
                 {
                     m_mesh = new Mesh();
                     m_mesh.hideFlags = HideFlags.HideAndDontSave;
+                    this.meshFilter.mesh = m_mesh;
                 }
 
                 return m_mesh;
@@ -144,15 +115,7 @@ namespace TMPro
             get
             {
                 if (m_meshFilter == null)
-                {
                     m_meshFilter = GetComponent<MeshFilter>();
-
-                    if (m_meshFilter == null)
-                    {
-                        m_meshFilter = gameObject.AddComponent<MeshFilter>();
-                        m_meshFilter.hideFlags = HideFlags.HideInInspector | HideFlags.HideAndDontSave;
-                    }
-                }
 
                 return m_meshFilter;
             }
@@ -160,7 +123,7 @@ namespace TMPro
 
         // MASKING RELATED PROPERTIES
         /// <summary>
-        /// Sets the mask type
+        /// Sets the mask type 
         /// </summary>
         public MaskingTypes maskType
         {
@@ -201,28 +164,28 @@ namespace TMPro
         /// </summary>
         public override void SetVerticesDirty()
         {
-            //Debug.Log("***** SetVerticesDirty() called on object [" + this.name + "] at frame [" + Time.frameCount + "] *****");
-
-            if (this == null || !this.IsActive())
+            if (m_verticesAlreadyDirty || this == null || !this.IsActive())
                 return;
 
+            //Debug.Log("***** SetVerticesDirty() called on object ID " + GetInstanceID() + ". ***** Dirty = " + m_verticesAlreadyDirty);
+
             TMP_UpdateManager.RegisterTextElementForGraphicRebuild(this);
+            m_verticesAlreadyDirty = true;
         }
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         public override void SetLayoutDirty()
         {
             m_isPreferredWidthDirty = true;
             m_isPreferredHeightDirty = true;
 
-            if (this == null || !this.IsActive())
+            if (m_layoutAlreadyDirty || this == null || !this.IsActive())
                 return;
 
-            LayoutRebuilder.MarkLayoutForRebuild(this.rectTransform);
-
+            m_layoutAlreadyDirty = true;
             m_isLayoutDirty = true;
         }
 
@@ -244,7 +207,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         public override void SetAllDirty()
         {
@@ -257,7 +220,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         /// <param name="update"></param>
         public override void Rebuild(CanvasUpdate update)
@@ -274,6 +237,8 @@ namespace TMPro
             else if (update == CanvasUpdate.PreRender)
             {
                 this.OnPreRenderObject();
+                m_verticesAlreadyDirty = false;
+                m_layoutAlreadyDirty = false;
 
                 if (!m_isMaterialDirty) return;
 
@@ -284,7 +249,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         protected override void UpdateMaterial()
         {
@@ -293,11 +258,13 @@ namespace TMPro
             //if (!this.IsActive())
             //    return;
 
-            if (renderer == null || m_sharedMaterial == null)
+            if (m_sharedMaterial == null)
                 return;
 
+            if (m_renderer == null) m_renderer = this.renderer;
+
             // Only update the material if it has changed.
-            if (m_renderer.sharedMaterial == null || m_renderer.sharedMaterial.GetInstanceID() != m_sharedMaterial.GetInstanceID())
+            if (m_renderer.sharedMaterial.GetInstanceID() != m_sharedMaterial.GetInstanceID())
                 m_renderer.sharedMaterial = m_sharedMaterial;
         }
 
@@ -332,6 +299,9 @@ namespace TMPro
             m_ignoreActiveState = ignoreActiveState;
             m_isInputParsingRequired = m_isInputParsingRequired ? true : forceTextReparsing;
             OnPreRenderObject();
+
+            m_verticesAlreadyDirty = false;
+            m_layoutAlreadyDirty = false;
         }
 
 
@@ -342,8 +312,8 @@ namespace TMPro
         /// <returns></returns>
         public override TMP_TextInfo GetTextInfo(string text)
         {
-            StringToInternalParsingBuffer(text, ref m_InternalParsingBuffer);
-            SetArraySizes(m_InternalParsingBuffer);
+            StringToCharArray(text, ref m_TextParsingBuffer);
+            SetArraySizes(m_TextParsingBuffer);
 
             m_renderMode = TextRenderFlags.DontRender;
 
@@ -472,8 +442,102 @@ namespace TMPro
         private bool m_currentAutoSizeMode;
 
 
-        public void CalculateLayoutInputHorizontal() { }
+        public void CalculateLayoutInputHorizontal()
+        {
+            //Debug.Log("*** CalculateLayoutInputHorizontal() ***");
 
-        public void CalculateLayoutInputVertical() { }
+            if (!this.gameObject.activeInHierarchy)
+                return;
+
+            //IsRectTransformDriven = true;
+
+            m_currentAutoSizeMode = m_enableAutoSizing;
+
+            if (m_isCalculateSizeRequired || m_rectTransform.hasChanged)
+            {
+                //Debug.Log("Calculating Layout Horizontal");
+
+                //m_LayoutPhase = AutoLayoutPhase.Horizontal;
+                //m_isRebuildingLayout = true;
+
+                m_minWidth = 0;
+                m_flexibleWidth = 0;
+
+                //m_renderMode = TextRenderFlags.GetPreferredSizes; // Set Text to not Render and exit early once we have new width values.
+
+                if (m_enableAutoSizing)
+                {
+                    m_fontSize = m_fontSizeMax;
+                }
+
+                // Set Margins to Infinity
+                m_marginWidth = k_LargePositiveFloat;
+                m_marginHeight = k_LargePositiveFloat;
+
+                if (m_isInputParsingRequired || m_isTextTruncated)
+                    ParseInputText();
+
+                GenerateTextMesh();
+
+                m_renderMode = TextRenderFlags.Render;
+
+                //m_preferredWidth = (int)m_preferredWidth + 1f;
+
+                ComputeMarginSize();
+
+                //Debug.Log("Preferred Width: " + m_preferredWidth + "  Margin Width: " + m_marginWidth + "  Preferred Height: " + m_preferredHeight + "  Margin Height: " + m_marginHeight + "  Rendered Width: " + m_renderedWidth + "  Height: " + m_renderedHeight + "  RectTransform Width: " + m_rectTransform.rect);
+
+                m_isLayoutDirty = true;
+            }
+        }
+
+
+        public void CalculateLayoutInputVertical()
+        {
+            //Debug.Log("*** CalculateLayoutInputVertical() ***");
+
+            // Check if object is active
+            if (!this.gameObject.activeInHierarchy) // || IsRectTransformDriven == false)
+                return;
+
+            //IsRectTransformDriven = true;
+
+            if (m_isCalculateSizeRequired || m_rectTransform.hasChanged)
+            {
+                //Debug.Log("Calculating Layout InputVertical");
+
+                //m_LayoutPhase = AutoLayoutPhase.Vertical;
+                //m_isRebuildingLayout = true;
+
+                m_minHeight = 0;
+                m_flexibleHeight = 0;
+
+                //m_renderMode = TextRenderFlags.GetPreferredSizes;
+
+                if (m_enableAutoSizing)
+                {
+                    m_currentAutoSizeMode = true;
+                    m_enableAutoSizing = false;
+                }
+
+                m_marginHeight = k_LargePositiveFloat;
+
+                GenerateTextMesh();
+
+                m_enableAutoSizing = m_currentAutoSizeMode;
+
+                m_renderMode = TextRenderFlags.Render;
+
+                //m_preferredHeight = (int)m_preferredHeight + 1f;
+
+                ComputeMarginSize();
+
+                //Debug.Log("Preferred Height: " + m_preferredHeight + "  Margin Height: " + m_marginHeight + "  Preferred Width: " + m_preferredWidth + "  Margin Width: " + m_marginWidth + "  Rendered Width: " + m_renderedWidth + "  Height: " + m_renderedHeight + "  RectTransform Width: " + m_rectTransform.rect);
+
+                m_isLayoutDirty = true;
+            }
+
+            m_isCalculateSizeRequired = false;
+        }
     }
 }

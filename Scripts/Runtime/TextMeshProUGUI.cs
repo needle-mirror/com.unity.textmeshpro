@@ -1,18 +1,23 @@
 using UnityEngine;
+using System;
 using System.Collections;
+using System.Collections.Generic;
+
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using UnityEngine.UI.CoroutineTween;
+
 
 #pragma warning disable 0414 // Disabled a few warnings related to serialized variables not used in this script but used in the editor.
 
-
 namespace TMPro
 {
+
     [DisallowMultipleComponent]
     [RequireComponent(typeof(RectTransform))]
     [RequireComponent(typeof(CanvasRenderer))]
     [AddComponentMenu("UI/TextMeshPro - Text (UI)", 11)]
     [ExecuteAlways]
-    [HelpURL("https://docs.unity3d.com/Packages/com.unity.textmeshpro@2.1")]
     public partial class TextMeshProUGUI : TMP_Text, ILayoutElement
     {
         /// <summary>
@@ -23,7 +28,6 @@ namespace TMPro
             get { return TMP_MaterialManager.GetMaterialForRendering(this, m_sharedMaterial); }
         }
 
-
         /// <summary>
         /// Determines if the size of the text container will be adjusted to fit the text object when it is first created.
         /// </summary>
@@ -33,6 +37,7 @@ namespace TMPro
 
             set { if (m_autoSizeTextContainer == value) return; m_autoSizeTextContainer = value; if (m_autoSizeTextContainer) { CanvasUpdateRegistry.RegisterCanvasElementForLayoutRebuild(this); SetLayoutDirty(); } }
         }
+
 
 
         /// <summary>
@@ -69,15 +74,28 @@ namespace TMPro
 
 
         private bool m_isRebuildingLayout = false;
-        private Coroutine m_DelayedGraphicRebuild;
-        private Coroutine m_DelayedMaterialRebuild;
+        //private bool m_isLayoutDirty = false;
+
 
         /// <summary>
         /// Function called by Unity when the horizontal layout needs to be recalculated.
         /// </summary>
         public void CalculateLayoutInputHorizontal()
         {
-            //Debug.Log("*** CalculateLayoutHorizontal() on Object ID: " + GetInstanceID() + " at frame: " + Time.frameCount + "***");
+            //Debug.Log("*** CalculateLayoutHorizontal() ***"); // at Frame: " + Time.frameCount); // called on Object ID " + GetInstanceID());
+            
+            //// Check if object is active
+            if (!this.gameObject.activeInHierarchy)
+                return;
+
+            if (m_isCalculateSizeRequired || m_rectTransform.hasChanged)
+            {
+                m_preferredWidth = GetPreferredWidth();
+
+                ComputeMarginSize();
+
+                m_isLayoutDirty = true;
+            }
         }
 
 
@@ -86,23 +104,31 @@ namespace TMPro
         /// </summary>
         public void CalculateLayoutInputVertical()
         {
-            //Debug.Log("*** CalculateLayoutInputVertical() on Object ID: " + GetInstanceID() + " at frame: " + Time.frameCount + "***");
+            //Debug.Log("*** CalculateLayoutInputVertical() ***"); // at Frame: " + Time.frameCount); // called on Object ID " + GetInstanceID());
+            
+            //// Check if object is active
+            if (!this.gameObject.activeInHierarchy) // || IsRectTransformDriven == false)
+                return;
+
+            if (m_isCalculateSizeRequired || m_rectTransform.hasChanged)
+            {
+                m_preferredHeight = GetPreferredHeight();
+
+                ComputeMarginSize();
+
+                m_isLayoutDirty = true;
+            }
+
+            m_isCalculateSizeRequired = false;
         }
 
 
         public override void SetVerticesDirty()
         {
-            if (this == null || !this.IsActive())
+            if (m_verticesAlreadyDirty || this == null || !this.IsActive() || CanvasUpdateRegistry.IsRebuildingGraphics())
                 return;
 
-            if (CanvasUpdateRegistry.IsRebuildingGraphics())
-            {
-                if (m_DelayedGraphicRebuild == null)
-                    m_DelayedGraphicRebuild = StartCoroutine(DelayedGraphicRebuild());
-
-                return;
-            }
-
+            m_verticesAlreadyDirty = true;
             CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild((ICanvasElement)this);
 
             if (m_OnDirtyVertsCallback != null)
@@ -111,16 +137,17 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         public override void SetLayoutDirty()
         {
             m_isPreferredWidthDirty = true;
             m_isPreferredHeightDirty = true;
 
-            if (this == null || !this.IsActive())
+            if ( m_layoutAlreadyDirty || this == null || !this.IsActive())
                 return;
 
+            m_layoutAlreadyDirty = true;
             LayoutRebuilder.MarkLayoutForRebuild(this.rectTransform);
 
             m_isLayoutDirty = true;
@@ -131,20 +158,14 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         public override void SetMaterialDirty()
         {
-            if (this == null || !this.IsActive())
-                return;
+            //Debug.Log("SetMaterialDirty()");
 
-            if (CanvasUpdateRegistry.IsRebuildingGraphics())
-            {
-                if (m_DelayedMaterialRebuild == null)
-                    m_DelayedMaterialRebuild = StartCoroutine(DelayedMaterialRebuild());
-
+            if (this == null || !this.IsActive() || CanvasUpdateRegistry.IsRebuildingGraphics())
                 return;
-            }
 
             m_isMaterialDirty = true;
             CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild((ICanvasElement)this);
@@ -155,7 +176,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         public override void SetAllDirty()
         {
@@ -167,39 +188,9 @@ namespace TMPro
         }
 
 
-        /// <summary>
-        /// Delay registration of text object for graphic rebuild by one frame.
-        /// </summary>
-        /// <returns></returns>
-        IEnumerator DelayedGraphicRebuild()
-        {
-            yield return null;
-
-            CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(this);
-
-            if (m_OnDirtyVertsCallback != null)
-                m_OnDirtyVertsCallback();
-        }
-
 
         /// <summary>
-        /// Delay registration of text object for graphic rebuild by one frame.
-        /// </summary>
-        /// <returns></returns>
-        IEnumerator DelayedMaterialRebuild()
-        {
-            yield return null;
-
-            m_isMaterialDirty = true;
-            CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(this);
-
-            if (m_OnDirtyMaterialCallback != null)
-                m_OnDirtyMaterialCallback();
-        }
-
-
-        /// <summary>
-        ///
+        /// 
         /// </summary>
         /// <param name="update"></param>
         public override void Rebuild(CanvasUpdate update)
@@ -216,6 +207,9 @@ namespace TMPro
             else if (update == CanvasUpdate.PreRender)
             {
                 OnPreRenderCanvas();
+
+                m_verticesAlreadyDirty = false;
+                m_layoutAlreadyDirty = false;
 
                 if (!m_isMaterialDirty) return;
 
@@ -241,7 +235,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         /// <param name="baseMaterial"></param>
         /// <returns></returns>
@@ -255,6 +249,10 @@ namespace TMPro
                 m_ShouldRecalculateStencil = false;
             }
 
+            // Release masking material
+            //if (m_MaskMaterial != null)
+            //    MaterialManager.ReleaseStencilMaterial(m_MaskMaterial);
+
             if (m_stencilID > 0)
             {
                 mat = TMP_MaterialManager.GetStencilMaterial(baseMaterial, m_stencilID);
@@ -263,15 +261,13 @@ namespace TMPro
 
                 m_MaskMaterial = mat;
             }
-            else if (m_MaskMaterial != null)
-                TMP_MaterialManager.ReleaseStencilMaterial(m_MaskMaterial);
 
             return mat;
         }
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         protected override void UpdateMaterial()
         {
@@ -280,7 +276,9 @@ namespace TMPro
             //if (!this.IsActive())
             //    return;
 
-            if (m_sharedMaterial == null || canvasRenderer == null) return;
+            if (m_sharedMaterial == null) return;
+
+            if (m_canvasRenderer == null) m_canvasRenderer = this.canvasRenderer;
 
             m_canvasRenderer.materialCount = 1;
             m_canvasRenderer.SetMaterial(materialForRendering, 0);
@@ -315,7 +313,7 @@ namespace TMPro
         }
 
 
-        //public override Material defaultMaterial
+        //public override Material defaultMaterial 
         //{
         //    get { Debug.Log("Default Material called."); return m_sharedMaterial; }
         //}
@@ -339,7 +337,6 @@ namespace TMPro
             base.RecalculateClipping();
         }
 
-
         // IMaskable Implementation
         /// <summary>
         /// Method called when Stencil Mask needs to be updated on this element and parents.
@@ -352,14 +349,12 @@ namespace TMPro
             SetMaterialDirty();
         }
 
-
         //public override void SetClipRect(Rect clipRect, bool validRect)
         //{
         //    //Debug.Log("***** SetClipRect (" + clipRect + ", " + validRect + ") *****");
 
         //    base.SetClipRect(clipRect, validRect);
         //}
-
 
         /// <summary>
         /// Override of the Cull function to provide for the ability to override the culling of the text object.
@@ -370,16 +365,14 @@ namespace TMPro
         {
             //Debug.Log("***** Cull (" + clipRect + ", " + validRect + ")   Cull: " + m_canvasRenderer.cull + " *****");
 
-            // Get compound rect for the text object and sub text objects in local canvas space.
-            Rect rect = GetCanvasSpaceClippingRect();
-
-            var cull = !validRect || !clipRect.Overlaps(rect, true);
-            if (m_canvasRenderer.cull != cull)
+            if (validRect)
             {
-                m_canvasRenderer.cull = cull;
-                onCullStateChanged.Invoke(cull);
-                OnCullingChanged();
+                m_canvasRenderer.cull = false;
+                CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(this);
+                return;
             }
+
+            base.Cull(clipRect, validRect);
         }
 
 
@@ -399,14 +392,13 @@ namespace TMPro
 
         /*
         /// <summary>
-        /// Sets the mask type
+        /// Sets the mask type 
         /// </summary>
         public MaskingTypes mask
         {
             get { return m_mask; }
             set { m_mask = value; havePropertiesChanged = true; isMaskUpdateRequired = true; }
         }
-
 
         /// <summary>
         /// Set the masking offset mode (as percentage or pixels)
@@ -419,6 +411,7 @@ namespace TMPro
         */
 
 
+
         /*
         /// <summary>
         /// Sets the softness of the mask
@@ -428,7 +421,6 @@ namespace TMPro
             get { return m_maskSoftness; }
             set { m_maskSoftness = value; havePropertiesChanged = true; isMaskUpdateRequired = true; }
         }
-
 
         /// <summary>
         /// Allows to move / offset the mesh vertices by a set amount
@@ -505,12 +497,10 @@ namespace TMPro
             m_havePropertiesChanged = true;
             m_ignoreActiveState = ignoreActiveState;
             m_isInputParsingRequired = m_isInputParsingRequired ? true : forceTextReparsing;
-
-            // Special handling in the event the Canvas is only disabled
-            if (m_canvas == null)
-                m_canvas = GetComponentInParent<Canvas>();
-
             OnPreRenderCanvas();
+
+            m_verticesAlreadyDirty = false;
+            m_layoutAlreadyDirty = false;
         }
 
 
@@ -521,8 +511,8 @@ namespace TMPro
         /// <returns></returns>
         public override TMP_TextInfo GetTextInfo(string text)
         {
-            StringToInternalParsingBuffer(text, ref m_InternalParsingBuffer);
-            SetArraySizes(m_InternalParsingBuffer);
+            StringToCharArray(text, ref m_TextParsingBuffer);
+            SetArraySizes(m_TextParsingBuffer);
 
             m_renderMode = TextRenderFlags.DontRender;
 
@@ -537,7 +527,6 @@ namespace TMPro
 
             return this.textInfo;
         }
-
 
         /// <summary>
         /// Function to clear the geometry of the Primary and Sub Text objects.
@@ -667,7 +656,7 @@ namespace TMPro
 
 
         public void UpdateFontAsset()
-        {
+        {        
             LoadFontAsset();
         }
 

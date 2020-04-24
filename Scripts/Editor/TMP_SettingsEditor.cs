@@ -44,11 +44,10 @@ namespace TMPro.EditorUtilities
             public static readonly GUIContent getFontFeaturesAtRuntime = new GUIContent("Get Font Features at Runtime", "Determines if Glyph Adjustment Data will be retrieved from font files at runtime when new characters and glyphs are added to font assets.");
             public static readonly GUIContent dynamicAtlasTextureGroup = new GUIContent("Dynamic Atlas Texture Group");
 
-            public static readonly GUIContent missingGlyphLabel = new GUIContent("Missing Character Unicode", "The character to be displayed when the requested character is not found in any font asset or fallbacks.");
+            public static readonly GUIContent missingGlyphLabel = new GUIContent("Replacement Character", "The character to be displayed when the requested character is not found in any font asset or fallbacks.");
             public static readonly GUIContent disableWarningsLabel = new GUIContent("Disable warnings", "Disable warning messages in the Console.");
 
             public static readonly GUIContent defaultSpriteAssetLabel = new GUIContent("Default Sprite Asset", "The Sprite Asset that will be assigned by default when using the <sprite> tag when no Sprite Asset is specified.");
-            public static readonly GUIContent missingSpriteCharacterUnicodeLabel = new GUIContent("Missing Sprite Unicode", "The unicode value for the sprite character to be displayed when the requested sprite character is not found in any sprite assets or fallbacks.");
             public static readonly GUIContent enableEmojiSupportLabel = new GUIContent("iOS Emoji Support", "Enables Emoji support for Touch Screen Keyboards on target devices.");
             //public static readonly GUIContent spriteRelativeScale = new GUIContent("Relative Scaling", "Determines if the sprites will be scaled relative to the primary font asset assigned to the text object or relative to the current font asset.");
 
@@ -75,7 +74,6 @@ namespace TMPro.EditorUtilities
         SerializedProperty m_PropEnableRaycastTarget;
 
         SerializedProperty m_PropSpriteAsset;
-        SerializedProperty m_PropMissingSpriteCharacterUnicode;
         //SerializedProperty m_PropSpriteRelativeScaling;
         SerializedProperty m_PropEnableEmojiSupport;
         SerializedProperty m_PropSpriteAssetPath;
@@ -104,8 +102,6 @@ namespace TMPro.EditorUtilities
         SerializedProperty m_PropFollowingCharacters;
         SerializedProperty m_PropUseModernHangulLineBreakingRules;
 
-        private const string k_UndoRedo = "UndoRedoPerformed";
-
         public void OnEnable()
         {
             if (target == null)
@@ -122,7 +118,6 @@ namespace TMPro.EditorUtilities
             m_PropEnableRaycastTarget = serializedObject.FindProperty("m_EnableRaycastTarget");
 
             m_PropSpriteAsset = serializedObject.FindProperty("m_defaultSpriteAsset");
-            m_PropMissingSpriteCharacterUnicode = serializedObject.FindProperty("m_MissingCharacterSpriteUnicode");
             //m_PropSpriteRelativeScaling = serializedObject.FindProperty("m_SpriteRelativeScaling");
             m_PropEnableEmojiSupport = serializedObject.FindProperty("m_enableEmojiSupport");
             m_PropSpriteAssetPath = serializedObject.FindProperty("m_defaultSpriteAssetPath");
@@ -169,7 +164,6 @@ namespace TMPro.EditorUtilities
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            string evt_cmd = Event.current.commandName;
 
             float labelWidth = EditorGUIUtility.labelWidth;
             float fieldWidth = EditorGUIUtility.fieldWidth;
@@ -265,7 +259,6 @@ namespace TMPro.EditorUtilities
             GUILayout.Label(Styles.defaultSpriteAssetLabel, EditorStyles.boldLabel);
             EditorGUI.indentLevel = 1;
             EditorGUILayout.PropertyField(m_PropSpriteAsset, Styles.defaultSpriteAssetLabel);
-            EditorGUILayout.PropertyField(m_PropMissingSpriteCharacterUnicode, Styles.missingSpriteCharacterUnicodeLabel);
             EditorGUILayout.PropertyField(m_PropEnableEmojiSupport, Styles.enableEmojiSupportLabel);
             //EditorGUILayout.PropertyField(m_PropSpriteRelativeScaling, Styles.spriteRelativeScale);
             EditorGUILayout.PropertyField(m_PropSpriteAssetPath, Styles.spriteAssetsPathLabel);
@@ -320,7 +313,7 @@ namespace TMPro.EditorUtilities
             EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
 
-            if (serializedObject.ApplyModifiedProperties() || evt_cmd == k_UndoRedo)
+            if (serializedObject.ApplyModifiedProperties())
             {
                 EditorUtility.SetDirty(target);
                 TMPro_EventManager.ON_TMP_SETTINGS_CHANGED();

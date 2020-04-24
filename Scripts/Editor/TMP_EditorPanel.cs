@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEditor;
-using UnityEditor.Presets;
 
 namespace TMPro.EditorUtilities
 {
@@ -12,29 +11,22 @@ namespace TMPro.EditorUtilities
         static readonly GUIContent k_OrderInLayerLabel = new GUIContent("Order in Layer", "Renderer's order within a sorting layer.");
         static readonly GUIContent k_OrthographicLabel = new GUIContent("Orthographic Mode", "Should be enabled when using an orthographic camera. Instructs the shader to not perform any perspective correction.");
         static readonly GUIContent k_VolumetricLabel = new GUIContent("Volumetric Setup", "Use cubes rather than quads to render the text. Allows for volumetric rendering when combined with a compatible shader.");
-
-        private static string[] k_SortingLayerNames;
-        bool IsPreset;
-
+        
         SerializedProperty m_IsVolumetricTextProp;
+        
         SerializedProperty m_IsOrthographicProp;
+
         Renderer m_Renderer;
 
         protected override void OnEnable()
         {
             base.OnEnable();
 
-            // Determine if the inspected object is a Preset
-            IsPreset = (int)(target as Component).gameObject.hideFlags == 93;
-
             m_IsOrthographicProp = serializedObject.FindProperty("m_isOrthographic");
-
+            
             m_IsVolumetricTextProp = serializedObject.FindProperty("m_isVolumetricText");
 
             m_Renderer = m_TextComponent.GetComponent<Renderer>();
-
-            // Populate Sorting Layer Names
-            k_SortingLayerNames = SortingLayerHelper.sortingLayerNames;
         }
 
         protected override void DrawExtraSettings()
@@ -59,7 +51,7 @@ namespace TMPro.EditorUtilities
                 DrawIsTextObjectScaleStatic();
 
                 DrawOrthographicMode();
-
+                
                 DrawRichText();
 
                 DrawParsing();
@@ -84,29 +76,33 @@ namespace TMPro.EditorUtilities
 
             EditorGUI.BeginChangeCheck();
 
-            TextMeshPro textComponent = (TextMeshPro)m_TextComponent;
+            // SORTING LAYERS
+            var sortingLayerNames = SortingLayerHelper.sortingLayerNames;
+
+            var textComponent = (TextMeshPro)m_TextComponent;
 
             // Look up the layer name using the current layer ID
-            string oldName = IsPreset ? SortingLayer.IDToName(textComponent._SortingLayerID) : SortingLayer.IDToName(textComponent.sortingLayerID);
+            string oldName = SortingLayerHelper.GetSortingLayerNameFromID(textComponent.sortingLayerID);
 
             // Use the name to look up our array index into the names list
-            int oldLayerIndex = System.Array.IndexOf(k_SortingLayerNames, oldName);
+            int oldLayerIndex = System.Array.IndexOf(sortingLayerNames, oldName);
 
             // Show the pop-up for the names
             EditorGUIUtility.fieldWidth = 0f;
-            int newLayerIndex = EditorGUILayout.Popup(k_SortingLayerLabel, oldLayerIndex, k_SortingLayerNames);
-
+            int newLayerIndex = EditorGUILayout.Popup(k_SortingLayerLabel, oldLayerIndex, sortingLayerNames);
+            
             // If the index changes, look up the ID for the new index to store as the new ID
             if (newLayerIndex != oldLayerIndex)
-                UpdateTargetsSortingLayerID(SortingLayer.NameToID(k_SortingLayerNames[newLayerIndex]));
+            {
+                textComponent.sortingLayerID = SortingLayerHelper.GetSortingLayerIDForIndex(newLayerIndex);
+            }
 
-            // Get value from internal property if target is a Preset otherwise from the public property
-            int oldSortingOrder = IsPreset ? textComponent._SortingOrder : textComponent.sortingOrder;
-
-            int newSortingLayerOrder = EditorGUILayout.IntField(k_OrderInLayerLabel, oldSortingOrder);
-
+            // Expose the manual sorting order
+            int newSortingLayerOrder = EditorGUILayout.IntField(k_OrderInLayerLabel, textComponent.sortingOrder);
             if (newSortingLayerOrder != textComponent.sortingOrder)
-                UpdateTargetsSortingOrder(newSortingLayerOrder);
+            {
+                textComponent.sortingOrder = newSortingLayerOrder;
+            }
 
             if (EditorGUI.EndChangeCheck())
                 m_HavePropertiesChanged = true;
@@ -163,28 +159,6 @@ namespace TMPro.EditorUtilities
                     TMPro_EventManager.ON_TEXTMESHPRO_PROPERTY_CHANGED(true, targets[i] as TextMeshPro);
                     s_EventId = undoEventId;
                 }
-            }
-        }
-
-        void UpdateTargetsSortingLayerID(int sortingLayerID)
-        {
-            for (int i = 0; i < targets.Length; i++)
-            {
-                var textComponent = (TextMeshPro)targets[i];
-
-                if (textComponent != null)
-                    textComponent.sortingLayerID = sortingLayerID;
-            }
-        }
-
-        void UpdateTargetsSortingOrder(int sortingOrder)
-        {
-            for (int i = 0; i < targets.Length; i++)
-            {
-                var textComponent = (TextMeshPro)targets[i];
-
-                if (textComponent != null)
-                    textComponent.sortingOrder = sortingOrder;
             }
         }
     }

@@ -35,7 +35,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         public override Texture mainTexture
         {
@@ -43,6 +43,7 @@ namespace TMPro
             {
                 if (this.sharedMaterial != null)
                     return this.sharedMaterial.GetTexture(ShaderUtilities.ID_MainTex);
+
 
                 return null;
             }
@@ -88,7 +89,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         public Material fallbackMaterial
         {
@@ -210,10 +211,8 @@ namespace TMPro
         public static TMP_SubMeshUI AddSubTextObject(TextMeshProUGUI textComponent, MaterialReference materialReference)
         {
             GameObject go = new GameObject("TMP UI SubObject [" + materialReference.material.name + "]", typeof(RectTransform));
-            go.hideFlags = HideFlags.DontSave;
 
             go.transform.SetParent(textComponent.transform, false);
-            go.transform.SetAsFirstSibling();
             go.layer = textComponent.gameObject.layer;
 
             RectTransform rectTransform = go.GetComponent<RectTransform>();
@@ -221,9 +220,6 @@ namespace TMPro
             rectTransform.anchorMax = Vector2.one;
             rectTransform.sizeDelta = Vector2.zero;
             rectTransform.pivot = textComponent.rectTransform.pivot;
-
-            LayoutElement layoutElement = go.AddComponent<LayoutElement>();
-            layoutElement.ignoreLayout = true;
 
             TMP_SubMeshUI subMesh = go.AddComponent<TMP_SubMeshUI>();
 
@@ -242,7 +238,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         protected override void OnEnable()
         {
@@ -276,7 +272,9 @@ namespace TMPro
         protected override void OnDisable()
         {
             //Debug.Log("*** SubObject OnDisable() ***");
-            base.OnDisable();
+
+            //m_canvasRenderer.Clear();
+            TMP_UpdateRegistry.UnRegisterCanvasElementForRebuild(this);
 
             if (m_MaskMaterial != null)
             {
@@ -289,6 +287,8 @@ namespace TMPro
                 TMP_MaterialManager.ReleaseFallbackMaterial(m_fallbackMaterial);
                 m_fallbackMaterial = null;
             }
+
+            base.OnDisable();
         }
 
 
@@ -344,14 +344,8 @@ namespace TMPro
             int fallbackSourceMaterialID = m_fallbackSourceMaterial == null ? 0 : m_fallbackSourceMaterial.GetInstanceID();
 
             // Sync culling with parent text object
-            bool hasCullModeProperty = m_sharedMaterial.HasProperty(ShaderUtilities.ShaderTag_CullMode);
-            float cullMode = 0;
-
-            if (hasCullModeProperty)
-            {
-                cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
-                m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
-            }
+            float cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
+            m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
 
             // Filter events and return if the affected material is not this object's material.
             if (m_fallbackMaterial != null && fallbackSourceMaterialID == targetMaterialID && TMP_Settings.matchMaterialPreset)
@@ -381,7 +375,7 @@ namespace TMPro
                 }
                 else if (targetMaterialID == maskingMaterialID)
                 {
-                    // Update the padding
+                    // Update the padding 
                     GetPaddingForMaterial(mat);
 
                     m_sharedMaterial.CopyPropertiesFromMaterial(mat);
@@ -401,8 +395,7 @@ namespace TMPro
                 }
 
                 // Re-sync culling with parent text object
-                if (hasCullModeProperty)
-                    m_MaskMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
+                m_MaskMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
             }
 
             m_padding = GetPaddingForMaterial();
@@ -480,7 +473,7 @@ namespace TMPro
 #endif
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         protected override void OnTransformParentChanged()
         {
@@ -516,8 +509,6 @@ namespace TMPro
 
                 m_MaskMaterial = mat;
             }
-            else if (m_MaskMaterial != null)
-                TMP_MaterialManager.ReleaseStencilMaterial(m_MaskMaterial);
 
             return mat;
         }
@@ -548,7 +539,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         /// <param name="isExtraPadding"></param>
         /// <param name="isBold"></param>
@@ -559,7 +550,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         public override void SetAllDirty()
         {
@@ -570,7 +561,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         public override void SetVerticesDirty()
         {
@@ -587,7 +578,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         public override void SetLayoutDirty()
         {
@@ -596,7 +587,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         public override void SetMaterialDirty()
         {
@@ -620,7 +611,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         public void SetPivotDirty()
         {
@@ -630,14 +621,6 @@ namespace TMPro
             this.rectTransform.pivot = m_TextComponent.rectTransform.pivot;
         }
 
-        Transform GetRootCanvasTransform()
-        {
-            if (m_RootCanvasTransform == null)
-                m_RootCanvasTransform = m_TextComponent.canvas.rootCanvas.transform;
-
-            return m_RootCanvasTransform;
-        }
-        private Transform m_RootCanvasTransform;
 
         /// <summary>
         /// Override to Cull function of MaskableGraphic to prevent Culling.
@@ -646,21 +629,19 @@ namespace TMPro
         /// <param name="validRect"></param>
         public override void Cull(Rect clipRect, bool validRect)
         {
-            // Get compound rect for the text object and sub text objects in local canvas space.
-            Rect rect = m_TextComponent.GetCanvasSpaceClippingRect();
-
-            var cull = !validRect || !clipRect.Overlaps(rect, true);
-            if (canvasRenderer.cull != cull)
+            if (validRect)
             {
-                canvasRenderer.cull = cull;
-                onCullStateChanged.Invoke(cull);
-                OnCullingChanged();
+                canvasRenderer.cull = false;
+                CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(this);
+                return;
             }
+
+            base.Cull(clipRect, validRect);
         }
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         protected override void UpdateGeometry()
         {
@@ -670,7 +651,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         /// <param name="update"></param>
         public override void Rebuild(CanvasUpdate update)
@@ -695,7 +676,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         protected override void UpdateMaterial()
         {
@@ -707,11 +688,8 @@ namespace TMPro
             //if (canvasRenderer == null) m_canvasRenderer = this.canvasRenderer;
 
             // Special handling to keep the Culling of the material in sync with parent text object
-            if (m_sharedMaterial.HasProperty(ShaderUtilities.ShaderTag_CullMode))
-            {
-                float cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
-                m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
-            }
+            float cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
+            m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);
 
             canvasRenderer.materialCount = 1;
             canvasRenderer.SetMaterial(materialForRendering, 0);
@@ -736,7 +714,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         public override void RecalculateMasking()
         {
@@ -784,7 +762,7 @@ namespace TMPro
 
             m_sharedMaterial = m_material;
 
-            // Compute and Set new padding values for this new material.
+            // Compute and Set new padding values for this new material. 
             m_padding = GetPaddingForMaterial();
 
             SetVerticesDirty();

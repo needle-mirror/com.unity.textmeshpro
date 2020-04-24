@@ -4,7 +4,7 @@ using System;
 using System.IO;
 using UnityEngine;
 using UnityEditor;
-
+ 
 
 namespace TMPro
 {
@@ -62,9 +62,6 @@ namespace TMPro
                         // Set flag to get around importing scripts as per of this package which results in an assembly reload which in turn prevents / clears any callbacks.
                         m_IsImportingExamples = true;
 
-                        // Disable AssetDatabase refresh until examples have been imported.
-                        //AssetDatabase.DisallowAutoRefresh();
-
                         var packageFullPath = GetPackageFullPath();
                         AssetDatabase.ImportPackage(packageFullPath + "/Package Resources/TMP Examples & Extras.unitypackage", false);
                     }
@@ -83,7 +80,7 @@ namespace TMPro
         }
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         /// <param name="packageName"></param>
         void ImportCallback(string packageName)
@@ -101,7 +98,6 @@ namespace TMPro
             {
                 m_ExamplesAndExtrasResourcesImported = true;
                 m_IsImportingExamples = false;
-                //AssetDatabase.AllowAutoRefresh();
             }
 
             Debug.Log("[" + packageName + "] have been imported.");
@@ -164,17 +160,11 @@ namespace TMPro
         [SerializeField]
         TMP_PackageResourceImporter m_ResourceImporter;
 
-        static TMP_PackageResourceImporterWindow m_ImporterWindow;
-
         public static void ShowPackageImporterWindow()
         {
-            if (m_ImporterWindow == null)
-            {
-                m_ImporterWindow = GetWindow<TMP_PackageResourceImporterWindow>();
-                m_ImporterWindow.titleContent = new GUIContent("TMP Importer");
-            }
-
-            m_ImporterWindow.Focus();
+            var window = GetWindow<TMP_PackageResourceImporterWindow>();
+            window.titleContent = new GUIContent("TMP Importer");
+            window.Focus();
         }
 
         void OnEnable()
@@ -203,7 +193,7 @@ namespace TMPro
         {
             Repaint();
         }
-
+        
         /// <summary>
         /// Limits the minimum size of the editor window.
         /// </summary>

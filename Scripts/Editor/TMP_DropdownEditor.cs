@@ -17,7 +17,6 @@ namespace TMPro.EditorUtilities
         SerializedProperty m_ItemImage;
         SerializedProperty m_OnSelectionChanged;
         SerializedProperty m_Value;
-        SerializedProperty m_AlphaFadeSpeed;
         SerializedProperty m_Options;
 
         protected override void OnEnable()
@@ -31,7 +30,6 @@ namespace TMPro.EditorUtilities
             m_ItemImage = serializedObject.FindProperty("m_ItemImage");
             m_OnSelectionChanged = serializedObject.FindProperty("m_OnValueChanged");
             m_Value = serializedObject.FindProperty("m_Value");
-            m_AlphaFadeSpeed = serializedObject.FindProperty("m_AlphaFadeSpeed");
             m_Options = serializedObject.FindProperty("m_Options");
         }
 
@@ -48,7 +46,6 @@ namespace TMPro.EditorUtilities
             EditorGUILayout.PropertyField(m_ItemText);
             EditorGUILayout.PropertyField(m_ItemImage);
             EditorGUILayout.PropertyField(m_Value);
-            EditorGUILayout.PropertyField(m_AlphaFadeSpeed);
             EditorGUILayout.PropertyField(m_Options);
             EditorGUILayout.PropertyField(m_OnSelectionChanged);
             serializedObject.ApplyModifiedProperties();

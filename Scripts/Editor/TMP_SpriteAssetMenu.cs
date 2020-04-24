@@ -14,8 +14,14 @@ namespace TMPro.EditorUtilities
     public static class TMP_SpriteAssetMenu
     {
         // Add a Context Menu to the Sprite Asset Editor Panel to Create and Add a Default Material.
+        [MenuItem("CONTEXT/TMP_SpriteAsset/Add Default Material", true, 2200)]
+        static bool AddDefaultMaterialValidate(MenuCommand command)
+        {
+            return AssetDatabase.IsOpenForEdit(command.context);
+        }
+
         [MenuItem("CONTEXT/TMP_SpriteAsset/Add Default Material", false, 2200)]
-        static void CopyTexture(MenuCommand command)
+        static void AddDefaultMaterial(MenuCommand command)
         {
             TMP_SpriteAsset spriteAsset = (TMP_SpriteAsset)command.context;
 
@@ -28,6 +34,12 @@ namespace TMPro.EditorUtilities
         }
 
         // Add a Context Menu to the Sprite Asset Editor Panel to update existing sprite assets.
+        [MenuItem("CONTEXT/TMP_SpriteAsset/Update Sprite Asset", true, 2100)]
+        static bool UpdateSpriteAssetValidate(MenuCommand command)
+        {
+            return AssetDatabase.IsOpenForEdit(command.context);
+        }
+
         [MenuItem("CONTEXT/TMP_SpriteAsset/Update Sprite Asset", false, 2100)]
         static void UpdateSpriteAsset(MenuCommand command)
         {
@@ -40,7 +52,7 @@ namespace TMPro.EditorUtilities
         }
 
         internal static void UpdateSpriteAsset(TMP_SpriteAsset spriteAsset)
-        {
+        { 
             // Get a list of all the sprites contained in the texture referenced by the sprite asset.
             // This only works if the texture is set to sprite mode.
             string filePath = AssetDatabase.GetAssetPath(spriteAsset.spriteSheet);
@@ -98,7 +110,7 @@ namespace TMPro.EditorUtilities
 
                     spriteGlyphTable.Add(spriteGlyph);
 
-                    TMP_SpriteCharacter spriteCharacter = new TMP_SpriteCharacter(0xFFFE, spriteGlyph);
+                    TMP_SpriteCharacter spriteCharacter = new TMP_SpriteCharacter(0, spriteGlyph);
                     spriteCharacter.name = sprite.name;
                     spriteCharacter.scale = 1.0f;
 
@@ -115,14 +127,6 @@ namespace TMPro.EditorUtilities
                     if (spriteGlyph.glyphRect.x != sprite.rect.x || spriteGlyph.glyphRect.y != sprite.rect.y || spriteGlyph.glyphRect.width != sprite.rect.width || spriteGlyph.glyphRect.height != sprite.rect.height)
                         spriteGlyph.glyphRect = new GlyphRect(sprite.rect);
                 }
-            }
-
-            // Update Sprite Character Table to replace unicode 0x0 by 0xFFFE
-            for (int i = 0; i < spriteAsset.spriteCharacterTable.Count; i++)
-            {
-                TMP_SpriteCharacter spriteCharacter = spriteAsset.spriteCharacterTable[i];
-                if (spriteCharacter.unicode == 0)
-                    spriteCharacter.unicode = 0xFFFE;
             }
 
             // Sort glyph table by glyph index
@@ -197,7 +201,7 @@ namespace TMPro.EditorUtilities
 
             // Get the Sprites contained in the Sprite Sheet
             EditorUtility.SetDirty(spriteAsset);
-
+            
             //spriteAsset.sprites = sprites;
 
             // Set source texture back to Not Readable.
@@ -214,12 +218,12 @@ namespace TMPro.EditorUtilities
         private static void PopulateSpriteTables(Texture source, ref List<TMP_SpriteCharacter> spriteCharacterTable, ref List<TMP_SpriteGlyph> spriteGlyphTable)
         {
             //Debug.Log("Creating new Sprite Asset.");
-
+            
             string filePath = AssetDatabase.GetAssetPath(source);
 
             // Get all the Sprites sorted by Index
             Sprite[] sprites = AssetDatabase.LoadAllAssetsAtPath(filePath).Select(x => x as Sprite).Where(x => x != null).OrderByDescending(x => x.rect.y).ThenBy(x => x.rect.x).ToArray();
-
+            
             for (int i = 0; i < sprites.Length; i++)
             {
                 Sprite sprite = sprites[i];
@@ -233,7 +237,7 @@ namespace TMPro.EditorUtilities
 
                 spriteGlyphTable.Add(spriteGlyph);
 
-                TMP_SpriteCharacter spriteCharacter = new TMP_SpriteCharacter(0xFFFE, spriteGlyph);
+                TMP_SpriteCharacter spriteCharacter = new TMP_SpriteCharacter(0, spriteGlyph);
                 spriteCharacter.name = sprite.name;
                 spriteCharacter.scale = 1.0f;
 
@@ -264,7 +268,7 @@ namespace TMPro.EditorUtilities
 
                 spriteGlyphTable.Add(spriteGlyph);
 
-                TMP_SpriteCharacter spriteCharacter = new TMP_SpriteCharacter(0xFFFE, spriteGlyph);
+                TMP_SpriteCharacter spriteCharacter = new TMP_SpriteCharacter(0, spriteGlyph);
                 spriteCharacter.name = sprite.name;
                 spriteCharacter.scale = 1.0f;
 
@@ -332,7 +336,7 @@ namespace TMPro.EditorUtilities
                     for (int j = 0; j < ids.Length; j++ )
                     {
                         if (ids[0] != 0) break;
-
+ 
                         if (j > 0 && (ids[j] - ids[j - 1]) > 1)
                         {
                             id = ids[j - 1] + 1;
@@ -366,6 +370,6 @@ namespace TMPro.EditorUtilities
             return spriteAsset.spriteInfoList;
         }
 
-
+       
     }
 }

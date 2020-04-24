@@ -39,7 +39,7 @@ namespace TMPro
 
     public class TMP_ProjectConversionUtility : EditorWindow
     {
-        // Create Project Files GUID Remapping Tool window
+        // Create Sprite Asset Editor Window
         [MenuItem("Window/TextMeshPro/Project Files GUID Remapping Tool", false, 2100)]
         static void ShowConverterWindow()
         {
@@ -81,7 +81,7 @@ namespace TMPro
         };
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         struct AssetModificationRecord
         {
@@ -234,7 +234,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         /// <param name="filePath"></param>
         /// <returns></returns>
@@ -402,7 +402,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         private static void ResetScanProcess()
         {
@@ -415,7 +415,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         private static void UpdateProjectFiles()
         {
@@ -484,7 +484,7 @@ namespace TMPro
         }
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         [MenuItem("Window/TextMeshPro/Import TMP Essential Resources", false, 2050)]
         public static void ImportProjectResourcesMenu()
@@ -494,7 +494,7 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         [MenuItem("Window/TextMeshPro/Import TMP Examples and Extras", false, 2051)]
         public static void ImportExamplesContentMenu()
@@ -511,56 +511,24 @@ namespace TMPro
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         private static void ImportExamplesAndExtras()
         {
-            string packageFullPath = TMP_EditorUtility.packageFullPath;
+            string packageFullPath = EditorUtilities.TMP_EditorUtility.packageFullPath;
 
             AssetDatabase.ImportPackage(packageFullPath + "/Package Resources/TMP Examples & Extras.unitypackage", true);
         }
 
-        private static string k_SettingsFilePath;
-        private static byte[] k_SettingsBackup;
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         private static void ImportEssentialResources()
         {
-            // Check if the TMP Settings asset is already present in the project.
-            string[] settings = AssetDatabase.FindAssets("t:TMP_Settings");
-
-            if (settings.Length > 0)
-            {
-                // Save assets just in case the TMP Setting were modified before import.
-                AssetDatabase.SaveAssets();
-
-                // Copy existing TMP Settings asset to a byte[]
-                k_SettingsFilePath = AssetDatabase.GUIDToAssetPath(settings[0]);
-                k_SettingsBackup = File.ReadAllBytes(k_SettingsFilePath);
-
-                RegisterResourceImportCallback();
-            }
-
-            string packageFullPath = TMP_EditorUtility.packageFullPath;
+            string packageFullPath = EditorUtilities.TMP_EditorUtility.packageFullPath;
 
             AssetDatabase.ImportPackage(packageFullPath + "/Package Resources/TMP Essential Resources.unitypackage", true);
-        }
-
-        private static void RegisterResourceImportCallback()
-        {
-            AssetDatabase.importPackageCompleted += ImportCallback;
-        }
-
-        private static void ImportCallback(string packageName)
-        {
-            // Restore backup of TMP Settings from byte[]
-            File.WriteAllBytes(k_SettingsFilePath, k_SettingsBackup);
-
-            AssetDatabase.Refresh();
-
-            AssetDatabase.importPackageCompleted -= ImportCallback;
         }
     }
 }

@@ -348,7 +348,6 @@ namespace TMPro
         private List<DropdownItem> m_Items = new List<DropdownItem>();
         private TweenRunner<FloatTween> m_AlphaTweenRunner;
         private bool validTemplate = false;
-        private Coroutine m_Coroutine = null;
 
         private static OptionData s_NoOptionData = new OptionData();
 
@@ -438,10 +437,10 @@ namespace TMPro
 
         protected override void Awake()
         {
-//#if UNITY_EDITOR
-//            if (!Application.isPlaying)
-//                return;
-//#endif
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                return;
+#endif
 
             m_AlphaTweenRunner = new TweenRunner<FloatTween>();
             m_AlphaTweenRunner.Init(this);
@@ -740,12 +739,6 @@ namespace TMPro
         /// </summary>
         public void Show()
         {
-            if (m_Coroutine != null)
-            {
-                StopCoroutine(m_Coroutine);
-                ImmediateDestroyDropdownList();
-            }
-
             if (!IsActive() || !IsInteractable() || m_Dropdown != null)
                 return;
 
@@ -1086,23 +1079,20 @@ namespace TMPro
         /// </summary>
         public void Hide()
         {
-            if (m_Coroutine == null)
+            if (m_Dropdown != null)
             {
-                if (m_Dropdown != null)
-                {
-                    AlphaFadeList(m_AlphaFadeSpeed, 0f);
+                AlphaFadeList(m_AlphaFadeSpeed, 0f);
 
-                    // User could have disabled the dropdown during the OnValueChanged call.
-                    if (IsActive())
-                        m_Coroutine = StartCoroutine(DelayedDestroyDropdownList(m_AlphaFadeSpeed));
-                }
-
-                if (m_Blocker != null)
-                    DestroyBlocker(m_Blocker);
-
-                m_Blocker = null;
-                Select();
+                // User could have disabled the dropdown during the OnValueChanged call.
+                if (IsActive())
+                    StartCoroutine(DelayedDestroyDropdownList(m_AlphaFadeSpeed));
             }
+
+            if (m_Blocker != null)
+                DestroyBlocker(m_Blocker);
+
+            m_Blocker = null;
+            Select();
         }
 
         private IEnumerator DelayedDestroyDropdownList(float delay)
@@ -1124,11 +1114,7 @@ namespace TMPro
             if (m_Dropdown != null)
                 DestroyDropdownList(m_Dropdown);
 
-            if (m_AlphaTweenRunner != null)
-                m_AlphaTweenRunner.StopTween();
-
             m_Dropdown = null;
-            m_Coroutine = null;
         }
 
         // Change the value and hide the dropdown.

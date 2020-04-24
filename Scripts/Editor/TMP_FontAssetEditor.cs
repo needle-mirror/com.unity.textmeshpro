@@ -1,10 +1,14 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
+
+//#if UNITY_2018_4_5_OR_NEWER
 using UnityEditor.TextCore.LowLevel;
+//#endif
 
 
 namespace TMPro.EditorUtilities
@@ -73,7 +77,7 @@ namespace TMPro.EditorUtilities
             {
                 if (s_InternalSDFMaterial == null)
                 {
-                    Shader shader = Shader.Find("Hidden/TMP/Internal/Editor/Distance Field SSD");
+                    Shader shader = Shader.Find("Hidden/TextMeshPro/Internal/Distance Field SSD");
 
                     if (shader != null)
                         s_InternalSDFMaterial = new Material(shader);
@@ -143,7 +147,7 @@ namespace TMPro.EditorUtilities
 
         private string m_KerningTableSearchPattern;
         private List<int> m_KerningTableSearchList;
-
+        
         private bool m_isSearchDirty;
 
         private const string k_UndoRedo = "UndoRedoPerformed";
@@ -261,9 +265,6 @@ namespace TMPro.EditorUtilities
 
             m_GlyphSearchList = new List<int>();
             m_KerningTableSearchList = new List<int>();
-
-            // Sort Font Asset Tables
-            m_fontAsset.SortAllTables();
         }
 
 
@@ -381,7 +382,11 @@ namespace TMPro.EditorUtilities
                                 Texture2D tex = m_fontAsset.atlasTextures[i];
 
                                 if (tex != null && tex.isReadable)
+                                {
+                                    //#if UNITY_2018_4_5_OR_NEWER
                                     FontEngineEditorUtilities.SetAtlasTextureIsReadable(tex, false);
+                                    //#endif
+                                }
                             }
 
                             Debug.Log("Atlas Population mode set to [Static].");
@@ -405,7 +410,11 @@ namespace TMPro.EditorUtilities
                                     Texture2D tex = m_fontAsset.atlasTextures[i];
 
                                     if (tex != null && tex.isReadable == false)
+                                    {
+                                        //#if UNITY_2018_4_5_OR_NEWER
                                         FontEngineEditorUtilities.SetAtlasTextureIsReadable(tex, true);
+                                        //#endif
+                                    }
                                 }
 
                                 Debug.Log("Atlas Population mode set to [Dynamic].");
@@ -489,7 +498,7 @@ namespace TMPro.EditorUtilities
                                     }
                                 }
 
-                                m_fontAsset.UpdateFontAssetData();
+                                m_fontAsset.ClearFontAssetData();
                                 GUIUtility.keyboardControl = 0;
                                 isAssetDirty = true;
 
@@ -563,7 +572,7 @@ namespace TMPro.EditorUtilities
                 GUI.Label(rect, "Regular Typeface", EditorStyles.label);
                 rect.x += rect.width;
                 GUI.Label(rect, "Italic Typeface", EditorStyles.label);
-
+                
                 EditorGUI.indentLevel = 1;
 
                 EditorGUILayout.PropertyField(fontWeights_prop.GetArrayElementAtIndex(1), new GUIContent("100 - Thin"));
@@ -605,7 +614,7 @@ namespace TMPro.EditorUtilities
                         m_materialPresets[i].SetFloat("_WeightBold", font_boldStyle_prop.floatValue);
                 }
                 EditorGUILayout.EndHorizontal();
-
+                
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.PropertyField(font_normalSpacing_prop, new GUIContent("Spacing Offset"));
                 font_normalSpacing_prop.floatValue = Mathf.Clamp(font_normalSpacing_prop.floatValue, -100, 100);
@@ -621,11 +630,11 @@ namespace TMPro.EditorUtilities
                     GUI.changed = false;
                 }
                 EditorGUILayout.EndHorizontal();
-
+                
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.PropertyField(font_italicStyle_prop, new GUIContent("Italic Style"));
                 font_italicStyle_prop.intValue = Mathf.Clamp(font_italicStyle_prop.intValue, 15, 60);
-
+                
                 EditorGUILayout.PropertyField(font_tabSize_prop, new GUIContent("Tab Multiple"));
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.EndVertical();
@@ -662,9 +671,7 @@ namespace TMPro.EditorUtilities
             EditorGUI.indentLevel = 0;
             rect = EditorGUILayout.GetControlRect(false, 24);
 
-            int characterCount = m_fontAsset.characterTable.Count;
-
-            if (GUI.Button(rect, new GUIContent("<b>Character Table</b>   [" + characterCount + "]" + (rect.width > 320 ? " Characters" : ""), "List of characters contained in this font asset."), TMP_UIStyleManager.sectionHeader))
+            if (GUI.Button(rect, new GUIContent("<b>Character Table</b>", "List of characters contained in this font asset."), TMP_UIStyleManager.sectionHeader)) 
                 UI_PanelState.characterTablePanel = !UI_PanelState.characterTablePanel;
 
             GUI.Label(rect, (UI_PanelState.characterTablePanel ? "" : s_UiStateLabel[1]), TMP_UIStyleManager.rightLabel);
@@ -861,9 +868,7 @@ namespace TMPro.EditorUtilities
 
             GUIStyle glyphPanelStyle = new GUIStyle(EditorStyles.helpBox);
 
-            int glyphCount = m_fontAsset.glyphTable.Count;
-
-            if (GUI.Button(rect, new GUIContent("<b>Glyph Table</b>   [" + glyphCount + "]" + (rect.width > 275 ? " Glyphs" : ""), "List of glyphs contained in this font asset."), TMP_UIStyleManager.sectionHeader))
+            if (GUI.Button(rect, new GUIContent("<b>Glyph Table</b>", "List of glyphs contained in this font asset."), TMP_UIStyleManager.sectionHeader))
                 UI_PanelState.glyphTablePanel = !UI_PanelState.glyphTablePanel;
 
             GUI.Label(rect, (UI_PanelState.glyphTablePanel ? "" : s_UiStateLabel[1]), TMP_UIStyleManager.rightLabel);
@@ -917,7 +922,7 @@ namespace TMPro.EditorUtilities
                 EditorGUILayout.EndVertical();
 
                 // Display Glyph Table Elements
-
+                
                 if (arraySize > 0)
                 {
                     // Display each GlyphInfo entry using the GlyphInfo property drawer.
@@ -1058,9 +1063,7 @@ namespace TMPro.EditorUtilities
             EditorGUI.indentLevel = 0;
             rect = EditorGUILayout.GetControlRect(false, 24);
 
-            int adjustmentPairCount = m_fontAsset.fontFeatureTable.glyphPairAdjustmentRecords.Count;
-
-            if (GUI.Button(rect, new GUIContent("<b>Glyph Adjustment Table</b>   [" + adjustmentPairCount + "]" + (rect.width > 340 ? " Records" : ""), "List of glyph adjustment / advanced kerning pairs."), TMP_UIStyleManager.sectionHeader))
+            if (GUI.Button(rect, new GUIContent("<b>Glyph Adjustment Table</b>", "List of glyph adjustment / advanced kerning pairs."), TMP_UIStyleManager.sectionHeader))
                 UI_PanelState.fontFeatureTablePanel = !UI_PanelState.fontFeatureTablePanel;
 
             GUI.Label(rect, (UI_PanelState.fontFeatureTablePanel ? "" : s_UiStateLabel[1]), TMP_UIStyleManager.rightLabel);
@@ -1263,7 +1266,7 @@ namespace TMPro.EditorUtilities
                 if (m_DisplayDestructiveChangeWarning == false)
                     TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, m_fontAsset);
 
-                if (m_fontAsset.IsFontAssetLookupTablesDirty || evt_cmd == k_UndoRedo)
+                if (m_fontAsset.m_IsFontAssetLookupTablesDirty || evt_cmd == k_UndoRedo)
                     m_fontAsset.ReadFontAssetDefinition();
 
                 isAssetDirty = false;
@@ -1271,7 +1274,7 @@ namespace TMPro.EditorUtilities
             }
 
 
-            // Clear selection if mouse event was not consumed.
+            // Clear selection if mouse event was not consumed. 
             GUI.enabled = true;
             if (currentEvent.type == EventType.MouseDown && currentEvent.button == 0)
                 m_SelectedAdjustmentRecord = -1;
@@ -1408,7 +1411,7 @@ namespace TMPro.EditorUtilities
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         /// <param name="srcGlyphID"></param>
         /// <param name="dstGlyphID"></param>
@@ -1444,7 +1447,7 @@ namespace TMPro.EditorUtilities
         }
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         /// <param name="glyphID"></param>
         void RemoveGlyphFromList(int index)
@@ -1561,7 +1564,7 @@ namespace TMPro.EditorUtilities
         }
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         /// <param name="srcGlyph"></param>
         /// <param name="dstGlyph"></param>
@@ -1608,7 +1611,7 @@ namespace TMPro.EditorUtilities
 
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         /// <param name="searchPattern"></param>
         /// <returns></returns>
@@ -1664,7 +1667,7 @@ namespace TMPro.EditorUtilities
                     searchResults.Add(i);
                 else if (id.ToString("X").Contains(searchPattern))
                     searchResults.Add(i);
-
+                
                 // Check for potential match against decimal id
                 //if (id.ToString().Contains(searchPattern))
                 //    searchResults.Add(i);

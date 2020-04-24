@@ -252,17 +252,6 @@ namespace TMPro
         private bool m_enableEmojiSupport;
 
         /// <summary>
-        /// The unicode value of the sprite that will be used when the requested sprite is missing from the sprite asset and potential fallbacks.
-        /// </summary>
-        public static uint missingCharacterSpriteUnicode
-        {
-            get { return instance.m_MissingCharacterSpriteUnicode; }
-            set { instance.m_MissingCharacterSpriteUnicode = value; }
-        }
-        [SerializeField]
-        private uint m_MissingCharacterSpriteUnicode;
-
-        /// <summary>
         /// Determines if sprites will be scaled relative to the primary font asset assigned to the text object or relative to the current font asset.
         /// </summary>
         //public static SpriteRelativeScaling spriteRelativeScaling
@@ -324,7 +313,7 @@ namespace TMPro
         private TextAsset m_followingCharacters;
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         public static LineBreakingTable linebreakingRules
         {
