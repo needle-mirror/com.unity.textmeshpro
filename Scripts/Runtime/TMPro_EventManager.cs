@@ -14,23 +14,23 @@ namespace TMPro
         // Event & Delegate used to notify TextMesh Pro objects that Material properties have been changed.
         public static readonly FastAction<bool, Material> MATERIAL_PROPERTY_EVENT = new FastAction<bool, Material>();
 
-        public static readonly FastAction<bool, TMP_FontAsset> FONT_PROPERTY_EVENT = new FastAction<bool, TMP_FontAsset>();
+        public static readonly FastAction<bool, Object> FONT_PROPERTY_EVENT = new FastAction<bool, Object>();
 
         public static readonly FastAction<bool, Object> SPRITE_ASSET_PROPERTY_EVENT = new FastAction<bool, Object>();
 
-        public static readonly FastAction<bool, TextMeshPro> TEXTMESHPRO_PROPERTY_EVENT = new FastAction<bool, TextMeshPro>();
+        public static readonly FastAction<bool, Object> TEXTMESHPRO_PROPERTY_EVENT = new FastAction<bool, Object>();
 
         public static readonly FastAction<GameObject, Material, Material> DRAG_AND_DROP_MATERIAL_EVENT = new FastAction<GameObject, Material, Material>();
 
         public static readonly FastAction<bool> TEXT_STYLE_PROPERTY_EVENT = new FastAction<bool>();
 
-        public static readonly FastAction<TMP_ColorGradient> COLOR_GRADIENT_PROPERTY_EVENT = new FastAction<TMP_ColorGradient>();
+        public static readonly FastAction<Object> COLOR_GRADIENT_PROPERTY_EVENT = new FastAction<Object>();
 
         public static readonly FastAction TMP_SETTINGS_PROPERTY_EVENT = new FastAction();
 
         public static readonly FastAction RESOURCE_LOAD_EVENT = new FastAction();
 
-        public static readonly FastAction<bool, TextMeshProUGUI> TEXTMESHPRO_UGUI_PROPERTY_EVENT = new FastAction<bool, TextMeshProUGUI>();
+        public static readonly FastAction<bool, Object> TEXTMESHPRO_UGUI_PROPERTY_EVENT = new FastAction<bool, Object>();
 
         public static readonly FastAction OnPreRenderObject_Event = new FastAction();
 
@@ -57,9 +57,9 @@ namespace TMPro
             MATERIAL_PROPERTY_EVENT.Call(isChanged, mat);
         }
 
-        public static void ON_FONT_PROPERTY_CHANGED(bool isChanged, TMP_FontAsset font)
+        public static void ON_FONT_PROPERTY_CHANGED(bool isChanged, Object obj)
         {
-            FONT_PROPERTY_EVENT.Call(isChanged, font);
+            FONT_PROPERTY_EVENT.Call(isChanged, obj);
         }
 
         public static void ON_SPRITE_ASSET_PROPERTY_CHANGED(bool isChanged, Object obj)
@@ -67,7 +67,7 @@ namespace TMPro
             SPRITE_ASSET_PROPERTY_EVENT.Call(isChanged, obj);
         }
 
-        public static void ON_TEXTMESHPRO_PROPERTY_CHANGED(bool isChanged, TextMeshPro obj)
+        public static void ON_TEXTMESHPRO_PROPERTY_CHANGED(bool isChanged, Object obj)
         {
             TEXTMESHPRO_PROPERTY_EVENT.Call(isChanged, obj);
         }
@@ -82,9 +82,9 @@ namespace TMPro
             TEXT_STYLE_PROPERTY_EVENT.Call(isChanged);
         }
 
-        public static void ON_COLOR_GRADIENT_PROPERTY_CHANGED(TMP_ColorGradient gradient)
+        public static void ON_COLOR_GRADIENT_PROPERTY_CHANGED(Object obj)
         {
-            COLOR_GRADIENT_PROPERTY_EVENT.Call(gradient);
+            COLOR_GRADIENT_PROPERTY_EVENT.Call(obj);
         }
 
 
@@ -103,7 +103,7 @@ namespace TMPro
             RESOURCE_LOAD_EVENT.Call();
         }
 
-        public static void ON_TEXTMESHPRO_UGUI_PROPERTY_CHANGED(bool isChanged, TextMeshProUGUI obj)
+        public static void ON_TEXTMESHPRO_UGUI_PROPERTY_CHANGED(bool isChanged, Object obj)
         {
             TEXTMESHPRO_UGUI_PROPERTY_EVENT.Call(isChanged, obj);
         }

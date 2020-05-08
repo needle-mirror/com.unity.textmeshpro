@@ -369,9 +369,15 @@ namespace TMPro
         public override void Cull(Rect clipRect, bool validRect)
         {
             //Debug.Log("***** Cull (" + clipRect + ", " + validRect + ")   Cull: " + m_canvasRenderer.cull + " *****");
+            if (m_canvas == null)
+                return;
 
             // Get compound rect for the text object and sub text objects in local canvas space.
             Rect rect = GetCanvasSpaceClippingRect();
+
+            // No point culling if geometry bounds have no width or height.
+            if (rect.width == 0 || rect.height == 0)
+                return;
 
             var cull = !validRect || !clipRect.Overlaps(rect, true);
             if (m_canvasRenderer.cull != cull)

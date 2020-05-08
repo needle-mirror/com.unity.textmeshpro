@@ -6,6 +6,7 @@ using UnityEngine.TextCore;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Object = UnityEngine.Object;
 
 #if TMP_PROFILE_ON
 using UnityEngine.Profiling;
@@ -333,12 +334,12 @@ namespace TMPro
                     Debug.LogWarning("No Font Asset assigned to " + name + ". Please assign a Font Asset.", this);
             }
 
-            if (m_fontAsset.atlasTexture != null && m_fontAsset.atlasTexture.GetInstanceID() != m_renderer.sharedMaterial.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID())
-            {
-                m_renderer.sharedMaterial = m_sharedMaterial;
-                //m_renderer.sharedMaterial = m_fontAsset.material;
-                Debug.LogWarning("Font Asset Atlas doesn't match the Atlas in the newly assigned material. Select a matching material or a different font asset.", this);
-            }
+            // if (m_fontAsset.atlasTexture != null && m_fontAsset.atlasTexture.GetInstanceID() != m_renderer.sharedMaterial.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID())
+            // {
+            //     m_renderer.sharedMaterial = m_sharedMaterial;
+            //     //m_renderer.sharedMaterial = m_fontAsset.material;
+            //     Debug.LogWarning("Font Asset Atlas doesn't match the Atlas in the newly assigned material. Select a matching material or a different font asset.", this);
+            // }
 
             if (m_renderer.sharedMaterial != m_sharedMaterial) //    || m_renderer.sharedMaterials.Contains(mat))
             {
@@ -358,11 +359,11 @@ namespace TMPro
 
 
         // Event received when font asset properties are changed in Font Inspector
-        void ON_FONT_PROPERTY_CHANGED(bool isChanged, TMP_FontAsset font)
+        void ON_FONT_PROPERTY_CHANGED(bool isChanged, Object fontAsset)
         {
             //Debug.Log("ON_FONT_PROPERTY_CHANGED event received. Target is [" + font.name + "]");
 
-            if (MaterialReference.Contains(m_materialReferences, font))
+            if (MaterialReference.Contains(m_materialReferences, (TMP_FontAsset)fontAsset))
             {
                 //Debug.Log("ON_FONT_PROPERTY_CHANGED event received.");
                 m_isInputParsingRequired = true;
@@ -377,9 +378,9 @@ namespace TMPro
 
 
         // Event received when UNDO / REDO Event alters the properties of the object.
-        void ON_TEXTMESHPRO_PROPERTY_CHANGED(bool isChanged, TextMeshPro obj)
+        void ON_TEXTMESHPRO_PROPERTY_CHANGED(bool isChanged, Object textComponent)
         {
-            if (obj == this)
+            if (textComponent == this)
             {
                 //Debug.Log("Undo / Redo Event Received by Object ID:" + GetInstanceID());
                 m_havePropertiesChanged = true;
@@ -433,7 +434,7 @@ namespace TMPro
         /// Event received when a Color Gradient Preset is modified.
         /// </summary>
         /// <param name="textObject"></param>
-        void ON_COLOR_GRADIENT_CHANGED(TMP_ColorGradient gradient)
+        void ON_COLOR_GRADIENT_CHANGED(Object gradient)
         {
             m_havePropertiesChanged = true;
 
@@ -2015,6 +2016,7 @@ namespace TMPro
                 #region Handle Kerning
                 TMP_GlyphValueRecord glyphAdjustments = new TMP_GlyphValueRecord();
                 float characterSpacingAdjustment = m_characterSpacing;
+                m_GlyphHorizontalAdvanceAdjustment = 0;
                 if (m_enableKerning)
                 {
                     #if TMP_PROFILE_ON
@@ -2048,6 +2050,8 @@ namespace TMPro
                         }
                     }
 
+                    m_GlyphHorizontalAdvanceAdjustment = glyphAdjustments.m_XAdvance;
+
                     #if TMP_PROFILE_ON
                     Profiler.EndSample();
                     #endif
@@ -2059,7 +2063,7 @@ namespace TMPro
                 #region Handle Right-to-Left
                 if (m_isRightToLeft)
                 {
-                    m_xAdvance -= ((currentGlyphMetrics.horizontalAdvance * currentElementScale) + (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment + m_wordSpacing + boldSpacingAdjustment) * currentEmScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
+                    m_xAdvance -= currentGlyphMetrics.horizontalAdvance * (1 - m_charWidthAdjDelta) * currentElementScale;
 
                     if (isWhiteSpace || charCode == 0x200B)
                         m_xAdvance -= m_wordSpacing * currentEmScale;
@@ -2665,7 +2669,7 @@ namespace TMPro
                                             Profiler.BeginSample("TMP - InsertNewLine()");
                                         #endif
 
-                                        InsertNewLine(i, baseScale, currentEmScale, characterSpacingAdjustment, widthOfTextArea, lineGap, ref isMaxVisibleDescenderSet, ref maxVisibleDescender);
+                                        InsertNewLine(i, baseScale, currentElementScale, currentEmScale, m_GlyphHorizontalAdvanceAdjustment, boldSpacingAdjustment, characterSpacingAdjustment, widthOfTextArea, lineGap, ref isMaxVisibleDescenderSet, ref maxVisibleDescender);
                                         isStartOfNewLine = true;
                                         isFirstWordOfLine = true;
 
@@ -2730,7 +2734,7 @@ namespace TMPro
                                         // Add new page
                                         m_isNewPage = true;
 
-                                        InsertNewLine(i, baseScale, currentEmScale, characterSpacingAdjustment, widthOfTextArea, lineGap, ref isMaxVisibleDescenderSet, ref maxVisibleDescender);
+                                        InsertNewLine(i, baseScale, currentElementScale,  currentEmScale, m_GlyphHorizontalAdvanceAdjustment, boldSpacingAdjustment, characterSpacingAdjustment, widthOfTextArea, lineGap, ref isMaxVisibleDescenderSet, ref maxVisibleDescender);
 
                                         m_startOfLineAscender = 0;
                                         m_lineOffset = 0;
@@ -2774,7 +2778,7 @@ namespace TMPro
                                     Profiler.BeginSample("TMP - InsertNewLine()");
                                 #endif
                                 // New line of text does not exceed vertical bounds of text container
-                                InsertNewLine(i, baseScale, currentEmScale, characterSpacingAdjustment, widthOfTextArea, lineGap, ref isMaxVisibleDescenderSet, ref maxVisibleDescender);
+                                InsertNewLine(i, baseScale, currentElementScale, currentEmScale, m_GlyphHorizontalAdvanceAdjustment, boldSpacingAdjustment, characterSpacingAdjustment, widthOfTextArea, lineGap, ref isMaxVisibleDescenderSet, ref maxVisibleDescender);
                                 isStartOfNewLine = true;
                                 isFirstWordOfLine = true;
 
@@ -3037,19 +3041,22 @@ namespace TMPro
                     if (isWhiteSpace || charCode == 0x200B)
                         m_xAdvance += m_wordSpacing * currentEmScale;
                 }
-                else if (!m_isRightToLeft)
+                else if (m_isRightToLeft)
+                {
+                    m_xAdvance -= (((glyphAdjustments.m_XAdvance + boldSpacingAdjustment) * currentElementScale + (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment) * currentEmScale + m_cSpacing) * (1 - m_charWidthAdjDelta));
+
+                    if (isWhiteSpace || charCode == 0x200B)
+                        m_xAdvance -= m_wordSpacing * currentEmScale;
+                }
+                else
                 {
                     float scaleFXMultiplier = 1;
                     if (m_isFXMatrixSet) scaleFXMultiplier = m_FXMatrix.lossyScale.x;
 
-                    m_xAdvance += ((currentGlyphMetrics.horizontalAdvance * scaleFXMultiplier + glyphAdjustments.m_XAdvance) * currentElementScale + (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment + boldSpacingAdjustment) * currentEmScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
+                    m_xAdvance += ((currentGlyphMetrics.horizontalAdvance * scaleFXMultiplier + glyphAdjustments.m_XAdvance + boldSpacingAdjustment) * currentElementScale + (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment) * currentEmScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
 
                     if (isWhiteSpace || charCode == 0x200B)
                         m_xAdvance += m_wordSpacing * currentEmScale;
-                }
-                else
-                {
-                    m_xAdvance -= glyphAdjustments.m_XAdvance * currentElementScale;
                 }
 
                 // Store xAdvance information
@@ -3133,10 +3140,11 @@ namespace TMPro
                     if (m_textInfo.lineInfo[m_lineNumber].characterCount == 1)
                         m_textInfo.lineInfo[m_lineNumber].alignment = m_lineJustification;
 
+                    float maxAdvanceOffset = (boldSpacingAdjustment * currentElementScale + (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment) * currentEmScale - m_cSpacing) * (1 - m_charWidthAdjDelta);
                     if (m_textInfo.characterInfo[m_lastVisibleCharacterOfLine].isVisible)
-                        m_textInfo.lineInfo[m_lineNumber].maxAdvance = m_textInfo.characterInfo[m_lastVisibleCharacterOfLine].xAdvance - (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment) * currentEmScale - m_cSpacing;
+                        m_textInfo.lineInfo[m_lineNumber].maxAdvance = m_textInfo.characterInfo[m_lastVisibleCharacterOfLine].xAdvance + (m_isRightToLeft ? maxAdvanceOffset : - maxAdvanceOffset);
                     else
-                        m_textInfo.lineInfo[m_lineNumber].maxAdvance = m_textInfo.characterInfo[m_lastCharacterOfLine].xAdvance - (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment) * currentEmScale - m_cSpacing;
+                        m_textInfo.lineInfo[m_lineNumber].maxAdvance = m_textInfo.characterInfo[m_lastCharacterOfLine].xAdvance + (m_isRightToLeft ? maxAdvanceOffset : - maxAdvanceOffset);
 
                     m_textInfo.lineInfo[m_lineNumber].baseline = 0 - m_lineOffset;
                     m_textInfo.lineInfo[m_lineNumber].ascender = lineAscender;
