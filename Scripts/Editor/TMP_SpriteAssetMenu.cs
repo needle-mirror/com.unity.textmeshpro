@@ -10,7 +10,6 @@ using System.Collections.Generic;
 
 namespace TMPro.EditorUtilities
 {
-
     public static class TMP_SpriteAssetMenu
     {
         // Add a Context Menu to the Sprite Asset Editor Panel to Create and Add a Default Material.
@@ -48,39 +47,70 @@ namespace TMPro.EditorUtilities
             if (string.IsNullOrEmpty(filePath))
                 return;
 
-            // Get all the Sprites sorted Left to Right / Top to Bottom
-            Sprite[] sprites = AssetDatabase.LoadAllAssetsAtPath(filePath).Select(x => x as Sprite).Where(x => x != null).OrderByDescending(x => x.rect.y).ThenBy(x => x.rect.x).ToArray();
+            // Get all the sprites defined in the sprite sheet texture referenced by this sprite asset.
+            Sprite[] sprites = AssetDatabase.LoadAllAssetsAtPath(filePath).Select(x => x as Sprite).Where(x => x != null).ToArray();
+
+            // Return if sprite sheet texture does not have any sprites defined in it.
+            if (sprites.Length == 0)
+            {
+                Debug.Log("Sprite Asset <color=#FFFF80>[" + spriteAsset.name + "]</color>'s atlas texture does not appear to have any sprites defined in it. Use the Unity Sprite Editor to define sprites for this texture.", spriteAsset.spriteSheet);
+                return;
+            }
 
             List<TMP_SpriteGlyph> spriteGlyphTable = spriteAsset.spriteGlyphTable;
 
-            // Finding available glyph indexes to insert new glyphs into.
-            var tempGlyphTable = spriteGlyphTable.OrderBy(glyph => glyph.index).ToList();
+            // Find available glpyh indexes
+            uint[] existingGlyphIndexes = spriteGlyphTable.Select(x => x.index).ToArray();
             List<uint> availableGlyphIndexes = new List<uint>();
 
+            uint lastGlyphIndex = existingGlyphIndexes.Length > 0 ? existingGlyphIndexes.Last() : 0;
             int elementIndex = 0;
-            for (uint i = 0; i < tempGlyphTable[tempGlyphTable.Count - 1].index; i++)
+            for (uint i = 0; i < lastGlyphIndex; i++)
             {
-                uint currentElementIndex = tempGlyphTable[elementIndex].index;
+                uint existingGlyphIndex = existingGlyphIndexes[elementIndex];
 
-                if (i == currentElementIndex)
+                if (i == existingGlyphIndex)
                     elementIndex += 1;
                 else
                     availableGlyphIndexes.Add(i);
             }
 
-            // Iterate over each of the sprites in the texture to try to match them to existing sprites in the sprite asset.
+            // Iterate over sprites contained in the updated sprite sheet to identify new and / or modified sprites.
             for (int i = 0; i < sprites.Length; i++)
             {
-                int id = sprites[i].GetInstanceID();
+                Sprite sprite = sprites[i];
 
-                int glyphIndex = spriteGlyphTable.FindIndex(item => item.sprite.GetInstanceID() == id);
+                // Check if current sprites is already contained in the sprite glyph table of the sprite asset.
+                TMP_SpriteGlyph spriteGlyph = spriteGlyphTable.FirstOrDefault(x => x.sprite == sprite);
 
-                if (glyphIndex == -1)
+                if (spriteGlyph != null)
                 {
-                    // Add new Sprite Glyph to the table
-                    Sprite sprite = sprites[i];
+                    // update existing sprite glyph
+                    if (spriteGlyph.glyphRect.x != sprite.rect.x || spriteGlyph.glyphRect.y != sprite.rect.y || spriteGlyph.glyphRect.width != sprite.rect.width || spriteGlyph.glyphRect.height != sprite.rect.height)
+                        spriteGlyph.glyphRect = new GlyphRect(sprite.rect);
+                }
+                else
+                {
+                    TMP_SpriteCharacter spriteCharacter;
 
-                    TMP_SpriteGlyph spriteGlyph = new TMP_SpriteGlyph();
+                    // Check if this sprite potentially exists under the same name in the sprite character table.
+                    if (spriteAsset.spriteCharacterTable != null && spriteAsset.spriteCharacterTable.Count > 0)
+                    {
+                        spriteCharacter = spriteAsset.spriteCharacterTable.FirstOrDefault(x => x.name == sprite.name);
+                        spriteGlyph = spriteCharacter != null ? spriteGlyphTable[(int)spriteCharacter.glyphIndex] : null;
+
+                        if (spriteGlyph != null)
+                        {
+                            // Update sprite reference and data
+                            spriteGlyph.sprite = sprite;
+
+                            if (spriteGlyph.glyphRect.x != sprite.rect.x || spriteGlyph.glyphRect.y != sprite.rect.y || spriteGlyph.glyphRect.width != sprite.rect.width || spriteGlyph.glyphRect.height != sprite.rect.height)
+                                spriteGlyph.glyphRect = new GlyphRect(sprite.rect);
+                        }
+                    }
+
+                    // Add new Sprite Glyph to the table
+                    spriteGlyph = new TMP_SpriteGlyph();
 
                     // Get available glyph index
                     if (availableGlyphIndexes.Count > 0)
@@ -98,22 +128,11 @@ namespace TMPro.EditorUtilities
 
                     spriteGlyphTable.Add(spriteGlyph);
 
-                    TMP_SpriteCharacter spriteCharacter = new TMP_SpriteCharacter(0xFFFE, spriteGlyph);
+                    spriteCharacter = new TMP_SpriteCharacter(0xFFFE, spriteGlyph);
                     spriteCharacter.name = sprite.name;
                     spriteCharacter.scale = 1.0f;
 
                     spriteAsset.spriteCharacterTable.Add(spriteCharacter);
-                }
-                else
-                {
-                    // Look for changes in existing Sprite Glyph
-                    Sprite sprite = sprites[i];
-
-                    TMP_SpriteGlyph spriteGlyph = spriteGlyphTable[glyphIndex];
-
-                    // We only update changes to the sprite position / glyph rect.
-                    if (spriteGlyph.glyphRect.x != sprite.rect.x || spriteGlyph.glyphRect.y != sprite.rect.y || spriteGlyph.glyphRect.width != sprite.rect.width || spriteGlyph.glyphRect.height != sprite.rect.height)
-                        spriteGlyph.glyphRect = new GlyphRect(sprite.rect);
                 }
             }
 
@@ -129,6 +148,7 @@ namespace TMPro.EditorUtilities
             spriteAsset.SortGlyphTable();
             spriteAsset.UpdateLookupTables();
             TMPro_EventManager.ON_SPRITE_ASSET_PROPERTY_CHANGED(true, spriteAsset);
+
         }
 
 
@@ -365,7 +385,5 @@ namespace TMPro.EditorUtilities
 
             return spriteAsset.spriteInfoList;
         }
-
-
     }
 }

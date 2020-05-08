@@ -1,6 +1,21 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [1.5.0-preview.12] - 2020-05-09
+## [2.1.0-preview.12]
+## [3.0.0-preview.12]
+### Changes
+- Added synchronization of the RaycastTarget property of the parent &lt;TextMeshProUGUI&gt; with potential child sub text objects. Case #1240784
+- Fixed Font Asset Bold Spacing adjustment scaling based on the text object point size instead of current point size. Case #1241132
+- Improved text alignment when using RTL in conjunction with character, word and other spacing adjustments.
+- Fixed TMP Input Field caret potentially not being visible when reaching the right side of the viewport. See [forum post](https://forum.unity.com/threads/inputfield-bug-2.879244/) for more details.
+- Fixed TMP Input Field incorrect text RectTransform horizontal adjustment when using the Backspace key. See [forum post](https://forum.unity.com/threads/inputfield-bug4-delete-and-backspace-bug.879283/) for more details.
+- Fixed potential null reference in the TextMeshProUGUI.Cull function when using a workflow that involves enabling / disabling Canvases in the scene.
+- Fixed ArgumentOutOfRangeException when using the "Update Sprite Asset" inspector option on a sprite asset that does not contain any sprites. Case #1242936
+- Fixed incorrect culling of the text geometry by the RectMask2D component on newly created text objects. Case #1245445
+- It is now possible to use the Material Context Menu options to Copy / Paste Material Properties or Atlas Texture originally created for TMP with all other non TMP specific materials. Case #1242671
+- Fixed NullReferenceException when setting the Atlas Texture to None in the Debug Settings of the Material Inspector of a text object. Case #1245104 
+
 ## [1.5.0-preview.11] - 2020-04-22
 ## [2.1.0-preview.11]
 ## [3.0.0-preview.11]

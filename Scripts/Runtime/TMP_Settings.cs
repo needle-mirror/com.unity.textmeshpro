@@ -201,6 +201,18 @@ namespace TMPro
         private bool m_autoSizeTextContainer;
 
         /// <summary>
+        /// Disables InternalUpdate() calls when true. This can improve performance when the scale of the text object is static.
+        /// </summary>
+        public static bool isTextObjectScaleStatic
+        {
+            get { return instance.m_IsTextObjectScaleStatic; }
+            set { instance.m_IsTextObjectScaleStatic = value; }
+        }
+        [SerializeField]
+        private bool m_IsTextObjectScaleStatic;
+
+
+        /// <summary>
         /// Returns the list of Fallback Fonts defined in the TMP Settings file.
         /// </summary>
         public static List<TMP_FontAsset> fallbackFontAssets

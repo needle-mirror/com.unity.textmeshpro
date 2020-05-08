@@ -384,6 +384,7 @@ namespace TMPro
         public float baselineOffset;
         public float lineOffset;
         public bool isDrivenLineSpacing;
+        public float glyphHorizontalAdvanceAdjustment;
 
         public float cSpace;
         public float mSpace;

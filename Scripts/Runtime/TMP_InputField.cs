@@ -3717,18 +3717,16 @@ namespace TMPro
             if (m_TextViewport == null)
                 return;
 
-            Vector2 caretPosition = new Vector2(startPosition.x + m_TextComponent.rectTransform.localPosition.x + m_TextViewport.localPosition.x + transform.localPosition.x, startPosition.y + m_TextComponent.rectTransform.localPosition.y + m_TextViewport.localPosition.y + transform.localPosition.y);
+            Vector3 localPosition = transform.localPosition;
+            Vector3 textComponentLocalPosition = m_TextComponent.rectTransform.localPosition;
+            Vector3 textViewportLocalPosition = m_TextViewport.localPosition;
+            Rect textViewportRect = m_TextViewport.rect;
 
-            Rect viewportWSRect = new Rect(transform.localPosition.x + m_TextViewport.localPosition.x + m_TextViewport.rect.x, transform.localPosition.y + m_TextViewport.localPosition.y + m_TextViewport.rect.y, m_TextViewport.rect.width, m_TextViewport.rect.height);
-            //Rect textWSRect = new Rect(m_TextComponent.rectTransform.localPosition.x + m_TextComponent.rectTransform.rect.x, m_TextComponent.rectTransform.localPosition.y + m_TextComponent.rectTransform.rect.y, m_TextComponent.rectTransform.rect.width, m_TextComponent.rectTransform.rect.height);
-
-            //Debug.Log("Caret: " + caretPositionWS.ToString("f4") +
-            //    "\nViewport: " + m_TextViewport.position.ToString("f4") + "  Rect: " + viewportMinWS.ToString("f4") + "  Max: " + viewportMaxWS.ToString("f4") +
-            //    "\nText: " + m_TextComponent.rectTransform.position.ToString("f4") + textRectMinWS.ToString("f4") + "  Max: " + textRectMaxWS.ToString("f4"));
+            Vector2 caretPosition = new Vector2(startPosition.x + textComponentLocalPosition.x + textViewportLocalPosition.x + localPosition.x, startPosition.y + textComponentLocalPosition.y + textViewportLocalPosition.y + localPosition.y);
+            Rect viewportWSRect = new Rect(localPosition.x + textViewportLocalPosition.x + textViewportRect.x, localPosition.y + textViewportLocalPosition.y + textViewportRect.y, textViewportRect.width, textViewportRect.height);
 
             // Adjust the position of the RectTransform based on the caret position in the viewport.
-            float rightOffset = viewportWSRect.xMax - (caretPosition.x + m_TextComponent.margin.z);
-            //float rightOffset = viewportMaxWS.x - (caretPositionWS.x + m_TextComponent.margin.z);
+            float rightOffset = viewportWSRect.xMax - (caretPosition.x + m_TextComponent.margin.z + m_CaretWidth);
             if (rightOffset < 0f)
             {
                 if (!multiLine || (multiLine && isCharVisible))
@@ -3775,10 +3773,10 @@ namespace TMPro
             {
                 float anchoredPositionX = m_TextComponent.rectTransform.anchoredPosition.x;
 
-                float firstCharPosition = transform.localPosition.x + m_TextViewport.localPosition.x + m_TextComponent.rectTransform.localPosition.x + m_TextComponent.textInfo.characterInfo[0].origin - m_TextComponent.margin.x;
-                float lastCharPosition = transform.localPosition.x + m_TextViewport.localPosition.x + m_TextComponent.rectTransform.localPosition.x + m_TextComponent.textInfo.characterInfo[m_TextComponent.textInfo.characterCount - 1].origin + m_TextComponent.margin.z;
+                float firstCharPosition = localPosition.x + textViewportLocalPosition.x + textComponentLocalPosition.x + m_TextComponent.textInfo.characterInfo[0].origin - m_TextComponent.margin.x;
+                float lastCharPosition = localPosition.x + textViewportLocalPosition.x + textComponentLocalPosition.x + m_TextComponent.textInfo.characterInfo[m_TextComponent.textInfo.characterCount - 1].origin + m_TextComponent.margin.z + m_CaretWidth;
 
-                if (anchoredPositionX > 0.0001f)
+                if (anchoredPositionX > 0.0001f && firstCharPosition > viewportWSRect.xMin)
                 {
                     float offset = viewportWSRect.xMin - firstCharPosition;
 
@@ -3788,7 +3786,7 @@ namespace TMPro
                     m_TextComponent.rectTransform.anchoredPosition += new Vector2(offset, 0);
                     AssignPositioningIfNeeded();
                 }
-                else if (anchoredPositionX < -0.0001f)
+                else if (anchoredPositionX < -0.0001f && lastCharPosition < viewportWSRect.xMax)
                 {
                     float offset = viewportWSRect.xMax - lastCharPosition;
 
