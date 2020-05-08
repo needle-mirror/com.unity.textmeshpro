@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System;
 using System.Collections;
+using Object = UnityEngine.Object;
 
 #pragma warning disable 0109 // Disable warning due to conflict between Unity Editor DLL and Runtime DLL related to .renderer property being available in one but not the other.
 
@@ -391,9 +392,9 @@ namespace TMPro
         }
 
         // Event received when font asset properties are changed in Font Inspector
-        void ON_FONT_PROPERTY_CHANGED(bool isChanged, TMP_FontAsset font)
+        void ON_FONT_PROPERTY_CHANGED(bool isChanged, Object fontAsset)
         {
-            if (m_fontAsset != null && font.GetInstanceID() == m_fontAsset.GetInstanceID())
+            if (m_fontAsset != null && fontAsset.GetInstanceID() == m_fontAsset.GetInstanceID())
             {
                 // Copy Normal and Bold Weight
                 if (m_fallbackMaterial != null)

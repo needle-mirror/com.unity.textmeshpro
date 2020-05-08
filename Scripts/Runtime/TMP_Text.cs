@@ -841,7 +841,7 @@ namespace TMPro
         }
         [SerializeField]
         protected bool m_enableKerning;
-
+        protected float m_GlyphHorizontalAdvanceAdjustment;
 
         /// <summary>
         /// Adds extra padding around each character. This may be necessary when the displayed text is very small to prevent clipping.
@@ -5826,7 +5826,7 @@ namespace TMPro
                 }
                 else
                 {
-                    m_xAdvance += ((currentGlyphMetrics.horizontalAdvance + glyphAdjustments.xAdvance) * currentElementScale + (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment + boldSpacingAdjustment) * currentEmScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
+                    m_xAdvance += ((currentGlyphMetrics.horizontalAdvance + glyphAdjustments.xAdvance + boldSpacingAdjustment) * currentElementScale + (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment) * currentEmScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
 
                     if (isWhiteSpace || charCode == 0x200B)
                         m_xAdvance += m_wordSpacing * currentEmScale;
@@ -6238,7 +6238,7 @@ namespace TMPro
         //}
 
 
-        protected void InsertNewLine(int i, float baseScale, float currentEmScale, float characterSpacingAdjustment, float width, float lineGap, ref bool isMaxVisibleDescenderSet, ref float maxVisibleDescender)
+        protected void InsertNewLine(int i, float baseScale, float currentElementScale, float currentEmScale, float glyphAdjustment, float boldSpacingAdjustment, float characterSpacingAdjustment, float width, float lineGap, ref bool isMaxVisibleDescenderSet, ref float maxVisibleDescender)
         {
             // Adjust line spacing if necessary
             float baselineAdjustmentDelta = m_maxLineAscender - m_startOfLineAscender;
@@ -6264,7 +6264,7 @@ namespace TMPro
             // Track & Store lineInfo for the new line
             m_textInfo.lineInfo[m_lineNumber].firstCharacterIndex = m_firstCharacterOfLine;
             m_textInfo.lineInfo[m_lineNumber].firstVisibleCharacterIndex = m_firstVisibleCharacterOfLine = m_firstCharacterOfLine > m_firstVisibleCharacterOfLine ? m_firstCharacterOfLine : m_firstVisibleCharacterOfLine;
-            m_textInfo.lineInfo[m_lineNumber].lastCharacterIndex = m_lastCharacterOfLine = m_characterCount - 1 > 0 ? m_characterCount - 1 : 0;
+            int lastCharacterIndex = m_textInfo.lineInfo[m_lineNumber].lastCharacterIndex = m_lastCharacterOfLine = m_characterCount - 1 > 0 ? m_characterCount - 1 : 0;
             m_textInfo.lineInfo[m_lineNumber].lastVisibleCharacterIndex = m_lastVisibleCharacterOfLine = m_lastVisibleCharacterOfLine < m_firstVisibleCharacterOfLine ? m_firstVisibleCharacterOfLine : m_lastVisibleCharacterOfLine;
 
             m_textInfo.lineInfo[m_lineNumber].characterCount = m_textInfo.lineInfo[m_lineNumber].lastCharacterIndex - m_textInfo.lineInfo[m_lineNumber].firstCharacterIndex + 1;
@@ -6274,7 +6274,9 @@ namespace TMPro
             m_textInfo.lineInfo[m_lineNumber].length = m_textInfo.lineInfo[m_lineNumber].lineExtents.max.x;
             m_textInfo.lineInfo[m_lineNumber].width = width;
 
-            m_textInfo.lineInfo[m_lineNumber].maxAdvance = m_textInfo.characterInfo[m_lastVisibleCharacterOfLine].xAdvance - (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment) * currentEmScale - m_cSpacing;
+            float maxAdvanceOffset = ((glyphAdjustment + boldSpacingAdjustment) * currentElementScale + (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment) * currentEmScale - m_cSpacing) * (1 - m_charWidthAdjDelta);
+            float adjustedHorizontalAdvance = m_textInfo.lineInfo[m_lineNumber].maxAdvance = m_textInfo.characterInfo[m_lastVisibleCharacterOfLine].xAdvance + (m_isRightToLeft ? maxAdvanceOffset : - maxAdvanceOffset);
+            m_textInfo.characterInfo[lastCharacterIndex].xAdvance = adjustedHorizontalAdvance;
 
             m_textInfo.lineInfo[m_lineNumber].baseline = 0 - m_lineOffset;
             m_textInfo.lineInfo[m_lineNumber].ascender = lineAscender;
@@ -6363,6 +6365,7 @@ namespace TMPro
             state.lineOffset = m_lineOffset;
             state.baselineOffset = m_baselineOffset;
             state.isDrivenLineSpacing = m_IsDrivenLineSpacing;
+            state.glyphHorizontalAdvanceAdjustment = m_GlyphHorizontalAdvanceAdjustment;
 
             state.cSpace = m_cSpacing;
             state.mSpace = m_monoSpacing;
@@ -6370,7 +6373,6 @@ namespace TMPro
             state.horizontalAlignment = m_lineJustification;
             state.marginLeft = m_marginLeft;
             state.marginRight = m_marginRight;
-
 
             state.vertexColor = m_htmlColor;
             state.underlineColor = m_underlineColor;
@@ -6454,6 +6456,7 @@ namespace TMPro
             m_lineOffset = state.lineOffset;
             m_baselineOffset = state.baselineOffset;
             m_IsDrivenLineSpacing = state.isDrivenLineSpacing;
+            m_GlyphHorizontalAdvanceAdjustment = state.glyphHorizontalAdvanceAdjustment;
 
             m_cSpacing = state.cSpace;
             m_monoSpacing = state.mSpace;
@@ -7210,6 +7213,7 @@ namespace TMPro
                 m_fontSizeMax = m_fontSize * TMP_Settings.defaultTextAutoSizingMaxRatio;
                 m_isWaitingOnResourceLoad = false;
                 raycastTarget = TMP_Settings.enableRaycastTarget;
+                m_IsTextObjectScaleStatic = TMP_Settings.isTextObjectScaleStatic;
             }
             else if ((int)m_textAlignment < 0xFF)
             {

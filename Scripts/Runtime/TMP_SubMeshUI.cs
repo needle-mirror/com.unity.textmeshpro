@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using Object = UnityEngine.Object;
 
 #pragma warning disable 0414 // Disabled a few warnings related to serialized variables not used in this script but used in the editor.
 
@@ -453,9 +454,9 @@ namespace TMPro
         }
 
         // Event received when font asset properties are changed in Font Inspector
-        void ON_FONT_PROPERTY_CHANGED(bool isChanged, TMP_FontAsset font)
+        void ON_FONT_PROPERTY_CHANGED(bool isChanged, Object fontAsset)
         {
-            if (m_fontAsset != null && font.GetInstanceID() == m_fontAsset.GetInstanceID())
+            if (m_fontAsset != null && fontAsset.GetInstanceID() == m_fontAsset.GetInstanceID())
             {
                 // Copy Normal and Bold Weight
                 if (m_fallbackMaterial != null)

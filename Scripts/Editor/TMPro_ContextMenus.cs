@@ -50,14 +50,14 @@ namespace TMPro.EditorUtilities
                 return;
             }
 
-            string assetPath = AssetDatabase.GetAssetPath(source_Mat).Split('.')[0];         
+            string assetPath = AssetDatabase.GetAssetPath(source_Mat).Split('.')[0];
 
             if (assetPath.IndexOf("Assets/", System.StringComparison.InvariantCultureIgnoreCase) == -1)
             {
                 Debug.LogWarning("Material Preset cannot be created from a material that is located outside the project.");
                 return;
             }
-            
+
             Material duplicate = new Material(source_Mat);
 
             // Need to manually copy the shader keywords
@@ -264,15 +264,24 @@ namespace TMPro.EditorUtilities
         {
             Material mat = command.context as Material;
 
+            if (mat == null)
+                return;
+
             if (m_copiedAtlasProperties != null)
             {
                 Undo.RecordObject(mat, "Paste Texture");
 
                 ShaderUtilities.GetShaderPropertyIDs(); // Make sure we have valid Property IDs
-                mat.SetTexture(ShaderUtilities.ID_MainTex, m_copiedAtlasProperties.GetTexture(ShaderUtilities.ID_MainTex));
-                mat.SetFloat(ShaderUtilities.ID_GradientScale, m_copiedAtlasProperties.GetFloat(ShaderUtilities.ID_GradientScale));
-                mat.SetFloat(ShaderUtilities.ID_TextureWidth, m_copiedAtlasProperties.GetFloat(ShaderUtilities.ID_TextureWidth));
-                mat.SetFloat(ShaderUtilities.ID_TextureHeight, m_copiedAtlasProperties.GetFloat(ShaderUtilities.ID_TextureHeight));
+
+                if (m_copiedAtlasProperties.HasProperty(ShaderUtilities.ID_MainTex))
+                    mat.SetTexture(ShaderUtilities.ID_MainTex, m_copiedAtlasProperties.GetTexture(ShaderUtilities.ID_MainTex));
+
+                if (m_copiedAtlasProperties.HasProperty(ShaderUtilities.ID_GradientScale))
+                {
+                    mat.SetFloat(ShaderUtilities.ID_GradientScale, m_copiedAtlasProperties.GetFloat(ShaderUtilities.ID_GradientScale));
+                    mat.SetFloat(ShaderUtilities.ID_TextureWidth, m_copiedAtlasProperties.GetFloat(ShaderUtilities.ID_TextureWidth));
+                    mat.SetFloat(ShaderUtilities.ID_TextureHeight, m_copiedAtlasProperties.GetFloat(ShaderUtilities.ID_TextureHeight));
+                }
             }
             else if (m_copiedTexture != null)
             {
@@ -317,7 +326,7 @@ namespace TMPro.EditorUtilities
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="command"></param>
         [MenuItem("CONTEXT/TMP_FontAsset/Update Atlas Texture...", false, 2000)]
