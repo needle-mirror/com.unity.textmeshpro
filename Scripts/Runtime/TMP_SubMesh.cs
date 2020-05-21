@@ -232,6 +232,32 @@ namespace TMPro
         private bool m_isRegisteredForEvents;
 
 
+        public static TMP_SubMesh AddSubTextObject(TextMeshPro textComponent, MaterialReference materialReference)
+        {
+            GameObject go = new GameObject("TMP SubMesh [" + materialReference.material.name + "]", typeof(TMP_SubMesh));
+            go.hideFlags = HideFlags.DontSave;
+
+            TMP_SubMesh subMesh = go.GetComponent<TMP_SubMesh>();
+
+            go.transform.SetParent(textComponent.transform, false);
+            go.transform.localPosition = Vector3.zero;
+            go.transform.localRotation = Quaternion.identity;
+            go.transform.localScale = Vector3.one;
+            go.layer = textComponent.gameObject.layer;
+
+            subMesh.m_TextComponent = textComponent;
+            subMesh.m_fontAsset = materialReference.fontAsset;
+            subMesh.m_spriteAsset = materialReference.spriteAsset;
+            subMesh.m_isDefaultMaterial = materialReference.isDefaultMaterial;
+            subMesh.SetSharedMaterial(materialReference.material);
+
+            subMesh.renderer.sortingLayerID = textComponent.renderer.sortingLayerID;
+            subMesh.renderer.sortingOrder = textComponent.renderer.sortingOrder;
+
+            return subMesh;
+        }
+
+
         void OnEnable()
         {
             //Debug.Log("***** OnEnable() called on object ID " + GetInstanceID() + "]. Parent Text Object ID [" + (textComponent == null ? "" : textComponent.GetInstanceID().ToString()) + "] *****");
@@ -251,6 +277,10 @@ namespace TMPro
 
                 m_isRegisteredForEvents = true;
             }
+
+            // Update HideFlags on previously created sub text objects.
+            if (hideFlags != HideFlags.DontSave)
+                hideFlags = HideFlags.DontSave;
 
             // Make the geometry visible when the object is enabled.
             meshFilter.sharedMesh = mesh;
@@ -418,33 +448,6 @@ namespace TMPro
         //    SetMaterialDirty();
         }
         #endif
-
-
-
-        public static TMP_SubMesh AddSubTextObject(TextMeshPro textComponent, MaterialReference materialReference)
-        {
-            GameObject go = new GameObject("TMP SubMesh [" + materialReference.material.name + "]", typeof(TMP_SubMesh));
-            go.hideFlags = HideFlags.DontSave;
-
-            TMP_SubMesh subMesh = go.GetComponent<TMP_SubMesh>();
-
-            go.transform.SetParent(textComponent.transform, false);
-            go.transform.localPosition = Vector3.zero;
-            go.transform.localRotation = Quaternion.identity;
-            go.transform.localScale = Vector3.one;
-            go.layer = textComponent.gameObject.layer;
-
-            subMesh.m_TextComponent = textComponent;
-            subMesh.m_fontAsset = materialReference.fontAsset;
-            subMesh.m_spriteAsset = materialReference.spriteAsset;
-            subMesh.m_isDefaultMaterial = materialReference.isDefaultMaterial;
-            subMesh.SetSharedMaterial(materialReference.material);
-
-            subMesh.renderer.sortingLayerID = textComponent.renderer.sortingLayerID;
-            subMesh.renderer.sortingOrder = textComponent.renderer.sortingOrder;
-
-            return subMesh;
-        }
 
 
         public void DestroySelf()

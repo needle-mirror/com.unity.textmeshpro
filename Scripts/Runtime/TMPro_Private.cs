@@ -1389,9 +1389,14 @@ namespace TMPro
             if (this.rectTransform != null)
             {
                 //Debug.Log("*** ComputeMarginSize() *** Current RectTransform's Width is " + m_rectTransform.rect.width + " and Height is " + m_rectTransform.rect.height); // + " and size delta is "  + m_rectTransform.sizeDelta);
+                Rect rect = m_rectTransform.rect;
 
-                m_marginWidth = m_rectTransform.rect.width - m_margin.x - m_margin.z;
-                m_marginHeight = m_rectTransform.rect.height - m_margin.y - m_margin.w;
+                m_marginWidth = rect.width - m_margin.x - m_margin.z;
+                m_marginHeight = rect.height - m_margin.y - m_margin.w;
+
+                // Cache current RectTransform width and pivot referenced in OnRectTransformDimensionsChange() to get around potential rounding error in the reported width of the RectTransform.
+                m_PreviousRectTransformSize = rect.size;
+                m_PreviousPivotPosition = m_rectTransform.pivot;
 
                 // Update the corners of the RectTransform
                 m_RectTransformCorners = GetTextContainerLocalCorners();
@@ -1430,9 +1435,6 @@ namespace TMPro
             {
                 return;
             }
-
-            m_PreviousRectTransformSize = m_rectTransform.rect.size;
-            m_PreviousPivotPosition = m_rectTransform.pivot;
 
             ComputeMarginSize();
 

@@ -266,6 +266,10 @@ namespace TMPro
                 m_isRegisteredForEvents = true;
             }
 
+            // Update HideFlags on previously created sub text objects.
+            if (hideFlags != HideFlags.DontSave)
+                hideFlags = HideFlags.DontSave;
+
             m_ShouldRecalculateStencil = true;
             RecalculateClipping();
             RecalculateMasking();

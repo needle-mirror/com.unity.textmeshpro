@@ -369,7 +369,7 @@ namespace TMPro
         public override void Cull(Rect clipRect, bool validRect)
         {
             //Debug.Log("***** Cull (" + clipRect + ", " + validRect + ")   Cull: " + m_canvasRenderer.cull + " *****");
-            if (m_canvas == null)
+            if (m_canvas == null || m_canvas.rootCanvas == null)
                 return;
 
             // Get compound rect for the text object and sub text objects in local canvas space.

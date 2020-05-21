@@ -126,6 +126,8 @@ namespace TMPro.EditorUtilities
         float m_AtlasGenerationProgress;
         string m_AtlasGenerationProgressLabel = string.Empty;
         float m_RenderingProgress;
+        bool m_IsGlyphPackingDone;
+        bool m_IsGlyphRenderingDone;
         bool m_IsRenderingDone;
         bool m_IsProcessing;
         bool m_IsGenerationDisabled;
@@ -279,6 +281,18 @@ namespace TMPro.EditorUtilities
                 m_AtlasGenerationProgress = FontEngine.generationProgress;
 
                 m_IsRepaintNeeded = true;
+            }
+
+            if (m_IsGlyphPackingDone)
+            {
+                Debug.Log("Glyph packing completed in: " + m_GlyphPackingGenerationTime.ToString("0.000 ms."));
+                m_IsGlyphPackingDone = false;
+            }
+
+            if (m_IsGlyphRenderingDone)
+            {
+                Debug.Log("Font Atlas generation completed in: " + m_GlyphRenderingGenerationTime.ToString("0.000 ms."));
+                m_IsGlyphRenderingDone = false;
             }
 
             // Update Feedback Window & Create Font Texture once Rendering is done.
@@ -921,7 +935,7 @@ namespace TMPro.EditorUtilities
                             //Stop StopWatch
                             m_StopWatch.Stop();
                             m_GlyphPackingGenerationTime = m_StopWatch.Elapsed.TotalMilliseconds;
-                            Debug.Log("Glyph packing completed in: " + m_GlyphPackingGenerationTime.ToString("0.000 ms."));
+                            m_IsGlyphPackingDone = true;
                             m_StopWatch.Reset();
 
                             m_FontCharacterTable.Clear();
@@ -987,7 +1001,7 @@ namespace TMPro.EditorUtilities
                             // Stop StopWatch
                             m_StopWatch.Stop();
                             m_GlyphRenderingGenerationTime = m_StopWatch.Elapsed.TotalMilliseconds;
-                            Debug.Log("Font Atlas generation completed in: " + m_GlyphRenderingGenerationTime.ToString("0.000 ms."));
+                            m_IsGlyphRenderingDone = true;
                             m_StopWatch.Reset();
                         });
                     }
