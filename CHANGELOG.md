@@ -1,6 +1,15 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [2.1.0-preview.13] - 2020-05-22
+## [1.5.0-preview.13]
+## [3.0.0-preview.13]
+### Changes
+- Fixed potential issue where the Font Asset Creator could get stuck in the packing phase of the atlas generation process. See [forum post](https://forum.unity.com/threads/font-asset-creator-stuck-at-packing-glyphs-pass-8.811863/) for details.
+- Fixed issue potentially affecting text layout as a result of the width of the RectTransform being incorrectly reported. See [forum post](https://forum.unity.com/threads/textmesh-pro-forcemeshupdate-true-not-working-when-object-inactive.524507/#post-5798515) for details.
+- Previously created prefabs containing sub text objects will now have their HideFlags updated to HideFlags.DontSave to be consistent with newly created prefabs whose sub text objects are no longer serialized. Case #1247184 
+- Fixed culling issue where lossy scale was not considered in the determination of the bounds of the text geometry.
+
 ## [2.1.0-preview.12] - 2020-05-09
 ## [1.5.0-preview.12]
 ## [3.0.0-preview.12]
