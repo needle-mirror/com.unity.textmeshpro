@@ -23,7 +23,7 @@ namespace TMPro
     }
 
 
-    [Serializable]
+    [Serializable][ExcludeFromPresetAttribute]
     public class TMP_FontAsset : TMP_Asset
     {
         /// <summary>
@@ -524,6 +524,115 @@ namespace TMPro
         }
 
 
+        /*
+        /// <summary>
+        /// Create new font asset using default settings from path to source font file.
+        /// </summary>
+        /// <param name="fontFilePath">Path to source font file.</param>
+        /// <returns></returns>
+        public static TMP_FontAsset CreateFontAsset(string fontFilePath)
+        {
+            return CreateFontAsset(fontFilePath, 90, 9, GlyphRenderMode.SDFAA, 1024, 1024, AtlasPopulationMode.Dynamic);
+        }
+
+        public static TMP_FontAsset CreateFontAsset(string fontFilePath, int samplingPointSize, int atlasPadding, GlyphRenderMode renderMode, int atlasWidth, int atlasHeight, AtlasPopulationMode atlasPopulationMode = AtlasPopulationMode.Dynamic, bool enableMultiAtlasSupport = true)
+        {
+            // Initialize FontEngine
+            FontEngine.InitializeFontEngine();
+
+            // Load Font Face
+            if (FontEngine.LoadFontFace(fontFilePath, samplingPointSize) != FontEngineError.Success)
+            {
+                //Debug.LogWarning("Unable to load font face for [" + font.name + "]. Make sure \"Include Font Data\" is enabled in the Font Import Settings.", font);
+                return null;
+            }
+
+            // Create new font asset
+            TMP_FontAsset fontAsset = ScriptableObject.CreateInstance<TMP_FontAsset>();
+
+            fontAsset.m_Version = "1.1.0";
+            fontAsset.faceInfo = FontEngine.GetFaceInfo();
+
+            // Set font reference and GUID
+            if (atlasPopulationMode == AtlasPopulationMode.Dynamic)
+                fontAsset.sourceFontFile = font;
+
+            // Set persistent reference to source font file in the Editor only.
+            #if UNITY_EDITOR
+            string guid;
+            long localID;
+
+            UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier(font, out guid, out localID);
+            fontAsset.m_SourceFontFileGUID = guid;
+            fontAsset.m_SourceFontFile_EditorRef = font;
+            #endif
+
+            fontAsset.atlasPopulationMode = atlasPopulationMode;
+
+            fontAsset.atlasWidth = atlasWidth;
+            fontAsset.atlasHeight = atlasHeight;
+            fontAsset.atlasPadding = atlasPadding;
+            fontAsset.atlasRenderMode = renderMode;
+
+            // Initialize array for the font atlas textures.
+            fontAsset.atlasTextures = new Texture2D[1];
+
+            // Create and add font atlas texture.
+            Texture2D texture = new Texture2D(0, 0, TextureFormat.Alpha8, false);
+
+            //texture.name = assetName + " Atlas";
+            fontAsset.atlasTextures[0] = texture;
+
+            fontAsset.isMultiAtlasTexturesEnabled = enableMultiAtlasSupport;
+
+            // Add free rectangle of the size of the texture.
+            int packingModifier;
+            if (((GlyphRasterModes)renderMode & GlyphRasterModes.RASTER_MODE_BITMAP) == GlyphRasterModes.RASTER_MODE_BITMAP)
+            {
+                packingModifier = 0;
+
+                // Optimize by adding static ref to shader.
+                Material tmp_material = new Material(ShaderUtilities.ShaderRef_MobileBitmap);
+
+                //tmp_material.name = texture.name + " Material";
+                tmp_material.SetTexture(ShaderUtilities.ID_MainTex, texture);
+                tmp_material.SetFloat(ShaderUtilities.ID_TextureWidth, atlasWidth);
+                tmp_material.SetFloat(ShaderUtilities.ID_TextureHeight, atlasHeight);
+
+                fontAsset.material = tmp_material;
+            }
+            else
+            {
+                packingModifier = 1;
+
+                // Optimize by adding static ref to shader.
+                Material tmp_material = new Material(ShaderUtilities.ShaderRef_MobileSDF);
+
+                //tmp_material.name = texture.name + " Material";
+                tmp_material.SetTexture(ShaderUtilities.ID_MainTex, texture);
+                tmp_material.SetFloat(ShaderUtilities.ID_TextureWidth, atlasWidth);
+                tmp_material.SetFloat(ShaderUtilities.ID_TextureHeight, atlasHeight);
+
+                tmp_material.SetFloat(ShaderUtilities.ID_GradientScale, atlasPadding + packingModifier);
+
+                tmp_material.SetFloat(ShaderUtilities.ID_WeightNormal, fontAsset.normalStyle);
+                tmp_material.SetFloat(ShaderUtilities.ID_WeightBold, fontAsset.boldStyle);
+
+                fontAsset.material = tmp_material;
+            }
+
+            fontAsset.freeGlyphRects = new List<GlyphRect>(8) { new GlyphRect(0, 0, atlasWidth - packingModifier, atlasHeight - packingModifier) };
+            fontAsset.usedGlyphRects = new List<GlyphRect>(8);
+
+            // TODO: Consider adding support for extracting glyph positioning data
+
+            fontAsset.ReadFontAssetDefinition();
+
+            return fontAsset;
+        }
+        */
+
+
         void Awake()
         {
             //Debug.Log("TMP Font Asset [" + this.name + "] with Version #" + m_Version + " has been enabled!");
@@ -533,6 +642,13 @@ namespace TMPro
                 UpgradeFontAsset();
         }
 
+        #if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (m_CharacterLookupDictionary == null || m_GlyphLookupDictionary == null)
+                ReadFontAssetDefinition();
+        }
+        #endif
 
         public void ReadFontAssetDefinition()
         {
@@ -2722,8 +2838,9 @@ namespace TMPro
 
             //TMP_ResourceManager.RebuildFontAssetCache(instanceID);
 
-            // Add glyphs
-            TryAddCharacters(unicodeCharacters, true);
+            // Add existing glyphs and characters back in the font asset (if any)
+            if (unicodeCharacters.Length > 0)
+                TryAddCharacters(unicodeCharacters, true);
 
             Profiler.EndSample();
         }

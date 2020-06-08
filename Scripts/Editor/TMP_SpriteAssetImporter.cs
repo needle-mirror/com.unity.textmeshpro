@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.TextCore;
 using UnityEditor;
 using System.IO;
@@ -28,19 +29,36 @@ namespace TMPro
         TMP_SpriteAsset m_SpriteAsset;
         List<TMP_Sprite> m_SpriteInfoList = new List<TMP_Sprite>();
 
-
+        /// <summary>
+        ///
+        /// </summary>
         void OnEnable()
         {
             // Set Editor Window Size
             SetEditorWindowSize();
         }
 
+        /// <summary>
+        ///
+        /// </summary>
         public void OnGUI()
         {
             DrawEditorPanel();
         }
 
+        /// <summary>
+        ///
+        /// </summary>
+        private void OnDisable()
+        {
+            // Clean up sprite asset object that may have been created and not saved.
+            if (m_SpriteAsset != null && !EditorUtility.IsPersistent(m_SpriteAsset))
+                DestroyImmediate(m_SpriteAsset);
+        }
 
+        /// <summary>
+        ///
+        /// </summary>
         void DrawEditorPanel()
         {
             // label
@@ -70,6 +88,10 @@ namespace TMPro
             {
                 m_CreationFeedback = string.Empty;
 
+                // Clean up sprite asset object that may have been previously created.
+                if (m_SpriteAsset != null && !EditorUtility.IsPersistent(m_SpriteAsset))
+                    DestroyImmediate(m_SpriteAsset);
+
                 // Read json data file
                 if (m_JsonFile != null)
                 {
@@ -93,9 +115,6 @@ namespace TMPro
                                 // Update import results
                                 m_CreationFeedback = "<b>Import Results</b>\n--------------------\n";
                                 m_CreationFeedback += "<color=#C0ffff><b>" + spriteCount + "</b></color> Sprites were imported from file.";
-
-                                if (m_SpriteAsset != null)
-                                    DestroyImmediate(m_SpriteAsset);
 
                                 // Create new Sprite Asset
                                 m_SpriteAsset = CreateInstance<TMP_SpriteAsset>();
@@ -122,7 +141,7 @@ namespace TMPro
             GUILayout.Space(5);
             GUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.Height(60));
             {
-                EditorGUILayout.LabelField(m_CreationFeedback, TMP_UIStyleManager.label);
+                EditorGUILayout.TextArea(m_CreationFeedback, TMP_UIStyleManager.label);
             }
             GUILayout.EndVertical();
 
@@ -139,7 +158,6 @@ namespace TMPro
             }
             GUI.enabled = true;
         }
-
 
         /// <summary>
         ///
@@ -175,7 +193,6 @@ namespace TMPro
             }
         }
 
-
         /// <summary>
         ///
         /// </summary>
@@ -210,7 +227,6 @@ namespace TMPro
             AddDefaultMaterial(m_SpriteAsset);
         }
 
-
         /// <summary>
         /// Create and add new default material to sprite asset.
         /// </summary>
@@ -226,7 +242,6 @@ namespace TMPro
             AssetDatabase.AddObjectToAsset(material, spriteAsset);
         }
 
-
         /// <summary>
         /// Limits the minimum size of the editor window.
         /// </summary>
@@ -238,6 +253,5 @@ namespace TMPro
 
             editorWindow.minSize = new Vector2(Mathf.Max(230, currentWindowSize.x), Mathf.Max(300, currentWindowSize.y));
         }
-
     }
 }

@@ -1712,6 +1712,11 @@ namespace TMPro
         protected virtual void SetCulling() { }
 
         /// <summary>
+        ///
+        /// </summary>
+        internal virtual void UpdateCulling() {}
+
+        /// <summary>
         /// Get the padding value for the currently assigned material
         /// </summary>
         /// <returns></returns>
@@ -5409,7 +5414,6 @@ namespace TMPro
                 // Look up Character Data from Dictionary and cache it.
                 #region Look up Character Data
                 //float baselineOffset = 0;
-                float spriteScale = 1;
                 float elementAscentLine = 0;
                 float elementDescentLine = 0;
                 if (m_textElementType == TMP_TextElementType.Sprite)
@@ -5428,7 +5432,7 @@ namespace TMPro
                     // The sprite scale calculations are based on the font asset assigned to the text object.
                     if (m_currentSpriteAsset.faceInfo.pointSize > 0)
                     {
-                        spriteScale = (m_currentFontSize / m_currentSpriteAsset.faceInfo.pointSize * m_currentSpriteAsset.faceInfo.scale * (m_isOrthographic ? 1 : 0.1f));
+                        float spriteScale = (m_currentFontSize / m_currentSpriteAsset.faceInfo.pointSize * m_currentSpriteAsset.faceInfo.scale * (m_isOrthographic ? 1 : 0.1f));
                         currentElementScale = sprite.scale * sprite.glyph.scale * spriteScale;
                         elementAscentLine = m_currentSpriteAsset.faceInfo.ascentLine;
                         //baselineOffset = m_currentSpriteAsset.faceInfo.baseline * m_fontScale * m_fontScaleMultiplier * m_currentSpriteAsset.faceInfo.scale;
@@ -5436,7 +5440,7 @@ namespace TMPro
                     }
                     else
                     {
-                        spriteScale = (m_currentFontSize / m_currentFontAsset.faceInfo.pointSize * m_currentFontAsset.faceInfo.scale * (m_isOrthographic ? 1 : 0.1f));
+                        float spriteScale = (m_currentFontSize / m_currentFontAsset.faceInfo.pointSize * m_currentFontAsset.faceInfo.scale * (m_isOrthographic ? 1 : 0.1f));
                         currentElementScale = m_currentFontAsset.faceInfo.ascentLine / sprite.glyph.metrics.height * sprite.scale * sprite.glyph.scale * spriteScale;
                         elementAscentLine = m_currentFontAsset.faceInfo.ascentLine;
                         //baselineOffset = m_currentFontAsset.faceInfo.baseline * m_fontScale * m_fontScaleMultiplier * m_currentFontAsset.faceInfo.scale;
@@ -5446,7 +5450,7 @@ namespace TMPro
                     m_cached_TextElement = sprite;
 
                     m_internalCharacterInfo[m_characterCount].elementType = TMP_TextElementType.Sprite;
-                    m_internalCharacterInfo[m_characterCount].scale = spriteScale;
+                    m_internalCharacterInfo[m_characterCount].scale = currentElementScale;
 
                     m_currentMaterialIndex = prev_MaterialIndex;
                 }
@@ -5496,35 +5500,37 @@ namespace TMPro
                 #region Handle Kerning
                 TMP_GlyphValueRecord glyphAdjustments = new TMP_GlyphValueRecord();
                 float characterSpacingAdjustment = m_characterSpacing;
+                m_GlyphHorizontalAdvanceAdjustment = 0;
                 if (m_enableKerning)
                 {
                     TMP_GlyphPairAdjustmentRecord adjustmentPair;
+                    uint baseGlyphIndex = m_cached_TextElement.m_GlyphIndex;
 
                     if (m_characterCount < totalCharacterCount - 1)
                     {
-                        uint firstGlyphIndex = m_cached_TextElement.glyphIndex;
-                        uint secondGlyphIndex = m_textInfo.characterInfo[m_characterCount + 1].textElement.glyphIndex;
-                        uint key = new GlyphPairKey(firstGlyphIndex, secondGlyphIndex).key;
+                        uint nextGlyphIndex = m_textInfo.characterInfo[m_characterCount + 1].textElement.m_GlyphIndex;
+                        uint key = nextGlyphIndex << 16 | baseGlyphIndex;
 
-                        if (m_currentFontAsset.fontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out adjustmentPair))
+                        if (m_currentFontAsset.m_FontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out adjustmentPair))
                         {
-                            glyphAdjustments = adjustmentPair.firstAdjustmentRecord.glyphValueRecord;
-                            characterSpacingAdjustment = (adjustmentPair.featureLookupFlags & FontFeatureLookupFlags.IgnoreSpacingAdjustments) == FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
+                            glyphAdjustments = adjustmentPair.m_FirstAdjustmentRecord.m_GlyphValueRecord;
+                            characterSpacingAdjustment = (adjustmentPair.m_FeatureLookupFlags & FontFeatureLookupFlags.IgnoreSpacingAdjustments) == FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
                         }
                     }
 
                     if (m_characterCount >= 1)
                     {
-                        uint firstGlyphIndex = m_textInfo.characterInfo[m_characterCount - 1].textElement.glyphIndex;
-                        uint secondGlyphIndex = m_cached_TextElement.glyphIndex;
-                        uint key = new GlyphPairKey(firstGlyphIndex, secondGlyphIndex).key;
+                        uint previousGlyphIndex = m_textInfo.characterInfo[m_characterCount - 1].textElement.m_GlyphIndex;
+                        uint key = baseGlyphIndex << 16 | previousGlyphIndex;
 
-                        if (m_currentFontAsset.fontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out adjustmentPair))
+                        if (m_currentFontAsset.m_FontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out adjustmentPair))
                         {
-                            glyphAdjustments += adjustmentPair.secondAdjustmentRecord.glyphValueRecord;
-                            characterSpacingAdjustment = (adjustmentPair.featureLookupFlags & FontFeatureLookupFlags.IgnoreSpacingAdjustments) == FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
+                            glyphAdjustments += adjustmentPair.m_SecondAdjustmentRecord.m_GlyphValueRecord;
+                            characterSpacingAdjustment = (adjustmentPair.m_FeatureLookupFlags & FontFeatureLookupFlags.IgnoreSpacingAdjustments) == FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
                         }
                     }
+
+                    m_GlyphHorizontalAdvanceAdjustment = glyphAdjustments.m_XAdvance;
                 }
                 #endregion
 
@@ -5566,12 +5572,12 @@ namespace TMPro
                 // Element Ascender in line space
                 float elementAscender = m_textElementType == TMP_TextElementType.Character
                     ? elementAscentLine * currentElementScale / smallCapsMultiplier + m_baselineOffset
-                    : elementAscentLine * spriteScale + m_baselineOffset;
+                    : elementAscentLine * currentElementScale + m_baselineOffset;
 
                 // Element Descender in line space
                 float elementDescender = m_textElementType == TMP_TextElementType.Character
                     ? elementDescentLine * currentElementScale / smallCapsMultiplier + m_baselineOffset
-                    : elementDescentLine * spriteScale + m_baselineOffset;
+                    : elementDescentLine * currentElementScale + m_baselineOffset;
 
                 float adjustedAscender = elementAscender;
                 float adjustedDescender = elementDescender;

@@ -1,6 +1,17 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [1.5.0-preview.14] - 2020-06-08
+## [2.1.0-preview.14]
+## [3.0.0-preview.14]
+### Changes
+- Fixed sprite character and sprite glyph scale not being reflected in the text layout. See [forum post](https://forum.unity.com/threads/glyph-scale-dont-change-line-height.898817/) for details.
+- Fixed potential null reference exception in the CrossFadeColor or CrossFadeAlpha functions. See [forum post](https://forum.unity.com/threads/version-1-5-0-2-1-0-3-0-0-preview-13-now-available-for-testing.753587/page-4#post-5885075) for details.
+- Minor improvements to the Sprite Asset Importer to improve allocations and address potential error encountered when creating multiple sprite assets. 
+- TMP GUID Remapping Tool - Removed "UnityEditor.Animations.AnimatorController" from the exclusion search list.
+- Fixed potential culling issue when dynamically updating the content of child text objects of RectMask2D components. Case #1253625
+- Fixed InvalidOperationException that could occur when changing text Overflow linked components via code. Case #1251283
+
 ## [1.5.0-preview.13] - 2020-05-22
 ## [2.1.0-preview.13]
 ## [3.0.0-preview.13]

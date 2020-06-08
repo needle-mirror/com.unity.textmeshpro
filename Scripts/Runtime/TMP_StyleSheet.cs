@@ -6,11 +6,11 @@ using System.Collections.Generic;
 namespace TMPro
 {
 
-    [Serializable]
+    [Serializable][ExcludeFromPresetAttribute]
     public class TMP_StyleSheet : ScriptableObject
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         internal List<TMP_Style> styles
         {
@@ -67,7 +67,7 @@ namespace TMPro
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         private void LoadStyleDictionaryInternal()
         {
@@ -80,7 +80,7 @@ namespace TMPro
             for (int i = 0; i < m_StyleList.Count; i++)
             {
                 m_StyleList[i].RefreshStyle();
-              
+
                 if (!m_StyleLookupDictionary.ContainsKey(m_StyleList[i].hashCode))
                     m_StyleLookupDictionary.Add(m_StyleList[i].hashCode, m_StyleList[i]);
             }
