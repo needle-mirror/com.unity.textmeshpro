@@ -11,9 +11,17 @@ namespace TMPro
     {
         private static TMP_UpdateManager s_Instance;
 
-        private readonly HashSet<TMP_Text> m_LayoutRebuildQueue = new HashSet<TMP_Text>();
-        private readonly HashSet<TMP_Text> m_GraphicRebuildQueue = new HashSet<TMP_Text>();
-        private readonly HashSet<TMP_Text> m_InternalUpdateQueue = new HashSet<TMP_Text>();
+        private readonly HashSet<int> m_LayoutQueueLookup = new HashSet<int>();
+        private readonly List<TMP_Text> m_LayoutRebuildQueue = new List<TMP_Text>();
+
+        private readonly HashSet<int> m_GraphicQueueLookup = new HashSet<int>();
+        private readonly List<TMP_Text> m_GraphicRebuildQueue = new List<TMP_Text>();
+
+        private readonly HashSet<int> m_InternalUpdateLookup = new HashSet<int>();
+        private readonly List<TMP_Text> m_InternalUpdateQueue = new List<TMP_Text>();
+
+        private readonly HashSet<int> m_CullingUpdateLookup = new HashSet<int>();
+        private readonly List<TMP_Text> m_CullingUpdateQueue = new List<TMP_Text>();
 
 
         /// <summary>
@@ -53,9 +61,12 @@ namespace TMPro
 
         private void InternalRegisterTextObjectForUpdate(TMP_Text textObject)
         {
-            if (m_InternalUpdateQueue.Contains(textObject))
+            int id = textObject.GetInstanceID();
+
+            if (m_InternalUpdateLookup.Contains(id))
                 return;
 
+            m_InternalUpdateLookup.Add(id);
             m_InternalUpdateQueue.Add(textObject);
         }
 
@@ -70,9 +81,12 @@ namespace TMPro
 
         private void InternalRegisterTextElementForLayoutRebuild(TMP_Text element)
         {
-            if (m_LayoutRebuildQueue.Contains(element))
+            int id = element.GetInstanceID();
+
+            if (m_LayoutQueueLookup.Contains(id))
                 return;
 
+            m_LayoutQueueLookup.Add(id);
             m_LayoutRebuildQueue.Add(element);
         }
 
@@ -91,10 +105,33 @@ namespace TMPro
 
         private void InternalRegisterTextElementForGraphicRebuild(TMP_Text element)
         {
-            if (m_GraphicRebuildQueue.Contains(element))
+            int id = element.GetInstanceID();
+
+            if (m_GraphicQueueLookup.Contains(id))
                 return;
 
+            m_GraphicQueueLookup.Add(id);
             m_GraphicRebuildQueue.Add(element);
+        }
+
+        public static void RegisterTextElementForCullingUpdate(TMP_Text element)
+        {
+            Profiler.BeginSample("TMP.RegisterTextElementForCullingUpdate");
+
+            instance.InternalRegisterTextElementForCullingUpdate(element);
+
+            Profiler.EndSample();
+        }
+
+        private void InternalRegisterTextElementForCullingUpdate(TMP_Text element)
+        {
+            int id = element.GetInstanceID();
+
+            if (m_CullingUpdateLookup.Contains(id))
+                return;
+
+            m_CullingUpdateLookup.Add(id);
+            m_CullingUpdateQueue.Add(element);
         }
 
         /// <summary>
@@ -110,28 +147,49 @@ namespace TMPro
         /// </summary>
         void DoRebuilds()
         {
-            Profiler.BeginSample("TMP.DoRebuilds");
-
-            // Handle text objects that require an update either as a result of scale changes or legacy animation.
-            foreach (var textObject in m_InternalUpdateQueue)
-                textObject.InternalUpdate();
+            // Handle text objects the require an update either as a result of scale changes or legacy animation.
+            for (int i = 0; i < m_InternalUpdateQueue.Count; i++)
+            {
+                m_InternalUpdateQueue[i].InternalUpdate();
+            }
 
             // Handle Layout Rebuild Phase
-            foreach (var textObject in m_LayoutRebuildQueue)
-                textObject.Rebuild(CanvasUpdate.Prelayout);
+            for (int i = 0; i < m_LayoutRebuildQueue.Count; i++)
+            {
+                m_LayoutRebuildQueue[i].Rebuild(CanvasUpdate.Prelayout);
+            }
 
             if (m_LayoutRebuildQueue.Count > 0)
+            {
                 m_LayoutRebuildQueue.Clear();
+                m_LayoutQueueLookup.Clear();
+            }
 
             // Handle Graphic Rebuild Phase
-            foreach (var textObject in m_GraphicRebuildQueue)
-                textObject.Rebuild(CanvasUpdate.PreRender);
+            for (int i = 0; i < m_GraphicRebuildQueue.Count; i++)
+            {
+                m_GraphicRebuildQueue[i].Rebuild(CanvasUpdate.PreRender);
+            }
 
             // If there are no objects in the queue, we don't need to clear the lists again.
             if (m_GraphicRebuildQueue.Count > 0)
+            {
                 m_GraphicRebuildQueue.Clear();
+                m_GraphicQueueLookup.Clear();
+            }
 
-            Profiler.EndSample();
+            // Handle Culling Update
+            for (int i = 0; i < m_CullingUpdateQueue.Count; i++)
+            {
+                m_CullingUpdateQueue[i].UpdateCulling();
+            }
+
+            // If there are no objects in the queue, we don't need to clear the lists again.
+            if (m_CullingUpdateQueue.Count > 0)
+            {
+                m_CullingUpdateQueue.Clear();
+                m_CullingUpdateLookup.Clear();
+            }
         }
 
         internal static void UnRegisterTextObjectForUpdate(TMP_Text textObject)
@@ -158,19 +216,28 @@ namespace TMPro
         {
             Profiler.BeginSample("TMP.InternalUnRegisterTextElementForGraphicRebuild");
 
+            int id = element.GetInstanceID();
+
             m_GraphicRebuildQueue.Remove(element);
+            m_GraphicQueueLookup.Remove(id);
 
             Profiler.EndSample();
         }
 
         private void InternalUnRegisterTextElementForLayoutRebuild(TMP_Text element)
         {
+            int id = element.GetInstanceID();
+
             m_LayoutRebuildQueue.Remove(element);
+            m_LayoutQueueLookup.Remove(id);
         }
 
         private void InternalUnRegisterTextObjectForUpdate(TMP_Text textObject)
         {
+            int id = textObject.GetInstanceID();
+
             m_InternalUpdateQueue.Remove(textObject);
+            m_InternalUpdateLookup.Remove(id);
         }
     }
 }

@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace TMPro
 {
-
+    [ExcludeFromPresetAttribute]
     public class TMP_SpriteAsset : TMP_Asset
     {
         internal Dictionary<int, int> m_NameLookup;

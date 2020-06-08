@@ -368,9 +368,17 @@ namespace TMPro
         /// <param name="validRect"></param>
         public override void Cull(Rect clipRect, bool validRect)
         {
-            //Debug.Log("***** Cull (" + clipRect + ", " + validRect + ")   Cull: " + m_canvasRenderer.cull + " *****");
             if (m_canvas == null || m_canvas.rootCanvas == null)
                 return;
+
+            // Delay culling check until the geometry of the text has been updated.
+            if (m_isLayoutDirty)
+            {
+                TMP_UpdateManager.RegisterTextElementForCullingUpdate(this);
+                m_ClipRect = clipRect;
+                m_ValidRect = validRect;
+                return;
+            }
 
             // Get compound rect for the text object and sub text objects in local canvas space.
             Rect rect = GetCanvasSpaceClippingRect();
@@ -385,22 +393,44 @@ namespace TMPro
                 m_canvasRenderer.cull = cull;
                 onCullStateChanged.Invoke(cull);
                 OnCullingChanged();
+
+                // Update any potential sub mesh objects
+                for (int i = 1; i < m_subTextObjects.Length && m_subTextObjects[i] != null; i++)
+                {
+                    m_subTextObjects[i].canvasRenderer.cull = cull;
+                }
             }
         }
 
+        private Rect m_ClipRect;
+        private bool m_ValidRect;
 
-        //protected override void UpdateGeometry()
-        //{
-        //    //Debug.Log("UpdateGeometry");
-        //    //base.UpdateGeometry();
-        //}
+        /// <summary>
+        /// Internal function to allow delay of culling until the text geometry has been updated.
+        /// </summary>
+        internal override void UpdateCulling()
+        {
+            // Get compound rect for the text object and sub text objects in local canvas space.
+            Rect rect = GetCanvasSpaceClippingRect();
 
+            // No point culling if geometry bounds have no width or height.
+            if (rect.width == 0 || rect.height == 0)
+                return;
 
-        //protected override void UpdateMaterial()
-        //{
-        //    //Debug.Log("UpdateMaterial called.");
-        ////    base.UpdateMaterial();
-        //}
+            var cull = !m_ValidRect || !m_ClipRect.Overlaps(rect, true);
+            if (m_canvasRenderer.cull != cull)
+            {
+                m_canvasRenderer.cull = cull;
+                onCullStateChanged.Invoke(cull);
+                OnCullingChanged();
+
+                // Update any potential sub mesh objects
+                for (int i = 1; i < m_subTextObjects.Length && m_subTextObjects[i] != null; i++)
+                {
+                    m_subTextObjects[i].canvasRenderer.cull = cull;
+                }
+            }
+        }
 
 
         /*
@@ -475,6 +505,9 @@ namespace TMPro
         /// <param name="useAlpha">Should also Tween the alpha channel?</param>
         protected override void InternalCrossFadeColor(Color targetColor, float duration, bool ignoreTimeScale, bool useAlpha)
         {
+            if (m_textInfo == null)
+                return;
+
             int materialCount = m_textInfo.materialCount;
 
             for (int i = 1; i < materialCount; i++)
@@ -492,6 +525,9 @@ namespace TMPro
         /// <param name="ignoreTimeScale">Should ignore Time.scale?</param>
         protected override void InternalCrossFadeAlpha(float alpha, float duration, bool ignoreTimeScale)
         {
+            if (m_textInfo == null)
+                return;
+
             int materialCount = m_textInfo.materialCount;
 
             for (int i = 1; i < materialCount; i++)
