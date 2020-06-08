@@ -21,7 +21,7 @@ namespace TMPro
     }
 
 
-    [Serializable]
+    [Serializable][ExcludeFromPresetAttribute]
     public class TMP_FontAsset : TMP_Asset
     {
         /// <summary>
@@ -531,6 +531,13 @@ namespace TMPro
                 UpgradeFontAsset();
         }
 
+        #if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (m_CharacterLookupDictionary == null || m_GlyphLookupDictionary == null)
+                ReadFontAssetDefinition();
+        }
+        #endif
 
         public void ReadFontAssetDefinition()
         {
@@ -2720,8 +2727,9 @@ namespace TMPro
 
             //TMP_ResourceManager.RebuildFontAssetCache(instanceID);
 
-            // Add glyphs
-            TryAddCharacters(unicodeCharacters, true);
+            // Add existing glyphs and characters back in the font asset (if any)
+            if (unicodeCharacters.Length > 0)
+                TryAddCharacters(unicodeCharacters, true);
 
             Profiler.EndSample();
         }

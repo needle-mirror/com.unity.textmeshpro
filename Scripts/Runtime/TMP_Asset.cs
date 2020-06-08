@@ -1,11 +1,12 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace TMPro
 {
 
     // Base class inherited by the various TextMeshPro Assets.
-    [System.Serializable]
-    public class TMP_Asset : ScriptableObject
+    [Serializable]
+    public abstract class TMP_Asset : ScriptableObject
     {
         /// <summary>
         /// Instance ID of the TMP Asset

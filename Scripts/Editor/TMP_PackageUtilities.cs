@@ -72,7 +72,6 @@ namespace TMPro
             typeof(Texture2D),
             typeof(Texture2DArray),
             typeof(Texture3D),
-            typeof(UnityEditor.Animations.AnimatorController),
             typeof(UnityEditorInternal.AssemblyDefinitionAsset),
             typeof(UnityEngine.AI.NavMeshData),
             typeof(UnityEngine.Tilemaps.Tile),

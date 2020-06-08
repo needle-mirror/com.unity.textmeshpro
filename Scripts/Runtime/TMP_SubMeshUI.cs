@@ -9,7 +9,7 @@ using Object = UnityEngine.Object;
 namespace TMPro
 {
     [ExecuteAlways]
-    public class TMP_SubMeshUI : MaskableGraphic, IClippable, IMaskable, IMaterialModifier
+    public class TMP_SubMeshUI : MaskableGraphic
     {
         /// <summary>
         /// The TMP Font Asset assigned to this sub text object.
@@ -645,22 +645,13 @@ namespace TMPro
         private Transform m_RootCanvasTransform;
 
         /// <summary>
-        /// Override to Cull function of MaskableGraphic to prevent Culling.
+        /// Override Cull function as this is handled by the parent text object.
         /// </summary>
         /// <param name="clipRect"></param>
         /// <param name="validRect"></param>
         public override void Cull(Rect clipRect, bool validRect)
         {
-            // Get compound rect for the text object and sub text objects in local canvas space.
-            Rect rect = m_TextComponent.GetCanvasSpaceClippingRect();
-
-            var cull = !validRect || !clipRect.Overlaps(rect, true);
-            if (canvasRenderer.cull != cull)
-            {
-                canvasRenderer.cull = cull;
-                onCullStateChanged.Invoke(cull);
-                OnCullingChanged();
-            }
+            // Do nothing as this functionality is handled by the parent text object.
         }
 
 

@@ -1909,7 +1909,6 @@ namespace TMPro
                 Profiler.BeginSample("TMP - Lookup Character & Glyph Data");
                 #endif
                 float baselineOffset = 0;
-                float spriteScale = 1;
                 float elementAscentLine = 0;
                 float elementDescentLine = 0;
                 if (m_textElementType == TMP_TextElementType.Sprite)
@@ -1930,7 +1929,7 @@ namespace TMPro
                     // The sprite scale calculations are based on the font asset assigned to the text object.
                     if (m_currentSpriteAsset.m_FaceInfo.pointSize > 0)
                     {
-                        spriteScale = m_currentFontSize / m_currentSpriteAsset.m_FaceInfo.pointSize * m_currentSpriteAsset.m_FaceInfo.scale * (m_isOrthographic ? 1 : 0.1f);
+                        float spriteScale = m_currentFontSize / m_currentSpriteAsset.m_FaceInfo.pointSize * m_currentSpriteAsset.m_FaceInfo.scale * (m_isOrthographic ? 1 : 0.1f);
                         currentElementScale = sprite.m_Scale * sprite.m_Glyph.scale * spriteScale;
                         elementAscentLine = m_currentSpriteAsset.m_FaceInfo.ascentLine;
                         baselineOffset = m_currentSpriteAsset.m_FaceInfo.baseline * m_fontScale * m_fontScaleMultiplier * m_currentSpriteAsset.m_FaceInfo.scale;
@@ -1938,7 +1937,7 @@ namespace TMPro
                     }
                     else
                     {
-                        spriteScale = m_currentFontSize / m_currentFontAsset.m_FaceInfo.pointSize * m_currentFontAsset.m_FaceInfo.scale * (m_isOrthographic ? 1 : 0.1f);
+                        float spriteScale = m_currentFontSize / m_currentFontAsset.m_FaceInfo.pointSize * m_currentFontAsset.m_FaceInfo.scale * (m_isOrthographic ? 1 : 0.1f);
                         currentElementScale = m_currentFontAsset.m_FaceInfo.ascentLine / sprite.m_Glyph.metrics.height * sprite.m_Scale * sprite.m_Glyph.scale * spriteScale;
                         elementAscentLine = m_currentFontAsset.m_FaceInfo.ascentLine;
                         baselineOffset = m_currentFontAsset.m_FaceInfo.baseline * m_fontScale * m_fontScaleMultiplier * m_currentFontAsset.m_FaceInfo.scale;
@@ -1948,7 +1947,7 @@ namespace TMPro
                     m_cached_TextElement = sprite;
 
                     m_textInfo.characterInfo[m_characterCount].elementType = TMP_TextElementType.Sprite;
-                    m_textInfo.characterInfo[m_characterCount].scale = spriteScale;
+                    m_textInfo.characterInfo[m_characterCount].scale = currentElementScale;
                     m_textInfo.characterInfo[m_characterCount].spriteAsset = m_currentSpriteAsset;
                     m_textInfo.characterInfo[m_characterCount].fontAsset = m_currentFontAsset;
                     m_textInfo.characterInfo[m_characterCount].materialReferenceIndex = m_currentMaterialIndex;
@@ -2213,12 +2212,12 @@ namespace TMPro
                 // Element Ascender in line space
                 float elementAscender = m_textElementType == TMP_TextElementType.Character
                     ? elementAscentLine * currentElementScale / smallCapsMultiplier + m_baselineOffset
-                    : elementAscentLine * spriteScale + m_baselineOffset;
+                    : elementAscentLine * currentElementScale + m_baselineOffset;
 
                 // Element Descender in line space
                 float elementDescender = m_textElementType == TMP_TextElementType.Character
                     ? elementDescentLine * currentElementScale / smallCapsMultiplier + m_baselineOffset
-                    : elementDescentLine * spriteScale + m_baselineOffset;
+                    : elementDescentLine * currentElementScale + m_baselineOffset;
 
                 float adjustedAscender = elementAscender;
                 float adjustedDescender = elementDescender;

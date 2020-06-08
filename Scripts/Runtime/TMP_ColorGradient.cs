@@ -11,7 +11,7 @@ namespace TMPro
         FourCornersGradient
     }
 
-    [System.Serializable]
+    [System.Serializable][ExcludeFromPresetAttribute]
     public class TMP_ColorGradient : ScriptableObject
     {
         public ColorMode colorMode = ColorMode.FourCornersGradient;
