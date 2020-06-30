@@ -1,6 +1,23 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [1.5.0] - 2020-06-30
+## [2.1.0]
+## [3.0.0]
+### Changes
+- Added support to control if a text object is Maskable and affected by UI Mask components. The new setting is found in the Extra Settings section of the &lt;TextMeshProUGUI&gt; component inspector.
+- Fixed potential Null Reference Exception when trying to add characters and / or glyphs to a font asset via scripting and before it has been initialized or ReadFontAssetDefinition() has been called.
+- Fixed incorrect preferred width values when using alternative font weight font assets. Case #1255336
+- Enabling or disabling the Mesh Renderer of a &lt;TextMeshPro&gt; text object should now also mirror that state on any sub text object renderers as well.
+- Fixed &lt;sprite&gt; incorrect position when this sprite is the only character in the text and when the sprite asset face info has not been defined.
+- Fixed potential Null Reference Exception related to culling when entering play mode.
+- Added OnPreRenderText event delegate to allow potential modification of the text geometry before it is uploaded to the mesh and rendered.
+- Fixed missing warning when the requested character is missing from the font asset or any potential fallbacks. Case #1256879
+- Fixed potential issue with Underline and StrikeThrough when using alternative typeface. Case #1255336
+- Fixed potential errors in the Text StyleSheet Inspector when adding or removing Text Styles after resetting the asset. Case #1254602 
+- Fixed text Margin property values not being draggable in the Extra Settings section of the text inspector. Case #1253447
+- It will no longer be possible to create Editor Presets for the TMP_FontAsset, TMP_SpriteAsset, TMP_StyleSheet, TMP_ColorGradient and TMP_Settings as these are persistent and runtime assets. Case #1251229
+
 ## [1.5.0-preview.14] - 2020-06-08
 ## [2.1.0-preview.14]
 ## [3.0.0-preview.14]

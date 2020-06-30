@@ -21,6 +21,11 @@ namespace TMPro
         private List<TMP_Style> m_StyleList = new List<TMP_Style>(1);
         private Dictionary<int, TMP_Style> m_StyleLookupDictionary;
 
+        private void Reset()
+        {
+            LoadStyleDictionaryInternal();
+        }
+
         /// <summary>
         /// Get the Style for the given hash code value.
         /// </summary>
@@ -83,6 +88,15 @@ namespace TMPro
 
                 if (!m_StyleLookupDictionary.ContainsKey(m_StyleList[i].hashCode))
                     m_StyleLookupDictionary.Add(m_StyleList[i].hashCode, m_StyleList[i]);
+            }
+
+            // Add Normal Style if it does not already exists
+            int normalStyleHashCode = TMP_TextParsingUtilities.GetHashCode("Normal");
+            if (!m_StyleLookupDictionary.ContainsKey(normalStyleHashCode))
+            {
+                TMP_Style style = new TMP_Style("Normal", string.Empty, string.Empty);
+                m_StyleList.Add(style);
+                m_StyleLookupDictionary.Add(normalStyleHashCode, style);
             }
 
             #if UNITY_EDITOR

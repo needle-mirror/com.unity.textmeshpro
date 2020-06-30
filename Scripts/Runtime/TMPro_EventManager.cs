@@ -32,25 +32,9 @@ namespace TMPro
 
         public static readonly FastAction<bool, Object> TEXTMESHPRO_UGUI_PROPERTY_EVENT = new FastAction<bool, Object>();
 
-        public static readonly FastAction OnPreRenderObject_Event = new FastAction();
-
         public static readonly FastAction<Object> TEXT_CHANGED_EVENT = new FastAction<Object>();
 
         //public static readonly FastAction WILL_RENDER_CANVASES = new FastAction();
-
-
-
-        //static TMPro_EventManager()
-        //{
-        //    // Register to the willRenderCanvases callback once
-        //    // then the WILL_RENDER_CANVASES FastAction will handle the rest
-        //    Canvas.willRenderCanvases += WILL_RENDER_CANVASES.Call;
-        //}
-
-        public static void ON_PRE_RENDER_OBJECT_CHANGED()
-        {
-            OnPreRenderObject_Event.Call();
-        }
 
         public static void ON_MATERIAL_PROPERTY_CHANGED(bool isChanged, Material mat)
         {

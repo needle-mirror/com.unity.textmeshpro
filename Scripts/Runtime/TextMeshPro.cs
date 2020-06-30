@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine.UI;
 
 namespace TMPro
@@ -369,10 +367,9 @@ namespace TMPro
 
 
         /// <summary>
-        /// Function to force the regeneration of the text object.
+        /// Event to allow users to modify the content of the text info before the text is rendered.
         /// </summary>
-        /// <param name="flags"> Flags to control which portions of the geometry gets uploaded.</param>
-        //public override void ForceMeshUpdate(TMP_VertexDataUpdateFlags flags) { }
+        public override event Action<TMP_TextInfo> OnPreRenderText;
 
 
         /// <summary>

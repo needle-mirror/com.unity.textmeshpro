@@ -16,7 +16,7 @@ namespace TMPro
     //    RelativeToCurrent   = 0x2,
     //}
 
-    [System.Serializable]
+    [System.Serializable][ExcludeFromPresetAttribute]
     public class TMP_Settings : ScriptableObject
     {
         private static TMP_Settings s_Instance;

@@ -1258,33 +1258,17 @@ namespace TMPro
         /// <summary>
         /// Event delegate to allow custom loading of TMP_FontAsset when using the <font="Font Asset Name"> tag.
         /// </summary>
-        public static event Func<int, string, TMP_FontAsset> onFontAssetRequest;
+        public static event Func<int, string, TMP_FontAsset> OnFontAssetRequest;
 
         /// <summary>
         /// Event delegate to allow custom loading of TMP_SpriteAsset when using the <sprite="Sprite Asset Name"> tag.
         /// </summary>
-        public static event Func<int, string, TMP_SpriteAsset> onSpriteAssetRequest;
+        public static event Func<int, string, TMP_SpriteAsset> OnSpriteAssetRequest;
 
-        //[Serializable]
-        //public class TextChangedEvent : UnityEvent { }
-
-        ///// <summary>
-        ///// Event delegate triggered when text has changed and been rendered.
-        ///// </summary>
-        //public TextChangedEvent onTextChanged
-        //{
-        //    get { return m_OnTextChanged; }
-        //    set { m_OnTextChanged = value; }
-        //}
-        //[SerializeField]
-        //private TextChangedEvent m_OnTextChanged = new TextChangedEvent();
-
-        //protected void SendOnTextChanged()
-        //{
-        //    if (onTextChanged != null)
-        //        onTextChanged.Invoke();
-        //}
-
+        /// <summary>
+        /// Event delegate to allow modifying the text geometry before it is uploaded to the mesh and rendered.
+        /// </summary>
+        public virtual event Action<TMP_TextInfo> OnPreRenderText = delegate { };
 
         // *** SPECIAL COMPONENTS ***
 
@@ -5324,7 +5308,7 @@ namespace TMPro
                 #endregion End Parse Rich Text Tag
 
                 int prev_MaterialIndex = m_currentMaterialIndex;
-                bool isUsingAltTypeface = m_internalCharacterInfo[m_characterCount].isUsingAlternateTypeface;
+                bool isUsingAltTypeface = m_textInfo.characterInfo[m_characterCount].isUsingAlternateTypeface;
 
                 m_isParsingText = false;
 
@@ -5442,9 +5426,10 @@ namespace TMPro
                     {
                         float spriteScale = (m_currentFontSize / m_currentFontAsset.faceInfo.pointSize * m_currentFontAsset.faceInfo.scale * (m_isOrthographic ? 1 : 0.1f));
                         currentElementScale = m_currentFontAsset.faceInfo.ascentLine / sprite.glyph.metrics.height * sprite.scale * sprite.glyph.scale * spriteScale;
-                        elementAscentLine = m_currentFontAsset.faceInfo.ascentLine;
+                        float scaleDelta = spriteScale / currentElementScale;
+                        elementAscentLine = m_currentFontAsset.faceInfo.ascentLine * scaleDelta;
                         //baselineOffset = m_currentFontAsset.faceInfo.baseline * m_fontScale * m_fontScaleMultiplier * m_currentFontAsset.faceInfo.scale;
-                        elementDescentLine = m_currentFontAsset.faceInfo.descentLine;
+                        elementDescentLine = m_currentFontAsset.faceInfo.descentLine * scaleDelta;
                     }
 
                     m_cached_TextElement = sprite;
@@ -6947,6 +6932,7 @@ namespace TMPro
             int underlineMaterialIndex = m_Underline.materialIndex;
 
             int verticesCount = index + 12;
+
             // Check to make sure our current mesh buffer allocations can hold these new Quads.
             if (verticesCount > m_textInfo.meshInfo[underlineMaterialIndex].vertices.Length)
             {
@@ -7057,7 +7043,6 @@ namespace TMPro
             uvs2[7 + index] = PackUV(max_UvX, 0, xScale);
 
             min_UvX = (vertices[index + 8].x - start.x) / (end.x - start.x);
-            max_UvX = (vertices[index + 6].x - start.x) / (end.x - start.x);
 
             uvs2[8 + index] = PackUV(min_UvX, 0, xScale);
             uvs2[9 + index] = PackUV(min_UvX, 1, xScale);
@@ -7068,7 +7053,7 @@ namespace TMPro
             // UNDERLINE VERTEX COLORS
             #region UNDERLINE VERTEX COLORS
             // Alpha is the lower of the vertex color or tag color alpha used.
-            underlineColor.a = m_fontColor32.a < underlineColor.a ? (byte)(m_fontColor32.a) : (byte)(underlineColor.a);
+            underlineColor.a = m_fontColor32.a < underlineColor.a ? m_fontColor32.a : underlineColor.a;
 
             Color32[] colors32 = m_textInfo.meshInfo[underlineMaterialIndex].colors32;
             colors32[0 + index] = underlineColor;
@@ -7109,6 +7094,7 @@ namespace TMPro
             int underlineMaterialIndex = m_Underline.materialIndex;
 
             int verticesCount = index + 4;
+
             // Check to make sure our current mesh buffer allocations can hold these new Quads.
             if (verticesCount > m_textInfo.meshInfo[underlineMaterialIndex].vertices.Length)
             {
@@ -7131,15 +7117,12 @@ namespace TMPro
             #region HANDLE UV0
             Vector2[] uvs0 = m_textInfo.meshInfo[underlineMaterialIndex].uvs0;
 
-            int atlasWidth = m_fontAsset.atlasWidth;
-            int atlasHeight = m_fontAsset.atlasHeight;
+            int atlasWidth = m_Underline.fontAsset.atlasWidth;
+            int atlasHeight = m_Underline.fontAsset.atlasHeight;
             GlyphRect glyphRect = m_Underline.character.glyph.glyphRect;
 
             // Calculate UV
             Vector2 uv0 = new Vector2(((float)glyphRect.x + glyphRect.width / 2) / atlasWidth, (glyphRect.y + (float)glyphRect.height / 2) / atlasHeight);  // bottom left
-            //Vector2 uv1 = new Vector2(uv0.x, uv0.y);  // top left
-            //Vector2 uv2 = new Vector2(uv0.x, uv0.y); // Top Right
-            //Vector2 uv3 = new Vector2(uv2.x, uv0.y); // Bottom Right
 
             // UVs for the Quad
             uvs0[0 + index] = uv0; // BL
@@ -7150,13 +7133,6 @@ namespace TMPro
 
             // HIGHLIGHT UV2
             #region HANDLE UV2 - SDF SCALE
-            // UV1 contains Face / Border UV layout.
-            //float min_UvX = 0;
-            //float max_UvX = (vertices[index + 2].x - start.x) / (end.x - start.x);
-
-            ////Calculate the xScale or how much the UV's are getting stretched on the X axis for the middle section of the underline.
-            //float xScale = 0; // Mathf.Abs(sdfScale);
-
             Vector2[] uvs2 = m_textInfo.meshInfo[underlineMaterialIndex].uvs2;
             Vector2 customUV = new Vector2(0, 1);
             uvs2[0 + index] = customUV;
@@ -7286,8 +7262,8 @@ namespace TMPro
         {
             bool isUsingAlternativeTypeface;
 
-            // Search base font asset
-            TMP_Character character = TMP_FontAssetUtilities.GetCharacterFromFontAsset(0x5F, fontAsset, false, m_FontStyleInternal, m_FontWeightInternal, out isUsingAlternativeTypeface);
+            // Search primary font asset for underline character while ignoring font style and weight as these do not affect the underline character.
+            TMP_Character character = TMP_FontAssetUtilities.GetCharacterFromFontAsset(0x5F, fontAsset, false, FontStyles.Normal, FontWeight.Regular, out isUsingAlternativeTypeface);
 
             /*
             if (m_Underline.character == null)
@@ -8674,12 +8650,7 @@ namespace TMPro
                         if (tempFont == null)
                         {
                             // Check for anyone registered to this callback
-                            if (onFontAssetRequest != null)
-                            {
-                                tempFont = onFontAssetRequest(fontHashCode, new string(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength));
-
-                                // Material should be loaded and assigned by delegate function
-                            }
+                            tempFont = OnFontAssetRequest?.Invoke(fontHashCode, new string(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength));
 
                             if (tempFont == null)
                             {
@@ -9260,8 +9231,7 @@ namespace TMPro
                                 if (tempSpriteAsset == null)
                                 {
                                     //
-                                    if (onSpriteAssetRequest != null)
-                                        tempSpriteAsset = onSpriteAssetRequest(spriteAssetHashCode, new string(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength));
+                                    tempSpriteAsset = OnSpriteAssetRequest?.Invoke(spriteAssetHashCode, new string(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength));
 
                                     if (tempSpriteAsset == null)
                                         tempSpriteAsset = Resources.Load<TMP_SpriteAsset>(TMP_Settings.defaultSpriteAssetPath + new string(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength));
