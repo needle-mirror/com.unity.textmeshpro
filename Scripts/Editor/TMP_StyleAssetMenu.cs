@@ -33,7 +33,7 @@ namespace TMPro.EditorUtilities
             }
 
 
-            string filePathWithName = AssetDatabase.GenerateUniqueAssetPath(filePath + "/TMP StyleSheet.asset");
+            string filePathWithName = AssetDatabase.GenerateUniqueAssetPath(filePath + "/Text StyleSheet.asset");
 
             //// Create new Style Sheet Asset.
             TMP_StyleSheet styleSheet = ScriptableObject.CreateInstance<TMP_StyleSheet>();

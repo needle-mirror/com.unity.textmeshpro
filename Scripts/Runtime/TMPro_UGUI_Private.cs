@@ -39,7 +39,6 @@ namespace TMPro
 
         private bool m_isScrollRegionSet;
         //private Mask m_mask;
-        private int m_stencilID = 0;
 
         [SerializeField]
         private Vector4 m_maskOffset;
@@ -164,11 +163,11 @@ namespace TMPro
 
             ComputeMarginSize();
 
-            m_ShouldRecalculateStencil = true;
             m_isInputParsingRequired = true;
             SetAllDirty();
 
             RecalculateClipping();
+            RecalculateMasking();
         }
 
 
@@ -180,11 +179,11 @@ namespace TMPro
             if (m_isAwake == false)
                 return;
 
-            if (m_MaskMaterial != null)
-            {
-                TMP_MaterialManager.ReleaseStencilMaterial(m_MaskMaterial);
-                m_MaskMaterial = null;
-            }
+            //if (m_MaskMaterial != null)
+            //{
+            //    TMP_MaterialManager.ReleaseStencilMaterial(m_MaskMaterial);
+            //    m_MaskMaterial = null;
+            //}
 
             // UnRegister Graphic Component
             GraphicRegistry.UnregisterGraphicForCanvas(m_canvas, this);
@@ -199,6 +198,7 @@ namespace TMPro
 
             LayoutRebuilder.MarkLayoutForRebuild(m_rectTransform);
             RecalculateClipping();
+            RecalculateMasking();
         }
 
 
@@ -647,6 +647,7 @@ namespace TMPro
         // Enable Masking in the Shader
         void DisableMasking()
         {
+            /*
             if (m_fontMaterial != null)
             {
                 if (m_stencilID > 0)
@@ -660,6 +661,7 @@ namespace TMPro
             }
 
             m_isMaskingEnabled = false;
+            */
 
             /*
             if (m_maskingMaterial != null && m_stencilID == 0)
@@ -1228,14 +1230,15 @@ namespace TMPro
                         // Use Space (32) Glyph from the currently assigned font asset.
                         unicode = unicodeChars[i].unicode = 32;
                         character = TMP_FontAssetUtilities.GetCharacterFromFontAsset((uint)unicode, m_currentFontAsset, true, m_FontStyleInternal, m_FontWeightInternal, out isUsingAlternativeTypeface);
-                        if (!TMP_Settings.warningsDisabled)
-                        {
-                            string formattedWarning = srcGlyph > 0xFFFF
-                                ? string.Format("The character with Unicode value \\U{0:X8} was not found in the [{1}] font asset or any potential fallbacks. It was replaced by a space in the text object [{2}].", srcGlyph, m_fontAsset.name, this.name)
-                                : string.Format("The character with Unicode value \\u{0:X4} was not found in the [{1}] font asset or any potential fallbacks. It was replaced by a space in the text object [{2}].", srcGlyph, m_fontAsset.name, this.name);
+                    }
 
-                            Debug.LogWarning(formattedWarning, this);
-                        }
+                    if (!TMP_Settings.warningsDisabled)
+                    {
+                        string formattedWarning = srcGlyph > 0xFFFF
+                            ? string.Format("The character with Unicode value \\U{0:X8} was not found in the [{1}] font asset or any potential fallbacks. It was replaced by Unicode character \\u{2:X4} in text object [{3}].", srcGlyph, m_fontAsset.name, character.unicode, this.name)
+                            : string.Format("The character with Unicode value \\u{0:X4} was not found in the [{1}] font asset or any potential fallbacks. It was replaced by Unicode character \\u{2:X4} in text object [{3}].", srcGlyph, m_fontAsset.name, character.unicode, this.name);
+
+                        Debug.LogWarning(formattedWarning, this);
                     }
                 }
 
@@ -2023,9 +2026,10 @@ namespace TMPro
                     {
                         float spriteScale = m_currentFontSize / m_currentFontAsset.m_FaceInfo.pointSize * m_currentFontAsset.m_FaceInfo.scale * (m_isOrthographic ? 1 : 0.1f);
                         currentElementScale = m_currentFontAsset.m_FaceInfo.ascentLine / sprite.m_Glyph.metrics.height * sprite.m_Scale * sprite.m_Glyph.scale * spriteScale;
-                        elementAscentLine = m_currentFontAsset.m_FaceInfo.ascentLine;
+                        float scaleDelta = spriteScale / currentElementScale;
+                        elementAscentLine = m_currentFontAsset.m_FaceInfo.ascentLine * scaleDelta;
                         baselineOffset = m_currentFontAsset.m_FaceInfo.baseline * m_fontScale * m_fontScaleMultiplier * m_currentFontAsset.m_FaceInfo.scale;
-                        elementDescentLine = m_currentFontAsset.m_FaceInfo.descentLine;
+                        elementDescentLine = m_currentFontAsset.m_FaceInfo.descentLine * scaleDelta;
                     }
 
                     m_cached_TextElement = sprite;
@@ -4335,8 +4339,8 @@ namespace TMPro
             // Phase III - Update Mesh Vertex Data
             if (m_renderMode == TextRenderFlags.Render && IsActive())
             {
-                // Clear unused vertices
-                //m_textInfo.meshInfo[0].ClearUnusedVertices();
+                // Event to allow users to modify the content of the text info before the text is rendered.
+                OnPreRenderText?.Invoke(m_textInfo);
 
                 // Must ensure the Canvas support the additional vertex attributes used by TMP.
                 // This could be optimized based on canvas render mode settings but gets complicated to handle with multiple text objects using different material presets.
@@ -4479,6 +4483,9 @@ namespace TMPro
 
         internal override Rect GetCanvasSpaceClippingRect()
         {
+            if (m_canvas == null || m_canvas.rootCanvas == null || m_mesh == null)
+                return Rect.zero;
+
             Transform rootCanvasTransform = m_canvas.rootCanvas.transform;
             Bounds compoundBounds = GetCompoundBounds();
 
@@ -4489,13 +4496,6 @@ namespace TMPro
 
             return new Rect(position + compoundBounds.min * lossyScale, compoundBounds.size * lossyScale);
         }
-
-
-        //public override void UpdateGeometry()
-        //{
-
-        //}
-
 
         /// <summary>
         /// Method to Update Scale in UV2

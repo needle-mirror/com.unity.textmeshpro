@@ -5,8 +5,6 @@ using UnityEditorInternal;
 using System.Collections.Generic;
 
 
-
-
 namespace TMPro.EditorUtilities
 {
 
@@ -374,33 +372,33 @@ namespace TMPro.EditorUtilities
                 GUI.enabled = true;
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 rect = EditorGUILayout.GetControlRect(false, 40);
-               
+
                 float width = (rect.width - 75f) / 4;
                 EditorGUI.LabelField(rect, "Global Offsets & Scale", EditorStyles.boldLabel);
-                
-                
+
+
                 rect.x += 70;
                 bool old_ChangedState = GUI.changed;
 
                 GUI.changed = false;
                 m_xOffset = EditorGUI.FloatField(new Rect(rect.x + 5f + width * 0, rect.y + 20, width - 5f, 18), new GUIContent("OX:"), m_xOffset);
                 if (GUI.changed) UpdateGlobalProperty("m_HorizontalBearingX", m_xOffset);
-                
+
                 m_yOffset = EditorGUI.FloatField(new Rect(rect.x + 5f + width * 1, rect.y + 20, width - 5f, 18), new GUIContent("OY:"), m_yOffset);
                 if (GUI.changed) UpdateGlobalProperty("m_HorizontalBearingY", m_yOffset);
-                
+
                 m_xAdvance = EditorGUI.FloatField(new Rect(rect.x + 5f + width * 2, rect.y + 20, width - 5f, 18), new GUIContent("ADV."), m_xAdvance);
                 if (GUI.changed) UpdateGlobalProperty("m_HorizontalAdvance", m_xAdvance);
-                
+
                 m_scale = EditorGUI.FloatField(new Rect(rect.x + 5f + width * 3, rect.y + 20, width - 5f, 18), new GUIContent("SF."), m_scale);
                 if (GUI.changed) UpdateGlobalProperty("m_Scale", m_scale);
 
                 EditorGUILayout.EndVertical();
-                
+
                 GUI.changed = old_ChangedState;
                 */
                 #endregion
- 
+
             }
             #endregion
 
@@ -565,7 +563,7 @@ namespace TMPro.EditorUtilities
                                 serializedObject.ApplyModifiedProperties();
 
                                 m_IsGlyphSearchDirty = true;
-                                
+
                                 //m_SpriteAsset.UpdateLookupTables();
                             }
 
@@ -660,7 +658,7 @@ namespace TMPro.EditorUtilities
                 EditorUtility.SetDirty(target);
             }
 
-            // Clear selection if mouse event was not consumed. 
+            // Clear selection if mouse event was not consumed.
             GUI.enabled = true;
             if (currentEvent.type == EventType.MouseDown && currentEvent.button == 0)
                 m_selectedElement = -1;
@@ -669,7 +667,7 @@ namespace TMPro.EditorUtilities
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="arraySize"></param>
         /// <param name="itemsPerPage"></param>
@@ -795,7 +793,7 @@ namespace TMPro.EditorUtilities
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="selectedIndex"></param>
         /// <param name="newIndex"></param>
@@ -830,7 +828,7 @@ namespace TMPro.EditorUtilities
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="source"></param>
         /// <param name="target"></param>
@@ -875,7 +873,7 @@ namespace TMPro.EditorUtilities
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="searchPattern"></param>
         /// <returns></returns>

@@ -1,5 +1,7 @@
-using UnityEngine;
+using System;
 using System.Collections;
+using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 #pragma warning disable 0414 // Disabled a few warnings related to serialized variables not used in this script but used in the editor.
@@ -67,6 +69,10 @@ namespace TMPro
         //    set { if (m_anchorDampening != value) { havePropertiesChanged = true; m_anchorDampening = value; /* ScheduleUpdate(); */ } }
         //}
 
+        #if !UNITY_2019_3_OR_NEWER
+        [SerializeField]
+        private bool m_Maskable = true;
+        #endif
 
         private bool m_isRebuildingLayout = false;
         private Coroutine m_DelayedGraphicRebuild;
@@ -251,20 +257,18 @@ namespace TMPro
 
             if (m_ShouldRecalculateStencil)
             {
-                m_stencilID = TMP_MaterialManager.GetStencilID(gameObject);
+                var rootCanvas = MaskUtilities.FindRootSortOverrideCanvas(transform);
+                m_StencilValue = maskable ? MaskUtilities.GetStencilDepth(transform, rootCanvas) : 0;
                 m_ShouldRecalculateStencil = false;
             }
 
-            if (m_stencilID > 0)
+            if (m_StencilValue > 0)
             {
-                mat = TMP_MaterialManager.GetStencilMaterial(baseMaterial, m_stencilID);
-                if (m_MaskMaterial != null)
-                    TMP_MaterialManager.ReleaseStencilMaterial(m_MaskMaterial);
-
-                m_MaskMaterial = mat;
+                var maskMat = StencilMaterial.Add(mat, (1 << m_StencilValue) - 1, StencilOp.Keep, CompareFunction.Equal, ColorWriteMask.All, (1 << m_StencilValue) - 1, 0);
+                StencilMaterial.Remove(m_MaskMaterial);
+                m_MaskMaterial = maskMat;
+                mat = m_MaskMaterial;
             }
-            else if (m_MaskMaterial != null)
-                TMP_MaterialManager.ReleaseStencilMaterial(m_MaskMaterial);
 
             return mat;
         }
@@ -344,13 +348,13 @@ namespace TMPro
         /// <summary>
         /// Method called when Stencil Mask needs to be updated on this element and parents.
         /// </summary>
-        public override void RecalculateMasking()
-        {
-            //Debug.Log("***** RecalculateMasking() *****");
-
-            this.m_ShouldRecalculateStencil = true;
-            SetMaterialDirty();
-        }
+        // public override void RecalculateMasking()
+        // {
+        //     //Debug.Log("***** RecalculateMasking() *****");
+        //
+        //     this.m_ShouldRecalculateStencil = true;
+        //     SetMaterialDirty();
+        // }
 
 
         //public override void SetClipRect(Rect clipRect, bool validRect)
@@ -368,10 +372,7 @@ namespace TMPro
         /// <param name="validRect"></param>
         public override void Cull(Rect clipRect, bool validRect)
         {
-            if (m_canvas == null || m_canvas.rootCanvas == null)
-                return;
-
-            // Delay culling check until the geometry of the text has been updated.
+            // Delay culling check in the event the text layout is dirty and geometry has to be updated.
             if (m_isLayoutDirty)
             {
                 TMP_UpdateManager.RegisterTextElementForCullingUpdate(this);
@@ -597,10 +598,9 @@ namespace TMPro
 
 
         /// <summary>
-        /// Function to force the regeneration of the text object.
+        /// Event to allow users to modify the content of the text info before the text is rendered.
         /// </summary>
-        /// <param name="flags"> Flags to control which portions of the geometry gets uploaded.</param>
-        //public override void ForceMeshUpdate(TMP_VertexDataUpdateFlags flags) { }
+        public override event Action<TMP_TextInfo> OnPreRenderText;
 
 
         /// <summary>

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
@@ -283,11 +284,11 @@ namespace TMPro
             //Debug.Log("*** SubObject OnDisable() ***");
             base.OnDisable();
 
-            if (m_MaskMaterial != null)
-            {
-                TMP_MaterialManager.ReleaseStencilMaterial(m_MaskMaterial);
-                m_MaskMaterial = null;
-            }
+            // if (m_MaskMaterial != null)
+            // {
+            //     TMP_MaterialManager.ReleaseStencilMaterial(m_MaskMaterial);
+            //     m_MaskMaterial = null;
+            // }
 
             if (m_fallbackMaterial != null)
             {
@@ -509,20 +510,18 @@ namespace TMPro
 
             if (m_ShouldRecalculateStencil)
             {
-                m_StencilValue = TMP_MaterialManager.GetStencilID(gameObject);
+                var rootCanvas = MaskUtilities.FindRootSortOverrideCanvas(transform);
+                m_StencilValue = maskable ? MaskUtilities.GetStencilDepth(transform, rootCanvas) : 0;
                 m_ShouldRecalculateStencil = false;
             }
 
             if (m_StencilValue > 0)
             {
-                mat = TMP_MaterialManager.GetStencilMaterial(baseMaterial, m_StencilValue);
-                if (m_MaskMaterial != null)
-                    TMP_MaterialManager.ReleaseStencilMaterial(m_MaskMaterial);
-
-                m_MaskMaterial = mat;
+                var maskMat = StencilMaterial.Add(mat, (1 << m_StencilValue) - 1, StencilOp.Keep, CompareFunction.Equal, ColorWriteMask.All, (1 << m_StencilValue) - 1, 0);
+                StencilMaterial.Remove(m_MaskMaterial);
+                m_MaskMaterial = maskMat;
+                mat = m_MaskMaterial;
             }
-            else if (m_MaskMaterial != null)
-                TMP_MaterialManager.ReleaseStencilMaterial(m_MaskMaterial);
 
             return mat;
         }
@@ -734,13 +733,13 @@ namespace TMPro
         /// <summary>
         ///
         /// </summary>
-        public override void RecalculateMasking()
-        {
-            //Debug.Log("RecalculateMasking()");
-
-            this.m_ShouldRecalculateStencil = true;
-            SetMaterialDirty();
-        }
+        // public override void RecalculateMasking()
+        // {
+        //     //Debug.Log("RecalculateMasking()");
+        //
+        //     this.m_ShouldRecalculateStencil = true;
+        //     SetMaterialDirty();
+        // }
 
 
 

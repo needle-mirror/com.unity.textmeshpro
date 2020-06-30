@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEditor;
 
 
@@ -25,7 +26,7 @@ namespace TMPro.EditorUtilities
             SerializedProperty closingDefinitionArray = property.FindPropertyRelative("m_ClosingTagArray");
 
 
-            EditorGUIUtility.labelWidth = 90;
+            EditorGUIUtility.labelWidth = 86;
             position.height = EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
             float labelHeight = position.height + 2f;
 
@@ -51,16 +52,16 @@ namespace TMPro.EditorUtilities
             rect1.x += 65;
             rect1.width = position.width / 2 - 75;
             EditorGUI.PropertyField(rect1, hashCodeProperty, GUIContent.none);
-            
+
             GUI.enabled = true;
 
             // Text Tags
             EditorGUI.BeginChangeCheck();
-            
+
             // Opening Tags
             position.y += labelHeight;
             GUI.Label(position, "Opening Tags");
-            Rect textRect1 = new Rect(108, position.y, position.width - 86, 35);
+            Rect textRect1 = new Rect(110, position.y, position.width - 86, 35);
             openingDefinitionProperty.stringValue = EditorGUI.TextArea(textRect1, openingDefinitionProperty.stringValue);
             if (EditorGUI.EndChangeCheck())
             {
@@ -82,22 +83,22 @@ namespace TMPro.EditorUtilities
             // Closing Tags
             position.y += 38;
             GUI.Label(position, "Closing Tags");
-            Rect textRect2 = new Rect(108, position.y, position.width - 86, 35);
+            Rect textRect2 = new Rect(110, position.y, position.width - 86, 35);
             closingDefinitionProperty.stringValue = EditorGUI.TextArea(textRect2, closingDefinitionProperty.stringValue);
 
             if (EditorGUI.EndChangeCheck())
             {
                 // If any properties have changed, we need to update the Opening and Closing Arrays.
                 int size = closingDefinitionProperty.stringValue.Length;
-                
+
                 // Adjust array size to match new string length.
                 if (closingDefinitionArray.arraySize != size) closingDefinitionArray.arraySize = size;
-                
+
                 for (int i = 0; i < size; i++)
                 {
                     SerializedProperty element = closingDefinitionArray.GetArrayElementAtIndex(i);
                     element.intValue = closingDefinitionProperty.stringValue[i];
-                }            
+                }
             }
 
         }
@@ -132,19 +133,19 @@ namespace TMPro.EditorUtilities
             serializedObject.Update();
 
             m_IsStyleSheetDirty = false;
-            int arraySize = m_StyleListProp.arraySize;
+            int elementCount = m_StyleListProp.arraySize;
             int itemsPerPage = (Screen.height - 100) / 110;
 
-            if (arraySize > 0)
+            if (elementCount > 0)
             {
                 // Display each Style entry using the StyleDrawer PropertyDrawer.
-                for (int i = itemsPerPage * m_Page; i < arraySize && i < itemsPerPage * (m_Page + 1); i++)
+                for (int i = itemsPerPage * m_Page; i < elementCount && i < itemsPerPage * (m_Page + 1); i++)
                 {
                     // Define the start of the selection region of the element.
                     Rect elementStartRegion = GUILayoutUtility.GetRect(0f, 0f, GUILayout.ExpandWidth(true));
 
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-   
+
                     SerializedProperty styleProperty = m_StyleListProp.GetArrayElementAtIndex(i);
                     EditorGUI.BeginChangeCheck();
                     EditorGUILayout.PropertyField(styleProperty);
@@ -153,7 +154,7 @@ namespace TMPro.EditorUtilities
                     {
                         //
                     }
-      
+
                     // Define the end of the selection region of the element.
                     Rect elementEndRegion = GUILayoutUtility.GetRect(0f, 0f, GUILayout.ExpandWidth(true));
 
@@ -171,7 +172,7 @@ namespace TMPro.EditorUtilities
                             GUIUtility.keyboardControl = 0;
                         }
                     }
-                    
+
                     // Handle Selection Highlighting
                     if (m_SelectedElement == i)
                         TMP_EditorUtility.DrawBox(selectionArea, 2f, new Color32(40, 192, 255, 255));
@@ -193,7 +194,7 @@ namespace TMPro.EditorUtilities
 
             // Move Style down.
             rect.x += rect.width;
-            if (m_SelectedElement == arraySize - 1) { GUI.enabled = false; }
+            if (m_SelectedElement == elementCount - 1) { GUI.enabled = false; }
             if (GUI.Button(rect, "Down"))
             {
                 SwapStyleElements(m_SelectedElement, m_SelectedElement + 1);
@@ -205,7 +206,10 @@ namespace TMPro.EditorUtilities
             if (GUI.Button(rect, "+"))
             {
                 int index = m_SelectedElement == -1 ? 0 : m_SelectedElement;
-                
+
+                if (index > elementCount)
+                    index = elementCount;
+
                 // Copy selected element
                 m_StyleListProp.InsertArrayElementAtIndex(index);
 
@@ -218,7 +222,7 @@ namespace TMPro.EditorUtilities
 
             // Delete style
             rect.x += rect.width;
-            if (m_SelectedElement == -1) GUI.enabled = false;
+            if (m_SelectedElement == -1 || m_SelectedElement >= elementCount) GUI.enabled = false;
             if (GUI.Button(rect, "-"))
             {
                 int index = m_SelectedElement == -1 ? 0 : m_SelectedElement;
@@ -250,19 +254,19 @@ namespace TMPro.EditorUtilities
             // PAGE COUNTER
             GUI.enabled = true;
             pagePos.x += pagePos.width;
-            int totalPages = (int)(arraySize / (float)itemsPerPage + 0.999f);
+            int totalPages = (int)(elementCount / (float)itemsPerPage + 0.999f);
             GUI.Label(pagePos, "Page " + (m_Page + 1) + " / " + totalPages, TMP_UIStyleManager.centeredLabel);
 
             // Next Page
             pagePos.x += pagePos.width;
-            if (itemsPerPage * (m_Page + 1) < arraySize) GUI.enabled = true;
+            if (itemsPerPage * (m_Page + 1) < elementCount) GUI.enabled = true;
             else GUI.enabled = false;
 
             if (GUI.Button(pagePos, "Next"))
                 m_Page += 1 * shiftMultiplier;
 
             // Clamp page range
-            m_Page = Mathf.Clamp(m_Page, 0, arraySize / itemsPerPage);
+            m_Page = Mathf.Clamp(m_Page, 0, elementCount / itemsPerPage);
 
 
             if (serializedObject.ApplyModifiedProperties())
@@ -276,11 +280,10 @@ namespace TMPro.EditorUtilities
                 }
             }
 
-            // Clear selection if mouse event was not consumed. 
+            // Clear selection if mouse event was not consumed.
             GUI.enabled = true;
             if (currentEvent.type == EventType.MouseDown && currentEvent.button == 0)
                 m_SelectedElement = -1;
-            
 
         }
 

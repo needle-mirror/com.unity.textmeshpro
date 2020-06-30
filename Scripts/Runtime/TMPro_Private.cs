@@ -33,8 +33,7 @@ namespace TMPro
         private int m_max_characters = 8; // Determines the initial allocation and size of the character array / buffer.
         private int m_max_numberOfLines = 4; // Determines the initial allocation and maximum number of lines of text.
 
-        protected TMP_SubMesh[] m_subTextObjects = new TMP_SubMesh[8];
-
+        private TMP_SubMesh[] m_subTextObjects = new TMP_SubMesh[8];
 
         // MASKING RELATED PROPERTIES
 
@@ -44,22 +43,11 @@ namespace TMPro
         // Matrix used to animated Env Map
         private Matrix4x4 m_EnvMapMatrix = new Matrix4x4();
 
-
         // Text Container / RectTransform Component
         private Vector3[] m_RectTransformCorners = new Vector3[4];
 
         [NonSerialized]
         private bool m_isRegisteredForEvents;
-
-
-        // DEBUG Variables
-        //private System.Diagnostics.Stopwatch m_StopWatch;
-        //private bool isDebugOutputDone;
-        //private int m_recursiveCount = 0;
-        //private int loopCountB;
-        //private int loopCountC;
-        //private int loopCountD;
-        //private int loopCountE;
 
 
         protected override void Awake()
@@ -277,6 +265,17 @@ namespace TMPro
             m_isPreferredHeightDirty = true;
 
             SetAllDirty();
+        }
+
+        private void OnBecameVisible()
+        {
+            // Keep the parent text object's renderer in sync with child sub objects' renderers.
+            SetActiveSubTextObjectRenderers(true);
+        }
+
+        private void OnBecameInvisible()
+        {
+            SetActiveSubTextObjectRenderers(false);
         }
 
 
@@ -1169,14 +1168,15 @@ namespace TMPro
                         // Use Space (32) Glyph from the currently assigned font asset.
                         unicode = unicodeChars[i].unicode = 32;
                         character = TMP_FontAssetUtilities.GetCharacterFromFontAsset((uint)unicode, m_currentFontAsset, true, m_FontStyleInternal, m_FontWeightInternal, out isUsingAlternativeTypeface);
-                        if (!TMP_Settings.warningsDisabled)
-                        {
-                            string formattedWarning = srcGlyph > 0xFFFF
-                                ? string.Format("The character with Unicode value \\U{0:X8} was not found in the [{1}] font asset or any potential fallbacks. It was replaced by a space in the text object [{2}].", srcGlyph, m_fontAsset.name, this.name)
-                                : string.Format("The character with Unicode value \\u{0:X4} was not found in the [{1}] font asset or any potential fallbacks. It was replaced by a space in the text object [{2}].", srcGlyph, m_fontAsset.name, this.name);
+                    }
 
-                            Debug.LogWarning(formattedWarning, this);
-                        }
+                    if (!TMP_Settings.warningsDisabled)
+                    {
+                        string formattedWarning = srcGlyph > 0xFFFF
+                            ? string.Format("The character with Unicode value \\U{0:X8} was not found in the [{1}] font asset or any potential fallbacks. It was replaced by Unicode character \\u{2:X4} in text object [{3}].", srcGlyph, m_fontAsset.name, character.unicode, this.name)
+                            : string.Format("The character with Unicode value \\u{0:X4} was not found in the [{1}] font asset or any potential fallbacks. It was replaced by Unicode character \\u{2:X4} in text object [{3}].", srcGlyph, m_fontAsset.name, character.unicode, this.name);
+
+                        Debug.LogWarning(formattedWarning, this);
                     }
                 }
 
@@ -1939,9 +1939,10 @@ namespace TMPro
                     {
                         float spriteScale = m_currentFontSize / m_currentFontAsset.m_FaceInfo.pointSize * m_currentFontAsset.m_FaceInfo.scale * (m_isOrthographic ? 1 : 0.1f);
                         currentElementScale = m_currentFontAsset.m_FaceInfo.ascentLine / sprite.m_Glyph.metrics.height * sprite.m_Scale * sprite.m_Glyph.scale * spriteScale;
-                        elementAscentLine = m_currentFontAsset.m_FaceInfo.ascentLine;
+                        float scaleDelta = spriteScale / currentElementScale;
+                        elementAscentLine = m_currentFontAsset.m_FaceInfo.ascentLine * scaleDelta;
                         baselineOffset = m_currentFontAsset.m_FaceInfo.baseline * m_fontScale * m_fontScaleMultiplier * m_currentFontAsset.m_FaceInfo.scale;
-                        elementDescentLine = m_currentFontAsset.m_FaceInfo.descentLine;
+                        elementDescentLine = m_currentFontAsset.m_FaceInfo.descentLine * scaleDelta;
                     }
 
                     m_cached_TextElement = sprite;
@@ -4233,8 +4234,8 @@ namespace TMPro
             // Phase III - Update Mesh Vertex Data
             if (m_renderMode == TextRenderFlags.Render && IsActive())
             {
-                // Clear unused vertices
-                //m_textInfo.meshInfo[0].ClearUnusedVertices();
+                // Event to allow users to modify the content of the text info before the text is rendered.
+                OnPreRenderText?.Invoke(m_textInfo);
 
                 // Sort the geometry of the text object if needed.
                 if (m_geometrySortingOrder != VertexSortingOrder.Normal)
@@ -4342,6 +4343,17 @@ namespace TMPro
             {
                 if (m_subTextObjects[i].enabled != state)
                     m_subTextObjects[i].enabled = state;
+            }
+        }
+
+        protected void SetActiveSubTextObjectRenderers(bool state)
+        {
+            for (int i = 1; i < m_subTextObjects.Length && m_subTextObjects[i] != null; i++)
+            {
+                Renderer renderer = m_subTextObjects[i].renderer;
+
+                if (renderer != null && renderer.enabled != state)
+                    renderer.enabled = state;
             }
         }
 
