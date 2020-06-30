@@ -524,8 +524,6 @@ namespace TMPro
 
         void Awake()
         {
-            //Debug.Log("TMP Font Asset [" + this.name + "] with Version #" + m_Version + " has been enabled!");
-
             // Check version number of font asset to see if it needs to be upgraded.
             if (this.material != null && string.IsNullOrEmpty(m_Version))
                 UpgradeFontAsset();
@@ -534,6 +532,7 @@ namespace TMPro
         #if UNITY_EDITOR
         private void OnValidate()
         {
+            // Make sure our lookup dictionary have been initialized.
             if (m_CharacterLookupDictionary == null || m_GlyphLookupDictionary == null)
                 ReadFontAssetDefinition();
         }
@@ -1400,6 +1399,10 @@ namespace TMPro
                 return false;
             }
 
+            // Make sure font asset has been initialized
+            if (m_CharacterLookupDictionary == null || m_GlyphLookupDictionary == null)
+                ReadFontAssetDefinition();
+
             // Clear lists used to track which character and glyphs were added or missing.
             m_GlyphsToAdd.Clear();
             m_GlyphsToAddLookup.Clear();
@@ -1616,6 +1619,10 @@ namespace TMPro
                 Profiler.EndSample();
                 return false;
             }
+
+            // Make sure font asset has been initialized
+            if (m_CharacterLookupDictionary == null || m_GlyphLookupDictionary == null)
+                ReadFontAssetDefinition();
 
             // Clear data structures used to track which glyph needs to be added to atlas texture.
             m_GlyphsToAdd.Clear();

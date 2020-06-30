@@ -1282,9 +1282,9 @@ namespace TMPro.EditorUtilities
 
             float width = rect.width + 3;
             pos0.width = EditorGUIUtility.labelWidth;
-            GUI.Label(pos0, label);
+            EditorGUI.PrefixLabel(pos0, label);
 
-            var vec = property.vector4Value;
+            Vector4 margins = property.vector4Value;
 
             float widthB = width - EditorGUIUtility.labelWidth;
             float fieldWidth = widthB / 4;
@@ -1292,34 +1292,31 @@ namespace TMPro.EditorUtilities
 
             // Labels
             pos0.x = EditorGUIUtility.labelWidth + 15;
-            GUI.Label(pos0, k_LeftLabel);
+            margins.x = DrawMarginField(pos0, "Left", margins.x);
 
             pos0.x += fieldWidth;
-            GUI.Label(pos0, k_TopLabel);
+            margins.y = DrawMarginField(pos0, "Top", margins.y);
 
             pos0.x += fieldWidth;
-            GUI.Label(pos0, k_RightLabel);
+            margins.z = DrawMarginField(pos0, "Right", margins.z);
 
             pos0.x += fieldWidth;
-            GUI.Label(pos0, k_BottomLabel);
+            margins.w = DrawMarginField(pos0, "Bottom", margins.w);
 
-            pos0.y += 18;
-
-            pos0.x = EditorGUIUtility.labelWidth + 15;
-            vec.x = EditorGUI.FloatField(pos0, GUIContent.none, vec.x);
-
-            pos0.x += fieldWidth;
-            vec.y = EditorGUI.FloatField(pos0, GUIContent.none, vec.y);
-
-            pos0.x += fieldWidth;
-            vec.z = EditorGUI.FloatField(pos0, GUIContent.none, vec.z);
-
-            pos0.x += fieldWidth;
-            vec.w = EditorGUI.FloatField(pos0, GUIContent.none, vec.w);
-
-            property.vector4Value = vec;
+            property.vector4Value = margins;
 
             EditorGUI.EndProperty();
+        }
+
+        float DrawMarginField(Rect position, string label, float value)
+        {
+            int controlId = GUIUtility.GetControlID(FocusType.Keyboard, position);
+            EditorGUI.PrefixLabel(position, controlId, new GUIContent(label));
+
+            Rect dragZone = new Rect(position.x, position.y, position.width, position.height);
+            position.y += EditorGUIUtility.singleLineHeight;
+
+            return EditorGUI.DoFloatField(EditorGUI.s_RecycledEditor, position, dragZone, controlId, value, EditorGUI.kFloatFieldFormatString, EditorStyles.numberField, true);
         }
 
         protected void DrawPropertySlider(GUIContent label, SerializedProperty property)

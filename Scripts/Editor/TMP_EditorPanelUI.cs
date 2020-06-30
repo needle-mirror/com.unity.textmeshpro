@@ -9,13 +9,16 @@ namespace TMPro.EditorUtilities
     public class TMP_EditorPanelUI : TMP_BaseEditorPanel
     {
         static readonly GUIContent k_RaycastTargetLabel = new GUIContent("Raycast Target", "Whether the text blocks raycasts from the Graphic Raycaster.");
+        static readonly GUIContent k_MaskableLabel = new GUIContent("Maskable", "Determines if the text object will be affected by UI Mask.");
 
         SerializedProperty m_RaycastTargetProp;
+        private SerializedProperty m_MaskableProp;
 
         protected override void OnEnable()
         {
             base.OnEnable();
             m_RaycastTargetProp = serializedObject.FindProperty("m_RaycastTarget");
+            m_MaskableProp = serializedObject.FindProperty("m_Maskable");
         }
 
         protected override void DrawExtraSettings()
@@ -39,6 +42,8 @@ namespace TMPro.EditorUtilities
                 DrawRichText();
 
                 DrawRaycastTarget();
+
+                DrawMaskable();
 
                 DrawParsing();
 
@@ -64,6 +69,23 @@ namespace TMPro.EditorUtilities
                 Graphic[] graphicComponents = m_TextComponent.GetComponentsInChildren<Graphic>();
                 for (int i = 1; i < graphicComponents.Length; i++)
                     graphicComponents[i].raycastTarget = m_RaycastTargetProp.boolValue;
+
+                m_HavePropertiesChanged = true;
+            }
+        }
+
+        protected void DrawMaskable()
+        {
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField(m_MaskableProp, k_MaskableLabel);
+            if (EditorGUI.EndChangeCheck())
+            {
+                m_TextComponent.maskable = m_MaskableProp.boolValue;
+
+                // Change needs to propagate to the child sub objects.
+                MaskableGraphic[] maskableGraphics = m_TextComponent.GetComponentsInChildren<MaskableGraphic>();
+                for (int i = 1; i < maskableGraphics.Length; i++)
+                    maskableGraphics[i].maskable = m_MaskableProp.boolValue;
 
                 m_HavePropertiesChanged = true;
             }
