@@ -936,7 +936,6 @@ namespace TMPro.EditorUtilities
                             m_StopWatch.Stop();
                             m_GlyphPackingGenerationTime = m_StopWatch.Elapsed.TotalMilliseconds;
                             m_IsGlyphPackingDone = true;
-                            //Debug.Log("Glyph packing completed in: " + m_GlyphPackingGenerationTime.ToString("0.000 ms."));
                             m_StopWatch.Reset();
 
                             m_FontCharacterTable.Clear();
@@ -1003,7 +1002,6 @@ namespace TMPro.EditorUtilities
                             m_StopWatch.Stop();
                             m_GlyphRenderingGenerationTime = m_StopWatch.Elapsed.TotalMilliseconds;
                             m_IsGlyphRenderingDone = true;
-                            //Debug.Log("Font Atlas generation completed in: " + m_GlyphRenderingGenerationTime.ToString("0.000 ms."));
                             m_StopWatch.Reset();
                         });
                     }

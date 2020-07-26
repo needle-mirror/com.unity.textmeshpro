@@ -1170,6 +1170,13 @@ namespace TMPro
                         character = TMP_FontAssetUtilities.GetCharacterFromFontAsset((uint)unicode, m_currentFontAsset, true, m_FontStyleInternal, m_FontWeightInternal, out isUsingAlternativeTypeface);
                     }
 
+                    if (character == null)
+                    {
+                        // Use End of Text (0x03) Glyph from the currently assigned font asset.
+                        unicode = unicodeChars[i].unicode = 0x03;
+                        character = TMP_FontAssetUtilities.GetCharacterFromFontAsset((uint)unicode, m_currentFontAsset, true, m_FontStyleInternal, m_FontWeightInternal, out isUsingAlternativeTypeface);
+                    }
+
                     if (!TMP_Settings.warningsDisabled)
                     {
                         string formattedWarning = srcGlyph > 0xFFFF
@@ -2736,7 +2743,7 @@ namespace TMPro
                                         // Add new page
                                         m_isNewPage = true;
 
-                                        InsertNewLine(i, baseScale, currentElementScale,  currentEmScale, m_GlyphHorizontalAdvanceAdjustment, boldSpacingAdjustment, characterSpacingAdjustment, widthOfTextArea, lineGap, ref isMaxVisibleDescenderSet, ref maxVisibleDescender);
+                                        InsertNewLine(i, baseScale, currentElementScale, currentEmScale, m_GlyphHorizontalAdvanceAdjustment, boldSpacingAdjustment, characterSpacingAdjustment, widthOfTextArea, lineGap, ref isMaxVisibleDescenderSet, ref maxVisibleDescender);
 
                                         m_startOfLineAscender = 0;
                                         m_lineOffset = 0;

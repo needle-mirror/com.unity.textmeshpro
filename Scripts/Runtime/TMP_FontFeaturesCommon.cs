@@ -7,6 +7,7 @@ using UnityEngine.TextCore.LowLevel;
 
 namespace TMPro
 {
+    [Flags]
     public enum FontFeatureLookupFlags
     {
         None                        =     0x0,
@@ -161,7 +162,7 @@ namespace TMPro
         public TMP_GlyphAdjustmentRecord secondAdjustmentRecord { get { return m_SecondAdjustmentRecord; } set { m_SecondAdjustmentRecord = value; } }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public FontFeatureLookupFlags featureLookupFlags { get { return m_FeatureLookupFlags; } set { m_FeatureLookupFlags = value; } }
 
@@ -191,7 +192,7 @@ namespace TMPro
         }
 
         /// <summary>
-        /// Internal constructor 
+        /// Internal constructor
         /// </summary>
         /// <param name="firstAdjustmentRecord"></param>
         /// <param name="secondAdjustmentRecord"></param>
