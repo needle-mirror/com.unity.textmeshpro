@@ -460,57 +460,6 @@ namespace TMPro
     }
 
 
-    /*
-    public class TMP_ShaderRemappingTool : EditorWindow
-    {
-        // Create Shader Reference Upgrade Tool window
-        [MenuItem("Window/TextMeshPro/Shader Reference Remapping Tool", false, 2110)]
-        static void ShowShaderUpgradeWindow()
-        {
-            var window = GetWindow<TMP_ShaderRemappingTool>();
-            window.titleContent = new GUIContent("Shader Upgrade Tool");
-            window.Focus();
-        }
-
-        private static string k_ProjectMaterialScanReportDefaultText = "<color=#FFFF80><b>Project Scan Results</b></color>\n";
-        private static string m_ProjectMaterialScanResults = string.Empty;
-
-
-        void OnEnable()
-        {
-            // Set Editor Window Size
-            SetEditorWindowSize();
-
-            m_ProjectMaterialScanResults = k_ProjectMaterialScanReportDefaultText;
-        }
-
-
-        private void OnGUI()
-        {
-
-        }
-
-
-        void OnInspectorUpdate()
-        {
-            Repaint();
-        }
-
-
-        /// <summary>
-        /// Limits the minimum size of the editor window.
-        /// </summary>
-        void SetEditorWindowSize()
-        {
-            EditorWindow editorWindow = this;
-
-            Vector2 currentWindowSize = editorWindow.minSize;
-
-            editorWindow.minSize = new Vector2(Mathf.Max(640, currentWindowSize.x), Mathf.Max(420, currentWindowSize.y));
-        }
-    }
-    */
-
 
     public class TMP_PackageUtilities : Editor
     {

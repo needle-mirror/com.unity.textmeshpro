@@ -3,6 +3,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -3821,7 +3822,9 @@ namespace TMPro
                 {
                     if (ch >= '0' && ch <= '9') return ch;
                     if (ch == '-' && (pos == 0 || selectionAtStart)) return ch;
-                    if (ch == '.' && characterValidation == CharacterValidation.Decimal && !text.Contains(".")) return ch;
+
+                    var separator = Thread.CurrentThread.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+                    if (ch == Convert.ToChar(separator) && characterValidation == CharacterValidation.Decimal && !text.Contains(separator)) return ch;
                 }
             }
             else if (characterValidation == CharacterValidation.Digit)

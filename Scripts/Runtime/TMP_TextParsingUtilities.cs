@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace TMPro
 {
-    public class TMP_TextParsingUtilities 
+    public class TMP_TextParsingUtilities
     {
         private static readonly TMP_TextParsingUtilities s_Instance = new TMP_TextParsingUtilities();
 

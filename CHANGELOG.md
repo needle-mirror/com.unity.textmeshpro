@@ -1,6 +1,17 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [1.5.1] - 2020-07-26
+## [2.1.1]
+## [3.0.1]
+### Changes
+- Addressed compiler warning related to the new virtual event OnPreRenderText.
+- Added one additional layer of missing character search where in the even the missing glyph character \u0000 or space character \u0020 is not available in any font asset or potential fallbacks, the End of Text (ETX) \u0003 will be used instead.
+- Input Field Integer or Decimal validation will now take into account the current culture. See [forum post](https://forum.unity.com/threads/currentculture-decimal-separator-in-input-fields.908999/) for details.
+- Added Editor only font asset post processor to handle font assets being modified outside of the Unity Editor.
+- Fixed potential Array Out of Bounds error that could occur when using &lt;/style&gt; without first using a valid &lt;style&gt;. Case #1263787 and See [forum post](https://forum.unity.com/threads/missingreferenceexception-occurs-on-selecting-a-tmp-dropdown-in-the-hierarchy-after-a-play-occurs.728018/#post-6094317) for details.
+- Fixed potential issue when using multiple &lt;font&gt; tag in the same text object where these referencing several font assets derived from the same font file. Since their Default Material all have the same name, this was causing an issue in the Material Reference Manager. See [forum post](https://forum.unity.com/threads/argumentexception-on-v2-1-0-unity-2019-4-4f1-identified-bug.934789/) for details. Case #1264596. 
+
 ## [1.5.0] - 2020-06-30
 ## [2.1.0]
 ## [3.0.0]

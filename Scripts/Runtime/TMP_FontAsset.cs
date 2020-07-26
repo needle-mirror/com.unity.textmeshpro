@@ -632,7 +632,6 @@ namespace TMPro
         }
         */
 
-
         void Awake()
         {
             // Check version number of font asset to see if it needs to be upgraded.
@@ -648,6 +647,8 @@ namespace TMPro
                 ReadFontAssetDefinition();
         }
         #endif
+
+        private static string s_DefaultMaterialSuffix = " Atlas Material";
 
         public void ReadFontAssetDefinition()
         {
@@ -684,7 +685,7 @@ namespace TMPro
             hashCode = TMP_TextUtilities.GetSimpleHashCode(this.name);
 
             // Compute Hashcode for the material name
-            materialHashCode = TMP_TextUtilities.GetSimpleHashCode(material.name);
+            materialHashCode = TMP_TextUtilities.GetSimpleHashCode(this.name + s_DefaultMaterialSuffix);
 
             // Add reference to font asset in TMP Resource Manager
             //TMP_ResourceManager.AddFontAsset(this);

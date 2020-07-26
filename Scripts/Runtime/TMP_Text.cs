@@ -2325,8 +2325,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         int srcOffset;
                         if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref m_InternalParsingBuffer, ref writeIndex))
                         {
@@ -2336,8 +2334,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "</STYLE>", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         ReplaceClosingStyleTag(ref sourceText, i, ref m_InternalParsingBuffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
@@ -2494,8 +2490,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         int srcOffset;
                         if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref m_InternalParsingBuffer, ref writeIndex))
                         {
@@ -2505,8 +2499,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "</STYLE>", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         ReplaceClosingStyleTag(ref sourceText, i, ref m_InternalParsingBuffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
@@ -2647,8 +2639,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         int srcOffset;
                         if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref m_InternalParsingBuffer, ref writeIndex))
                         {
@@ -2658,8 +2648,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "</STYLE>", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         ReplaceClosingStyleTag(ref sourceText, i, ref m_InternalParsingBuffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
@@ -2785,8 +2773,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         int srcOffset;
                         if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref internalParsingArray, ref writeIndex))
                         {
@@ -2796,8 +2782,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "</STYLE>", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         ReplaceClosingStyleTag(ref sourceText, i, ref internalParsingArray, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
@@ -3016,8 +3000,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         int srcOffset;
                         if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref internalParsingArray, ref writeIndex))
                         {
@@ -3027,8 +3009,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "</STYLE>", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         ReplaceClosingStyleTag(ref sourceText, i, ref internalParsingArray, ref writeIndex);
 
                         i += 7;
@@ -3217,8 +3197,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         int srcOffset;
                         if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref internalParsingArray, ref writeIndex))
                         {
@@ -3228,8 +3206,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "</STYLE>", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         ReplaceClosingStyleTag(ref sourceText, i, ref internalParsingArray, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
@@ -3276,6 +3252,9 @@ namespace TMPro
             // Return if we don't have a valid style.
             if (style == null || srcOffset == 0) return false;
 
+            // Increase style depth
+            m_TextStyleStackDepth += 1;
+
             // Push style hashcode onto stack
             m_TextStyleStacks[m_TextStyleStackDepth].Push(style.hashCode);
 
@@ -3358,8 +3337,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "<STYLE=", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         int offset;
                         if (ReplaceOpeningStyleTag(ref tagDefinition, i, out offset, ref charBuffer, ref writeIndex))
                         {
@@ -3369,8 +3346,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "</STYLE>", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         ReplaceClosingStyleTag(ref tagDefinition, i, ref charBuffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
@@ -3410,6 +3385,10 @@ namespace TMPro
             // Return if we don't have a valid style.
             if (style == null || srcOffset == 0) return false;
 
+            // Increase style depth
+            m_TextStyleStackDepth += 1;
+
+            // Push style hashcode onto stack
             m_TextStyleStacks[m_TextStyleStackDepth].Push(style.hashCode);
 
             int styleLength = style.styleOpeningTagArray.Length;
@@ -3491,8 +3470,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "<STYLE=", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         int offset;
                         if (ReplaceOpeningStyleTag(ref tagDefinition, i, out offset, ref charBuffer, ref writeIndex))
                         {
@@ -3502,8 +3479,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "</STYLE>", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         ReplaceClosingStyleTag(ref tagDefinition, i, ref charBuffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
@@ -3543,6 +3518,9 @@ namespace TMPro
             // Return if we don't have a valid style.
             if (style == null || srcOffset == 0) return false;
 
+            // Increase style depth
+            m_TextStyleStackDepth += 1;
+
             // Push style hashcode onto stack
             m_TextStyleStacks[m_TextStyleStackDepth].Push(style.hashCode);
 
@@ -3625,8 +3603,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "<STYLE=", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         int offset;
                         if (ReplaceOpeningStyleTag(ref tagDefinition, i, out offset, ref charBuffer, ref writeIndex))
                         {
@@ -3636,8 +3612,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "</STYLE>", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         ReplaceClosingStyleTag(ref tagDefinition, i, ref charBuffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
@@ -3677,6 +3651,9 @@ namespace TMPro
             // Return if we don't have a valid style.
             if (style == null || srcOffset == 0) return false;
 
+            // Increase style depth
+            m_TextStyleStackDepth += 1;
+
             // Push style hashcode onto stack
             m_TextStyleStacks[m_TextStyleStackDepth].Push(style.hashCode);
 
@@ -3759,8 +3736,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "<STYLE=", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         int offset;
                         if (ReplaceOpeningStyleTag(ref tagDefinition, i, out offset, ref charBuffer, ref writeIndex))
                         {
@@ -3770,8 +3745,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "</STYLE>", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         ReplaceClosingStyleTag(ref tagDefinition, i, ref charBuffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
@@ -3801,11 +3774,14 @@ namespace TMPro
         bool ReplaceClosingStyleTag(ref string sourceText, int srcIndex, ref UnicodeChar[] charBuffer, ref int writeIndex)
         {
             // Get style from the Style Stack
-            int hashCode = m_TextStyleStacks[m_TextStyleStackDepth].Pop();
+            int hashCode = m_TextStyleStacks[m_TextStyleStackDepth + 1].Pop();
             TMP_Style style = GetStyle(hashCode);
 
             // Return if we don't have a valid style.
             if (style == null) return false;
+
+            // Increase style depth
+            m_TextStyleStackDepth += 1;
 
             int styleLength = style.styleClosingTagArray.Length;
 
@@ -3886,8 +3862,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "<STYLE=", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         int offset;
                         if (ReplaceOpeningStyleTag(ref tagDefinition, i, out offset, ref charBuffer, ref writeIndex))
                         {
@@ -3897,8 +3871,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "</STYLE>", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         ReplaceClosingStyleTag(ref tagDefinition, i, ref charBuffer, ref writeIndex);
 
                         i += 7;
@@ -3929,11 +3901,14 @@ namespace TMPro
         bool ReplaceClosingStyleTag(ref int[] sourceText, int srcIndex, ref UnicodeChar[] charBuffer, ref int writeIndex)
         {
             // Get style from the Style Stack
-            int hashCode = m_TextStyleStacks[m_TextStyleStackDepth].Pop();
+            int hashCode = m_TextStyleStacks[m_TextStyleStackDepth + 1].Pop();
             TMP_Style style = GetStyle(hashCode);
 
             // Return if we don't have a valid style.
             if (style == null) return false;
+
+            // Increase style depth
+            m_TextStyleStackDepth += 1;
 
             int styleLength = style.styleClosingTagArray.Length;
 
@@ -4014,8 +3989,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "<STYLE=", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         int offset; ;
                         if (ReplaceOpeningStyleTag(ref tagDefinition, i, out offset, ref charBuffer, ref writeIndex))
                         {
@@ -4025,8 +3998,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "</STYLE>", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         ReplaceClosingStyleTag(ref tagDefinition, i, ref charBuffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
@@ -4058,11 +4029,14 @@ namespace TMPro
         bool ReplaceClosingStyleTag(ref char[] sourceText, int srcIndex, ref UnicodeChar[] charBuffer, ref int writeIndex)
         {
             // Get style from the Style Stack
-            int hashCode = m_TextStyleStacks[m_TextStyleStackDepth].Pop();
+            int hashCode = m_TextStyleStacks[m_TextStyleStackDepth + 1].Pop();
             TMP_Style style = GetStyle(hashCode);
 
             // Return if we don't have a valid style.
             if (style == null) return false;
+
+            // Increase style depth
+            m_TextStyleStackDepth += 1;
 
             int styleLength = style.styleClosingTagArray.Length;
 
@@ -4143,8 +4117,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "<STYLE=", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         int offset;
                         if (ReplaceOpeningStyleTag(ref tagDefinition, i, out offset, ref charBuffer, ref writeIndex))
                         {
@@ -4154,8 +4126,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "</STYLE>", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         ReplaceClosingStyleTag(ref tagDefinition, i, ref charBuffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
@@ -4186,11 +4156,14 @@ namespace TMPro
         bool ReplaceClosingStyleTag(ref StringBuilder sourceText, int srcIndex, ref UnicodeChar[] charBuffer, ref int writeIndex)
         {
             // Get style from the Style Stack
-            int hashCode = m_TextStyleStacks[m_TextStyleStackDepth].Pop();
+            int hashCode = m_TextStyleStacks[m_TextStyleStackDepth + 1].Pop();
             TMP_Style style = GetStyle(hashCode);
 
             // Return if we don't have a valid style.
             if (style == null) return false;
+
+            // Increase style depth
+            m_TextStyleStackDepth += 1;
 
             int styleLength = style.styleClosingTagArray.Length;
 
@@ -4271,8 +4244,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "<STYLE=", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         int offset;
                         if (ReplaceOpeningStyleTag(ref tagDefinition, i, out offset, ref charBuffer, ref writeIndex))
                         {
@@ -4282,8 +4253,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "</STYLE>", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         ReplaceClosingStyleTag(ref tagDefinition, i, ref charBuffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
@@ -4297,6 +4266,8 @@ namespace TMPro
                 charBuffer[writeIndex].unicode = c;
                 writeIndex += 1;
             }
+
+            m_TextStyleStackDepth -= 1;
 
             return true;
         }
@@ -4411,8 +4382,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "<STYLE=", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         int offset;
                         if (ReplaceOpeningStyleTag(ref tagDefinition, i, out offset, ref charBuffer, ref writeIndex))
                         {
@@ -4422,8 +4391,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "</STYLE>", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         ReplaceClosingStyleTag(ref tagDefinition, i, ref charBuffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
@@ -4529,8 +4496,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "<STYLE=", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         int offset;
                         if (ReplaceOpeningStyleTag(ref tagDefinition, i, out offset, ref charBuffer, ref writeIndex))
                         {
@@ -4540,8 +4505,6 @@ namespace TMPro
                     }
                     else if (IsTagName(ref tagDefinition, "</STYLE>", i))
                     {
-                        m_TextStyleStackDepth += 1;
-
                         ReplaceClosingStyleTag(ref tagDefinition, i, ref charBuffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.

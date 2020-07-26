@@ -1,5 +1,6 @@
-﻿using UnityEngine;
-using UnityEngine.TextCore;
+﻿using System.Diagnostics;
+using UnityEngine;
+
 
 namespace TMPro
 {
@@ -157,6 +158,7 @@ namespace TMPro
     /// <summary>
     /// Structure containing information about individual text elements (character or sprites).
     /// </summary>
+    [DebuggerDisplay("Unicode '{character}'  ({((uint)character).ToString(\"X\")})")]
     public struct TMP_CharacterInfo
     {
         public char character; // Should be changed to an uint to handle UTF32
