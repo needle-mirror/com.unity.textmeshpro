@@ -1169,6 +1169,13 @@ namespace TMPro
                         character = TMP_FontAssetUtilities.GetCharacterFromFontAsset((uint)unicode, m_currentFontAsset, true, m_FontStyleInternal, m_FontWeightInternal, out isUsingAlternativeTypeface);
                     }
 
+                    if (character == null)
+                    {
+                        // Use End of Text (0x03) Glyph from the currently assigned font asset.
+                        unicode = unicodeChars[i].unicode = 0x03;
+                        character = TMP_FontAssetUtilities.GetCharacterFromFontAsset((uint)unicode, m_currentFontAsset, true, m_FontStyleInternal, m_FontWeightInternal, out isUsingAlternativeTypeface);
+                    }
+
                     if (!TMP_Settings.warningsDisabled)
                     {
                         string formattedWarning = srcGlyph > 0xFFFF

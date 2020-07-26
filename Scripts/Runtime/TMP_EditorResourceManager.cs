@@ -17,6 +17,9 @@ namespace TMPro
         private readonly List<Object> m_ObjectReImportQueue = new List<Object>();
         private HashSet<int> m_ObjectReImportQueueLookup = new HashSet<int>();
 
+        private readonly List<TMP_FontAsset> m_FontAssetDefinitionRefreshQueue = new List<TMP_FontAsset>();
+        private HashSet<int> m_FontAssetDefinitionRefreshQueueLookup = new HashSet<int>();
+
         /// <summary>
         /// Get a singleton instance of the manager.
         /// </summary>
@@ -67,8 +70,6 @@ namespace TMPro
 
             m_ObjectReImportQueueLookup.Add(id);
             m_ObjectReImportQueue.Add(obj);
-
-            return;
         }
 
         /// <summary>
@@ -89,8 +90,26 @@ namespace TMPro
 
             m_ObjectUpdateQueueLookup.Add(id);
             m_ObjectUpdateQueue.Add(obj);
+        }
 
-            return;
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="fontAsset"></param>
+        internal static void RegisterFontAssetForDefinitionRefresh(TMP_FontAsset fontAsset)
+        {
+            instance.InternalRegisterFontAssetForDefinitionRefresh(fontAsset);
+        }
+
+        private void InternalRegisterFontAssetForDefinitionRefresh(TMP_FontAsset fontAsset)
+        {
+            int id = fontAsset.GetInstanceID();
+
+            if (m_FontAssetDefinitionRefreshQueueLookup.Contains(id))
+                return;
+
+            m_FontAssetDefinitionRefreshQueueLookup.Add(id);
+            m_FontAssetDefinitionRefreshQueue.Add(fontAsset);
         }
 
 
@@ -134,6 +153,24 @@ namespace TMPro
             {
                 m_ObjectReImportQueue.Clear();
                 m_ObjectReImportQueueLookup.Clear();
+            }
+
+            // Handle Font Asset Definition Refresh
+            for (int i = 0; i < m_FontAssetDefinitionRefreshQueue.Count; i++)
+            {
+                TMP_FontAsset fontAsset = m_FontAssetDefinitionRefreshQueue[i];
+
+                if (fontAsset != null)
+                {
+                    fontAsset.ReadFontAssetDefinition();
+                    TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
+                }
+            }
+
+            if (m_FontAssetDefinitionRefreshQueue.Count > 0)
+            {
+                m_FontAssetDefinitionRefreshQueue.Clear();
+                m_FontAssetDefinitionRefreshQueueLookup.Clear();
             }
         }
 
