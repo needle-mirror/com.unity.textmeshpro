@@ -181,7 +181,8 @@ namespace TMPro.EditorUtilities
 
             // STYLE LIST MANAGEMENT
             Rect rect = EditorGUILayout.GetControlRect(false, 20);
-            rect.width /= 6;
+            float totalWidth = rect.width;
+            rect.width = totalWidth * 0.175f;
 
             // Move Style up.
             bool guiEnabled = GUI.enabled;
@@ -202,7 +203,7 @@ namespace TMPro.EditorUtilities
             GUI.enabled = guiEnabled;
 
             // Add Style
-            rect.x += rect.width * 3;
+            rect.x += rect.width + totalWidth * 0.3f;
             if (GUI.Button(rect, "+"))
             {
                 int index = m_SelectedElement == -1 ? 0 : m_SelectedElement;
@@ -242,7 +243,7 @@ namespace TMPro.EditorUtilities
             int shiftMultiplier = currentEvent.shift ? 10 : 1; // Page + Shift goes 10 page forward
 
             Rect pagePos = EditorGUILayout.GetControlRect(false, 20);
-            pagePos.width /= 3;
+            pagePos.width = totalWidth * 0.35f;
 
             // Previous Page
             if (m_Page > 0) GUI.enabled = true;
@@ -254,11 +255,13 @@ namespace TMPro.EditorUtilities
             // PAGE COUNTER
             GUI.enabled = true;
             pagePos.x += pagePos.width;
+            pagePos.width = totalWidth * 0.30f;
             int totalPages = (int)(elementCount / (float)itemsPerPage + 0.999f);
             GUI.Label(pagePos, "Page " + (m_Page + 1) + " / " + totalPages, TMP_UIStyleManager.centeredLabel);
 
             // Next Page
             pagePos.x += pagePos.width;
+            pagePos.width = totalWidth * 0.35f;
             if (itemsPerPage * (m_Page + 1) < elementCount) GUI.enabled = true;
             else GUI.enabled = false;
 

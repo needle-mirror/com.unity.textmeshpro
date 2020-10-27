@@ -82,7 +82,7 @@ namespace TMPro
 
             Material stencilMaterial;
 
-            //Create new Masking Material Instance for this Base Material 
+            //Create new Masking Material Instance for this Base Material
             stencilMaterial = new Material(baseMaterial);
             stencilMaterial.hideFlags = HideFlags.HideAndDontSave;
 
@@ -123,7 +123,7 @@ namespace TMPro
         public static void ReleaseStencilMaterial(Material stencilMaterial)
         {
             int stencilMaterialID = stencilMaterial.GetInstanceID();
-            
+
             for (int i = 0; i < m_materialList.Count; i++)
             {
                 if (m_materialList[i].stencilMaterial.GetInstanceID() == stencilMaterialID)
@@ -171,7 +171,7 @@ namespace TMPro
         public static Material SetStencil(Material material, int stencilID)
         {
             material.SetFloat(ShaderUtilities.ID_StencilID, stencilID);
-            
+
             if (stencilID == 0)
                 material.SetFloat(ShaderUtilities.ID_StencilComp, 8);
             else
@@ -266,8 +266,8 @@ namespace TMPro
                 Material stencilMaterial = m_materialList[i].stencilMaterial;
 
                 Object.DestroyImmediate(stencilMaterial);
-                m_materialList.RemoveAt(i);
             }
+            m_materialList.Clear();
         }
 
 
@@ -456,7 +456,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="targetMaterial"></param>
         public static void AddFallbackMaterialReference(Material targetMaterial)
@@ -467,7 +467,7 @@ namespace TMPro
             long key;
             FallbackMaterial fallback;
 
-            // Lookup key to retrieve 
+            // Lookup key to retrieve
             if (m_fallbackMaterialLookup.TryGetValue(sourceID, out key))
             {
                 if (m_fallbackMaterials.TryGetValue(key, out fallback))
@@ -480,7 +480,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="targetMaterial"></param>
         public static void RemoveFallbackMaterialReference(Material targetMaterial)
@@ -491,7 +491,7 @@ namespace TMPro
             long key;
             FallbackMaterial fallback;
 
-            // Lookup key to retrieve 
+            // Lookup key to retrieve
             if (m_fallbackMaterialLookup.TryGetValue(sourceID, out key))
             {
                 if (m_fallbackMaterials.TryGetValue(key, out fallback))
@@ -506,7 +506,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public static void CleanupFallbackMaterials()
         {
@@ -621,7 +621,7 @@ namespace TMPro
 
         #if TMP_DEBUG_MODE
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public static void ListMaterials()
         {
@@ -645,7 +645,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public static void ListFallbackMaterials()
         {

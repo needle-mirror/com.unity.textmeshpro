@@ -288,7 +288,7 @@ namespace TMPro
 
             m_canvasRenderer.materialCount = 1;
             m_canvasRenderer.SetMaterial(materialForRendering, 0);
-            //m_canvasRenderer.SetTexture(m_sharedMaterial.mainTexture);
+            //m_canvasRenderer.SetTexture(materialForRendering.mainTexture);
         }
 
 

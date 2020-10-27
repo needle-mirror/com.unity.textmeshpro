@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Rendering;
 
 
 namespace TMPro
@@ -236,7 +237,9 @@ namespace TMPro
         /// <param name="size"></param>
         public void ResizeMeshInfo(int size)
         {
-            // Limit the mesh to less than 65535 vertices which is the limit for Unity's Mesh.
+            // If the requested size will exceed the 16 bit mesh limit, switch mesh to use 32 bit.
+            //if (size > 16383 && this.mesh.indexFormat == IndexFormat.UInt16)
+            //    this.mesh.indexFormat = IndexFormat.UInt32;
             size = Mathf.Min(size, 16383);
 
             int size_X4 = size * 4;
@@ -507,7 +510,7 @@ namespace TMPro
             switch (order)
             {
                 case VertexSortingOrder.Normal:
-                    // Do nothing 
+                    // Do nothing
                     break;
                 case VertexSortingOrder.Reverse:
                     int size = vertexCount / 4;

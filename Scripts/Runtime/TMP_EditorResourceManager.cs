@@ -112,7 +112,6 @@ namespace TMPro
             m_FontAssetDefinitionRefreshQueue.Add(fontAsset);
         }
 
-
         void DoUpdates()
         {
             // Handle objects that need updating

@@ -14,6 +14,8 @@ namespace TMPro
     {
         // Public Properties and Serializable Properties
 
+        [SerializeField] internal int _SortingLayer;
+
         /// <summary>
         /// Sets the Renderer's sorting Layer ID
         /// </summary>

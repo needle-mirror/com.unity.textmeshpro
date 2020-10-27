@@ -71,11 +71,6 @@ namespace TMPro
             if (m_renderer == null)
                 m_renderer = gameObject.AddComponent<Renderer>();
 
-            // Get reference to CanvasRenderer (if one exists)
-            m_CanvasRenderer = GetComponent<CanvasRenderer>();
-            if (m_CanvasRenderer != null)
-                m_CanvasRenderer.hideFlags = HideFlags.HideInInspector;
-
             // Cache Reference to RectTransform
             m_rectTransform = this.rectTransform;
 
@@ -119,7 +114,12 @@ namespace TMPro
             TMP_SubMesh[] subTextObjects = GetComponentsInChildren<TMP_SubMesh>();
             if (subTextObjects.Length > 0)
             {
-                for (int i = 0; i < subTextObjects.Length; i++)
+                int subTextObjectCount = subTextObjects.Length;
+
+                if (subTextObjectCount + 1 > m_subTextObjects.Length)
+                    Array.Resize(ref m_subTextObjects, subTextObjectCount + 1);
+
+                for (int i = 0; i < subTextObjectCount; i++)
                     m_subTextObjects[i + 1] = subTextObjects[i];
             }
 
@@ -243,8 +243,13 @@ namespace TMPro
             if (meshFilter != null && m_meshFilter.hideFlags != (HideFlags.HideInInspector | HideFlags.HideAndDontSave))
                 m_meshFilter.hideFlags = HideFlags.HideInInspector | HideFlags.HideAndDontSave;
 
-            if (m_CanvasRenderer != null)
-                m_CanvasRenderer.hideFlags = HideFlags.HideInInspector;
+            if (m_CanvasRenderer == null)
+            {
+                m_CanvasRenderer = GetComponent<CanvasRenderer>();
+
+                if (m_CanvasRenderer != null)
+                    m_CanvasRenderer.hideFlags = HideFlags.HideInInspector;
+            }
 
             // Additional Properties could be added to sync up Serialized Properties & Properties.
 
@@ -275,6 +280,7 @@ namespace TMPro
 
         private void OnBecameInvisible()
         {
+            // Keep the parent text object's renderer in sync with child sub objects' renderers.
             SetActiveSubTextObjectRenderers(false);
         }
 
@@ -311,6 +317,8 @@ namespace TMPro
 
             if (this == null)
                 return;
+
+            m_isWaitingOnResourceLoad = false;
 
             Awake();
             OnEnable();
@@ -966,7 +974,7 @@ namespace TMPro
             m_materialReferenceStack.SetDefault(new MaterialReference(m_currentMaterialIndex, m_currentFontAsset, null, m_currentMaterial, m_padding));
 
             m_materialReferenceIndexLookup.Clear();
-            MaterialReference.AddMaterialReference(m_currentMaterial, m_currentFontAsset, m_materialReferences, m_materialReferenceIndexLookup);
+            MaterialReference.AddMaterialReference(m_currentMaterial, m_currentFontAsset, ref m_materialReferences, m_materialReferenceIndexLookup);
 
             // Set allocations for the text object's TextInfo
             if (m_textInfo == null)
@@ -1012,7 +1020,7 @@ namespace TMPro
                         else
                             m_Ellipsis.material = m_Ellipsis.fontAsset.material;
 
-                        m_Ellipsis.materialIndex = MaterialReference.AddMaterialReference(m_Ellipsis.material, m_Ellipsis.fontAsset, m_materialReferences, m_materialReferenceIndexLookup);
+                        m_Ellipsis.materialIndex = MaterialReference.AddMaterialReference(m_Ellipsis.material, m_Ellipsis.fontAsset, ref m_materialReferences, m_materialReferenceIndexLookup);
                         m_materialReferences[m_Ellipsis.materialIndex].referenceCount = 0;
                     }
                 }
@@ -1211,7 +1219,7 @@ namespace TMPro
                 if (character.elementType == TextElementType.Sprite)
                 {
                     TMP_SpriteAsset spriteAssetRef = character.textAsset as TMP_SpriteAsset;
-                    m_currentMaterialIndex = MaterialReference.AddMaterialReference(spriteAssetRef.material, spriteAssetRef, m_materialReferences, m_materialReferenceIndexLookup);
+                    m_currentMaterialIndex = MaterialReference.AddMaterialReference(spriteAssetRef.material, spriteAssetRef, ref m_materialReferences, m_materialReferenceIndexLookup);
                     m_materialReferences[m_currentMaterialIndex].referenceCount += 1;
 
                     m_textInfo.characterInfo[m_totalCharacterCount].elementType = TMP_TextElementType.Sprite;
@@ -1237,7 +1245,7 @@ namespace TMPro
                     else
                         m_currentMaterial = m_currentFontAsset.material;
 
-                    m_currentMaterialIndex = MaterialReference.AddMaterialReference(m_currentMaterial, m_currentFontAsset, m_materialReferences, m_materialReferenceIndexLookup);
+                    m_currentMaterialIndex = MaterialReference.AddMaterialReference(m_currentMaterial, m_currentFontAsset, ref m_materialReferences, m_materialReferenceIndexLookup);
                 }
 
                 // Handle Multi Atlas Texture support
@@ -1245,7 +1253,7 @@ namespace TMPro
                 {
                     m_currentMaterial = TMP_MaterialManager.GetFallbackMaterial(m_currentFontAsset, m_currentMaterial, character.glyph.atlasIndex);
 
-                    m_currentMaterialIndex = MaterialReference.AddMaterialReference(m_currentMaterial, m_currentFontAsset, m_materialReferences, m_materialReferenceIndexLookup);
+                    m_currentMaterialIndex = MaterialReference.AddMaterialReference(m_currentMaterial, m_currentFontAsset, ref m_materialReferences, m_materialReferenceIndexLookup);
 
                     isUsingFallbackOrAlternativeTypeface = true;
                 }
@@ -1257,7 +1265,7 @@ namespace TMPro
                         m_materialReferences[m_currentMaterialIndex].referenceCount += 1;
                     else
                     {
-                        m_currentMaterialIndex = MaterialReference.AddMaterialReference(new Material(m_currentMaterial), m_currentFontAsset, m_materialReferences, m_materialReferenceIndexLookup);
+                        m_currentMaterialIndex = MaterialReference.AddMaterialReference(new Material(m_currentMaterial), m_currentFontAsset, ref m_materialReferences, m_materialReferenceIndexLookup);
                         m_materialReferences[m_currentMaterialIndex].referenceCount += 1;
                     }
                 }
@@ -1552,6 +1560,9 @@ namespace TMPro
                 // Reset Text Auto Size iteration tracking.
                 m_IsAutoSizePointSizeSet = false;
                 m_AutoSizeIterationCount = 0;
+
+                // Make sure state of MeshRenderer is mirrored on potential sub text objects.
+                SetActiveSubTextObjectRenderers(m_renderer.enabled);
 
                 // The GenerateTextMesh function is potentially called repeatedly when text auto size is enabled.
                 // This is a revised implementation to remove the use of recursion which could potentially result in stack overflow issues.
@@ -2018,8 +2029,7 @@ namespace TMPro
                 GlyphMetrics currentGlyphMetrics = m_cached_TextElement.m_Glyph.metrics;
 
                 // Optimization to avoid calling this more than once per character.
-                bool isWhiteSpace = char.IsWhiteSpace((char)charCode);
-                //bool isVisibleCharacter = !isWhiteSpace;
+                bool isWhiteSpace = charCode <= 0xFFFF && char.IsWhiteSpace((char)charCode);
 
                 // Handle Kerning if Enabled.
                 #region Handle Kerning
@@ -4288,6 +4298,13 @@ namespace TMPro
             TMPro_EventManager.ON_TEXT_CHANGED(this);
 
             //Debug.Log("***** Done rendering text object ID " + GetInstanceID() + ". *****");
+
+            // Clear allocations no longer necessary given the text object is static
+            // if (true)
+            // {
+            //     m_isInputParsingRequired = true;
+            //     m_textInfo.ClearAllData();
+            // }
 
             #if TMP_PROFILE_ON
             // End Sampling of Phase III

@@ -17,6 +17,7 @@ namespace TMPro.EditorUtilities
 
 
         // Add a Context Menu to the Texture Editor Panel to allow Copy / Paste of Texture.
+        #if !TEXTCORE_1_0_OR_NEWER
         [MenuItem("CONTEXT/Texture/Copy", false, 2000)]
         static void CopyTexture(MenuCommand command)
         {
@@ -34,6 +35,7 @@ namespace TMPro.EditorUtilities
             EditorUtility.FocusProjectWindow();
             EditorGUIUtility.PingObject(mat);
         }
+        #endif
 
 
         // Add a Context Menu to allow easy duplication of the Material.
@@ -99,6 +101,7 @@ namespace TMPro.EditorUtilities
 
 
         // COPY MATERIAL PROPERTIES
+        #if !TEXTCORE_1_0_OR_NEWER
         [MenuItem("CONTEXT/Material/Copy Material Properties", false)]
         static void CopyMaterialProperties(MenuCommand command)
         {
@@ -269,6 +272,7 @@ namespace TMPro.EditorUtilities
 
             //DestroyImmediate(m_copiedAtlasProperties);
         }
+        #endif
 
 
         // Context Menus for TMPro Font Assets
