@@ -284,12 +284,17 @@ namespace TMPro.EditorUtilities
 
         void DoTexture(string name, string label, System.Type type, bool withTilingOffset = false, string[] speedNames = null)
         {
+            float objFieldSize = 60f;
+            bool smallLayout = EditorGUIUtility.currentViewWidth <= 440f && (withTilingOffset || speedNames != null);
+            float controlHeight = smallLayout ? objFieldSize * 2 : objFieldSize;
+
             MaterialProperty property = FindProperty(name, m_Properties);
             m_Editor.BeginAnimatedCheck(Rect.zero, property);
 
-            Rect rect = EditorGUILayout.GetControlRect(true, 60f);
+            Rect rect = EditorGUILayout.GetControlRect(true, controlHeight);
             float totalWidth = rect.width;
-            rect.width = EditorGUIUtility.labelWidth + 60f;
+            rect.width = EditorGUIUtility.labelWidth + objFieldSize;
+            rect.height = objFieldSize;
             s_TempLabel.text = label;
 
             EditorGUI.BeginChangeCheck();
@@ -299,8 +304,12 @@ namespace TMPro.EditorUtilities
                 property.textureValue = tex as Texture;
             }
 
-            rect.x += rect.width + 4f;
-            rect.width = totalWidth - rect.width - 4f;
+            float additionalHeight = controlHeight - objFieldSize;
+            float xOffset = smallLayout ? rect.width - objFieldSize : rect.width;
+
+            rect.y += additionalHeight;
+            rect.x += xOffset;
+            rect.width = totalWidth - xOffset;
             rect.height = EditorGUIUtility.singleLineHeight;
 
             if (withTilingOffset)
@@ -322,7 +331,7 @@ namespace TMPro.EditorUtilities
             float labelWidth = EditorGUIUtility.labelWidth;
             int indentLevel = EditorGUI.indentLevel;
             EditorGUI.indentLevel = 0;
-            EditorGUIUtility.labelWidth = Mathf.Min(40f, rect.width * 0.20f);
+            EditorGUIUtility.labelWidth = Mathf.Min(37f, rect.width * 0.40f);
 
             Vector4 vector = property.textureScaleAndOffset;
 
@@ -372,15 +381,15 @@ namespace TMPro.EditorUtilities
             float labelWidth = EditorGUIUtility.labelWidth;
             int indentLevel = EditorGUI.indentLevel;
             EditorGUI.indentLevel = 0;
-            EditorGUIUtility.labelWidth = Mathf.Min(40f, rect.width * 0.20f);
+            EditorGUIUtility.labelWidth = Mathf.Min(37f, rect.width * 0.40f);
 
             s_TempLabel.text = "Speed";
             rect = EditorGUI.PrefixLabel(rect, s_TempLabel);
 
-            EditorGUIUtility.labelWidth = 13f;
-            rect.width = rect.width * 0.5f - 1f;
+            EditorGUIUtility.labelWidth = 10f;
+            rect.width = rect.width * 0.5f - 2f;
             DoFloat(rect, names[0], "X");
-            rect.x += rect.width + 2f;
+            rect.x += rect.width + 4f;
             DoFloat(rect, names[1], "Y");
             EditorGUIUtility.labelWidth = labelWidth;
             EditorGUI.indentLevel = indentLevel;

@@ -150,6 +150,7 @@ namespace TMPro.EditorUtilities
         int m_AtlasHeight = 512;
         byte[] m_AtlasTextureBuffer;
         Texture2D m_FontAtlasTexture;
+        Texture2D m_GlyphRectPreviewTexture;
         Texture2D m_SavedFontAtlas;
 
         //
@@ -257,11 +258,12 @@ namespace TMPro.EditorUtilities
         public void OnGUI()
         {
             GUILayout.BeginHorizontal();
+
             DrawControls();
+
             if (position.width > position.height && position.width > k_TwoColumnControlsWidth)
-            {
                 DrawPreview();
-            }
+
             GUILayout.EndHorizontal();
         }
 
@@ -285,7 +287,14 @@ namespace TMPro.EditorUtilities
 
             if (m_IsGlyphPackingDone)
             {
-                Debug.Log("Glyph packing completed in: " + m_GlyphPackingGenerationTime.ToString("0.000 ms."));
+                UpdateRenderFeedbackWindow();
+
+                if (m_IsGenerationCancelled == false)
+                {
+                    DrawGlyphRectPreviewTexture();
+                    Debug.Log("Glyph packing completed in: " + m_GlyphPackingGenerationTime.ToString("0.000 ms."));
+                }
+
                 m_IsGlyphPackingDone = false;
             }
 
@@ -662,8 +671,10 @@ namespace TMPro.EditorUtilities
                 if (!m_IsProcessing && m_SourceFontFile != null)
                 {
                     DestroyImmediate(m_FontAtlasTexture);
+                    DestroyImmediate(m_GlyphRectPreviewTexture);
                     m_FontAtlasTexture = null;
                     m_SavedFontAtlas = null;
+                    m_OutputFeedback = string.Empty;
 
                     // Initialize font engine
                     FontEngineError errorCode = FontEngine.InitializeFontEngine();
@@ -942,6 +953,30 @@ namespace TMPro.EditorUtilities
                             m_FontGlyphTable.Clear();
                             m_GlyphsToRender.Clear();
 
+                            // Handle Results and potential cancellation of glyph rendering
+                            if (m_GlyphRenderMode == GlyphRenderMode.SDF32 && m_PointSize > 512 || m_GlyphRenderMode == GlyphRenderMode.SDF16 && m_PointSize > 1024 || m_GlyphRenderMode == GlyphRenderMode.SDF8 && m_PointSize > 2048)
+                            {
+                                int upSampling = 1;
+                                switch (m_GlyphRenderMode)
+                                {
+                                 case GlyphRenderMode.SDF8:
+                                     upSampling = 8;
+                                     break;
+                                 case GlyphRenderMode.SDF16:
+                                     upSampling = 16;
+                                     break;
+                                 case GlyphRenderMode.SDF32:
+                                     upSampling = 32;
+                                     break;
+                                }
+
+                                Debug.Log("Glyph rendering has been aborted due to sampling point size of [" + m_PointSize + "] x SDF [" + upSampling + "] up sampling exceeds 16,384 point size. Please revise your generation settings to make sure the sampling point size x SDF up sampling mode does not exceed 16,384.");
+
+                                m_IsRenderingDone = true;
+                                m_AtlasGenerationProgress = 0;
+                                m_IsGenerationCancelled = true;
+                            }
+
                             // Add glyphs and characters successfully added to texture to their respective font tables.
                             foreach (Glyph glyph in m_GlyphsPacked)
                             {
@@ -980,29 +1015,32 @@ namespace TMPro.EditorUtilities
                         {
                             autoEvent.WaitOne();
 
-                            // Start Stop Watch
-                            m_StopWatch = System.Diagnostics.Stopwatch.StartNew();
-
-                            m_IsRenderingDone = false;
-
-                            // Allocate texture data
-                            m_AtlasTextureBuffer = new byte[m_AtlasWidth * m_AtlasHeight];
-
-                            m_AtlasGenerationProgressLabel = "Rendering glyphs...";
-
-                            // Render and add glyphs to the given atlas texture.
-                            if (m_GlyphsToRender.Count > 0)
+                            if (m_IsGenerationCancelled == false)
                             {
-                                FontEngine.RenderGlyphsToTexture(m_GlyphsToRender, m_Padding, m_GlyphRenderMode, m_AtlasTextureBuffer, m_AtlasWidth, m_AtlasHeight);
+                                // Start Stop Watch
+                                m_StopWatch = System.Diagnostics.Stopwatch.StartNew();
+
+                                m_IsRenderingDone = false;
+
+                                // Allocate texture data
+                                m_AtlasTextureBuffer = new byte[m_AtlasWidth * m_AtlasHeight];
+
+                                m_AtlasGenerationProgressLabel = "Rendering glyphs...";
+
+                                // Render and add glyphs to the given atlas texture.
+                                if (m_GlyphsToRender.Count > 0)
+                                {
+                                    FontEngine.RenderGlyphsToTexture(m_GlyphsToRender, m_Padding, m_GlyphRenderMode, m_AtlasTextureBuffer, m_AtlasWidth, m_AtlasHeight);
+                                }
+
+                                m_IsRenderingDone = true;
+
+                                // Stop StopWatch
+                                m_StopWatch.Stop();
+                                m_GlyphRenderingGenerationTime = m_StopWatch.Elapsed.TotalMilliseconds;
+                                m_IsGlyphRenderingDone = true;
+                                m_StopWatch.Reset();
                             }
-
-                            m_IsRenderingDone = true;
-
-                            // Stop StopWatch
-                            m_StopWatch.Stop();
-                            m_GlyphRenderingGenerationTime = m_StopWatch.Elapsed.TotalMilliseconds;
-                            m_IsGlyphRenderingDone = true;
-                            m_StopWatch.Reset();
                         });
                     }
 
@@ -1087,10 +1125,7 @@ namespace TMPro.EditorUtilities
             GUI.enabled = true; // Re-enable GUI
 
             if (position.height > position.width || position.width < k_TwoColumnControlsWidth)
-            {
                 DrawPreview();
-                GUILayout.Space(5);
-            }
 
             EditorGUILayout.EndScrollView();
 
@@ -1110,6 +1145,12 @@ namespace TMPro.EditorUtilities
             {
                 DestroyImmediate(m_FontAtlasTexture);
                 m_FontAtlasTexture = null;
+            }
+
+            if (m_GlyphRectPreviewTexture != null)
+            {
+                DestroyImmediate(m_GlyphRectPreviewTexture);
+                m_GlyphRectPreviewTexture = null;
             }
 
             m_AtlasGenerationProgressLabel = string.Empty;
@@ -1179,6 +1220,37 @@ namespace TMPro.EditorUtilities
             }
         }
 
+        void DrawGlyphRectPreviewTexture()
+        {
+            if (m_GlyphRectPreviewTexture != null)
+                DestroyImmediate(m_GlyphRectPreviewTexture);
+
+            m_GlyphRectPreviewTexture = new Texture2D(m_AtlasWidth, m_AtlasHeight, TextureFormat.RGBA32, false, true);
+
+            FontEngine.ResetAtlasTexture(m_GlyphRectPreviewTexture);
+
+            foreach (Glyph glyph in m_GlyphsPacked)
+            {
+                GlyphRect glyphRect = glyph.glyphRect;
+
+                Color c = UnityEngine.Random.ColorHSV(0f, 1f, 0.5f, 0.5f, 1.0f, 1.0f);
+
+                int x0 = glyphRect.x;
+                int x1 = x0 + glyphRect.width;
+
+                int y0 = glyphRect.y;
+                int y1 = y0 + glyphRect.height;
+
+                // Draw glyph rectangle.
+                for (int x = x0; x < x1; x++)
+                {
+                    for (int y = y0; y < y1; y++)
+                        m_GlyphRectPreviewTexture.SetPixel(x, y, c);
+                }
+            }
+
+            m_GlyphRectPreviewTexture.Apply(false);
+        }
 
         void CreateFontAtlasTexture()
         {
@@ -1720,27 +1792,44 @@ namespace TMPro.EditorUtilities
             EditorPrefs.SetString(k_FontAssetCreationSettingsContainerKey, serializedSettings);
         }
 
+
         void DrawPreview()
         {
             Rect pixelRect;
-            if (position.width > position.height && position.width > k_TwoColumnControlsWidth)
+
+            float ratioX = (position.width - k_TwoColumnControlsWidth) / m_AtlasWidth;
+            float ratioY = (position.height - 15) / m_AtlasHeight;
+
+            if (position.width < position.height)
             {
-                float minSide = Mathf.Min(position.height - 15f, position.width - k_TwoColumnControlsWidth);
+                ratioX = (position.width - 15) / m_AtlasWidth;
+                ratioY = (position.height - 485) / m_AtlasHeight;
+            }
 
-                EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.MaxWidth(minSide));
+            if (ratioX < ratioY)
+            {
+                float width = m_AtlasWidth * ratioX;
+                float height = m_AtlasHeight * ratioX;
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.MaxWidth(width), GUILayout.MaxHeight(height));
 
-                pixelRect = GUILayoutUtility.GetRect(minSide, minSide, GUILayout.ExpandHeight(false), GUILayout.ExpandWidth(false));
+                pixelRect = GUILayoutUtility.GetRect(width - 5, height, GUILayout.ExpandHeight(false), GUILayout.ExpandWidth(false));
             }
             else
             {
-                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                float width = m_AtlasWidth * ratioY;
+                float height = m_AtlasHeight * ratioY;
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.MaxWidth(width), GUILayout.MaxHeight(height));
 
-                pixelRect = GUILayoutUtility.GetAspectRect(1f);
+                pixelRect = GUILayoutUtility.GetRect(width - 5, height, GUILayout.ExpandHeight(false), GUILayout.ExpandWidth(false));
             }
 
             if (m_FontAtlasTexture != null)
             {
                 EditorGUI.DrawTextureAlpha(pixelRect, m_FontAtlasTexture, ScaleMode.StretchToFill);
+            }
+            else if (m_GlyphRectPreviewTexture != null)
+            {
+                EditorGUI.DrawPreviewTexture(pixelRect, m_GlyphRectPreviewTexture, null, ScaleMode.StretchToFill);
             }
             else if (m_SavedFontAtlas != null)
             {

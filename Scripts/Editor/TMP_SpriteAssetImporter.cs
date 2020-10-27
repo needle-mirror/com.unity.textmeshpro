@@ -27,7 +27,6 @@ namespace TMPro
         string m_CreationFeedback;
 
         TMP_SpriteAsset m_SpriteAsset;
-        List<TMP_Sprite> m_SpriteInfoList = new List<TMP_Sprite>();
 
         /// <summary>
         ///
@@ -146,7 +145,7 @@ namespace TMPro
             GUILayout.EndVertical();
 
             GUILayout.Space(5);
-            GUI.enabled = m_JsonFile != null && m_SpriteAtlas && m_SpriteInfoList != null && m_SpriteAsset != null;
+            GUI.enabled = m_JsonFile != null && m_SpriteAtlas && m_SpriteAsset != null;
             if (GUILayout.Button("Save Sprite Asset") && m_JsonFile != null)
             {
                 string filePath = EditorUtility.SaveFilePanel("Save Sprite Asset File", new FileInfo(AssetDatabase.GetAssetPath(m_JsonFile)).DirectoryName, m_JsonFile.name, "asset");

@@ -332,10 +332,12 @@ namespace TMPro
             m_isRegisteredForEvents = false;
 
             // Notify parent text object
-            m_TextComponent.havePropertiesChanged = true;
-            m_TextComponent.SetAllDirty();
+            if (m_TextComponent != null)
+            {
+                m_TextComponent.havePropertiesChanged = true;
+                m_TextComponent.SetAllDirty();
+            }
         }
-
 
 
         #if UNITY_EDITOR

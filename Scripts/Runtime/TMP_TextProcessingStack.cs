@@ -50,6 +50,12 @@ namespace TMPro
                 case FontStyles.Underline:
                     underline++;
                     return underline;
+                case FontStyles.UpperCase:
+                    uppercase++;
+                    return uppercase;
+                case FontStyles.LowerCase:
+                    lowercase++;
+                    return lowercase;
                 case FontStyles.Strikethrough:
                     strikethrough++;
                     return strikethrough;
@@ -89,6 +95,18 @@ namespace TMPro
                     else
                         underline = 0;
                     return underline;
+                case FontStyles.UpperCase:
+                    if (uppercase > 1)
+                        uppercase--;
+                    else
+                        uppercase = 0;
+                    return uppercase;
+                case FontStyles.LowerCase:
+                    if (lowercase > 1)
+                        lowercase--;
+                    else
+                        lowercase = 0;
+                    return lowercase;
                 case FontStyles.Strikethrough:
                     if (strikethrough > 1)
                         strikethrough--;

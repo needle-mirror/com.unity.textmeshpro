@@ -130,7 +130,7 @@ namespace TMPro.EditorUtilities
             }
             else
             {
-                textComponent.fontSize = 36;
+                textComponent.fontSize = -99;
                 textComponent.color = Color.white;
                 textComponent.text = "New Text";
             }
@@ -201,6 +201,7 @@ namespace TMPro.EditorUtilities
         {
             // Find the best scene view
             SceneView sceneView = SceneView.lastActiveSceneView;
+
             if (sceneView == null && SceneView.sceneViews.Count > 0)
                 sceneView = SceneView.sceneViews[0] as SceneView;
 
@@ -259,38 +260,62 @@ namespace TMPro.EditorUtilities
                 if (prefabStage != null && !prefabStage.IsPartOfPrefabContents(parent))
                     parent = prefabStage.prefabContentsRoot;
             }
-            if (parent.GetComponentInParent<Canvas>() == null)
+
+            if (parent.GetComponentsInParent<Canvas>(true).Length == 0)
             {
                 // Create canvas under context GameObject,
                 // and make that be the parent which UI element is added under.
                 GameObject canvas = CreateNewUI();
-                canvas.transform.SetParent(parent.transform, false);
+                Undo.SetTransformParent(canvas.transform, parent.transform, "");
                 parent = canvas;
-            }
-
-            // Setting the element to be a child of an element already in the scene should
-            // be sufficient to also move the element to that scene.
-            // However, it seems the element needs to be already in its destination scene when the
-            // RegisterCreatedObjectUndo is performed; otherwise the scene it was created in is dirtied.
-            SceneManager.MoveGameObjectToScene(element, parent.scene);
-
-            if (element.transform.parent == null)
-            {
-                Undo.SetTransformParent(element.transform, parent.transform, "Parent " + element.name);
             }
 
             GameObjectUtility.EnsureUniqueNameForSibling(element);
 
-            // We have to fix up the undo name since the name of the object was only known after reparenting it.
-            Undo.SetCurrentGroupName("Create " + element.name);
-
-            GameObjectUtility.SetParentAndAlign(element, parent);
+            SetParentAndAlign(element, parent);
             if (!explicitParentChoice) // not a context click, so center in sceneview
                 SetPositionVisibleinSceneView(parent.GetComponent<RectTransform>(), element.GetComponent<RectTransform>());
 
-            Undo.RegisterCreatedObjectUndo(element, "Create " + element.name);
+            // This call ensure any change made to created Objects after they where registered will be part of the Undo.
+            Undo.RegisterFullObjectHierarchyUndo(parent == null ? element : parent, "");
+
+            // We have to fix up the undo name since the name of the object was only known after reparenting it.
+            Undo.SetCurrentGroupName("Create " + element.name);
 
             Selection.activeGameObject = element;
+        }
+
+        private static void SetParentAndAlign(GameObject child, GameObject parent)
+        {
+            if (parent == null)
+                return;
+
+            Undo.SetTransformParent(child.transform, parent.transform, "");
+
+            RectTransform rectTransform = child.transform as RectTransform;
+            if (rectTransform)
+            {
+                rectTransform.anchoredPosition = Vector2.zero;
+                Vector3 localPosition = rectTransform.localPosition;
+                localPosition.z = 0;
+                rectTransform.localPosition = localPosition;
+            }
+            else
+            {
+                child.transform.localPosition = Vector3.zero;
+            }
+            child.transform.localRotation = Quaternion.identity;
+            child.transform.localScale = Vector3.one;
+
+            SetLayerRecursively(child, parent.layer);
+        }
+
+        private static void SetLayerRecursively(GameObject go, int layer)
+        {
+            go.layer = layer;
+            Transform t = go.transform;
+            for (int i = 0; i < t.childCount; i++)
+                SetLayerRecursively(t.GetChild(i).gameObject, layer);
         }
 
 

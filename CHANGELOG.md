@@ -1,6 +1,37 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [2.1.3] - 2020-10-27
+## [1.5.3]
+## [3.0.3]
+### Changes
+- Fixed potential null reference exception in the Input Field that can occur as a result of using a workflow that involves enabling and disabling Canvases. See [forum post](https://forum.unity.com/threads/tmp_inputfield-generatecaret-m_textcomponent-canvas-exception.940659/) for details.
+- Fixed potential Invalid AssetDatabase path warning that can be issued when assets are imported from outside the project. See [forum post](https://forum.unity.com/threads/textmesh-pro-invalid-assetdatabase-path-use-path-relative-to-the-project-folder.955731/) for details.
+- Fixed &lt;TextMeshProUGUI&gt; objects not being created correctly in Prefab isolation mode when using the Create context menu. See [forum post](https://forum.unity.com/threads/tmp-doesnt-like-prefabs.954186/) for details. Case #1266096
+- Fixed an issue where nesting &lt;uppercase&gt; and &lt;lowercase&gt; tags didn't behaves as expected. See [forum post](https://forum.unity.com/threads/nested-tags-of-same-kind-dont-act-as-expected.956364/) for details.
+- Fixed Input Field incorrect handling of validation with text selection. Case #1267777
+- Fixed potential null reference exception that could occur in the Input Field when hiding the soft keyboard on iOS or Android. Case #1273631
+- Fixed OnScroll event not getting passed to potential parent ScrollRect when the Input Field is in Single Line mode. Case #1270241
+- Fixed Prefab override context menu to override or revert changes not being available for some text object properties. Case #1271420
+- The sampling point size in the Font Asset Creator will now be limited to a maximum of 16,384 points for SDF over-sampled modes. This means a maximum point size of 2048 for SDF8, 1024 for SDF16 and 512 for SDF32. Case #1253370
+- Fixed Margin widget in the scene view not working correctly when the text object is rotated on the z-axis. Case #1263001
+- Fixed Input Field Scrollbar not behaving correctly when set to Bottom to Top direction. Case #1179982
+- Fixed minor UI cosmetic issue in the StyleSheet inspector. Case #1258771
+- Fixed minor UI cosmetic issue in Material inspector texture properties. Case #1163983
+- Fixed potential IndexOutOfRangeException that could occur when duplicating text objects that have more than 8 sub text objects.
+- Revised and improved Input Field with Scrollbar behavior with respect to text alignment. Case #1272647
+- Improved Input Field Name validation including adding the ability to use Hyphens. Case #1277951
+- Fixed state of MeshRenderer potentially not being mirrored on sub text objects. Case #1278329
+- Fixed GetPreferredValues() function returning incorrect values when called consecutively. See [forum post](https://forum.unity.com/threads/preferred-width-height-sometimes-0.980022/) for details.
+- Initial pass at revising some of the data structures used in the text parsing and layout process to reduce text object memory overhead.
+- Fixed incorrect positioning of IME window when using a canvas in World Space when no camera is assigned to the canvas. Case #1043535
+- Added new option to Font Asset Generation Settings to automatically clear dynamic data and atlas texture when creating a build.
+- Fixed text object properties not being applied correctly when instantiating a text prefab prior to importing TMP Essential Resources. Case #1271192
+- Fixed default text object properties potentially not being set correctly when instantiating a prefab. Case #1286412
+- Fixed incorrect parsing and display of UTF32 characters. See [forum post](https://forum.unity.com/threads/several-unicode-characters-cannot-be-shown-using-tmp.970857/#post-6316422) for details.
+- Fixed potential material error when updating a font asset generation settings when the font asset is using a non SDF shader. Case #1286132
+- Fixed minor UI cosmetic issue in the Sprite Asset Sprite Glyph Table inspector. Case #1285022
+
 ## [2.1.1] - 2020-07-26
 ## [1.5.1]
 ## [3.0.1]
