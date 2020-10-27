@@ -76,6 +76,9 @@ namespace TMPro.EditorUtilities
 
         protected void DrawMaskable()
         {
+            if (m_MaskableProp == null)
+                return;
+
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(m_MaskableProp, k_MaskableLabel);
             if (EditorGUI.EndChangeCheck())

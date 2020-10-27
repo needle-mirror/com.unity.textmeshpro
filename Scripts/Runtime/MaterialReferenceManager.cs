@@ -246,10 +246,7 @@ namespace TMPro
         /// <returns></returns>
         public bool Contains(TMP_FontAsset font)
         {
-            if (m_FontAssetReferenceLookup.ContainsKey(font.hashCode))
-                return true;
-
-            return false;
+            return m_FontAssetReferenceLookup.ContainsKey(font.hashCode);
         }
 
 
@@ -260,10 +257,7 @@ namespace TMPro
         /// <returns></returns>
         public bool Contains(TMP_SpriteAsset sprite)
         {
-            if (m_FontAssetReferenceLookup.ContainsKey(sprite.hashCode))
-                return true;
-
-            return false;
+            return m_FontAssetReferenceLookup.ContainsKey(sprite.hashCode);
         }
 
 
@@ -289,12 +283,7 @@ namespace TMPro
         {
             fontAsset = null;
 
-            if (m_FontAssetReferenceLookup.TryGetValue(hashCode, out fontAsset))
-            {
-                return true;
-            }
-
-            return false;
+            return m_FontAssetReferenceLookup.TryGetValue(hashCode, out fontAsset);
         }
 
 
@@ -320,12 +309,7 @@ namespace TMPro
         {
             spriteAsset = null;
 
-            if (m_SpriteAssetReferenceLookup.TryGetValue(hashCode, out spriteAsset))
-            {
-                return true;
-            }
-
-            return false;
+            return m_SpriteAssetReferenceLookup.TryGetValue(hashCode, out spriteAsset);
         }
 
 
@@ -350,12 +334,7 @@ namespace TMPro
         {
             gradientPreset = null;
 
-            if (m_ColorGradientReferenceLookup.TryGetValue(hashCode, out gradientPreset))
-            {
-                return true;
-            }
-
-            return false;
+            return m_ColorGradientReferenceLookup.TryGetValue(hashCode, out gradientPreset);
         }
 
 
@@ -380,12 +359,7 @@ namespace TMPro
         {
             material = null;
 
-            if (m_FontMaterialReferenceLookup.TryGetValue(hashCode, out material))
-            {
-                return true;
-            }
-
-            return false;
+            return m_FontMaterialReferenceLookup.TryGetValue(hashCode, out material);
         }
 
 
@@ -414,7 +388,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="fontAsset"></param>
         /// <returns></returns>
@@ -428,7 +402,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
@@ -442,7 +416,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="material"></param>
         /// <param name="materialHashCode"></param>
@@ -483,7 +457,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         //public void Clear()
         //{
@@ -584,69 +558,68 @@ namespace TMPro
         /// <param name="materialReferences"></param>
         /// <param name="materialReferenceIndexLookup"></param>
         /// <returns></returns>
-        public static int AddMaterialReference(Material material, TMP_FontAsset fontAsset, MaterialReference[] materialReferences, Dictionary<int, int> materialReferenceIndexLookup)
+        public static int AddMaterialReference(Material material, TMP_FontAsset fontAsset, ref MaterialReference[] materialReferences, Dictionary<int, int> materialReferenceIndexLookup)
         {
             int materialID = material.GetInstanceID();
             int index;
 
             if (materialReferenceIndexLookup.TryGetValue(materialID, out index))
-            {
                 return index;
-            }
-            else
-            {
-                index = materialReferenceIndexLookup.Count;
 
-                // Add new reference index
-                materialReferenceIndexLookup[materialID] = index;
+            index = materialReferenceIndexLookup.Count;
 
-                materialReferences[index].index = index;
-                materialReferences[index].fontAsset = fontAsset;
-                materialReferences[index].spriteAsset = null;
-                materialReferences[index].material = material;
-                materialReferences[index].isDefaultMaterial = materialID == fontAsset.material.GetInstanceID() ? true : false;
-                //materialReferences[index].padding = 0;
-                materialReferences[index].referenceCount = 0;
+            // Add new reference index
+            materialReferenceIndexLookup[materialID] = index;
 
-                return index;
-            }
+            if (index >= materialReferences.Length)
+                System.Array.Resize(ref materialReferences, Mathf.NextPowerOfTwo(index + 1));
+
+            materialReferences[index].index = index;
+            materialReferences[index].fontAsset = fontAsset;
+            materialReferences[index].spriteAsset = null;
+            materialReferences[index].material = material;
+            materialReferences[index].isDefaultMaterial = materialID == fontAsset.material.GetInstanceID() ? true : false;
+            //materialReferences[index].padding = 0;
+            materialReferences[index].referenceCount = 0;
+
+            return index;
+
         }
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="material"></param>
         /// <param name="spriteAsset"></param>
         /// <param name="materialReferences"></param>
         /// <param name="materialReferenceIndexLookup"></param>
         /// <returns></returns>
-        public static int AddMaterialReference(Material material, TMP_SpriteAsset spriteAsset, MaterialReference[] materialReferences, Dictionary<int, int> materialReferenceIndexLookup)
+        public static int AddMaterialReference(Material material, TMP_SpriteAsset spriteAsset, ref MaterialReference[] materialReferences, Dictionary<int, int> materialReferenceIndexLookup)
         {
             int materialID = material.GetInstanceID();
             int index;
 
             if (materialReferenceIndexLookup.TryGetValue(materialID, out index))
-            {
                 return index;
-            }
-            else
-            {
-                index = materialReferenceIndexLookup.Count;
 
-                // Add new reference index
-                materialReferenceIndexLookup[materialID] = index;
+            index = materialReferenceIndexLookup.Count;
 
-                materialReferences[index].index = index;
-                materialReferences[index].fontAsset = materialReferences[0].fontAsset;
-                materialReferences[index].spriteAsset = spriteAsset;
-                materialReferences[index].material = material;
-                materialReferences[index].isDefaultMaterial = true;
-                //materialReferences[index].padding = 0;
-                materialReferences[index].referenceCount = 0;
+            // Add new reference index
+            materialReferenceIndexLookup[materialID] = index;
 
-                return index;
-            }
+            if (index >= materialReferences.Length)
+                System.Array.Resize(ref materialReferences, Mathf.NextPowerOfTwo(index + 1));
+
+            materialReferences[index].index = index;
+            materialReferences[index].fontAsset = materialReferences[0].fontAsset;
+            materialReferences[index].spriteAsset = spriteAsset;
+            materialReferences[index].material = material;
+            materialReferences[index].isDefaultMaterial = true;
+            //materialReferences[index].padding = 0;
+            materialReferences[index].referenceCount = 0;
+
+            return index;
         }
     }
 }

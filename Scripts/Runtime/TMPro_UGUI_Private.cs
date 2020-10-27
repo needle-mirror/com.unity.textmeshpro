@@ -110,7 +110,12 @@ namespace TMPro
             TMP_SubMeshUI[] subTextObjects = GetComponentsInChildren<TMP_SubMeshUI>();
             if (subTextObjects.Length > 0)
             {
-                for (int i = 0; i < subTextObjects.Length; i++)
+                int subTextObjectCount = subTextObjects.Length;
+
+                if (subTextObjectCount + 1 > m_subTextObjects.Length)
+                    Array.Resize(ref m_subTextObjects, subTextObjectCount + 1);
+
+                for (int i = 0; i < subTextObjectCount; i++)
                     m_subTextObjects[i + 1] = subTextObjects[i];
             }
 
@@ -321,6 +326,8 @@ namespace TMPro
 
             if (this == null)
                 return;
+
+            m_isWaitingOnResourceLoad = false;
 
             Awake();
             OnEnable();
@@ -1025,7 +1032,7 @@ namespace TMPro
             m_materialReferenceStack.SetDefault(new MaterialReference(m_currentMaterialIndex, m_currentFontAsset, null, m_currentMaterial, m_padding));
 
             m_materialReferenceIndexLookup.Clear();
-            MaterialReference.AddMaterialReference(m_currentMaterial, m_currentFontAsset, m_materialReferences, m_materialReferenceIndexLookup);
+            MaterialReference.AddMaterialReference(m_currentMaterial, m_currentFontAsset, ref m_materialReferences, m_materialReferenceIndexLookup);
 
             // Set allocations for the text object's TextInfo
             if (m_textInfo == null)
@@ -1071,7 +1078,7 @@ namespace TMPro
                         else
                             m_Ellipsis.material = m_Ellipsis.fontAsset.material;
 
-                        m_Ellipsis.materialIndex = MaterialReference.AddMaterialReference(m_Ellipsis.material, m_Ellipsis.fontAsset, m_materialReferences, m_materialReferenceIndexLookup);
+                        m_Ellipsis.materialIndex = MaterialReference.AddMaterialReference(m_Ellipsis.material, m_Ellipsis.fontAsset, ref m_materialReferences, m_materialReferenceIndexLookup);
                         m_materialReferences[m_Ellipsis.materialIndex].referenceCount = 0;
                     }
                 }
@@ -1273,7 +1280,7 @@ namespace TMPro
                 if (character.elementType == TextElementType.Sprite)
                 {
                     TMP_SpriteAsset spriteAssetRef = character.textAsset as TMP_SpriteAsset;
-                    m_currentMaterialIndex = MaterialReference.AddMaterialReference(spriteAssetRef.material, spriteAssetRef, m_materialReferences, m_materialReferenceIndexLookup);
+                    m_currentMaterialIndex = MaterialReference.AddMaterialReference(spriteAssetRef.material, spriteAssetRef, ref m_materialReferences, m_materialReferenceIndexLookup);
                     m_materialReferences[m_currentMaterialIndex].referenceCount += 1;
 
                     m_textInfo.characterInfo[m_totalCharacterCount].elementType = TMP_TextElementType.Sprite;
@@ -1299,7 +1306,7 @@ namespace TMPro
                     else
                         m_currentMaterial = m_currentFontAsset.material;
 
-                    m_currentMaterialIndex = MaterialReference.AddMaterialReference(m_currentMaterial, m_currentFontAsset, m_materialReferences, m_materialReferenceIndexLookup);
+                    m_currentMaterialIndex = MaterialReference.AddMaterialReference(m_currentMaterial, m_currentFontAsset, ref m_materialReferences, m_materialReferenceIndexLookup);
                 }
 
                 // Handle Multi Atlas Texture support
@@ -1307,7 +1314,7 @@ namespace TMPro
                 {
                     m_currentMaterial = TMP_MaterialManager.GetFallbackMaterial(m_currentFontAsset, m_currentMaterial, character.glyph.atlasIndex);
 
-                    m_currentMaterialIndex = MaterialReference.AddMaterialReference(m_currentMaterial, m_currentFontAsset, m_materialReferences, m_materialReferenceIndexLookup);
+                    m_currentMaterialIndex = MaterialReference.AddMaterialReference(m_currentMaterial, m_currentFontAsset, ref m_materialReferences, m_materialReferenceIndexLookup);
 
                     isUsingFallbackOrAlternativeTypeface = true;
                 }
@@ -1319,7 +1326,7 @@ namespace TMPro
                         m_materialReferences[m_currentMaterialIndex].referenceCount += 1;
                     else
                     {
-                        m_currentMaterialIndex = MaterialReference.AddMaterialReference(new Material(m_currentMaterial), m_currentFontAsset, m_materialReferences, m_materialReferenceIndexLookup);
+                        m_currentMaterialIndex = MaterialReference.AddMaterialReference(new Material(m_currentMaterial), m_currentFontAsset, ref m_materialReferences, m_materialReferenceIndexLookup);
                         m_materialReferences[m_currentMaterialIndex].referenceCount += 1;
                     }
                 }
@@ -2105,8 +2112,7 @@ namespace TMPro
                 GlyphMetrics currentGlyphMetrics = m_cached_TextElement.m_Glyph.metrics;
 
                 // Optimization to avoid calling this more than once per character.
-                bool isWhiteSpace = char.IsWhiteSpace((char)charCode);
-                //bool isVisibleCharacter = !isWhiteSpace;
+                bool isWhiteSpace = charCode <= 0xFFFF && char.IsWhiteSpace((char)charCode);
 
                 // Handle Kerning if Enabled.
                 #region Handle Kerning

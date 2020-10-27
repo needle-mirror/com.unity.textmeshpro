@@ -27,7 +27,7 @@ namespace TMPro
         /// </summary>
         public string name
         { get { return m_Name; } set { if (value != m_Name) m_Name = value; } }
-       
+
         /// <summary>
         /// The hash code corresponding to the name of this style.
         /// </summary>
@@ -54,7 +54,7 @@ namespace TMPro
         public int[] styleClosingTagArray
         { get { return m_ClosingTagArray; } }
 
-       
+
         // PRIVATE FIELDS
         [SerializeField]
         private string m_Name;
@@ -74,6 +74,11 @@ namespace TMPro
         [SerializeField]
         private int[] m_ClosingTagArray;
 
+        [SerializeField]
+        internal uint[] m_OpeningTagUnicodeArray;
+
+        [SerializeField]
+        internal uint[] m_ClosingTagUnicodeArray;
 
         /// <summary>
         /// Constructor
@@ -98,14 +103,26 @@ namespace TMPro
         public void RefreshStyle()
         {
             m_HashCode = TMP_TextParsingUtilities.GetHashCode(m_Name);
-            
-            m_OpeningTagArray = new int[m_OpeningDefinition.Length];
-            for (int i = 0; i < m_OpeningDefinition.Length; i++)
-                m_OpeningTagArray[i] = m_OpeningDefinition[i];
 
-            m_ClosingTagArray = new int[m_ClosingDefinition.Length];
-            for (int i = 0; i < m_ClosingDefinition.Length; i++)
+            int s1 = m_OpeningDefinition.Length;
+            m_OpeningTagArray = new int[s1];
+            m_OpeningTagUnicodeArray = new uint[s1];
+
+            for (int i = 0; i < s1; i++)
+            {
+                m_OpeningTagArray[i] = m_OpeningDefinition[i];
+                m_OpeningTagUnicodeArray[i] = m_OpeningDefinition[i];
+            }
+
+            int s2 = m_ClosingDefinition.Length;
+            m_ClosingTagArray = new int[s2];
+            m_ClosingTagUnicodeArray = new uint[s2];
+
+            for (int i = 0; i < s2; i++)
+            {
                 m_ClosingTagArray[i] = m_ClosingDefinition[i];
+                m_ClosingTagUnicodeArray[i] = m_ClosingDefinition[i];
+            }
         }
 
     }

@@ -331,13 +331,15 @@ namespace TMPro
             RecalculateClipping();
 
             // Notify parent text object
-            m_TextComponent.havePropertiesChanged = true;
-            m_TextComponent.SetAllDirty();
+            if (m_TextComponent != null)
+            {
+                m_TextComponent.havePropertiesChanged = true;
+                m_TextComponent.SetAllDirty();
+            }
         }
 
 
-
-#if UNITY_EDITOR
+        #if UNITY_EDITOR
         // Event received when custom material editor properties are changed.
         void ON_MATERIAL_PROPERTY_CHANGED(bool isChanged, Material mat)
         {
@@ -484,7 +486,7 @@ namespace TMPro
             //SetVerticesDirty();
             //SetMaterialDirty();
         }
-#endif
+        #endif
 
         /// <summary>
         ///
@@ -711,7 +713,7 @@ namespace TMPro
 
             canvasRenderer.materialCount = 1;
             canvasRenderer.SetMaterial(materialForRendering, 0);
-            //m_canvasRenderer.SetTexture(mainTexture);
+            //canvasRenderer.SetTexture(materialForRendering.mainTexture);
 
             #if UNITY_EDITOR
             if (m_sharedMaterial != null && gameObject.name != "TMP SubMeshUI [" + m_sharedMaterial.name + "]")

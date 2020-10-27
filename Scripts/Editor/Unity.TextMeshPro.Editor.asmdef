@@ -3,9 +3,21 @@
     "references": [
         "Unity.TextMeshPro"
     ],
-    "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
     ],
-    "excludePlatforms": []
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.textcore",
+            "expression": "1.0.0-preview.0",
+            "define": "TEXTCORE_1_0_OR_NEWER"
+        }
+    ],
+    "noEngineReferences": false
 }

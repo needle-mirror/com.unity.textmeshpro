@@ -7,8 +7,8 @@ using UnityEngine.Profiling;
 using System.Collections.Generic;
 using System.Linq;
 
-#if UNITY_EDITOR
-using UnityEditor.TextCore.LowLevel;
+#if UNITY_EDITOR && UNITY_2018_4_OR_NEWER && !UNITY_2018_4_0 && !UNITY_2018_4_1 && !UNITY_2018_4_2 && !UNITY_2018_4_3 && !UNITY_2018_4_4
+    using UnityEditor.TextCore.LowLevel;
 #endif
 
 
@@ -215,7 +215,7 @@ namespace TMPro
         public int atlasTextureCount { get { return m_AtlasTextureIndex + 1; } }
 
         /// <summary>
-        ///
+        /// Enables the font asset to create additional atlas textures as needed.
         /// </summary>
         public bool isMultiAtlasTexturesEnabled
         {
@@ -225,6 +225,17 @@ namespace TMPro
 
         [SerializeField]
         private bool m_IsMultiAtlasTexturesEnabled;
+
+        /// <summary>
+        /// Determines if dynamic font asset data should be cleared before builds.
+        /// </summary>
+        internal bool clearDynamicDataOnBuild
+        {
+            get { return m_ClearDynamicDataOnBuild; }
+            set { m_ClearDynamicDataOnBuild = value; }
+        }
+        [SerializeField]
+        private bool m_ClearDynamicDataOnBuild;
 
         /// <summary>
         /// List of spaces occupied by glyphs in a given texture.
@@ -469,8 +480,6 @@ namespace TMPro
 
             // Create and add font atlas texture.
             Texture2D texture = new Texture2D(0, 0, TextureFormat.Alpha8, false);
-
-            //texture.name = assetName + " Atlas";
             fontAsset.atlasTextures[0] = texture;
 
             fontAsset.isMultiAtlasTexturesEnabled = enableMultiAtlasSupport;
@@ -856,14 +865,11 @@ namespace TMPro
             if (m_CharacterLookupDictionary == null)
                 return false;
 
-            if (m_CharacterLookupDictionary.ContainsKey((uint)character))
-                return true;
-
-            return false;
+            return m_CharacterLookupDictionary.ContainsKey((uint)character);
         }
 
         /// <summary>
-        /// Function to check if a character is contained in the font asset with the option to also check through fallback font assets.
+        /// Function to check if a character is contained in the font asset with the option to also check potential local fallbacks.
         /// </summary>
         /// <param name="character"></param>
         /// <param name="searchFallbacks"></param>
@@ -1042,7 +1048,7 @@ namespace TMPro
         }
 
         /// <summary>
-        ///
+        /// Function to check if the characters in the given string are contained in the font asset with the option to also check its potential local fallbacks.
         /// </summary>
         /// <param name="text"></param>
         /// <param name="missingCharacters"></param>
@@ -2713,6 +2719,20 @@ namespace TMPro
             Profiler.EndSample();
         }
 
+        internal void ClearFontAssetDataInternal()
+        {
+            // Clear glyph, character and font feature tables
+            ClearFontAssetTables();
+
+            // Clear atlas textures
+            ClearAtlasTextures(true);
+
+            #if UNITY_EDITOR
+            // Makes the changes to the font asset persistent.
+            TMP_EditorResourceManager.RegisterResourceForUpdate(this);
+            #endif
+        }
+
         /// <summary>
         ///
         /// </summary>
@@ -2789,50 +2809,52 @@ namespace TMPro
             if (m_AtlasTextures == null)
                 return;
 
-            // Clear all atlas textures
-            for (int i = 0; i < m_AtlasTextures.Length; i++)
+            Texture2D texture = null;
+
+            // Clear all additional atlas textures
+            for (int i = 1; i < m_AtlasTextures.Length; i++)
             {
-                Texture2D texture = m_AtlasTextures[i];
-
-                if (i > 0 && texture != null)
-                {
-                    DestroyImmediate(texture, true);
-
-                    #if UNITY_EDITOR
-                    if (UnityEditor.EditorUtility.IsPersistent(this))
-                        TMP_EditorResourceManager.RegisterResourceForReimport(this);
-                    #endif
-                }
+                texture = m_AtlasTextures[i];
 
                 if (texture == null)
                     continue;
 
-                // TODO: Need texture to be readable.
-                if (m_AtlasTextures[i].isReadable == false)
-                {
-                    #if UNITY_EDITOR
-                    FontEngineEditorUtilities.SetAtlasTextureIsReadable(m_AtlasTextures[i], true);
-                    #endif
-                }
+                DestroyImmediate(texture, true);
 
-                if (setAtlasSizeToZero)
-                {
-                    texture.Resize(0, 0, TextureFormat.Alpha8, false);
-                }
-                else if (texture.width != m_AtlasWidth || texture.height != m_AtlasHeight)
-                {
-                    texture.Resize(m_AtlasWidth, m_AtlasHeight, TextureFormat.Alpha8, false);
-                }
-
-                // Clear texture atlas
-                FontEngine.ResetAtlasTexture(texture);
-                texture.Apply();
-
-                if (i == 0)
-                    m_AtlasTexture = texture;
-
-                m_AtlasTextures[i] = texture;
+                #if UNITY_EDITOR
+                if (UnityEditor.EditorUtility.IsPersistent(this))
+                    TMP_EditorResourceManager.RegisterResourceForReimport(this);
+                #endif
             }
+
+            // Resize atlas texture array down to one texture
+            Array.Resize(ref m_AtlasTextures, 1);
+
+            texture = m_AtlasTexture = m_AtlasTextures[0];
+
+            // Clear main atlas texture
+            if (texture.isReadable == false)
+            {
+                #if UNITY_EDITOR && UNITY_2018_4_OR_NEWER && !UNITY_2018_4_0 && !UNITY_2018_4_1 && !UNITY_2018_4_2 && !UNITY_2018_4_3 && !UNITY_2018_4_4
+                    FontEngineEditorUtilities.SetAtlasTextureIsReadable(texture, true);
+                #else
+                    Debug.LogWarning("Unable to reset font asset [" + this.name + "]'s atlas texture. Please make the texture [" + texture.name + "] readable.", texture);
+                    return;
+                #endif
+            }
+
+            if (setAtlasSizeToZero)
+            {
+                texture.Resize(0, 0, TextureFormat.Alpha8, false);
+            }
+            else if (texture.width != m_AtlasWidth || texture.height != m_AtlasHeight)
+            {
+                texture.Resize(m_AtlasWidth, m_AtlasHeight, TextureFormat.Alpha8, false);
+            }
+
+            // Clear texture atlas
+            FontEngine.ResetAtlasTexture(texture);
+            texture.Apply();
         }
 
         /// <summary>

@@ -265,7 +265,7 @@ namespace TMPro.EditorUtilities
             m_MaterialPresetNames = GetMaterialPresets();
 
             // Get Styles from Style Sheet
-            if (!m_TextComponent.m_isWaitingOnResourceLoad)
+            if (TMP_Settings.instance != null)
                 m_StyleNames = GetStyleNames();
 
             // Register to receive events when style sheets are modified.
@@ -333,6 +333,8 @@ namespace TMPro.EditorUtilities
 
             Handles.DrawSolidRectangleWithOutline(m_HandlePoints, new Color32(255, 255, 255, 0), new Color32(255, 255, 0, 255));
 
+            Matrix4x4 matrix = m_RectTransform.worldToLocalMatrix;
+
             // Draw & process FreeMoveHandles
 
             // LEFT HANDLE
@@ -341,6 +343,9 @@ namespace TMPro.EditorUtilities
             bool hasChanged = false;
             if (oldLeft != newLeft)
             {
+                oldLeft = matrix.MultiplyPoint(oldLeft);
+                newLeft = matrix.MultiplyPoint(newLeft);
+
                 float delta = oldLeft.x - newLeft.x;
                 marginOffset.x += -delta / lossyScale.x;
                 //Debug.Log("Left Margin H0:" + handlePoints[0] + "  H1:" + handlePoints[1]);
@@ -352,6 +357,9 @@ namespace TMPro.EditorUtilities
             Vector3 newTop = Handles.FreeMoveHandle(oldTop, Quaternion.identity, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
             if (oldTop != newTop)
             {
+                oldTop = matrix.MultiplyPoint(oldTop);
+                newTop = matrix.MultiplyPoint(newTop);
+
                 float delta = oldTop.y - newTop.y;
                 marginOffset.y += delta / lossyScale.y;
                 //Debug.Log("Top Margin H1:" + handlePoints[1] + "  H2:" + handlePoints[2]);
@@ -363,6 +371,9 @@ namespace TMPro.EditorUtilities
             Vector3 newRight = Handles.FreeMoveHandle(oldRight, Quaternion.identity, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
             if (oldRight != newRight)
             {
+                oldRight = matrix.MultiplyPoint(oldRight);
+                newRight = matrix.MultiplyPoint(newRight);
+
                 float delta = oldRight.x - newRight.x;
                 marginOffset.z += delta / lossyScale.x;
                 hasChanged = true;
@@ -374,6 +385,9 @@ namespace TMPro.EditorUtilities
             Vector3 newBottom = Handles.FreeMoveHandle(oldBottom, Quaternion.identity, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
             if (oldBottom != newBottom)
             {
+                oldBottom = matrix.MultiplyPoint(oldBottom);
+                newBottom = matrix.MultiplyPoint(newBottom);
+
                 float delta = oldBottom.y - newBottom.y;
                 marginOffset.w += -delta / lossyScale.y;
                 hasChanged = true;
@@ -415,7 +429,8 @@ namespace TMPro.EditorUtilities
                 EditorGUI.BeginChangeCheck();
                 EditorGUILayout.PropertyField(m_TextProp, GUIContent.none);
 
-                if (EditorGUI.EndChangeCheck())
+                // Need to also compare string content due to issue related to scroll bar drag handle
+                if (EditorGUI.EndChangeCheck() && m_TextProp.stringValue != m_TextComponent.text)
                 {
                     m_TextComponent.m_inputSource = TMP_Text.TextInputSources.Text;
                     m_TextComponent.m_isInputParsingRequired = true;
@@ -455,6 +470,8 @@ namespace TMPro.EditorUtilities
                 {
                     rect = EditorGUILayout.GetControlRect(false, 17);
 
+                    EditorGUI.BeginProperty(rect, k_StyleLabel, m_TextStyleHashCodeProp);
+
                     m_TextStyleIndexLookup.TryGetValue(m_TextStyleHashCodeProp.intValue, out m_StyleSelectionIndex);
 
                     EditorGUI.BeginChangeCheck();
@@ -465,6 +482,8 @@ namespace TMPro.EditorUtilities
                         m_TextComponent.m_TextStyle = m_Styles[m_StyleSelectionIndex];
                         m_HavePropertiesChanged = true;
                     }
+
+                    EditorGUI.EndProperty();
                 }
             }
         }
@@ -518,6 +537,8 @@ namespace TMPro.EditorUtilities
                 EditorGUI.BeginChangeCheck();
                 rect = EditorGUILayout.GetControlRect(false, 17);
 
+                EditorGUI.BeginProperty(rect, k_MaterialPresetLabel, m_FontSharedMaterialProp);
+
                 float oldHeight = EditorStyles.popup.fixedHeight;
                 EditorStyles.popup.fixedHeight = rect.height;
 
@@ -528,6 +549,9 @@ namespace TMPro.EditorUtilities
                     m_MaterialPresetIndexLookup.TryGetValue(m_FontSharedMaterialProp.objectReferenceValue.GetInstanceID(), out m_MaterialPresetSelectionIndex);
 
                 m_MaterialPresetSelectionIndex = EditorGUI.Popup(rect, k_MaterialPresetLabel, m_MaterialPresetSelectionIndex, m_MaterialPresetNames);
+
+                EditorGUI.EndProperty();
+
                 if (EditorGUI.EndChangeCheck())
                 {
                     m_FontSharedMaterialProp.objectReferenceValue = m_MaterialPresets[m_MaterialPresetSelectionIndex];
@@ -546,6 +570,8 @@ namespace TMPro.EditorUtilities
             if (EditorGUIUtility.wideMode)
             {
                 rect = EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight + 2f);
+
+                EditorGUI.BeginProperty(rect, k_FontStyleLabel, m_FontStyleProp);
 
                 EditorGUI.PrefixLabel(rect, k_FontStyleLabel);
 
@@ -594,10 +620,14 @@ namespace TMPro.EditorUtilities
                     v5 = selected == 16 ? 16 : 0;
                     v6 = selected == 32 ? 32 : 0;
                 }
+
+                EditorGUI.EndProperty();
             }
             else
             {
                 rect = EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight + 2f);
+
+                EditorGUI.BeginProperty(rect, k_FontStyleLabel, m_FontStyleProp);
 
                 EditorGUI.PrefixLabel(rect, k_FontStyleLabel);
 
@@ -651,6 +681,8 @@ namespace TMPro.EditorUtilities
                     v5 = selected == 16 ? 16 : 0;
                     v6 = selected == 32 ? 32 : 0;
                 }
+
+                EditorGUI.EndProperty();
             }
 
             if (EditorGUI.EndChangeCheck())
@@ -757,10 +789,9 @@ namespace TMPro.EditorUtilities
         {
             // FACE VERTEX COLOR
             EditorGUI.BeginChangeCheck();
-            Color vertexColor = EditorGUILayout.ColorField(k_BaseColorLabel, m_FontColorProp.colorValue, false, true, false);
+            EditorGUILayout.PropertyField(m_FontColorProp, k_BaseColorLabel);
             if (EditorGUI.EndChangeCheck())
             {
-                m_FontColorProp.colorValue = vertexColor;
                 m_HavePropertiesChanged = true;
             }
 
@@ -810,7 +841,7 @@ namespace TMPro.EditorUtilities
 
                 EditorGUILayout.PropertyField(colorMode, k_ColorModeLabel);
 
-                var rect = EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight * (EditorGUIUtility.wideMode ? 1 : 2));
+                Rect rect = EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight * (EditorGUIUtility.wideMode ? 1 : 2));
 
                 EditorGUI.PrefixLabel(rect, k_CorenerColorsLabel);
 
@@ -936,6 +967,8 @@ namespace TMPro.EditorUtilities
             EditorGUI.BeginChangeCheck();
 
             Rect rect = EditorGUILayout.GetControlRect(true, EditorGUIUtility.currentViewWidth > 504 ? 20 : 40 + 3);
+            EditorGUI.BeginProperty(rect, k_AlignmentLabel, m_HorizontalAlignmentProp);
+            EditorGUI.BeginProperty(rect, k_AlignmentLabel, m_VerticalAlignmentProp);
 
             EditorGUI.PrefixLabel(rect, k_AlignmentLabel);
             rect.x += EditorGUIUtility.labelWidth;
@@ -950,20 +983,28 @@ namespace TMPro.EditorUtilities
             if (EditorGUI.EndChangeCheck())
                 m_HavePropertiesChanged = true;
 
+            EditorGUI.EndProperty();
+            EditorGUI.EndProperty();
+
             EditorGUILayout.Space();
         }
 
         void DrawWrappingOverflow()
         {
             // TEXT WRAPPING
+            Rect rect = EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight);
+            EditorGUI.BeginProperty(rect, k_WrappingLabel, m_EnableWordWrappingProp);
+
             EditorGUI.BeginChangeCheck();
-            int wrapSelection = EditorGUILayout.Popup(k_WrappingLabel, m_EnableWordWrappingProp.boolValue ? 1 : 0, k_WrappingOptions);
+            int wrapSelection = EditorGUI.Popup(rect, k_WrappingLabel, m_EnableWordWrappingProp.boolValue ? 1 : 0, k_WrappingOptions);
             if (EditorGUI.EndChangeCheck())
             {
                 m_EnableWordWrappingProp.boolValue = wrapSelection == 1;
                 m_HavePropertiesChanged = true;
                 m_TextComponent.m_isInputParsingRequired = true;
             }
+
+            EditorGUI.EndProperty();
 
             // TEXT OVERFLOW
             EditorGUI.BeginChangeCheck();

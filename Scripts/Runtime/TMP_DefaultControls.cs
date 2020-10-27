@@ -153,17 +153,13 @@ namespace TMPro
         public static GameObject CreateText(Resources resources)
         {
             GameObject go = null;
+
             #if UNITY_EDITOR
                 go = ObjectFactory.CreateGameObject("Text (TMP)");
+                ObjectFactory.AddComponent<TextMeshProUGUI>(go);
             #else
                 go = CreateUIElementRoot("Text (TMP)", s_TextElementSize);
-            #endif
-
-            TextMeshProUGUI textComponent = null;
-            #if UNITY_EDITOR
-                textComponent = ObjectFactory.AddComponent<TextMeshProUGUI>(go);
-            #else
-                textComponent = go.AddComponent<TextMeshProUGUI>();
+                go.AddComponent<TextMeshProUGUI>();
             #endif
 
             return go;

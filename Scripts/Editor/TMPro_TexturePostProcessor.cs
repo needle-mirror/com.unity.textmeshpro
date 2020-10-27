@@ -28,6 +28,10 @@ namespace TMPro.EditorUtilities
         {
             foreach (var asset in importedAssets)
             {
+                // Return if imported asset path is outside of the project.
+                if (asset.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase) == false)
+                    continue;
+
                 if (AssetDatabase.GetMainAssetTypeAtPath(asset) == typeof(TMP_FontAsset))
                 {
                     TMP_FontAsset fontAsset = AssetDatabase.LoadAssetAtPath(asset, typeof(TMP_FontAsset)) as TMP_FontAsset;

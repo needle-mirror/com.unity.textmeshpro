@@ -4,7 +4,10 @@ using UnityEditorInternal;
 using System.Collections.Generic;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
-using UnityEditor.TextCore.LowLevel;
+
+#if UNITY_2018_4_OR_NEWER && !UNITY_2018_4_0 && !UNITY_2018_4_1 && !UNITY_2018_4_2 && !UNITY_2018_4_3 && !UNITY_2018_4_4
+    using UnityEditor.TextCore.LowLevel;
+#endif
 
 
 namespace TMPro.EditorUtilities
@@ -158,6 +161,7 @@ namespace TMPro.EditorUtilities
         private SerializedProperty m_AtlasWidth_prop;
         private SerializedProperty m_AtlasHeight_prop;
         private SerializedProperty m_IsMultiAtlasTexturesEnabled_prop;
+        private SerializedProperty m_ClearDynamicDataOnBuild_prop;
 
         private SerializedProperty fontWeights_prop;
 
@@ -209,6 +213,7 @@ namespace TMPro.EditorUtilities
             m_AtlasWidth_prop = serializedObject.FindProperty("m_AtlasWidth");
             m_AtlasHeight_prop = serializedObject.FindProperty("m_AtlasHeight");
             m_IsMultiAtlasTexturesEnabled_prop = serializedObject.FindProperty("m_IsMultiAtlasTexturesEnabled");
+            m_ClearDynamicDataOnBuild_prop = serializedObject.FindProperty("m_ClearDynamicDataOnBuild");
 
             fontWeights_prop = serializedObject.FindProperty("m_FontWeightTable");
 
@@ -381,7 +386,11 @@ namespace TMPro.EditorUtilities
                                 Texture2D tex = m_fontAsset.atlasTextures[i];
 
                                 if (tex != null && tex.isReadable)
-                                    FontEngineEditorUtilities.SetAtlasTextureIsReadable(tex, false);
+                                {
+                                    #if UNITY_2018_4_OR_NEWER && !UNITY_2018_4_0 && !UNITY_2018_4_1 && !UNITY_2018_4_2 && !UNITY_2018_4_3 && !UNITY_2018_4_4
+                                        FontEngineEditorUtilities.SetAtlasTextureIsReadable(tex, false);
+                                    #endif
+                                }
                             }
 
                             Debug.Log("Atlas Population mode set to [Static].");
@@ -405,7 +414,11 @@ namespace TMPro.EditorUtilities
                                     Texture2D tex = m_fontAsset.atlasTextures[i];
 
                                     if (tex != null && tex.isReadable == false)
-                                        FontEngineEditorUtilities.SetAtlasTextureIsReadable(tex, true);
+                                    {
+                                        #if UNITY_2018_4_OR_NEWER && !UNITY_2018_4_0 && !UNITY_2018_4_1 && !UNITY_2018_4_2 && !UNITY_2018_4_3 && !UNITY_2018_4_4
+                                            FontEngineEditorUtilities.SetAtlasTextureIsReadable(tex, true);
+                                        #endif
+                                    }
                                 }
 
                                 Debug.Log("Atlas Population mode set to [Dynamic].");
@@ -468,10 +481,14 @@ namespace TMPro.EditorUtilities
                                     m_fontAsset.faceInfo = FontEngine.GetFaceInfo();
                                 }
 
+                                Material mat = m_fontAsset.material;
+
                                 // Update material
-                                m_fontAsset.material.SetFloat(ShaderUtilities.ID_TextureWidth, m_AtlasWidth_prop.intValue);
-                                m_fontAsset.material.SetFloat(ShaderUtilities.ID_TextureHeight, m_AtlasHeight_prop.intValue);
-                                m_fontAsset.material.SetFloat(ShaderUtilities.ID_GradientScale, m_AtlasPadding_prop.intValue + 1);
+                                mat.SetFloat(ShaderUtilities.ID_TextureWidth, m_AtlasWidth_prop.intValue);
+                                mat.SetFloat(ShaderUtilities.ID_TextureHeight, m_AtlasHeight_prop.intValue);
+
+                                if (mat.HasProperty(ShaderUtilities.ID_GradientScale))
+                                    mat.SetFloat(ShaderUtilities.ID_GradientScale, m_AtlasPadding_prop.intValue + 1);
 
                                 // Update material presets if any of the relevant properties have been changed.
                                 if (m_MaterialPresetsRequireUpdate)
@@ -481,11 +498,13 @@ namespace TMPro.EditorUtilities
                                     Material[] materialPresets = TMP_EditorUtility.FindMaterialReferences(m_fontAsset);
                                     for (int i = 0; i < materialPresets.Length; i++)
                                     {
-                                        Material mat = materialPresets[i];
+                                        mat = materialPresets[i];
 
                                         mat.SetFloat(ShaderUtilities.ID_TextureWidth, m_AtlasWidth_prop.intValue);
                                         mat.SetFloat(ShaderUtilities.ID_TextureHeight, m_AtlasHeight_prop.intValue);
-                                        mat.SetFloat(ShaderUtilities.ID_GradientScale, m_AtlasPadding_prop.intValue + 1);
+
+                                        if (mat.HasProperty(ShaderUtilities.ID_GradientScale))
+                                            mat.SetFloat(ShaderUtilities.ID_GradientScale, m_AtlasPadding_prop.intValue + 1);
                                     }
                                 }
 
@@ -510,6 +529,8 @@ namespace TMPro.EditorUtilities
                                 //Undo.ClearUndo(m_fontAsset);
                             }
                         }
+
+                        EditorGUILayout.PropertyField(m_ClearDynamicDataOnBuild_prop, new GUIContent("Clear Dynamic Data On Build", "Clears all dynamic data restoring the font asset back to its default creation and empty state."));
                     }
                     EditorGUI.EndDisabledGroup();
                 }

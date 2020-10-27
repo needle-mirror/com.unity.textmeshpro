@@ -18,7 +18,17 @@ namespace TMPro.EditorUtilities
 
         SerializedProperty m_IsVolumetricTextProp;
         SerializedProperty m_IsOrthographicProp;
-        Renderer m_Renderer;
+        Object[] m_Renderers;
+
+        SerializedObject m_RendererSerializedObject;
+        SerializedProperty m_RendererSortingLayerProp;
+        SerializedProperty m_RendererSortingLayerIDProp;
+        SerializedProperty m_RendererSortingOrderProp;
+
+        SerializedProperty m_TextSortingLayerProp;
+        SerializedProperty m_TextSortingLayerIDProp;
+        SerializedProperty m_TextSortingOrderProp;
+
 
         protected override void OnEnable()
         {
@@ -31,7 +41,18 @@ namespace TMPro.EditorUtilities
 
             m_IsVolumetricTextProp = serializedObject.FindProperty("m_isVolumetricText");
 
-            m_Renderer = m_TextComponent.GetComponent<Renderer>();
+            m_Renderers = new Object[targets.Length];
+            for (int i = 0; i < m_Renderers.Length; i++)
+                m_Renderers[i] = (targets[i] as TextMeshPro)?.GetComponent<Renderer>();
+
+            m_RendererSerializedObject = new SerializedObject(m_Renderers);
+            m_RendererSortingLayerProp = m_RendererSerializedObject.FindProperty("m_SortingLayer");
+            m_RendererSortingLayerIDProp = m_RendererSerializedObject.FindProperty("m_SortingLayerID");
+            m_RendererSortingOrderProp = m_RendererSerializedObject.FindProperty("m_SortingOrder");
+
+            m_TextSortingLayerProp = serializedObject.FindProperty("_SortingLayer");
+            m_TextSortingLayerIDProp = serializedObject.FindProperty("_SortingLayerID");
+            m_TextSortingOrderProp = serializedObject.FindProperty("_SortingOrder");
 
             // Populate Sorting Layer Names
             k_SortingLayerNames = SortingLayerHelper.sortingLayerNames;
@@ -78,43 +99,47 @@ namespace TMPro.EditorUtilities
             }
         }
 
-        protected void DrawSortingLayer()
+        private void DrawSortingLayer()
         {
-            Undo.RecordObject(m_Renderer, "Sorting Layer Change");
+            m_RendererSerializedObject.Update();
+
+            Rect rect = EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight);
+
+            // Special handling for Presets where the sorting layer, id and order is serialized with the text object instead of on the MeshRenderer.
+            SerializedProperty sortingLayerProp = IsPreset ? m_TextSortingLayerProp : m_RendererSortingLayerProp;
+            SerializedProperty sortingLayerIDProp = IsPreset ? m_TextSortingLayerIDProp : m_RendererSortingLayerIDProp;
+
+            EditorGUI.BeginProperty(rect, k_SortingLayerLabel, sortingLayerIDProp);
+            EditorGUI.BeginChangeCheck();
+            int newLayerIndex = EditorGUI.Popup(rect, k_SortingLayerLabel, sortingLayerProp.intValue, k_SortingLayerNames);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                sortingLayerProp.intValue = newLayerIndex;
+                sortingLayerIDProp.intValue = SortingLayer.NameToID(k_SortingLayerNames[newLayerIndex]);
+                m_HavePropertiesChanged = true;
+            }
+
+            EditorGUI.EndProperty();
+
+            // Sorting Order
+            SerializedProperty sortingOrderLayerProp = IsPreset ? m_TextSortingOrderProp : m_RendererSortingOrderProp;
 
             EditorGUI.BeginChangeCheck();
 
-            TextMeshPro textComponent = (TextMeshPro)m_TextComponent;
-
-            // Look up the layer name using the current layer ID
-            string oldName = IsPreset ? SortingLayer.IDToName(textComponent._SortingLayerID) : SortingLayer.IDToName(textComponent.sortingLayerID);
-
-            // Use the name to look up our array index into the names list
-            int oldLayerIndex = System.Array.IndexOf(k_SortingLayerNames, oldName);
-
-            // Show the pop-up for the names
-            EditorGUIUtility.fieldWidth = 0f;
-            int newLayerIndex = EditorGUILayout.Popup(k_SortingLayerLabel, oldLayerIndex, k_SortingLayerNames);
-
-            // If the index changes, look up the ID for the new index to store as the new ID
-            if (newLayerIndex != oldLayerIndex)
-                UpdateTargetsSortingLayerID(SortingLayer.NameToID(k_SortingLayerNames[newLayerIndex]));
-
-            // Get value from internal property if target is a Preset otherwise from the public property
-            int oldSortingOrder = IsPreset ? textComponent._SortingOrder : textComponent.sortingOrder;
-
-            int newSortingLayerOrder = EditorGUILayout.IntField(k_OrderInLayerLabel, oldSortingOrder);
-
-            if (newSortingLayerOrder != textComponent.sortingOrder)
-                UpdateTargetsSortingOrder(newSortingLayerOrder);
+            EditorGUILayout.PropertyField(sortingOrderLayerProp, k_OrderInLayerLabel);
 
             if (EditorGUI.EndChangeCheck())
+            {
                 m_HavePropertiesChanged = true;
+            }
+
+            m_RendererSerializedObject.ApplyModifiedProperties();
 
             EditorGUILayout.Space();
         }
 
-        protected void DrawOrthographicMode()
+        private void DrawOrthographicMode()
         {
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(m_IsOrthographicProp, k_OrthographicLabel);
@@ -166,26 +191,5 @@ namespace TMPro.EditorUtilities
             }
         }
 
-        void UpdateTargetsSortingLayerID(int sortingLayerID)
-        {
-            for (int i = 0; i < targets.Length; i++)
-            {
-                var textComponent = (TextMeshPro)targets[i];
-
-                if (textComponent != null)
-                    textComponent.sortingLayerID = sortingLayerID;
-            }
-        }
-
-        void UpdateTargetsSortingOrder(int sortingOrder)
-        {
-            for (int i = 0; i < targets.Length; i++)
-            {
-                var textComponent = (TextMeshPro)targets[i];
-
-                if (textComponent != null)
-                    textComponent.sortingOrder = sortingOrder;
-            }
-        }
     }
 }

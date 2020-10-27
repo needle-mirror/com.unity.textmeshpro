@@ -98,6 +98,31 @@ namespace TMPro
 
 
         /// <summary>
+        ///
+        /// </summary>
+        internal void ClearAllData()
+        {
+            characterCount = 0;
+            spaceCount = 0;
+            wordCount = 0;
+            linkCount = 0;
+            lineCount = 0;
+            pageCount = 0;
+            spriteCount = 0;
+
+            this.characterInfo = new TMP_CharacterInfo[4];
+            this.wordInfo = new TMP_WordInfo[1];
+            this.lineInfo = new TMP_LineInfo[1];
+            this.pageInfo = new TMP_PageInfo[1];
+            this.linkInfo = new TMP_LinkInfo[0];
+
+            materialCount = 0;
+
+            this.meshInfo = new TMP_MeshInfo[1];
+        }
+
+
+        /// <summary>
         /// Function to clear the content of the MeshInfo array while preserving the Triangles, Normals and Tangents.
         /// </summary>
         public void ClearMeshInfo(bool updateMesh)
@@ -118,7 +143,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public void ResetVertexLayout(bool isVolumetric)
         {
@@ -142,7 +167,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// Function to clear and initialize the lineInfo array. 
+        /// Function to clear and initialize the lineInfo array.
         /// </summary>
         public void ClearLineInfo()
         {
