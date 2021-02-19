@@ -10,6 +10,7 @@ namespace TMPro.EditorUtilities
         static bool s_Face = true, s_Outline = true, s_Outline2, s_Underlay, s_Lighting, s_Glow, s_Bevel, s_Light, s_Bump, s_Env;
 
         static string[]
+            s_FaceUVSpeedName = { "_FaceUVSpeed" },
             s_FaceUvSpeedNames = { "_FaceUVSpeedX", "_FaceUVSpeedY" },
             s_OutlineUvSpeedNames = { "_OutlineUVSpeedX", "_OutlineUVSpeedY" };
 
@@ -194,12 +195,18 @@ namespace TMPro.EditorUtilities
         void DoFacePanel()
         {
             EditorGUI.indentLevel += 1;
+
             DoColor("_FaceColor", "Color");
+
             if (m_Material.HasProperty(ShaderUtilities.ID_FaceTex))
             {
                 if (m_Material.HasProperty("_FaceUVSpeedX"))
                 {
                     DoTexture2D("_FaceTex", "Texture", true, s_FaceUvSpeedNames);
+                }
+                else if (m_Material.HasProperty("_FaceUVSpeed"))
+                {
+                    DoTexture2D("_FaceTex", "Texture", true, s_FaceUVSpeedName);
                 }
                 else
                 {
@@ -207,11 +214,23 @@ namespace TMPro.EditorUtilities
                 }
             }
 
-            DoSlider("_OutlineSoftness", "Softness");
-            DoSlider("_FaceDilate", "Dilate");
-            if (m_Material.HasProperty(ShaderUtilities.ID_Shininess))
+            if (m_Material.HasProperty("_FaceSoftness"))
             {
-                DoSlider("_FaceShininess", "Gloss");
+                DoSlider("_FaceSoftness", "X", "Softness");
+            }
+
+            if (m_Material.HasProperty("_OutlineSoftness"))
+            {
+                DoSlider("_OutlineSoftness", "Softness");
+            }
+
+            if (m_Material.HasProperty(ShaderUtilities.ID_FaceDilate))
+            {
+                DoSlider("_FaceDilate", "Dilate");
+                if (m_Material.HasProperty(ShaderUtilities.ID_Shininess))
+                {
+                    DoSlider("_FaceShininess", "Gloss");
+                }
             }
 
             EditorGUI.indentLevel -= 1;

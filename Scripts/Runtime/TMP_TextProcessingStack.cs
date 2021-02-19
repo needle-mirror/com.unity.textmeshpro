@@ -167,7 +167,7 @@ namespace TMPro
             index = 0;
             m_RolloverSize = 0;
 
-            m_DefaultItem = default;
+            m_DefaultItem = default(T);
             m_Count = 0;
         }
 
@@ -183,7 +183,7 @@ namespace TMPro
             index = 0;
             m_RolloverSize = 0;
 
-            m_DefaultItem = default;
+            m_DefaultItem = default(T);
             m_Count = 0;
         }
 
@@ -195,7 +195,7 @@ namespace TMPro
             index = 0;
             m_RolloverSize = rolloverSize;
 
-            m_DefaultItem = default;
+            m_DefaultItem = default(T);
             m_Count = 0;
         }
 
@@ -241,6 +241,18 @@ namespace TMPro
 
 
         /// <summary>
+        /// Set stack elements to default item.
+        /// </summary>
+        /// <param name="stack">The stack of elements.</param>
+        /// <param name="item"></param>
+        internal static void SetDefault(TMP_TextProcessingStack<T>[] stack, T item)
+        {
+            for (int i = 0; i < stack.Length; i++)
+                stack[i].SetDefault(item);
+        }
+
+
+        /// <summary>
         /// Function to clear and reset stack to first item.
         /// </summary>
         public void Clear()
@@ -260,7 +272,7 @@ namespace TMPro
             {
                 m_Capacity = k_DefaultCapacity;
                 itemStack = new T[m_Capacity];
-                m_DefaultItem = default;
+                m_DefaultItem = default(T);
             }
 
             itemStack[0] = item;
@@ -329,7 +341,7 @@ namespace TMPro
         public T Pop()
         {
             if (index == 0 && m_RolloverSize == 0)
-                return default;
+                return default(T);
 
             if (m_RolloverSize == 0)
                 index -= 1;

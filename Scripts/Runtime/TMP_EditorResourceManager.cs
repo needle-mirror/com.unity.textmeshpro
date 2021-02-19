@@ -40,16 +40,21 @@ namespace TMPro
         private TMP_EditorResourceManager()
         {
             Camera.onPostRender += OnCameraPostRender;
+            Canvas.willRenderCanvases += OnPreRenderCanvases;
         }
-
 
         void OnCameraPostRender(Camera cam)
         {
             // Exclude the PreRenderCamera
-            if (cam.cameraType == CameraType.Preview)
+            if (cam.cameraType != CameraType.SceneView)
                 return;
 
-            DoUpdates();
+            DoPostRenderUpdates();
+        }
+
+        void OnPreRenderCanvases()
+        {
+            DoPreRenderUpdates();
         }
 
         /// <summary>
@@ -112,7 +117,7 @@ namespace TMPro
             m_FontAssetDefinitionRefreshQueue.Add(fontAsset);
         }
 
-        void DoUpdates()
+        void DoPostRenderUpdates()
         {
             // Handle objects that need updating
             int objUpdateCount = m_ObjectUpdateQueue.Count;
@@ -143,7 +148,6 @@ namespace TMPro
                 Object obj = m_ObjectReImportQueue[i];
                 if (obj != null)
                 {
-                    //Debug.Log("Re-importing [" + obj.name + "]");
                     AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(obj));
                 }
             }
@@ -153,7 +157,10 @@ namespace TMPro
                 m_ObjectReImportQueue.Clear();
                 m_ObjectReImportQueueLookup.Clear();
             }
+        }
 
+        void DoPreRenderUpdates()
+        {
             // Handle Font Asset Definition Refresh
             for (int i = 0; i < m_FontAssetDefinitionRefreshQueue.Count; i++)
             {
@@ -172,7 +179,6 @@ namespace TMPro
                 m_FontAssetDefinitionRefreshQueueLookup.Clear();
             }
         }
-
     }
 }
 #endif

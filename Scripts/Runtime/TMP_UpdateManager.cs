@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using UnityEngine.Profiling;
+using Unity.Profiling;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
@@ -23,6 +23,12 @@ namespace TMPro
         private readonly HashSet<int> m_CullingUpdateLookup = new HashSet<int>();
         private readonly List<TMP_Text> m_CullingUpdateQueue = new List<TMP_Text>();
 
+        // Profiler Marker declarations
+        private static ProfilerMarker k_RegisterTextObjectForUpdateMarker = new ProfilerMarker("TMP.RegisterTextObjectForUpdate");
+        private static ProfilerMarker k_RegisterTextElementForGraphicRebuildMarker = new ProfilerMarker("TMP.RegisterTextElementForGraphicRebuild");
+        private static ProfilerMarker k_RegisterTextElementForCullingUpdateMarker = new ProfilerMarker("TMP.RegisterTextElementForCullingUpdate");
+        private static ProfilerMarker k_UnregisterTextObjectForUpdateMarker = new ProfilerMarker("TMP.UnregisterTextObjectForUpdate");
+        private static ProfilerMarker k_UnregisterTextElementForGraphicRebuildMarker = new ProfilerMarker("TMP.UnregisterTextElementForGraphicRebuild");
 
         /// <summary>
         /// Get a singleton instance of the registry
@@ -52,11 +58,11 @@ namespace TMPro
         /// <param name="textObject"></param>
         internal static void RegisterTextObjectForUpdate(TMP_Text textObject)
         {
-            Profiler.BeginSample("TMP.RegisterTextObjectForUpdate");
+            k_RegisterTextObjectForUpdateMarker.Begin();
 
             instance.InternalRegisterTextObjectForUpdate(textObject);
 
-            Profiler.EndSample();
+            k_RegisterTextObjectForUpdateMarker.End();
         }
 
         private void InternalRegisterTextObjectForUpdate(TMP_Text textObject)
@@ -96,11 +102,11 @@ namespace TMPro
         /// <param name="element"></param>
         public static void RegisterTextElementForGraphicRebuild(TMP_Text element)
         {
-            Profiler.BeginSample("TMP.RegisterTextElementForGraphicRebuild");
+            k_RegisterTextElementForGraphicRebuildMarker.Begin();
 
             instance.InternalRegisterTextElementForGraphicRebuild(element);
 
-            Profiler.EndSample();
+            k_RegisterTextElementForGraphicRebuildMarker.End();
         }
 
         private void InternalRegisterTextElementForGraphicRebuild(TMP_Text element)
@@ -116,11 +122,11 @@ namespace TMPro
 
         public static void RegisterTextElementForCullingUpdate(TMP_Text element)
         {
-            Profiler.BeginSample("TMP.RegisterTextElementForCullingUpdate");
+            k_RegisterTextElementForCullingUpdateMarker.Begin();
 
             instance.InternalRegisterTextElementForCullingUpdate(element);
 
-            Profiler.EndSample();
+            k_RegisterTextElementForCullingUpdateMarker.End();
         }
 
         private void InternalRegisterTextElementForCullingUpdate(TMP_Text element)
@@ -194,11 +200,11 @@ namespace TMPro
 
         internal static void UnRegisterTextObjectForUpdate(TMP_Text textObject)
         {
-            Profiler.BeginSample("TMP.UnRegisterTextObjectForUpdate");
+            k_UnregisterTextObjectForUpdateMarker.Begin();
 
             instance.InternalUnRegisterTextObjectForUpdate(textObject);
 
-            Profiler.EndSample();
+            k_UnregisterTextObjectForUpdateMarker.End();
         }
 
         /// <summary>
@@ -214,14 +220,14 @@ namespace TMPro
 
         private void InternalUnRegisterTextElementForGraphicRebuild(TMP_Text element)
         {
-            Profiler.BeginSample("TMP.InternalUnRegisterTextElementForGraphicRebuild");
+            k_UnregisterTextElementForGraphicRebuildMarker.Begin();
 
             int id = element.GetInstanceID();
 
             m_GraphicRebuildQueue.Remove(element);
             m_GraphicQueueLookup.Remove(id);
 
-            Profiler.EndSample();
+            k_UnregisterTextElementForGraphicRebuildMarker.End();
         }
 
         private void InternalUnRegisterTextElementForLayoutRebuild(TMP_Text element)

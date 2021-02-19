@@ -1,6 +1,38 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [3.0.4] - 2021-02-19
+## [2.1.4]
+## [1.5.4]
+### Changes
+- Improved sprite tag anim functionality to take into consideration the sprite character and glyph scale. Case #1309707
+- Improved Ellipsis character insertion handling to prevent potential issues when the Ellipsis glyph ascender and descender exceed those of the primary font asset. See [forum post](https://forum.unity.com/threads/ellipsis-exception.995680/#post-6472790) for details.
+- Fixed text object margin handles in Scene view not behaving correctly as a result of lossy scale or object rotation. Case #1295523
+- The &lt;mark&gt; tag padding attribute can now be defined using font units (em).
+- Fixed text parsing issue related to recent memory overhead optimizations. Case #1295755
+- Updated TMP Essential Resources and TMP Examples & Extras.
+- Updated TMP Sprite shader to add support for Single Pass Stereo rendering.
+- Fixed potential iOS build failure. Case #1298753
+- Fixed a few missing Profiler.EndSample() in the TMP_FontAsset.cs file. See [forum post](https://forum.unity.com/threads/missing-profiler-endsample-error-in-textmeshpro-2-1-3.1024531/) for details.
+- Fixed SetText() with formatting issue where large numbers would show a leading zero. See [forum post](https://forum.unity.com/threads/tmpro-settext-with-format-incorrectly-shows-leading-zero-for-some-ints.777842/) for details.
+- Updated profiling code to use the new and more efficient ProfilerMarker.
+- Fixed incorrect text bounds. See [forum post](https://forum.unity.com/threads/left-aligned-text-does-not-stay-centered-in-its-parents-layout-group-when-wrapping-is-enabled.1028755/#post-6670030) for details.
+- Fixed OutOfRangeException error that could occur in the TMP Input Field when selecting all and inserting characters using IME. Case #1301059
+- Fixed incorrect handling of Surrogate Pairs in the TMP Input Field. Case #1299798
+- Fixed Font Asset Creator incorrectly leaving the Readable state of font asset atlas textures to readable where it should be set to non readable for static font assets. Case #1305520
+- Added Multi Select functionality to the "Create - TextMesh Pro - Font Asset" context menu option. Case #1303074
+- Revised internal handling of the various text input methods to ensure the text property is always reflective of the text content in the Inspector Text Input Box in the Editor and via the text property getter even when using a combination of the various SetText methods or the text property setter. Case #1294998 <br>Please note that using the text property getter when the text was updated via one of the SetText methods will results a string allocation.
+- Fixed incorrect line spacing caused by preceding &lt;size=x.x&gt; tag. See [forum post](https://forum.unity.com/threads/bug-asian-fonts-dont-work-correctly-since-version-2-1-0.1043410/) for details.
+- Revised how the Bold Spacing which is defined per font asset will affect spacing between bold characters to ensure more uniform spacing. This change may require users to manually adjust the bold spacing value of their font assets to maintain similar spacing / layout results.
+- Fixed linked text components not updating correctly when setting the text to null or empty. Case #1305832
+- The vertexBufferAutoSizeReduction property will now be set to false by default. This property is used to determine if the internal data structures used in the parsing of the text should be resized when the text content shrinks by more than 256 characters which results in CG. Case #1305311
+- Fixed animated sprites not behaving correctly when using text overflow mode Ellipsis and Truncate. Case #1303672
+- Fixed TMP Resource Importer window stealing focus when Inspector Layout Property window is open when TMP Essential Resources have not been imported into the project. Case #1300462
+- Fixed minor UI cosmetic issue affecting text spacing properties alignment in the Quick Search window. Case #1299587
+- Fixed minor UI cosmetic issue in the Font Asset inspector related to the positioning of the warning when changing Generation Settings.
+- Fixed issue where the material properties of fallback font assets are not updated when changing the material properties of the primary font asset via code. Case #1271468
+- Fixed an issue with Text Overflow Linked mode where text would not flow correctly from one component to the other when the last character present at the break point was a linefeed "\n" or vertical tab "\v". See [forum post](https://forum.unity.com/threads/odd-line-break-behavior-in-text-with-overflow-linked.1056821/) for details.
+
 ## [3.0.3] - 2020-10-27
 ## [2.1.3]
 ## [1.5.3]

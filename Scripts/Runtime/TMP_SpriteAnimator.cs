@@ -20,8 +20,6 @@ namespace TMPro
         }
 
 
-
-
         void OnEnable()
         {
             //m_playAnimations = true;
@@ -39,7 +37,6 @@ namespace TMPro
             StopAllCoroutines();
             m_animations.Clear();
         }
-
 
 
         public void DoSpriteAnimation(int currentCharacter, TMP_SpriteAsset spriteAsset, int start, int end, int framerate)
@@ -68,13 +65,15 @@ namespace TMPro
             if (end > spriteAsset.spriteCharacterTable.Count)
                 end = spriteAsset.spriteCharacterTable.Count - 1;
 
-            // Get a reference to the geometry of the current character.
+            // Get a reference to the current character's info
             TMP_CharacterInfo charInfo = m_TextComponent.textInfo.characterInfo[currentCharacter];
 
             int materialIndex = charInfo.materialReferenceIndex;
             int vertexIndex = charInfo.vertexIndex;
 
             TMP_MeshInfo meshInfo = m_TextComponent.textInfo.meshInfo[materialIndex];
+
+            float baseSpriteScale = spriteAsset.spriteCharacterTable[start].scale * spriteAsset.spriteCharacterTable[start].glyph.scale;
 
             float elapsedTime = 0;
             float targetTime = 1f / Mathf.Abs(framerate);
@@ -85,6 +84,14 @@ namespace TMPro
                 {
                     elapsedTime = 0;
 
+                    // Return if sprite was truncated or replaced by the Ellipsis character.
+                    char character = m_TextComponent.textInfo.characterInfo[currentCharacter].character;
+                    if (character == 0x03 || character == 0x2026)
+                    {
+                        m_animations.Remove(currentCharacter);
+                        yield break;
+                    }
+
                     // Get a reference to the current sprite
                     TMP_SpriteCharacter spriteCharacter = spriteAsset.spriteCharacterTable[currentFrame];
 
@@ -92,7 +99,8 @@ namespace TMPro
                     Vector3[] vertices = meshInfo.vertices;
 
                     Vector2 origin = new Vector2(charInfo.origin, charInfo.baseLine);
-                    float spriteScale = charInfo.fontAsset.faceInfo.ascentLine / spriteCharacter.glyph.metrics.height * spriteCharacter.scale * charInfo.scale;
+
+                    float spriteScale = charInfo.scale / baseSpriteScale * spriteCharacter.scale * spriteCharacter.glyph.scale;
 
                     Vector3 bl = new Vector3(origin.x + spriteCharacter.glyph.metrics.horizontalBearingX * spriteScale, origin.y + (spriteCharacter.glyph.metrics.horizontalBearingY - spriteCharacter.glyph.metrics.height) * spriteScale);
                     Vector3 tl = new Vector3(bl.x, origin.y + spriteCharacter.glyph.metrics.horizontalBearingY * spriteScale);

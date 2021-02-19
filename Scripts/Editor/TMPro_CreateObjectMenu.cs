@@ -2,8 +2,11 @@
 using UnityEditor;
 using UnityEditor.Presets;
 using UnityEditor.SceneManagement;
+
+//#if !UNITY_2021_2_OR_NEWER
 using UnityEditor.Experimental.SceneManagement;
-using UnityEngine.SceneManagement;
+//#endif
+
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 

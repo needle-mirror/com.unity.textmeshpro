@@ -167,29 +167,29 @@ namespace TMPro
                 List<TMP_FontAsset> fallbackFontAssets = sourceFontAsset.fallbackFontAssetTable;
                 int fallbackCount = fallbackFontAssets.Count;
 
-                if (fallbackFontAssets != null && fallbackCount > 0)
+                if (fallbackCount == 0)
+                    return null;
+
+                for (int i = 0; i < fallbackCount; i++)
                 {
-                    for (int i = 0; i < fallbackCount; i++)
-                    {
-                        TMP_FontAsset temp = fallbackFontAssets[i];
+                    TMP_FontAsset temp = fallbackFontAssets[i];
 
-                        if (temp == null)
-                            continue;
+                    if (temp == null)
+                        continue;
 
-                        int id = temp.instanceID;
+                    int id = temp.instanceID;
 
-                        // Try adding font asset to search list. If already present skip to the next one otherwise check if it contains the requested character.
-                        if (k_SearchedAssets.Add(id) == false)
-                            continue;
+                    // Try adding font asset to search list. If already present skip to the next one otherwise check if it contains the requested character.
+                    if (k_SearchedAssets.Add(id) == false)
+                        continue;
 
-                        // Add reference to this search query
-                        sourceFontAsset.FallbackSearchQueryLookup.Add(id);
+                    // Add reference to this search query
+                    sourceFontAsset.FallbackSearchQueryLookup.Add(id);
 
-                        character = GetCharacterFromFontAsset_Internal(unicode, temp, true, fontStyle, fontWeight, out isAlternativeTypeface);
+                    character = GetCharacterFromFontAsset_Internal(unicode, temp, true, fontStyle, fontWeight, out isAlternativeTypeface);
 
-                        if (character != null)
-                            return character;
-                    }
+                    if (character != null)
+                        return character;
                 }
             }
 

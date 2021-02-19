@@ -102,14 +102,9 @@ namespace TMPro
                 return;
 
             if (CanvasUpdateRegistry.IsRebuildingGraphics())
-            {
-                if (m_DelayedGraphicRebuild == null)
-                    m_DelayedGraphicRebuild = StartCoroutine(DelayedGraphicRebuild());
-
                 return;
-            }
 
-            CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild((ICanvasElement)this);
+            CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(this);
 
             if (m_OnDirtyVertsCallback != null)
                 m_OnDirtyVertsCallback();
@@ -145,15 +140,10 @@ namespace TMPro
                 return;
 
             if (CanvasUpdateRegistry.IsRebuildingGraphics())
-            {
-                if (m_DelayedMaterialRebuild == null)
-                    m_DelayedMaterialRebuild = StartCoroutine(DelayedMaterialRebuild());
-
                 return;
-            }
 
             m_isMaterialDirty = true;
-            CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild((ICanvasElement)this);
+            CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(this);
 
             if (m_OnDirtyMaterialCallback != null)
                 m_OnDirtyMaterialCallback();
@@ -165,8 +155,6 @@ namespace TMPro
         /// </summary>
         public override void SetAllDirty()
         {
-            m_isInputParsingRequired = true;
-
             SetLayoutDirty();
             SetVerticesDirty();
             SetMaterialDirty();
@@ -185,6 +173,8 @@ namespace TMPro
 
             if (m_OnDirtyVertsCallback != null)
                 m_OnDirtyVertsCallback();
+
+            m_DelayedGraphicRebuild = null;
         }
 
 
@@ -201,6 +191,8 @@ namespace TMPro
 
             if (m_OnDirtyMaterialCallback != null)
                 m_OnDirtyMaterialCallback();
+
+            m_DelayedMaterialRebuild = null;
         }
 
 
@@ -547,7 +539,6 @@ namespace TMPro
         {
             m_havePropertiesChanged = true;
             m_ignoreActiveState = ignoreActiveState;
-            m_isInputParsingRequired = m_isInputParsingRequired ? true : forceTextReparsing;
 
             // Special handling in the event the Canvas is only disabled
             if (m_canvas == null)
@@ -564,8 +555,8 @@ namespace TMPro
         /// <returns></returns>
         public override TMP_TextInfo GetTextInfo(string text)
         {
-            StringToInternalParsingBuffer(text, ref m_InternalParsingBuffer);
-            SetArraySizes(m_InternalParsingBuffer);
+            SetText(text);
+            SetArraySizes(m_TextProcessingArray);
 
             m_renderMode = TextRenderFlags.DontRender;
 
@@ -591,9 +582,6 @@ namespace TMPro
 
             for (int i = 1; i < m_subTextObjects.Length && m_subTextObjects[i] != null; i++)
                 m_subTextObjects[i].canvasRenderer.SetMesh(null);
-
-            //if (m_linkedTextComponent != null)
-            //   m_linkedTextComponent.ClearMesh();
         }
 
 

@@ -65,7 +65,7 @@ namespace TMPro
                         // Disable AssetDatabase refresh until examples have been imported.
                         //AssetDatabase.DisallowAutoRefresh();
 
-                        var packageFullPath = GetPackageFullPath();
+                        string packageFullPath = GetPackageFullPath();
                         AssetDatabase.ImportPackage(packageFullPath + "/Package Resources/TMP Examples & Extras.unitypackage", false);
                     }
                     GUILayout.Space(5f);
@@ -157,6 +157,23 @@ namespace TMPro
 
             return null;
         }
+
+        /// <summary>
+        /// Imports the specified TMP resources.
+        /// </summary>
+        /// <param name="importEssentials">Should import the TMP Essential Resources.</param>
+        /// <param name="importExamples">Should import the TMP Examples & Extras.</param>
+        /// <param name="interactive">If interactive is true, an import package dialog will be opened, else all assets in the package will be imported into the current project silently.</param>
+        public static void ImportResources(bool importEssentials, bool importExamples, bool interactive)
+        {
+            string packageFullPath = GetPackageFullPath();
+
+            if (importEssentials)
+                AssetDatabase.ImportPackage(packageFullPath + "/Package Resources/TMP Essential Resources.unitypackage", interactive);
+
+            if (importExamples)
+                AssetDatabase.ImportPackage(packageFullPath + "/Package Resources/TMP Examples & Extras.unitypackage", interactive);
+        }
     }
 
     public class TMP_PackageResourceImporterWindow : EditorWindow
@@ -172,9 +189,8 @@ namespace TMPro
             {
                 m_ImporterWindow = GetWindow<TMP_PackageResourceImporterWindow>();
                 m_ImporterWindow.titleContent = new GUIContent("TMP Importer");
+                m_ImporterWindow.Focus();
             }
-
-            m_ImporterWindow.Focus();
         }
 
         void OnEnable()
