@@ -7,7 +7,7 @@ namespace TMPro
     /// <summary>
     /// Rich Text Tags and Attribute definitions and their respective HashCode values.
     /// </summary>
-    internal enum TagHashCode : int
+    internal enum MarkupTag : int
     {
         // Rich Text Tags
         BOLD = 66,                          // <b>
@@ -32,7 +32,6 @@ namespace TMPro
         SIZE = 3061285,                     // <size>
         SLASH_SIZE = 58429962,              // </size>
         SPRITE = -991527447,                // <sprite>
-        BR = 2256,                          // <br>
         NO_BREAK = 2856657,                 // <nobr>
         SLASH_NO_BREAK = 57477502,          // </nobr>
         STYLE = 100252951,                  // <style>
@@ -104,6 +103,7 @@ namespace TMPro
         ANIM = 2283339,                 // <anim="first frame, last frame, frame rate">
         MATERIAL = 825491659,           // <font="Name of font asset" material="Name of material">
         HREF = 2535353,                 // <a href="url">text to be displayed.</a>
+        ANGLE = 75347905,               // <i angle="40">Italic Slant Angle</i>
 
         // Named Colors
         RED = 91635,
@@ -115,6 +115,12 @@ namespace TMPro
         WHITE = 105680263,
         PURPLE = -1250222130,
 
+        // Unicode Characters
+        BR = 2256,                          // <br> Line Feed (LF) \u0A
+        ZWSP = 3288238,                     // <zwsp> Zero Width Space \u200B
+        NBSP = 2869039,                     // <nbsp> Non Breaking Space \u00A0
+        SHY = 92674,                        // <SHY> Soft Hyphen \u00AD
+
         // Alignment
         LEFT = 2660507,                 // <align=left>
         RIGHT = 99937376,               // <align=right>
@@ -123,6 +129,7 @@ namespace TMPro
         FLUSH = 85552164,               // <align=flush>
 
         // Prefix and Unit suffix
+        NONE = 2857034,
         PLUS = 43,
         MINUS = 45,
         PX = 2568,
@@ -140,6 +147,8 @@ namespace TMPro
 
         TRUE = 2932022,
         FALSE = 85422813,
+
+        INVALID = 1585415185,
 
         NORMAL = -1183493901,           // <style="Normal">
         DEFAULT = -620974005,           // <font="Default">
@@ -166,23 +175,28 @@ namespace TMPro
     /// <summary>
     /// Commonly referenced Unicode characters in the text generation process.
     /// </summary>
-    internal enum Unicode : uint
+    internal static class CodePoint
     {
-        SPACE = 0x20,
-        DOUBLE_QUOTE = 0x22,
-        NUMBER_SIGN = 0x23,
-        PERCENTAGE = 0x25,
-        PLUS = 0x2B,
-        MINUS = 0x2D,
-        PERIOD = 0x2E,
+        public const uint SPACE = 0x20;
+        public const uint DOUBLE_QUOTE = 0x22;
+        public const uint NUMBER_SIGN = 0x23;
+        public const uint PERCENTAGE = 0x25;
+        public const uint PLUS = 0x2B;
+        public const uint MINUS = 0x2D;
+        public const uint PERIOD = 0x2E;
 
-        HYPHEN_MINUS = 0x2D,
-        SOFT_HYPHEN = 0xAD,
-        HYPHEN = 0x2010,
-        NON_BREAKING_HYPHEN = 0x2011,
-        ZERO_WIDTH_SPACE = 0x200B,
-        RIGHT_SINGLE_QUOTATION = 0x2019,
-        APOSTROPHE = 0x27,
-        WORD_JOINER = 0x2060,           // Prohibits line break.
+        public const uint HYPHEN_MINUS = 0x2D;
+        public const uint SOFT_HYPHEN = 0xAD;
+        public const uint HYPHEN = 0x2010;
+        public const uint NON_BREAKING_HYPHEN = 0x2011;
+        public const uint ZERO_WIDTH_SPACE = 0x200B;
+        public const uint RIGHT_SINGLE_QUOTATION = 0x2019;
+        public const uint APOSTROPHE = 0x27;
+        public const uint WORD_JOINER = 0x2060;
+        public const uint HIGH_SURROGATE_START = 0xD800;
+        public const uint HIGH_SURROGATE_END = 0xDBFF;
+        public const uint LOW_SURROGATE_START = 0xDC00;
+        public const uint LOW_SURROGATE_END = 0xDFFF;
+        public const uint UNICODE_PLANE01_START = 0x10000;
     }
 }

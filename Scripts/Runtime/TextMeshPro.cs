@@ -35,6 +35,9 @@ namespace TMPro
 
                 m_renderer.sortingLayerID = value;
                 _SortingLayerID = value;
+
+                // Make sure sorting layer ID change is also reflected on sub text objects.
+                UpdateSubMeshSortingLayerID(value);
             }
         }
         [SerializeField]
@@ -59,6 +62,9 @@ namespace TMPro
 
                 m_renderer.sortingOrder = value;
                 _SortingOrder = value;
+
+                // Make sure sorting order change is also reflected on sub text objects.
+                UpdateSubMeshSortingOrder(value);
             }
         }
         [SerializeField]
@@ -248,8 +254,6 @@ namespace TMPro
         /// </summary>
         public override void SetAllDirty()
         {
-            m_isInputParsingRequired = true;
-
             SetLayoutDirty();
             SetVerticesDirty();
             SetMaterialDirty();
@@ -330,7 +334,6 @@ namespace TMPro
         {
             m_havePropertiesChanged = true;
             m_ignoreActiveState = ignoreActiveState;
-            m_isInputParsingRequired = m_isInputParsingRequired ? true : forceTextReparsing;
             OnPreRenderObject();
         }
 
@@ -342,8 +345,8 @@ namespace TMPro
         /// <returns></returns>
         public override TMP_TextInfo GetTextInfo(string text)
         {
-            StringToInternalParsingBuffer(text, ref m_InternalParsingBuffer);
-            SetArraySizes(m_InternalParsingBuffer);
+            SetText(text);
+            SetArraySizes(m_TextProcessingArray);
 
             m_renderMode = TextRenderFlags.DontRender;
 

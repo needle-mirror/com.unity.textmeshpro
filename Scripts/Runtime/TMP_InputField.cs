@@ -2141,7 +2141,9 @@ namespace TMPro
                         shouldContinue = KeyPressed(m_ProcessingEvent);
                         if (shouldContinue == EditState.Finish)
                         {
-                            SendOnSubmit();
+                            if (!m_WasCanceled)
+                                SendOnSubmit();
+
                             DeactivateInputField();
                             break;
                         }
@@ -2359,10 +2361,9 @@ namespace TMPro
                 }
                 else
                 {
-                    //position = GetStringIndexFromCaretPosition(caretSelectPositionInternal - 1);
-                    position = caretSelectPositionInternal < 2
+                    position = caretSelectPositionInternal < 1
                         ? m_TextComponent.textInfo.characterInfo[0].index
-                        : m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal - 2].index + m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal - 2].stringLength;
+                        : m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal - 1].index;
                 }
             }
 
@@ -2815,7 +2816,11 @@ namespace TMPro
                     m_StringPosition = m_StringSelectPosition;
                 }
 
-                m_isSelectAll = false;
+                if (m_isSelectAll)
+                {
+                    m_CaretPosition = m_CaretSelectPosition = 0;
+                    m_isSelectAll = false;
+                }
             }
             else
             {
@@ -2953,9 +2958,9 @@ namespace TMPro
                         m_Text = text.Remove(m_TextComponent.textInfo.characterInfo[caretPositionInternal - 1].index, numberOfCharactersToRemove);
 
                         // Get new adjusted string position
-                        stringSelectPositionInternal = stringPositionInternal = caretPositionInternal < 2
+                        stringSelectPositionInternal = stringPositionInternal = caretPositionInternal < 1
                             ? m_TextComponent.textInfo.characterInfo[0].index
-                            : m_TextComponent.textInfo.characterInfo[caretPositionInternal - 2].index + m_TextComponent.textInfo.characterInfo[caretPositionInternal - 2].stringLength;
+                            : m_TextComponent.textInfo.characterInfo[caretPositionInternal - 1].index;
 
                         caretSelectPositionInternal = caretPositionInternal = caretPositionInternal - 1;
                     }
@@ -3539,7 +3544,7 @@ namespace TMPro
                     m_IsCaretPositionDirty = false;
                 }
 
-                if (!hasSelection && !m_ReadOnly)
+                if (!hasSelection)
                 {
                     GenerateCaret(helper, Vector2.zero);
                     SendOnEndTextSelection();
@@ -3557,7 +3562,7 @@ namespace TMPro
 
         private void GenerateCaret(VertexHelper vbo, Vector2 roundingOffset)
         {
-            if (m_CaretVisible == false || m_TextComponent.canvas == null)
+            if (m_CaretVisible == false || m_TextComponent.canvas == null || m_ReadOnly)
                 return;
 
             if (m_CursorVerts == null)

@@ -206,7 +206,7 @@ namespace TMPro.EditorUtilities
             rect.x += rect.width + totalWidth * 0.3f;
             if (GUI.Button(rect, "+"))
             {
-                int index = m_SelectedElement == -1 ? 0 : m_SelectedElement;
+                int index = m_SelectedElement == -1 ? elementCount : m_SelectedElement;
 
                 if (index > elementCount)
                     index = elementCount;

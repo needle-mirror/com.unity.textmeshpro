@@ -29,7 +29,7 @@ namespace TMPro
         // TEXT INPUT COMPONENT RELATED FUNCTIONS
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="textComponent">A reference to the text object.</param>
         /// <param name="position">Position to check for intersection.</param>
@@ -203,7 +203,7 @@ namespace TMPro
                 float descender = rectTransform.TransformPoint(new Vector3(0, lineInfo.descender, 0)).y;
 
                 if (ascender > position.y && descender < position.y)
-                { 
+                {
                     //Debug.Log("Position is on line " + i);
                     return i;
                 }
@@ -1689,9 +1689,9 @@ namespace TMPro
                                 return i;
 
                             // Find the closest line segment to position.
-                            float dbl = DistanceToLine(bl, tl, position); 
-                            float dtl = DistanceToLine(tl, tr, position); 
-                            float dtr = DistanceToLine(tr, br, position); 
+                            float dbl = DistanceToLine(bl, tl, position);
+                            float dtl = DistanceToLine(tl, tr, position);
+                            float dtr = DistanceToLine(tr, br, position);
                             float dbr = DistanceToLine(br, bl, position);
 
                             float d = dbl < dtl ? dbl : dtl;
@@ -1999,7 +1999,7 @@ namespace TMPro
         //}
 
 
-    
+
         /// <summary>
         /// Function to check if a Point is contained within a Rectangle.
         /// </summary>
@@ -2103,25 +2103,25 @@ namespace TMPro
         /// <param name="point"></param>
         /// <returns></returns>
         public static float DistanceToLine(Vector3 a, Vector3 b, Vector3 point)
-        {            
+        {
             Vector3 n = b - a;
             Vector3 pa = a - point;
- 
+
             float c = Vector3.Dot( n, pa );
- 
+
             // Closest point is a
             if ( c > 0.0f )
                 return Vector3.Dot( pa, pa );
- 
+
             Vector3 bp = point - b;
- 
+
             // Closest point is b
             if (Vector3.Dot( n, bp ) > 0.0f )
                 return Vector3.Dot( bp, bp );
- 
+
             // Closest point is between a and b
             Vector3 e = pa - n * (c / Vector3.Dot( n, n ));
- 
+
             return Vector3.Dot( e, e );
         }
 
@@ -2195,6 +2195,17 @@ namespace TMPro
         }
 
         /// <summary>
+        /// Get uppercase version of this ASCII character.
+        /// </summary>
+        internal static uint ToUpperASCIIFast(uint c)
+        {
+            if (c > k_lookupStringU.Length - 1)
+                return c;
+
+            return k_lookupStringU[(int)c];
+        }
+
+        /// <summary>
         /// Returns the case insensitive hashcode for the given string.
         /// </summary>
         /// <param name="s"></param>
@@ -2215,10 +2226,10 @@ namespace TMPro
         /// <returns></returns>
         public static int GetSimpleHashCode(string s)
         {
-            int hashCode = 0; // 5381;
+            int hashCode = 0;
 
             for (int i = 0; i < s.Length; i++)
-                hashCode = (hashCode << 5) + hashCode ^ s[i];
+                hashCode = ((hashCode << 5) + hashCode) ^ s[i];
 
             return hashCode;
         }
@@ -2275,7 +2286,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// Function to convert a properly formatted string which contains an hex value to its decimal value. 
+        /// Function to convert a properly formatted string which contains an hex value to its decimal value.
         /// </summary>
         /// <param name="s"></param>
         /// <returns></returns>

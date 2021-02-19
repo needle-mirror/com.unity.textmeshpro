@@ -25,6 +25,13 @@ namespace TMPro
                 return;
             }
 
+            // Make sure TMP Essential Resources have been imported in the user project.
+            if (TMP_Settings.instance == null)
+            {
+                Debug.Log("Unable to create font asset. Please import the TMP Essential Resources.");
+                return;
+            }
+
             TMP_FontAsset sourceFontAsset = (TMP_FontAsset)target;
 
             string sourceFontFilePath = AssetDatabase.GetAssetPath(target);
@@ -64,7 +71,7 @@ namespace TMPro
                 return;
             }
 
-            TMP_FontAsset sourceFontAsset = (TMP_FontAsset)target; 
+            TMP_FontAsset sourceFontAsset = (TMP_FontAsset)target;
 
             string sourceFontFilePath = AssetDatabase.GetAssetPath(target);
 
@@ -143,15 +150,31 @@ namespace TMPro
         [MenuItem("Assets/Create/TextMeshPro/Font Asset #%F12", false, 100)]
         public static void CreateFontAsset()
         {
-            Object target = Selection.activeObject;
+            Object[] targets = Selection.objects;
 
-            // Make sure the selection is a font file
-            if (target == null || target.GetType() != typeof(Font))
+            if (targets == null)
             {
                 Debug.LogWarning("A Font file must first be selected in order to create a Font Asset.");
                 return;
             }
 
+            for (int i = 0; i < targets.Length; i++)
+            {
+                Object target = targets[i];
+
+                // Make sure the selection is a font file
+                if (target == null || target.GetType() != typeof(Font))
+                {
+                    Debug.LogWarning("Selected Object [" + target.name + "] is not a Font file. A Font file must be selected in order to create a Font Asset.", target);
+                    continue;
+                }
+
+                CreateFontAssetFromSelectedObject(target);
+            }
+        }
+
+        static void CreateFontAssetFromSelectedObject(Object target)
+        {
             Font sourceFont = (Font)target;
 
             string sourceFontFilePath = AssetDatabase.GetAssetPath(target);
