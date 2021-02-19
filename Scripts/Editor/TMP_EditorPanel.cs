@@ -118,6 +118,10 @@ namespace TMPro.EditorUtilities
                 sortingLayerProp.intValue = newLayerIndex;
                 sortingLayerIDProp.intValue = SortingLayer.NameToID(k_SortingLayerNames[newLayerIndex]);
                 m_HavePropertiesChanged = true;
+
+                // Sync Sorting Layer ID change on potential sub text object.
+                TextMeshPro textComponent = m_TextComponent as TextMeshPro;
+                textComponent.UpdateSubMeshSortingLayerID(sortingLayerIDProp.intValue);
             }
 
             EditorGUI.EndProperty();
@@ -132,6 +136,9 @@ namespace TMPro.EditorUtilities
             if (EditorGUI.EndChangeCheck())
             {
                 m_HavePropertiesChanged = true;
+
+                TextMeshPro textComponent = m_TextComponent as TextMeshPro;
+                textComponent.UpdateSubMeshSortingOrder(sortingOrderLayerProp.intValue);
             }
 
             m_RendererSerializedObject.ApplyModifiedProperties();

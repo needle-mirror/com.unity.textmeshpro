@@ -312,6 +312,7 @@ namespace TMPro.EditorUtilities
 
                 if (m_IsGenerationCancelled == false)
                 {
+                    m_AtlasGenerationProgress = FontEngine.generationProgress;
                     m_AtlasGenerationProgressLabel = "Generation completed in: " + (m_GlyphPackingGenerationTime + m_GlyphRenderingGenerationTime).ToString("0.00 ms.");
 
                     UpdateRenderFeedbackWindow();
@@ -1099,8 +1100,8 @@ namespace TMPro.EditorUtilities
                     string filePath = Path.GetFullPath(AssetDatabase.GetAssetPath(m_SelectedFontAsset)).Replace('\\', '/');
 
                     if (((GlyphRasterModes)m_GlyphRenderMode & GlyphRasterModes.RASTER_MODE_BITMAP) == GlyphRasterModes.RASTER_MODE_BITMAP)
-                            Save_Bitmap_FontAsset(filePath);
-                        else
+                        Save_Bitmap_FontAsset(filePath);
+                    else
                         Save_SDF_FontAsset(filePath);
                 }
             }
@@ -1467,14 +1468,14 @@ namespace TMPro.EditorUtilities
                 if (tex.width != m_AtlasWidth || tex.height != m_AtlasHeight)
                 {
                     tex.Resize(m_AtlasWidth, m_AtlasHeight);
-                    tex.Apply();
+                    tex.Apply(false);
                 }
 
                 // Copy new texture data to existing texture
                 Graphics.CopyTexture(m_FontAtlasTexture, tex);
 
                 // Apply changes to the texture.
-                tex.Apply(false, !isReadableState);
+                tex.Apply(false);
 
                 // Special handling due to a bug in earlier versions of Unity.
                 m_FontAtlasTexture.hideFlags = HideFlags.None;
@@ -1493,6 +1494,9 @@ namespace TMPro.EditorUtilities
                 //    material_references[i].SetFloat(ShaderUtilities.ID_WeightBold, fontAsset.boldStyle);
                 //}
             }
+
+            // Set texture to non readable
+            FontEngineEditorUtilities.SetAtlasTextureIsReadable(fontAsset.atlasTexture, false);
 
             // Add list of GlyphRects to font asset.
             fontAsset.freeGlyphRects = m_FreeGlyphRects;
@@ -1598,7 +1602,6 @@ namespace TMPro.EditorUtilities
                 fontAsset.material = tmp_material;
 
                 AssetDatabase.AddObjectToAsset(tmp_material, fontAsset);
-
             }
             else
             {
@@ -1656,14 +1659,14 @@ namespace TMPro.EditorUtilities
                 if (tex.width != m_AtlasWidth || tex.height != m_AtlasHeight)
                 {
                     tex.Resize(m_AtlasWidth, m_AtlasHeight);
-                    tex.Apply();
+                    tex.Apply(false);
                 }
 
                 // Copy new texture data to existing texture
                 Graphics.CopyTexture(m_FontAtlasTexture, tex);
 
                 // Apply changes to the texture.
-                tex.Apply(false, !isReadableState);
+                tex.Apply(false);
 
                 // Special handling due to a bug in earlier versions of Unity.
                 m_FontAtlasTexture.hideFlags = HideFlags.None;
@@ -1686,6 +1689,9 @@ namespace TMPro.EditorUtilities
             // Saving File for Debug
             //var pngData = destination_Atlas.EncodeToPNG();
             //File.WriteAllBytes("Assets/Textures/Debug Distance Field.png", pngData);
+
+            // Set texture to non readable
+            FontEngineEditorUtilities.SetAtlasTextureIsReadable(fontAsset.atlasTexture, false);
 
             // Add list of GlyphRects to font asset.
             fontAsset.freeGlyphRects = m_FreeGlyphRects;
@@ -1826,6 +1832,13 @@ namespace TMPro.EditorUtilities
             if (m_FontAtlasTexture != null)
             {
                 EditorGUI.DrawTextureAlpha(pixelRect, m_FontAtlasTexture, ScaleMode.StretchToFill);
+
+                // Destroy GlyphRect preview texture
+                if (m_GlyphRectPreviewTexture != null)
+                {
+                    DestroyImmediate(m_GlyphRectPreviewTexture);
+                    m_GlyphRectPreviewTexture = null;
+                }
             }
             else if (m_GlyphRectPreviewTexture != null)
             {

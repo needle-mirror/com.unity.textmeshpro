@@ -6,23 +6,11 @@ using System.Collections;
 
 namespace TMPro.EditorUtilities
 {
-
-    public class TMPro_TexturePostProcessor : AssetPostprocessor
-    {
-        void OnPostprocessTexture(Texture2D texture)
-        {
-            Texture2D tex = AssetDatabase.LoadAssetAtPath(assetPath, typeof(Texture2D)) as Texture2D;
-
-            // Send Event Sub Objects
-            if (tex != null)
-                TMPro_EventManager.ON_SPRITE_ASSET_PROPERTY_CHANGED(true, tex);
-        }
-    }
-
     /// <summary>
-    /// Asset post processor used to handle font assets getting updated outside of the Unity editor.
+    /// Asset post processor used to handle text assets changes.
+    /// This includes tracking of changes to textures used by sprite assets as well as font assets potentially getting updated outside of the Unity editor.
     /// </summary>
-    class FontAssetPostProcessor : AssetPostprocessor
+    public class TMPro_TexturePostProcessor : AssetPostprocessor
     {
         private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
@@ -38,6 +26,14 @@ namespace TMPro.EditorUtilities
 
                     if (fontAsset != null)
                         TMP_EditorResourceManager.RegisterFontAssetForDefinitionRefresh(fontAsset);
+                }
+
+                if (AssetDatabase.GetMainAssetTypeAtPath(asset) == typeof(Texture2D))
+                {
+                    Texture2D tex = AssetDatabase.LoadAssetAtPath(asset, typeof(Texture2D)) as Texture2D;
+
+                    if (tex != null)
+                        TMPro_EventManager.ON_SPRITE_ASSET_PROPERTY_CHANGED(true, tex);
                 }
             }
         }

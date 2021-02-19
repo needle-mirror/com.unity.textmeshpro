@@ -377,7 +377,6 @@ namespace TMPro
         public int wordCount;
         public FontStyles fontStyle;
         public int italicAngle;
-        public float fontScale;
         public float fontScaleMultiplier;
 
         public float currentFontSize;

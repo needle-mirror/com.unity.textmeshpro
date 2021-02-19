@@ -240,7 +240,7 @@ namespace TMPro.EditorUtilities
                 EditorGUILayout.EndFadeGroup();
 
                 EditorGUILayout.PropertyField(m_SelectionColor);
-                
+
                 EditorGUI.indentLevel--;
             }
             #endregion
@@ -262,7 +262,7 @@ namespace TMPro.EditorUtilities
                 EditorGUILayout.PropertyField(m_ReadOnly);
                 EditorGUILayout.PropertyField(m_RichText);
                 EditorGUILayout.PropertyField(m_RichTextEditingAllowed, new GUIContent("Allow Rich Text Editing"));
-                
+
                 EditorGUI.indentLevel--;
             }
             #endregion

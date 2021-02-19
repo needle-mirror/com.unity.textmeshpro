@@ -21,22 +21,10 @@ namespace TMPro
 
         static TMP_MaterialManager()
         {
-            Camera.onPreRender += new Camera.CameraCallback(OnPreRender);
-            Canvas.willRenderCanvases += new Canvas.WillRenderCanvases(OnPreRenderCanvas);
+            Canvas.willRenderCanvases += OnPreRender;
         }
 
-
-        static void OnPreRender(Camera cam)
-        {
-            if (isFallbackListDirty)
-            {
-                //Debug.Log("1 - Cleaning up Fallback Materials.");
-                CleanupFallbackMaterials();
-                isFallbackListDirty = false;
-            }
-        }
-
-        static void OnPreRenderCanvas()
+        static void OnPreRender()
         {
             if (isFallbackListDirty)
             {
@@ -361,7 +349,16 @@ namespace TMPro
             FallbackMaterial fallback;
 
             if (m_fallbackMaterials.TryGetValue(key, out fallback))
+            {
+                // Check if source material properties have changed.
+                int sourceMaterialCRC = ComputeMaterialCRC(sourceMaterial);
+                if (sourceMaterialCRC == fallback.sourceMaterialCRC)
+                    return fallback.fallbackMaterial;
+
+                CopyMaterialPresetProperties(sourceMaterial, fallback.fallbackMaterial);
+                fallback.sourceMaterialCRC = sourceMaterialCRC;
                 return fallback.fallbackMaterial;
+            }
 
             // Create new material from the source material and assign relevant atlas texture
             Material fallbackMaterial = new Material(sourceMaterial);
@@ -374,9 +371,9 @@ namespace TMPro
             #endif
 
             fallback = new FallbackMaterial();
-            fallback.baseID = sourceMaterialID;
-            fallback.baseMaterial = fontAsset.material;
             fallback.fallbackID = key;
+            fallback.sourceMaterial = fontAsset.material;
+            fallback.sourceMaterialCRC = ComputeMaterialCRC(sourceMaterial);
             fallback.fallbackMaterial = fallbackMaterial;
             fallback.count = 0;
 
@@ -389,7 +386,6 @@ namespace TMPro
 
             return fallbackMaterial;
         }
-
 
 
         /// <summary>
@@ -408,12 +404,18 @@ namespace TMPro
 
             if (m_fallbackMaterials.TryGetValue(key, out fallback))
             {
-                //Debug.Log("Material [" + fallback.fallbackMaterial.name + "] already exists.");
+                // Check if source material properties have changed.
+                int sourceMaterialCRC = ComputeMaterialCRC(sourceMaterial);
+                if (sourceMaterialCRC == fallback.sourceMaterialCRC)
+                    return fallback.fallbackMaterial;
+
+                CopyMaterialPresetProperties(sourceMaterial, fallback.fallbackMaterial);
+                fallback.sourceMaterialCRC = sourceMaterialCRC;
                 return fallback.fallbackMaterial;
             }
 
             // Create new material from the source material and copy properties if using distance field shaders.
-            Material fallbackMaterial = null;
+            Material fallbackMaterial;
             if (sourceMaterial.HasProperty(ShaderUtilities.ID_GradientScale) && targetMaterial.HasProperty(ShaderUtilities.ID_GradientScale))
             {
                 fallbackMaterial = new Material(sourceMaterial);
@@ -438,9 +440,9 @@ namespace TMPro
             }
 
             fallback = new FallbackMaterial();
-            fallback.baseID = sourceID;
-            fallback.baseMaterial = sourceMaterial;
             fallback.fallbackID = key;
+            fallback.sourceMaterial = sourceMaterial;
+            fallback.sourceMaterialCRC = ComputeMaterialCRC(sourceMaterial);
             fallback.fallbackMaterial = fallbackMaterial;
             fallback.count = 0;
 
@@ -465,11 +467,11 @@ namespace TMPro
 
             int sourceID = targetMaterial.GetInstanceID();
             long key;
-            FallbackMaterial fallback;
 
             // Lookup key to retrieve
             if (m_fallbackMaterialLookup.TryGetValue(sourceID, out key))
             {
+                FallbackMaterial fallback;
                 if (m_fallbackMaterials.TryGetValue(key, out fallback))
                 {
                     //Debug.Log("Adding Fallback material " + fallback.fallbackMaterial.name + " with reference count of " + (fallback.count + 1));
@@ -489,11 +491,11 @@ namespace TMPro
 
             int sourceID = targetMaterial.GetInstanceID();
             long key;
-            FallbackMaterial fallback;
 
             // Lookup key to retrieve
             if (m_fallbackMaterialLookup.TryGetValue(sourceID, out key))
             {
+                FallbackMaterial fallback;
                 if (m_fallbackMaterials.TryGetValue(key, out fallback))
                 {
                     fallback.count -= 1;
@@ -536,17 +538,17 @@ namespace TMPro
         /// <summary>
         /// Function to release the fallback material.
         /// </summary>
-        /// <param name="fallackMaterial"></param>
-        public static void ReleaseFallbackMaterial(Material fallackMaterial)
+        /// <param name="fallbackMaterial">Material to be released.</param>
+        public static void ReleaseFallbackMaterial(Material fallbackMaterial)
         {
-            if (fallackMaterial == null) return;
+            if (fallbackMaterial == null) return;
 
-            int materialID = fallackMaterial.GetInstanceID();
+            int materialID = fallbackMaterial.GetInstanceID();
             long key;
-            FallbackMaterial fallback;
 
             if (m_fallbackMaterialLookup.TryGetValue(materialID, out key))
             {
+                FallbackMaterial fallback;
                 if (m_fallbackMaterials.TryGetValue(key, out fallback))
                 {
                     //Debug.Log("Releasing Fallback material " + fallback.fallbackMaterial.name + " with remaining reference count of " + (fallback.count - 1));
@@ -568,9 +570,9 @@ namespace TMPro
 
         private class FallbackMaterial
         {
-            public int baseID;
-            public Material baseMaterial;
             public long fallbackID;
+            public Material sourceMaterial;
+            internal int sourceMaterialCRC;
             public Material fallbackMaterial;
             public int count;
         }
@@ -618,6 +620,69 @@ namespace TMPro
             destination.SetFloat(ShaderUtilities.ID_WeightBold, dst_weightBold);
         }
 
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="mat"></param>
+        /// <returns></returns>
+        static int ComputeMaterialCRC(Material mat)
+        {
+            uint crc = TMP_TextUtilities.CRCBegin();
+
+            // Face properties
+            if (mat.HasProperty(ShaderUtilities.ID_FaceColor))
+                crc = TMP_TextUtilities.CRCFeed(crc, mat.GetColor(ShaderUtilities.ID_FaceColor));
+
+            if (mat.HasProperty(ShaderUtilities.ID_FaceDilate))
+                crc = TMP_TextUtilities.CRCFeed(crc, mat.GetFloat(ShaderUtilities.ID_FaceDilate));
+
+            // Outline properties
+            if (mat.HasProperty(ShaderUtilities.ID_OutlineColor))
+                crc = TMP_TextUtilities.CRCFeed(crc, mat.GetColor(ShaderUtilities.ID_OutlineColor));
+
+            if (mat.HasProperty(ShaderUtilities.ID_OutlineWidth))
+                crc = TMP_TextUtilities.CRCFeed(crc, mat.GetFloat(ShaderUtilities.ID_OutlineWidth));
+
+            if (mat.HasProperty(ShaderUtilities.ID_OutlineSoftness))
+                crc = TMP_TextUtilities.CRCFeed(crc, mat.GetFloat(ShaderUtilities.ID_OutlineSoftness));
+
+            // Underlay properties
+            if (mat.HasProperty(ShaderUtilities.ID_UnderlayColor))
+                crc = TMP_TextUtilities.CRCFeed(crc, mat.GetColor(ShaderUtilities.ID_UnderlayColor));
+
+            if (mat.HasProperty(ShaderUtilities.ID_UnderlayOffsetX))
+                crc = TMP_TextUtilities.CRCFeed(crc, mat.GetFloat(ShaderUtilities.ID_UnderlayOffsetX));
+
+            if (mat.HasProperty(ShaderUtilities.ID_UnderlayOffsetY))
+                crc = TMP_TextUtilities.CRCFeed(crc, mat.GetFloat(ShaderUtilities.ID_UnderlayOffsetY));
+
+            if (mat.HasProperty(ShaderUtilities.ID_UnderlayDilate))
+                crc = TMP_TextUtilities.CRCFeed(crc, mat.GetFloat(ShaderUtilities.ID_UnderlayDilate));
+
+            if (mat.HasProperty(ShaderUtilities.ID_UnderlaySoftness))
+                crc = TMP_TextUtilities.CRCFeed(crc, mat.GetFloat(ShaderUtilities.ID_UnderlaySoftness));
+
+            // Glow properties
+            if (mat.HasProperty(ShaderUtilities.ID_GlowColor))
+                crc = TMP_TextUtilities.CRCFeed(crc, mat.GetColor(ShaderUtilities.ID_GlowColor));
+
+            if (mat.HasProperty(ShaderUtilities.ID_GlowOffset))
+                crc = TMP_TextUtilities.CRCFeed(crc, mat.GetFloat(ShaderUtilities.ID_GlowOffset));
+
+            if (mat.HasProperty(ShaderUtilities.ID_GlowPower))
+                crc = TMP_TextUtilities.CRCFeed(crc, mat.GetFloat(ShaderUtilities.ID_GlowPower));
+
+            if (mat.HasProperty(ShaderUtilities.ID_GlowInner))
+                crc = TMP_TextUtilities.CRCFeed(crc, mat.GetFloat(ShaderUtilities.ID_GlowInner));
+
+            if (mat.HasProperty(ShaderUtilities.ID_GlowOuter))
+                crc = TMP_TextUtilities.CRCFeed(crc, mat.GetFloat(ShaderUtilities.ID_GlowOuter));
+
+            crc = TMP_TextUtilities.CRCDone(crc);
+
+            return (int)crc;
+        }
+
 
         #if TMP_DEBUG_MODE
         /// <summary>
@@ -626,7 +691,7 @@ namespace TMPro
         public static void ListMaterials()
         {
 
-            if (m_materialList.Count() == 0)
+            if (m_materialList.Count == 0)
             {
                 Debug.Log("Material List is empty.");
                 return;
@@ -634,7 +699,7 @@ namespace TMPro
 
             //Debug.Log("List contains " + m_materialList.Count() + " items.");
 
-            for (int i = 0; i < m_materialList.Count(); i++)
+            for (int i = 0; i < m_materialList.Count; i++)
             {
                 Material baseMaterial = m_materialList[i].baseMaterial;
                 Material stencilMaterial = m_materialList[i].stencilMaterial;
@@ -650,20 +715,27 @@ namespace TMPro
         public static void ListFallbackMaterials()
         {
 
-            if (m_fallbackMaterialList.Count() == 0)
+            if (m_fallbackMaterials.Count == 0)
             {
                 Debug.Log("Material List is empty.");
                 return;
             }
 
-            Debug.Log("List contains " + m_fallbackMaterialList.Count() + " items.");
+            Debug.Log("List contains " + m_fallbackMaterials.Count + " items.");
 
-            for (int i = 0; i < m_fallbackMaterialList.Count(); i++)
+            int count = 0;
+            foreach (var fallback in m_fallbackMaterials)
             {
-                Material baseMaterial = m_fallbackMaterialList[i].baseMaterial;
-                Material fallbackMaterial = m_fallbackMaterialList[i].fallbackMaterial;
+                Material baseMaterial = fallback.Value.baseMaterial;
+                Material fallbackMaterial = fallback.Value.fallbackMaterial;
 
-                Debug.Log("Item #" + (i + 1) + " - Base Material is [" + baseMaterial.name + "] with ID " + baseMaterial.GetInstanceID() + " is associated with [" + (fallbackMaterial != null ? fallbackMaterial.name : "Null") + "] with ID " + (fallbackMaterial != null ? fallbackMaterial.GetInstanceID() : 0) + " and is referenced " + m_fallbackMaterialList[i].count + " time(s).");
+                string output = "Item #" + (count++);
+                if (baseMaterial != null)
+                    output += " - Base Material is [" + baseMaterial.name + "] with ID " + baseMaterial.GetInstanceID();
+                if (fallbackMaterial != null)
+                    output += " is associated with [" + fallbackMaterial.name + "] with ID " + fallbackMaterial.GetInstanceID() + " and is referenced " + fallback.Value.count + " time(s).";
+
+                Debug.Log(output);
             }
         }
         #endif
