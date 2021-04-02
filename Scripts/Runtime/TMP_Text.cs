@@ -1743,31 +1743,6 @@ namespace TMPro
 
 
         /// <summary>
-        /// Method used for resetting vertex layout when switching to and from Volumetric Text mode.
-        /// </summary>
-        /// <param name="updateMesh"></param>
-        //protected virtual void ResetVertexLayout() { }
-
-
-        /// <summary>
-        /// Internal function used by the Text Input Field to populate TMP_TextInfo data.
-        /// </summary>
-        internal void SetTextInternal(string text)
-        {
-            m_text = text;
-            m_renderMode = TextRenderFlags.DontRender;
-            ForceMeshUpdate();
-            m_renderMode = TextRenderFlags.Render;
-        }
-
-        /// <summary>
-        /// Function to force the regeneration of the text object.
-        /// </summary>
-        /// <param name="flags"> Flags to control which portions of the geometry gets uploaded.</param>
-        //public virtual void ForceMeshUpdate(TMP_VertexDataUpdateFlags flags) { }
-
-
-        /// <summary>
         /// Function to update the geometry of the main and sub text objects.
         /// </summary>
         /// <param name="mesh"></param>
@@ -2059,44 +2034,6 @@ namespace TMPro
         }
 
         /// <summary>
-        /// Convert source text to Unicode (uint) and populate internal text backing array.
-        /// </summary>
-        /// <param name="sourceText">int array containing the source text to be converted</param>
-        /// <param name="start">Index of the first element of the source array to be converted and copied to the internal text backing array.</param>
-        /// <param name="length">Number of elements in the array to be converted and copied to the internal text backing array.</param>
-        void PopulateTextBackingArray(int[] sourceText, int start, int length)
-        {
-            int readIndex;
-            int writeIndex = 0;
-
-            // Range check
-            if (sourceText == null)
-            {
-                readIndex = 0;
-                length = 0;
-            }
-            else
-            {
-                readIndex = Mathf.Clamp(start, 0, sourceText.Length);
-                length = Mathf.Clamp(length, 0, start + length < sourceText.Length ? length : sourceText.Length - start);
-            }
-
-            // Make sure array size is appropriate
-            if (length >= m_TextBackingArray.Capacity)
-                m_TextBackingArray.Resize((length));
-
-            int end = readIndex + length;
-            for (; readIndex < end; readIndex++)
-            {
-                m_TextBackingArray[writeIndex] = (uint)sourceText[readIndex];
-                writeIndex += 1;
-            }
-
-            // Terminate array with zero as we are not clearing the array on new invocation of this function.
-            m_TextBackingArray[writeIndex] = 0;
-        }
-
-        /// <summary>
         ///
         /// </summary>
         void PopulateTextProcessingArray()
@@ -2328,6 +2265,25 @@ namespace TMPro
 
             m_TextProcessingArray[writeIndex].unicode = 0;
             m_InternalTextProcessingArraySize = writeIndex;
+        }
+
+        /// <summary>
+        /// Function used in conjunction with GetPreferredValues
+        /// </summary>
+        /// <param name="sourceText"></param>
+        void SetTextInternal(string sourceText)
+        {
+            int srcLength = sourceText == null ? 0 : sourceText.Length;
+
+            PopulateTextBackingArray(sourceText, 0, srcLength);
+
+            // Set input source
+            TextInputSources currentInputSource = m_inputSource;
+            m_inputSource = TextInputSources.TextString;
+
+            PopulateTextProcessingArray();
+
+            m_inputSource = currentInputSource;
         }
 
         /// <summary>
@@ -3734,7 +3690,7 @@ namespace TMPro
         {
             m_isCalculatingPreferredValues = true;
 
-            SetText(text);
+            SetTextInternal(text);
             SetArraySizes(m_TextProcessingArray);
 
             Vector2 margin = k_LargePositiveVector2;
@@ -3758,7 +3714,7 @@ namespace TMPro
         {
             m_isCalculatingPreferredValues = true;
 
-            SetText(text);
+            SetTextInternal(text);
             SetArraySizes(m_TextProcessingArray);
 
             Vector2 margin = new Vector2(width, height);

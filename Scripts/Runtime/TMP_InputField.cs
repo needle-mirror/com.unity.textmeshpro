@@ -1349,8 +1349,8 @@ namespace TMPro
 
         private bool InPlaceEditing()
         {
-            if (m_TouchKeyboardAllowsInPlaceEditing || (TouchScreenKeyboard.isSupported && (Application.platform == RuntimePlatform.WSAPlayerX86 || Application.platform == RuntimePlatform.WSAPlayerX64 || Application.platform == RuntimePlatform.WSAPlayerARM)))
-                return true;
+            if (Application.platform == RuntimePlatform.WSAPlayerX86 || Application.platform == RuntimePlatform.WSAPlayerX64 || Application.platform == RuntimePlatform.WSAPlayerARM)
+                return !TouchScreenKeyboard.isSupported || m_TouchKeyboardAllowsInPlaceEditing;
 
             if (TouchScreenKeyboard.isSupported && shouldHideSoftKeyboard)
                 return true;

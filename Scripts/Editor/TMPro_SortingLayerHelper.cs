@@ -28,5 +28,31 @@ namespace TMPro
 
             return layerNames;
         }
+
+        internal static int GetSortingLayerIndexFromValue(int value)
+        {
+            int layerCount = SortingLayer.layers.Length;
+
+            for (int i = 0; i < layerCount; i++)
+            {
+                if (value == SortingLayer.layers[i].value)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        internal static int GetSortingLayerIndexFromSortingLayerID(int id)
+        {
+            int layerCount = SortingLayer.layers.Length;
+
+            for (int i = 0; i < layerCount; i++)
+            {
+                if (id == SortingLayer.layers[i].id)
+                    return i;
+            }
+
+            return -1;
+        }
     }
 }
