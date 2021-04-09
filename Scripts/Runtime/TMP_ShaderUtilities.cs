@@ -421,28 +421,10 @@ namespace TMPro
                 if (material.HasProperty(ID_ScaleRatio_C))
                     scaleRatio_C = material.GetFloat(ID_ScaleRatio_C);
 
-                float offsetX = 0;
-                float offsetY = 0;
-                float dilate = 0;
-                float softness = 0;
-
-                if (material.HasProperty(ID_UnderlayOffset))
-                {
-                    Vector2 underlayOffset = material.GetVector(ID_UnderlayOffset);
-                    offsetX = underlayOffset.x;
-                    offsetY = underlayOffset.y;
-
-                    dilate = material.GetFloat(ID_UnderlayIsoPerimeter);
-                    softness = material.GetFloat(ID_UnderlaySoftness);
-                }
-                else if (material.HasProperty(ID_UnderlayOffsetX))
-                {
-
-                    offsetX = material.GetFloat(ID_UnderlayOffsetX) * scaleRatio_C;
-                    offsetY = material.GetFloat(ID_UnderlayOffsetY) * scaleRatio_C;
-                    dilate = material.GetFloat(ID_UnderlayDilate) * scaleRatio_C;
-                    softness = material.GetFloat(ID_UnderlaySoftness) * scaleRatio_C;
-                }
+                float offsetX = material.GetFloat(ID_UnderlayOffsetX) * scaleRatio_C;
+                float offsetY = material.GetFloat(ID_UnderlayOffsetY) * scaleRatio_C;
+                float dilate = material.GetFloat(ID_UnderlayDilate) * scaleRatio_C;
+                float softness = material.GetFloat(ID_UnderlaySoftness) * scaleRatio_C;
 
                 padding.x = Mathf.Max(padding.x, faceDilate + dilate + softness - offsetX);
                 padding.y = Mathf.Max(padding.y, faceDilate + dilate + softness - offsetY);

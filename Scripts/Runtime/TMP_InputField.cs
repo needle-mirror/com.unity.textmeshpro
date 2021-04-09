@@ -424,6 +424,10 @@ namespace TMPro
                     case RuntimePlatform.WSAPlayerX64:
                     case RuntimePlatform.WSAPlayerARM:
                     case RuntimePlatform.Stadia:
+                    #if UNITY_2020_2_OR_NEWER
+                    case RuntimePlatform.PS4:
+                    case RuntimePlatform.PS5:
+                    #endif
                     case RuntimePlatform.Switch:
                         return m_HideSoftKeyboard;
                     default:
@@ -442,6 +446,10 @@ namespace TMPro
                     case RuntimePlatform.WSAPlayerX64:
                     case RuntimePlatform.WSAPlayerARM:
                     case RuntimePlatform.Stadia:
+                    #if UNITY_2020_2_OR_NEWER
+                    case RuntimePlatform.PS4:
+                    case RuntimePlatform.PS5:
+                    #endif
                     case RuntimePlatform.Switch:
                         SetPropertyUtility.SetStruct(ref m_HideSoftKeyboard, value);
                         break;
@@ -465,6 +473,10 @@ namespace TMPro
                 case RuntimePlatform.Android:
                 case RuntimePlatform.IPhonePlayer:
                 case RuntimePlatform.tvOS:
+                #if UNITY_2020_2_OR_NEWER
+                case RuntimePlatform.PS4:
+                case RuntimePlatform.PS5:
+                #endif
                 case RuntimePlatform.Switch:
                     return false;
                 default:
@@ -1351,8 +1363,8 @@ namespace TMPro
 
         private bool InPlaceEditing()
         {
-            if (m_TouchKeyboardAllowsInPlaceEditing || (TouchScreenKeyboard.isSupported && (Application.platform == RuntimePlatform.WSAPlayerX86 || Application.platform == RuntimePlatform.WSAPlayerX64 || Application.platform == RuntimePlatform.WSAPlayerARM)))
-                return true;
+            if (Application.platform == RuntimePlatform.WSAPlayerX86 || Application.platform == RuntimePlatform.WSAPlayerX64 || Application.platform == RuntimePlatform.WSAPlayerARM)
+                return !TouchScreenKeyboard.isSupported || m_TouchKeyboardAllowsInPlaceEditing;
 
             if (TouchScreenKeyboard.isSupported && shouldHideSoftKeyboard)
                 return true;

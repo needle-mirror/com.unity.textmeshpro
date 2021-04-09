@@ -23,6 +23,7 @@ namespace TMPro
         private Vector3[] m_RectTransformCorners = new Vector3[4];
         private CanvasRenderer m_canvasRenderer;
         private Canvas m_canvas;
+        private float m_CanvasScaleFactor;
 
 
         private bool m_isFirstAllocation; // Flag to determine if this is the first allocation of the buffers.
@@ -1553,8 +1554,17 @@ namespace TMPro
             if (!this.gameObject.activeInHierarchy)
                 return;
 
+            // Check if Canvas scale factor has changed as this requires an update of the SDF Scale.
+            bool hasCanvasScaleFactorChanged = false;
+            if (m_canvas != null && m_CanvasScaleFactor != m_canvas.scaleFactor)
+            {
+                m_CanvasScaleFactor = m_canvas.scaleFactor;
+                hasCanvasScaleFactorChanged = true;
+            }
+
             // Ignore changes to RectTransform SizeDelta that are very small and typically the result of rounding errors when using RectTransform in Anchor Stretch mode.
-            if (rectTransform != null &&
+            if (hasCanvasScaleFactorChanged == false &&
+                rectTransform != null &&
                 Mathf.Abs(m_rectTransform.rect.width - m_PreviousRectTransformSize.x) < 0.0001f && Mathf.Abs(m_rectTransform.rect.height - m_PreviousRectTransformSize.y) < 0.0001f &&
                 Mathf.Abs(m_rectTransform.pivot.x - m_PreviousPivotPosition.x) < 0.0001f && Mathf.Abs(m_rectTransform.pivot.y - m_PreviousPivotPosition.y) < 0.0001f)
             {
