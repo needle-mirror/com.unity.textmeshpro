@@ -438,13 +438,10 @@ namespace TMPro
 
         protected override void Awake()
         {
-//#if UNITY_EDITOR
-//            if (!Application.isPlaying)
-//                return;
-//#endif
-
-            m_AlphaTweenRunner = new TweenRunner<FloatTween>();
-            m_AlphaTweenRunner.Init(this);
+            #if UNITY_EDITOR
+            if (!Application.isPlaying)
+                return;
+            #endif
 
             if (m_CaptionImage)
                 m_CaptionImage.enabled = (m_CaptionImage.sprite != null);
@@ -455,6 +452,8 @@ namespace TMPro
 
         protected override void Start()
         {
+            m_AlphaTweenRunner = new TweenRunner<FloatTween>();
+            m_AlphaTweenRunner.Init(this);
             base.Start();
 
             RefreshShownValue();

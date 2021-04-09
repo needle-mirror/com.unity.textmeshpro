@@ -1,6 +1,20 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [2.1.5] - 2021-04-09
+## [1.5.5]
+## [3.0.5]
+### Changes
+- Added compiler conditional to address error related to missing RectMask2D padding property which was added in Unity 2019.4.12f1. See [forum post](https://forum.unity.com/threads/update-textmesh-pro-to-latest-in-2019-4.945332/#post-6906851) for details.
+- Fixed GetPreferredValues(string text) and GetPreferredValues(string text, float width, float height) incorrectly changing the text. See [forum post](https://forum.unity.com/threads/preferred-width-height-sometimes-0.980022/#post-6991058) for details.
+- Fixed potential crash when FontEngine.GetGlyphIndex is called on a font asset that was previously unloaded or deleted. See [forum post](https://forum.unity.com/threads/tmpro-tmp_fontasset-addsynthesizedcharacter-causes-crash-when-calling-fontengine-getglyphindex.1071452/) for details. 
+- Fixed potential crash when trying to add new glyphs to a dynamic font asset whose atlas texture is set to non readable. Case #1319567
+- Fixed Format Exception error when using the Project Text Spacing Conversion Tool when the Language Region Format is not English. Case #1320544
+- Fixed text rendering issue due to incorrectly SDF scaling when using a CanvasScaler and resizing the game view.
+- Fixed TextMeshPro component Sorting Layer field in the Inspector's Extra Settings not showing the correct layer. Case #1326985
+- Fixed m_AlphaTweenRunner not initialized in TMP_Dropdown when Reload Domain is disabled in the Editor Enter Play Mode Settings. See [forum post](https://forum.unity.com/threads/m_alphatweenrunner-not-initialized-in-tmp_dropdown.1071887/) for details. 
+- Added support for PS4 and PS5 to TMP Input Field.
+
 ## [2.1.4] - 2021-02-19
 ## [1.5.4]
 ## [3.0.4]

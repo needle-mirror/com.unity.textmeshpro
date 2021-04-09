@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using TMPro.EditorUtilities;
 
@@ -413,7 +414,7 @@ namespace TMPro
                     {
                         if (line.Contains(k_FontSizeProperty))
                         {
-                            fontSize = float.Parse(line.Split(':')[1]);
+                            fontSize = float.Parse(line.Split(':')[1], NumberStyles.Float, CultureInfo.InvariantCulture);
                             readingFlag = 3;
                             continue;
                         }
@@ -425,7 +426,7 @@ namespace TMPro
                         // Read character spacing
                         if (line.Contains(k_CharacterSpacingProperty))
                         {
-                            characterSpacingValue = float.Parse(line.Split(':')[1]);
+                            characterSpacingValue = float.Parse(line.Split(':')[1], NumberStyles.Float, CultureInfo.InvariantCulture);
                             if (characterSpacingValue != 0)
                             {
                                 // Convert character spacing value.
@@ -441,7 +442,7 @@ namespace TMPro
                         if (line.Contains(k_WordSpacingProperty))
                         {
                             // Get the character spacing value
-                            wordSpacingValue = float.Parse(line.Split(':')[1]);
+                            wordSpacingValue = float.Parse(line.Split(':')[1], NumberStyles.Float, CultureInfo.InvariantCulture);
                             if (wordSpacingValue != 0)
                             {
                                 // Convert character spacing value.
@@ -457,7 +458,7 @@ namespace TMPro
                         if (line.Contains(k_LineSpacingProperty))
                         {
                             // Get the value of line spacing value
-                            lineSpacingValue = float.Parse(line.Split(':')[1]);
+                            lineSpacingValue = float.Parse(line.Split(':')[1], NumberStyles.Float, CultureInfo.InvariantCulture);
                             if (lineSpacingValue != 0)
                             {
                                 // Convert line spacing value.
@@ -473,7 +474,7 @@ namespace TMPro
                         if (line.Contains(k_ParagraphSpacingProperty))
                         {
                             // Get the value of line spacing value
-                            paragraphSpacingValue = float.Parse(line.Split(':')[1]);
+                            paragraphSpacingValue = float.Parse(line.Split(':')[1], NumberStyles.Float, CultureInfo.InvariantCulture);
                             if (paragraphSpacingValue != 0)
                             {
                                 // Convert line spacing value.

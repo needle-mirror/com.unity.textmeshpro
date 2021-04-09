@@ -721,47 +721,49 @@ namespace TMPro
         {
             k_AddSynthesizedCharactersMarker.Begin();
 
+            bool isFontFaceLoaded = false;
+
             if (m_AtlasPopulationMode == AtlasPopulationMode.Dynamic)
-                FontEngine.LoadFontFace(sourceFontFile, m_FaceInfo.pointSize);
+                isFontFaceLoaded = FontEngine.LoadFontFace(sourceFontFile, m_FaceInfo.pointSize) == FontEngineError.Success;
 
             // Only characters not present in the source font file will be synthesized.
 
             // Non visible and control characters with no metrics
             // Add End of Text \u0003
-            AddSynthesizedCharacter(0x03, true);
+            AddSynthesizedCharacter(0x03, isFontFaceLoaded, true);
 
             // Add Tab \u0009
-            AddSynthesizedCharacter(0x09, true);
+            AddSynthesizedCharacter(0x09, isFontFaceLoaded, true);
 
             // Add Line Feed (LF) \u000A
-            AddSynthesizedCharacter(0x0A);
+            AddSynthesizedCharacter(0x0A, isFontFaceLoaded);
 
             // Add Vertical Tab (VT) \u000B
-            AddSynthesizedCharacter(0x0B);
+            AddSynthesizedCharacter(0x0B, isFontFaceLoaded);
 
             // Add Carriage Return (CR) \u000D
-            AddSynthesizedCharacter(0x0D);
+            AddSynthesizedCharacter(0x0D, isFontFaceLoaded);
 
             // Add Arabic Letter Mark \u061C
-            AddSynthesizedCharacter(0x061C);
+            AddSynthesizedCharacter(0x061C, isFontFaceLoaded);
 
             // Add Zero Width Space <ZWSP> \u2000B
-            AddSynthesizedCharacter(0x200B);
+            AddSynthesizedCharacter(0x200B, isFontFaceLoaded);
 
             // Add Left-To-Right Mark \u200E
-            AddSynthesizedCharacter(0x200E);
+            AddSynthesizedCharacter(0x200E, isFontFaceLoaded);
 
             // Add Right-To-Left Mark \u200F
-            AddSynthesizedCharacter(0x200F);
+            AddSynthesizedCharacter(0x200F, isFontFaceLoaded);
 
             // Add Line Separator \u2028
-            AddSynthesizedCharacter(0x2028);
+            AddSynthesizedCharacter(0x2028, isFontFaceLoaded);
 
             // Add Paragraph Separator \u2029
-            AddSynthesizedCharacter(0x2029);
+            AddSynthesizedCharacter(0x2029, isFontFaceLoaded);
 
             // Add Word Joiner <WJ> / Zero Width Non-Breaking Space \u2060
-            AddSynthesizedCharacter(0x2060);
+            AddSynthesizedCharacter(0x2060, isFontFaceLoaded);
 
             // Set Cap Line using the capital letter 'X'
             if (m_FaceInfo.capLine == 0 && m_CharacterLookupDictionary.ContainsKey('X'))
@@ -780,7 +782,7 @@ namespace TMPro
             k_AddSynthesizedCharactersMarker.End();
         }
 
-        void AddSynthesizedCharacter(uint unicode, bool addImmediately = false)
+        void AddSynthesizedCharacter(uint unicode, bool isFontFaceLoaded, bool addImmediately = false)
         {
             // Check if unicode is already present in the font asset
             if (m_CharacterLookupDictionary.ContainsKey(unicode))
@@ -788,7 +790,7 @@ namespace TMPro
 
             Glyph glyph;
 
-            if (m_AtlasPopulationMode == AtlasPopulationMode.Dynamic)
+            if (isFontFaceLoaded)
             {
                 // Check if unicode is present in font file
                 if (FontEngine.GetGlyphIndex(unicode) != 0)
@@ -2057,18 +2059,18 @@ namespace TMPro
             //    }
             //}
 
+            // Make sure atlas texture is readable.
+            if (m_AtlasTextures[m_AtlasTextureIndex].isReadable == false)
+            {
+                Debug.LogWarning("Unable to add the requested character to font asset [" + this.name + "]'s atlas texture. Please make the texture [" + m_AtlasTextures[m_AtlasTextureIndex].name + "] readable.", m_AtlasTextures[m_AtlasTextureIndex]);
+
+                k_TryAddCharacterMarker.End();
+                return false;
+            }
+
             // Resize the Atlas Texture to the appropriate size
             if (m_AtlasTextures[m_AtlasTextureIndex].width == 0 || m_AtlasTextures[m_AtlasTextureIndex].height == 0)
             {
-                // TODO: Need texture to be readable.
-                if (m_AtlasTextures[m_AtlasTextureIndex].isReadable == false)
-                {
-                    Debug.LogWarning("Unable to add the requested character to font asset [" + this.name + "]'s atlas texture. Please make the texture [" + m_AtlasTextures[m_AtlasTextureIndex].name + "] readable.", m_AtlasTextures[m_AtlasTextureIndex]);
-
-                    k_TryAddCharacterMarker.End();
-                    return false;
-                }
-
                 m_AtlasTextures[m_AtlasTextureIndex].Resize(m_AtlasWidth, m_AtlasHeight);
                 FontEngine.ResetAtlasTexture(m_AtlasTextures[m_AtlasTextureIndex]);
             }
