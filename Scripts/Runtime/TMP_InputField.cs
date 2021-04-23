@@ -428,7 +428,9 @@ namespace TMPro
                     #endif
                     #if UNITY_2019_4_OR_NEWER
                     case RuntimePlatform.PS4:
-                    case RuntimePlatform.PS5:
+                        #if !(UNITY_2019_4_1 || UNITY_2019_4_2 || UNITY_2019_4_3 || UNITY_2019_4_4 || UNITY_2019_4_5 || UNITY_2019_4_6 || UNITY_2019_4_7 || UNITY_2019_4_8 || UNITY_2019_4_9 || UNITY_2019_4_10 || UNITY_2019_4_11 || UNITY_2019_4_12 || UNITY_2019_4_13 || UNITY_2019_4_14 || UNITY_2019_4_15 || UNITY_2019_4_16 || UNITY_2019_4_17 || UNITY_2019_4_18 || UNITY_2019_4_19 || UNITY_2019_4_20 || UNITY_2019_4_21 || UNITY_2019_4_22)
+                        case RuntimePlatform.PS5:
+                        #endif
                     #endif
                     case RuntimePlatform.Switch:
                         return m_HideSoftKeyboard;
@@ -452,7 +454,9 @@ namespace TMPro
                     #endif
                     #if UNITY_2019_4_OR_NEWER
                     case RuntimePlatform.PS4:
-                    case RuntimePlatform.PS5:
+                        #if !(UNITY_2019_4_1 || UNITY_2019_4_2 || UNITY_2019_4_3 || UNITY_2019_4_4 || UNITY_2019_4_5 || UNITY_2019_4_6 || UNITY_2019_4_7 || UNITY_2019_4_8 || UNITY_2019_4_9 || UNITY_2019_4_10 || UNITY_2019_4_11 || UNITY_2019_4_12 || UNITY_2019_4_13 || UNITY_2019_4_14 || UNITY_2019_4_15 || UNITY_2019_4_16 || UNITY_2019_4_17 || UNITY_2019_4_18 || UNITY_2019_4_19 || UNITY_2019_4_20 || UNITY_2019_4_21 || UNITY_2019_4_22)
+                        case RuntimePlatform.PS5:
+                        #endif
                     #endif
                     case RuntimePlatform.Switch:
                         SetPropertyUtility.SetStruct(ref m_HideSoftKeyboard, value);
@@ -479,7 +483,9 @@ namespace TMPro
                 case RuntimePlatform.tvOS:
                 #if UNITY_2019_4_OR_NEWER
                 case RuntimePlatform.PS4:
-                case RuntimePlatform.PS5:
+                    #if !(UNITY_2019_4_1 || UNITY_2019_4_2 || UNITY_2019_4_3 || UNITY_2019_4_4 || UNITY_2019_4_5 || UNITY_2019_4_6 || UNITY_2019_4_7 || UNITY_2019_4_8 || UNITY_2019_4_9 || UNITY_2019_4_10 || UNITY_2019_4_11 || UNITY_2019_4_12 || UNITY_2019_4_13 || UNITY_2019_4_14 || UNITY_2019_4_15 || UNITY_2019_4_16 || UNITY_2019_4_17 || UNITY_2019_4_18 || UNITY_2019_4_19 || UNITY_2019_4_20 || UNITY_2019_4_21 || UNITY_2019_4_22)
+                    case RuntimePlatform.PS5:
+                    #endif
                 #endif
                 case RuntimePlatform.Switch:
                     return false;
