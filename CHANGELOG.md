@@ -1,6 +1,12 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [1.5.6] - 2021-04-23
+## [2.1.6]
+## [3.0.6]
+### Changes
+- Removed the use of Out Variable Declarations since it is not support in C# 6.0 and causing internal testing issue on UWP.
+
 ## [1.5.5] - 2021-04-02
 ## [2.1.5]
 ## [3.0.5]

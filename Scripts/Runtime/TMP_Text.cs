@@ -2217,7 +2217,8 @@ namespace TMPro
                             continue;
                         case MarkupTag.STYLE:
                             int openWriteIndex = writeIndex;
-                            if (ReplaceOpeningStyleTag(ref m_TextBackingArray, readIndex, out int srcOffset, ref m_TextProcessingArray, ref writeIndex))
+                            int srcOffset;
+                            if (ReplaceOpeningStyleTag(ref m_TextBackingArray, readIndex, out srcOffset, ref m_TextProcessingArray, ref writeIndex))
                             {
                                 // Update potential text elements added by the opening style.
                                 for (; openWriteIndex < writeIndex; openWriteIndex++)
@@ -2800,7 +2801,8 @@ namespace TMPro
                             i += 5;
                             continue;
                         case MarkupTag.STYLE:
-                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
+                            int offset;
+                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out offset, ref charBuffer, ref writeIndex))
                             {
                                 i = offset;
                                 continue;
@@ -2922,7 +2924,8 @@ namespace TMPro
                             i += 5;
                             continue;
                         case MarkupTag.STYLE:
-                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
+                            int offset;
+                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out offset, ref charBuffer, ref writeIndex))
                             {
                                 i = offset;
                                 continue;
@@ -3041,7 +3044,8 @@ namespace TMPro
                             i += 5;
                             continue;
                         case MarkupTag.STYLE:
-                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
+                            int offset;
+                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out offset, ref charBuffer, ref writeIndex))
                             {
                                 i = offset;
                                 continue;
@@ -3157,7 +3161,8 @@ namespace TMPro
                             i += 5;
                             continue;
                         case MarkupTag.STYLE:
-                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
+                            int offset;
+                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out offset, ref charBuffer, ref writeIndex))
                             {
                                 i = offset;
                                 continue;
@@ -3269,7 +3274,8 @@ namespace TMPro
                             i += 5;
                             continue;
                         case MarkupTag.STYLE:
-                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
+                            int offset;
+                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out offset, ref charBuffer, ref writeIndex))
                             {
                                 i = offset;
                                 continue;
@@ -3378,7 +3384,8 @@ namespace TMPro
                             i += 5;
                             continue;
                         case MarkupTag.STYLE:
-                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
+                            int offset;
+                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out offset, ref charBuffer, ref writeIndex))
                             {
                                 i = offset;
                                 continue;
