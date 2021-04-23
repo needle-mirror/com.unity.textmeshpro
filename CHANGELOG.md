@@ -1,6 +1,12 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [3.0.6] - 2021-04-23
+## [2.1.6]
+## [1.5.6]
+### Changes
+- Added compiler conditional to exclude reference to PS5 in Unity 2019.4.22f1 or older and similar for Unity 2020.2.2f1 or older.
+
 ## [3.0.5] - 2021-04-09
 ## [2.1.5]
 ## [1.5.5]

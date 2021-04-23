@@ -426,7 +426,9 @@ namespace TMPro
                     case RuntimePlatform.Stadia:
                     #if UNITY_2020_2_OR_NEWER
                     case RuntimePlatform.PS4:
-                    case RuntimePlatform.PS5:
+                        #if !(UNITY_2020_2_1 || UNITY_2020_2_2)
+                        case RuntimePlatform.PS5:
+                        #endif
                     #endif
                     case RuntimePlatform.Switch:
                         return m_HideSoftKeyboard;
@@ -448,7 +450,9 @@ namespace TMPro
                     case RuntimePlatform.Stadia:
                     #if UNITY_2020_2_OR_NEWER
                     case RuntimePlatform.PS4:
-                    case RuntimePlatform.PS5:
+                        #if !(UNITY_2020_2_1 || UNITY_2020_2_2)
+                        case RuntimePlatform.PS5:
+                        #endif
                     #endif
                     case RuntimePlatform.Switch:
                         SetPropertyUtility.SetStruct(ref m_HideSoftKeyboard, value);
@@ -475,7 +479,9 @@ namespace TMPro
                 case RuntimePlatform.tvOS:
                 #if UNITY_2020_2_OR_NEWER
                 case RuntimePlatform.PS4:
-                case RuntimePlatform.PS5:
+                    #if !(UNITY_2020_2_1 || UNITY_2020_2_2)
+                    case RuntimePlatform.PS5:
+                    #endif
                 #endif
                 case RuntimePlatform.Switch:
                     return false;
