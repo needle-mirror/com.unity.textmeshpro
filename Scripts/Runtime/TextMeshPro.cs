@@ -9,7 +9,7 @@ namespace TMPro
     [RequireComponent(typeof(MeshRenderer))]
     [AddComponentMenu("Mesh/TextMeshPro - Text")]
     [ExecuteAlways]
-    [HelpURL("https://docs.unity3d.com/Packages/com.unity.textmeshpro@2.1")]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.textmeshpro@2.2")]
     public partial class TextMeshPro : TMP_Text, ILayoutElement
     {
         // Public Properties and Serializable Properties

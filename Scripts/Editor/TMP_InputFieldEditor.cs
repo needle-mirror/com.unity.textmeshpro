@@ -50,7 +50,9 @@ namespace TMPro.EditorUtilities
         SerializedProperty m_RichText;
         SerializedProperty m_RichTextEditingAllowed;
         SerializedProperty m_ResetOnDeActivation;
+        SerializedProperty m_KeepTextSelectionVisible;
         SerializedProperty m_RestoreOriginalTextOnEscape;
+        SerializedProperty m_ShouldActivateOnSelect;
 
         SerializedProperty m_OnFocusSelectAll;
         SerializedProperty m_GlobalPointSize;
@@ -97,9 +99,12 @@ namespace TMPro.EditorUtilities
             m_RichText = serializedObject.FindProperty("m_RichText");
             m_RichTextEditingAllowed = serializedObject.FindProperty("m_isRichTextEditingAllowed");
             m_ResetOnDeActivation = serializedObject.FindProperty("m_ResetOnDeActivation");
+            m_KeepTextSelectionVisible = serializedObject.FindProperty("m_KeepTextSelectionVisible");
             m_RestoreOriginalTextOnEscape = serializedObject.FindProperty("m_RestoreOriginalTextOnEscape");
 
             m_OnFocusSelectAll = serializedObject.FindProperty("m_OnFocusSelectAll");
+            m_ShouldActivateOnSelect = serializedObject.FindProperty("m_ShouldActivateOnSelect");
+
             m_GlobalPointSize = serializedObject.FindProperty("m_GlobalPointSize");
             m_GlobalFontAsset = serializedObject.FindProperty("m_GlobalFontAsset");
 
@@ -186,10 +191,10 @@ namespace TMPro.EditorUtilities
                             if (text != null)
                             {
                                 if (m_LineType.enumValueIndex == (int)TMP_InputField.LineType.SingleLine)
-                                    text.enableWordWrapping = false;
+                                    text.textWrappingMode = TextWrappingModes.PreserveWhitespaceNoWrap;
                                 else
                                 {
-                                    text.enableWordWrapping = true;
+                                    text.textWrappingMode = TextWrappingModes.Normal;
                                 }
                             }
                         }
@@ -254,9 +259,17 @@ namespace TMPro.EditorUtilities
             {
                 EditorGUI.indentLevel++;
 
-                EditorGUILayout.PropertyField(m_OnFocusSelectAll, new GUIContent("OnFocus - Select All", "Should all the text be selected when the Input Field is selected."));
-                EditorGUILayout.PropertyField(m_ResetOnDeActivation, new GUIContent("Reset On DeActivation", "Should the Text and Caret position be reset when Input Field is DeActivated."));
-                EditorGUILayout.PropertyField(m_RestoreOriginalTextOnEscape, new GUIContent("Restore On ESC Key", "Should the original text be restored when pressing ESC."));
+                EditorGUILayout.PropertyField(m_OnFocusSelectAll, new GUIContent("OnFocus - Select All", "Should all the text be selected when the Input Field is selected?"));
+                EditorGUILayout.PropertyField(m_ResetOnDeActivation, new GUIContent("Reset On Deactivation", "Should the Text and Caret position be reset when Input Field looses focus and is Deactivated?"));
+
+                EditorGUI.indentLevel++;
+                GUI.enabled = !m_ResetOnDeActivation.boolValue;
+                EditorGUILayout.PropertyField(m_KeepTextSelectionVisible, new GUIContent("Keep Text Selection Visible", "Should the text selection remain visible when the input field looses focus and is deactivated?"));
+                GUI.enabled = true;
+                EditorGUI.indentLevel--;
+
+                EditorGUILayout.PropertyField(m_RestoreOriginalTextOnEscape, new GUIContent("Restore On ESC Key", "Should the original text be restored when pressing ESC?"));
+                EditorGUILayout.PropertyField(m_ShouldActivateOnSelect, new GUIContent("Should Activate On Select", "Determines if the Input Field will be activated when selected."));
                 EditorGUILayout.PropertyField(m_HideMobileKeyboard, new GUIContent("Hide Soft Keyboard", "Controls the visibility of the mobile virtual keyboard."));
                 EditorGUILayout.PropertyField(m_HideMobileInput, new GUIContent("Hide Mobile Input", "Controls the visibility of the editable text field above the mobile virtual keyboard."));
                 EditorGUILayout.PropertyField(m_ReadOnly);

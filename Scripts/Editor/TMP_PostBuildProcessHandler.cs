@@ -16,7 +16,7 @@ namespace TMPro
                 // Try loading the TMP Settings
                 TMP_Settings settings = Resources.Load<TMP_Settings>("TMP Settings");
 
-                if (settings == null)
+                if (settings == null || TMP_Settings.enableEmojiSupport == false)
                     return;
 
                 string file = Path.Combine(pathToBuiltProject, "Classes/UI/Keyboard.mm");

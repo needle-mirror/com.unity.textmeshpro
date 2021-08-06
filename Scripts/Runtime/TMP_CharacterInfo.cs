@@ -7,9 +7,9 @@ namespace TMPro
     public struct TMP_Vertex
     {
         public Vector3 position;
-        public Vector2 uv;
+        public Vector4 uv;
         public Vector2 uv2;
-        public Vector2 uv4;
+        //public Vector2 uv4;
         public Color32 color;
 
         public static TMP_Vertex zero { get { return k_Zero; } }
@@ -203,6 +203,7 @@ namespace TMPro
         public float descender;
         internal float adjustedAscender;
         internal float adjustedDescender;
+        internal float adjustedHorizontalAdvance;
 
         public float aspectRatio;
         public float scale;

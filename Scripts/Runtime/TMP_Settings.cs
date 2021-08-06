@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Serialization;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -30,14 +31,15 @@ namespace TMPro
         }
 
         /// <summary>
-        /// Controls if Word Wrapping will be enabled on newly created text objects by default.
+        /// Controls the text wrapping mode of newly created text objects.
         /// </summary>
-        public static bool enableWordWrapping
+        public static TextWrappingModes textWrappingMode
         {
-            get { return instance.m_enableWordWrapping; }
+            get { return instance.m_TextWrappingMode; }
         }
+        [FormerlySerializedAs("m_enableWordWrapping")]
         [SerializeField]
-        private bool m_enableWordWrapping;
+        private TextWrappingModes m_TextWrappingMode;
 
         /// <summary>
         /// Controls if Kerning is enabled on newly created text objects by default.
@@ -109,6 +111,16 @@ namespace TMPro
         }
         [SerializeField]
         private int m_missingGlyphCharacter;
+
+        /// <summary>
+        /// Determines if the "Clear Dynamic Data on Build" property will be set to true or false on newly created dynamic font assets.
+        /// </summary>
+        public static bool clearDynamicDataOnBuild
+        {
+            get { return instance.m_ClearDynamicDataOnBuild; }
+        }
+
+        [SerializeField] private bool m_ClearDynamicDataOnBuild = true;
 
         /// <summary>
         /// Controls the display of warning message in the console.
@@ -231,6 +243,15 @@ namespace TMPro
         }
         [SerializeField]
         private bool m_matchMaterialPreset;
+
+        /// <summary>
+        /// Determines if sub text objects will be hidden in the scene hierarchy.
+        /// </summary>
+        public static bool hideSubTextObjects
+        {
+            get { return instance.m_HideSubTextObjects; }
+        }
+        [SerializeField] private bool m_HideSubTextObjects = true;
 
         /// <summary>
         /// The Default Sprite Asset to be used by default.

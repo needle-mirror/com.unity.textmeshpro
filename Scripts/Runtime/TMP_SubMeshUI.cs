@@ -212,7 +212,7 @@ namespace TMPro
         public static TMP_SubMeshUI AddSubTextObject(TextMeshProUGUI textComponent, MaterialReference materialReference)
         {
             GameObject go = new GameObject("TMP UI SubObject [" + materialReference.material.name + "]", typeof(RectTransform));
-            go.hideFlags = HideFlags.DontSave;
+            go.hideFlags = TMP_Settings.hideSubTextObjects ? HideFlags.HideAndDontSave : HideFlags.DontSave;
 
             go.transform.SetParent(textComponent.transform, false);
             go.transform.SetAsFirstSibling();
@@ -462,7 +462,7 @@ namespace TMPro
         // Event received when font asset properties are changed in Font Inspector
         void ON_FONT_PROPERTY_CHANGED(bool isChanged, Object fontAsset)
         {
-            if (m_fontAsset != null && fontAsset.GetInstanceID() == m_fontAsset.GetInstanceID())
+            if (m_fontAsset != null && fontAsset != null && fontAsset.GetInstanceID() == m_fontAsset.GetInstanceID())
             {
                 // Copy Normal and Bold Weight
                 if (m_fallbackMaterial != null)

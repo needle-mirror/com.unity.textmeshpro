@@ -119,7 +119,7 @@ namespace TMPro
                         return character;
                     }
 
-                    if (temp.atlasPopulationMode == AtlasPopulationMode.Dynamic)
+                    if (temp.atlasPopulationMode == AtlasPopulationMode.Dynamic || temp.atlasPopulationMode == AtlasPopulationMode.DynamicOS)
                     {
                         if (temp.TryAddCharacterInternal(unicode, out character))
                         {
@@ -146,7 +146,6 @@ namespace TMPro
                     // At this point, we were not able to find the requested character in the alternative typeface
                     // so we check the source font asset and its potential fallbacks.
                 }
-
             }
             #endregion
 
@@ -154,7 +153,7 @@ namespace TMPro
             if (sourceFontAsset.characterLookupTable.TryGetValue(unicode, out character))
                 return character;
 
-            if (sourceFontAsset.atlasPopulationMode == AtlasPopulationMode.Dynamic)
+            if (sourceFontAsset.atlasPopulationMode == AtlasPopulationMode.Dynamic || sourceFontAsset.atlasPopulationMode == AtlasPopulationMode.DynamicOS)
             {
                 if (sourceFontAsset.TryAddCharacterInternal(unicode, out character))
                     return character;
@@ -184,7 +183,7 @@ namespace TMPro
                         continue;
 
                     // Add reference to this search query
-                    sourceFontAsset.FallbackSearchQueryLookup.Add(id);
+                    //sourceFontAsset.FallbackSearchQueryLookup.Add(id);
 
                     character = GetCharacterFromFontAsset_Internal(unicode, temp, true, fontStyle, fontWeight, out isAlternativeTypeface);
 
@@ -236,7 +235,7 @@ namespace TMPro
                 if (fontAsset == null) continue;
 
                 // Add reference to this search query
-                sourceFontAsset.FallbackSearchQueryLookup.Add(fontAsset.instanceID);
+                //sourceFontAsset.FallbackSearchQueryLookup.Add(fontAsset.instanceID);
 
                 TMP_Character character = GetCharacterFromFontAsset_Internal(unicode, fontAsset, includeFallbacks, fontStyle, fontWeight, out isAlternativeTypeface);
 

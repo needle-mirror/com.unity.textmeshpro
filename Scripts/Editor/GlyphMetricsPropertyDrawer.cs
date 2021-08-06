@@ -8,7 +8,7 @@ namespace TMPro.EditorUtilities
 {
 
     [CustomPropertyDrawer(typeof(GlyphMetrics))]
-    public class GlyphMetricsPropertyDrawer : PropertyDrawer
+    internal class GlyphMetricsPropertyDrawer : PropertyDrawer
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {

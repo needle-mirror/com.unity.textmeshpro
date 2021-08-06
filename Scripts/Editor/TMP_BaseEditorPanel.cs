@@ -44,7 +44,7 @@ namespace TMPro.EditorUtilities
         static readonly GUIContent k_LineSpacingLabel = new GUIContent("Line");
         static readonly GUIContent k_ParagraphSpacingLabel = new GUIContent("Paragraph");
 
-        static readonly GUIContent k_AlignmentLabel = new GUIContent("Alignment", "Horizontal and vertical aligment of the text within its container.");
+        static readonly GUIContent k_AlignmentLabel = new GUIContent("Alignment", "Horizontal and vertical alignment of the text within its container.");
         static readonly GUIContent k_WrapMixLabel = new GUIContent("Wrap Mix (W <-> C)", "How much to favor words versus characters when distributing the text.");
 
         static readonly GUIContent k_WrappingLabel = new GUIContent("Wrapping", "Wraps text to the next line when reaching the edge of the container.");
@@ -140,7 +140,7 @@ namespace TMPro.EditorUtilities
         protected SerializedProperty m_VerticalMappingProp;
         protected SerializedProperty m_UvLineOffsetProp;
 
-        protected SerializedProperty m_EnableWordWrappingProp;
+        protected SerializedProperty m_TextWrappingModeProp;
         protected SerializedProperty m_WordWrappingRatiosProp;
         protected SerializedProperty m_TextOverflowModeProp;
         protected SerializedProperty m_PageToDisplayProp;
@@ -219,7 +219,7 @@ namespace TMPro.EditorUtilities
             m_VerticalMappingProp = serializedObject.FindProperty("m_verticalMapping");
             m_UvLineOffsetProp = serializedObject.FindProperty("m_uvLineOffset");
 
-            m_EnableWordWrappingProp = serializedObject.FindProperty("m_enableWordWrapping");
+            m_TextWrappingModeProp = serializedObject.FindProperty("m_TextWrappingMode");
             m_WordWrappingRatiosProp = serializedObject.FindProperty("m_wordWrappingRatios");
             m_TextOverflowModeProp = serializedObject.FindProperty("m_overflowMode");
             m_PageToDisplayProp = serializedObject.FindProperty("m_pageToDisplay");
@@ -993,13 +993,12 @@ namespace TMPro.EditorUtilities
         {
             // TEXT WRAPPING
             Rect rect = EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight);
-            EditorGUI.BeginProperty(rect, k_WrappingLabel, m_EnableWordWrappingProp);
+            EditorGUI.BeginProperty(rect, k_WrappingLabel, m_TextWrappingModeProp);
 
             EditorGUI.BeginChangeCheck();
-            int wrapSelection = EditorGUI.Popup(rect, k_WrappingLabel, m_EnableWordWrappingProp.boolValue ? 1 : 0, k_WrappingOptions);
+            EditorGUI.PropertyField(rect, m_TextWrappingModeProp);
             if (EditorGUI.EndChangeCheck())
             {
-                m_EnableWordWrappingProp.boolValue = wrapSelection == 1;
                 m_HavePropertiesChanged = true;
             }
 

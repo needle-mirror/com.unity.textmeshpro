@@ -1,11 +1,11 @@
 ﻿#define TMP_PRESENT
 
 using System;
-using System.Collections;
 using System.Text;
 using System.Collections.Generic;
 using Unity.Profiling;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.TextCore;
 using UnityEngine.UI;
 
@@ -96,6 +96,7 @@ namespace TMPro
     public enum TMP_TextElementType { Character, Sprite };
     public enum MaskingTypes { MaskOff = 0, MaskHard = 1, MaskSoft = 2 }; //, MaskTex = 4 };
     public enum TextOverflowModes { Overflow = 0, Ellipsis = 1, Masking = 2, Truncate = 3, ScrollRect = 4, Page = 5, Linked = 6 };
+    public enum TextWrappingModes { NoWrap = 0, Normal = 1, PreserveWhitespace = 2, PreserveWhitespaceNoWrap = 3 };
     public enum MaskingOffsetMode { Percentage = 0, Pixel = 1 };
     public enum TextureMappingOptions { Character = 0, Line = 1, Paragraph = 2, MatchAspect = 3 };
 
@@ -266,6 +267,8 @@ namespace TMPro
         protected static Color32 s_colorWhite = new Color32(255, 255, 255, 255);
         protected Color32 m_underlineColor = s_colorWhite;
         protected Color32 m_strikethroughColor = s_colorWhite;
+        internal HighlightState m_HighlightState = new HighlightState(s_colorWhite, TMP_Offset.zero);
+        internal bool m_ConvertToLinearSpace;
 
         /// <summary>
         /// Sets the vertex color alpha value.
@@ -712,15 +715,34 @@ namespace TMPro
 
 
         /// <summary>
+        /// Controls the text wrapping mode.
+        /// </summary>
+        public TextWrappingModes textWrappingMode
+        {
+            get { return m_TextWrappingMode; }
+            set { if (m_TextWrappingMode == value) return; m_havePropertiesChanged = true; m_TextWrappingMode = value; SetVerticesDirty(); SetLayoutDirty(); }
+        }
+
+
+        /// <summary>
         /// Controls whether or not word wrapping is applied. When disabled, the text will be displayed on a single line.
         /// </summary>
+        [Obsolete("The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.")]
         public bool enableWordWrapping
         {
-            get { return m_enableWordWrapping; }
-            set { if (m_enableWordWrapping == value) return; m_havePropertiesChanged = true; m_enableWordWrapping = value; SetVerticesDirty(); SetLayoutDirty(); }
+            get { return m_TextWrappingMode != 0; }
+            set
+            {
+                TextWrappingModes mode = (TextWrappingModes)(value ? 1 : 0);
+
+                if (m_TextWrappingMode == mode)
+                    return;
+
+                m_havePropertiesChanged = true; m_TextWrappingMode = mode; SetVerticesDirty(); SetLayoutDirty();
+            }
         }
-        [SerializeField]
-        protected bool m_enableWordWrapping = false;
+        [SerializeField] [FormerlySerializedAs("m_enableWordWrapping")]
+        protected TextWrappingModes m_TextWrappingMode;
         protected bool m_isCharacterWrappingEnabled = false;
         protected bool m_isNonBreakingSpace = false;
         protected bool m_isIgnoringAlignment;
@@ -841,7 +863,7 @@ namespace TMPro
         }
         [SerializeField]
         protected bool m_enableKerning;
-        protected float m_GlyphHorizontalAdvanceAdjustment;
+        protected int m_LastBaseGlyphIndex;
 
         /// <summary>
         /// Adds extra padding around each character. This may be necessary when the displayed text is very small to prevent clipping.
@@ -1125,7 +1147,13 @@ namespace TMPro
         /// </summary>
         public TMP_TextInfo textInfo
         {
-            get { return m_textInfo; }
+            get
+            {
+                if (m_textInfo == null)
+                    m_textInfo = new TMP_TextInfo(this);
+
+                return m_textInfo;
+            }
         }
         //[SerializeField]
         protected TMP_TextInfo m_textInfo; // Class which holds information about the Text object such as characters, lines, mesh data as well as metrics.
@@ -1266,6 +1294,21 @@ namespace TMPro
         public static event Func<int, string, TMP_SpriteAsset> OnSpriteAssetRequest;
 
         /// <summary>
+        /// Delegate for the OnMissingCharacter event called when the requested Unicode character is missing from the font asset.
+        /// </summary>
+        /// <param name="unicode">The Unicode of the missing character.</param>
+        /// <param name="stringIndex">The index of the missing character in the source string.</param>
+        /// <param name="text">The source text that contains the missing character.</param>
+        /// <param name="fontAsset">The font asset that is missing the requested characters.</param>
+        /// <param name="textComponent">The text component where the requested character is missing.</param>
+        public delegate void MissingCharacterEventCallback(int unicode, int stringIndex, string text, TMP_FontAsset fontAsset, TMP_Text textComponent);
+
+        /// <summary>
+        /// Event delegate to be called when the requested Unicode character is missing from the font asset.
+        /// </summary>
+        public static event MissingCharacterEventCallback OnMissingCharacter;
+
+        /// <summary>
         /// Event delegate to allow modifying the text geometry before it is uploaded to the mesh and rendered.
         /// </summary>
         public virtual event Action<TMP_TextInfo> OnPreRenderText = delegate { };
@@ -1383,7 +1426,7 @@ namespace TMPro
         /// </summary>
         public virtual float preferredWidth { get { m_preferredWidth = GetPreferredWidth(); return m_preferredWidth; } }
         protected float m_preferredWidth;
-        protected float m_renderedWidth;
+        protected float m_RenderedWidth;
         protected bool m_isPreferredWidthDirty;
 
         /// <summary>
@@ -1391,7 +1434,7 @@ namespace TMPro
         /// </summary>
         public virtual float preferredHeight { get { m_preferredHeight = GetPreferredHeight(); return m_preferredHeight; } }
         protected float m_preferredHeight;
-        protected float m_renderedHeight;
+        protected float m_RenderedHeight;
         protected bool m_isPreferredHeightDirty;
 
         protected bool m_isCalculatingPreferredValues;
@@ -1491,11 +1534,11 @@ namespace TMPro
         protected int m_totalCharacterCount;
 
         // Structures used to save the state of the text layout in conjunction with line breaking / word wrapping.
-        protected static WordWrapState m_SavedWordWrapState = new WordWrapState();
-        protected static WordWrapState m_SavedLineState = new WordWrapState();
-        protected static WordWrapState m_SavedEllipsisState = new WordWrapState();
-        protected static WordWrapState m_SavedLastValidState = new WordWrapState();
-        protected static WordWrapState m_SavedSoftLineBreakState = new WordWrapState();
+        internal static WordWrapState m_SavedWordWrapState = new WordWrapState();
+        internal static WordWrapState m_SavedLineState = new WordWrapState();
+        internal static WordWrapState m_SavedEllipsisState = new WordWrapState();
+        internal static WordWrapState m_SavedLastValidState = new WordWrapState();
+        internal static WordWrapState m_SavedSoftLineBreakState = new WordWrapState();
 
         //internal Stack<WordWrapState> m_LineBreakCandiateStack = new Stack<WordWrapState>();
         internal static TMP_TextProcessingStack<WordWrapState> m_EllipsisInsertionCandidateStack = new TMP_TextProcessingStack<WordWrapState>(8, 8);
@@ -1510,6 +1553,7 @@ namespace TMPro
         protected int m_lastVisibleCharacterOfLine;
         protected int m_lineNumber;
         protected int m_lineVisibleCharacterCount;
+        protected int m_lineVisibleSpaceCount;
         protected int m_pageNumber;
         protected float m_PageAscender;
         protected float m_maxTextAscender;
@@ -2215,6 +2259,16 @@ namespace TMPro
                             writeIndex += 1;
                             readIndex += 5;
                             continue;
+                        case MarkupTag.SHY:
+                            if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
+
+                            m_TextProcessingArray[writeIndex].unicode = 0xAD;
+                            m_TextProcessingArray[writeIndex].stringIndex = readIndex;
+                            m_TextProcessingArray[writeIndex].length = 5;
+
+                            writeIndex += 1;
+                            readIndex += 4;
+                            continue;
                         case MarkupTag.STYLE:
                             int openWriteIndex = writeIndex;
                             if (ReplaceOpeningStyleTag(ref m_TextBackingArray, readIndex, out int srcOffset, ref m_TextProcessingArray, ref writeIndex))
@@ -2290,7 +2344,31 @@ namespace TMPro
         /// This function is the same as using the text property to set the text.
         /// </summary>
         /// <param name="sourceText">String containing the text.</param>
+        public void SetText(string sourceText)
+        {
+            int srcLength = sourceText == null ? 0 : sourceText.Length;
+
+            PopulateTextBackingArray(sourceText, 0, srcLength);
+
+            m_text = sourceText;
+
+            // Set input source
+            m_inputSource = TextInputSources.TextString;
+
+            PopulateTextProcessingArray();
+
+            m_havePropertiesChanged = true;
+
+            SetVerticesDirty();
+            SetLayoutDirty();
+        }
+
+        /// <summary>
+        /// This function is the same as using the text property to set the text.
+        /// </summary>
+        /// <param name="sourceText">String containing the text.</param>
         /// <param name="syncTextInputBox">This optional parameter no longer provides any functionality as this function now simple sets the .text property which is reflected in the Text Input Box.</param>
+        [Obsolete("Use the SetText(string) function instead.")]
         public void SetText(string sourceText, bool syncTextInputBox = true)
         {
             int srcLength = sourceText == null ? 0 : sourceText.Length;
@@ -2799,6 +2877,13 @@ namespace TMPro
                             writeIndex += 1;
                             i += 5;
                             continue;
+                        case MarkupTag.SHY:
+                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                            charBuffer[writeIndex].unicode = 0xAD;
+                            writeIndex += 1;
+                            i += 4;
+                            continue;
                         case MarkupTag.STYLE:
                             if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
                             {
@@ -2921,6 +3006,13 @@ namespace TMPro
                             writeIndex += 1;
                             i += 5;
                             continue;
+                        case MarkupTag.SHY:
+                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                            charBuffer[writeIndex].unicode = 0xAD;
+                            writeIndex += 1;
+                            i += 4;
+                            continue;
                         case MarkupTag.STYLE:
                             if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
                             {
@@ -3040,6 +3132,13 @@ namespace TMPro
                             writeIndex += 1;
                             i += 5;
                             continue;
+                        case MarkupTag.SHY:
+                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                            charBuffer[writeIndex].unicode = 0xAD;
+                            writeIndex += 1;
+                            i += 4;
+                            continue;
                         case MarkupTag.STYLE:
                             if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
                             {
@@ -3156,6 +3255,13 @@ namespace TMPro
                             writeIndex += 1;
                             i += 5;
                             continue;
+                        case MarkupTag.SHY:
+                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                            charBuffer[writeIndex].unicode = 0xAD;
+                            writeIndex += 1;
+                            i += 4;
+                            continue;
                         case MarkupTag.STYLE:
                             if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
                             {
@@ -3268,6 +3374,13 @@ namespace TMPro
                             writeIndex += 1;
                             i += 5;
                             continue;
+                        case MarkupTag.SHY:
+                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                            charBuffer[writeIndex].unicode = 0xAD;
+                            writeIndex += 1;
+                            i += 4;
+                            continue;
                         case MarkupTag.STYLE:
                             if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
                             {
@@ -3376,6 +3489,13 @@ namespace TMPro
                             charBuffer[writeIndex].unicode = 0x200B;
                             writeIndex += 1;
                             i += 5;
+                            continue;
+                        case MarkupTag.SHY:
+                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+
+                            charBuffer[writeIndex].unicode = 0xAD;
+                            writeIndex += 1;
+                            i += 4;
                             continue;
                         case MarkupTag.STYLE:
                             if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
@@ -3720,7 +3840,7 @@ namespace TMPro
             Vector2 margin = new Vector2(width, height);
 
             // CALCULATE PREFERRED WIDTH
-            float preferredWidth = GetPreferredWidth(margin);
+            float preferredWidth = GetPreferredWidth(margin, m_TextWrappingMode);
 
             // CALCULATE PREFERRED HEIGHT
             float preferredHeight = GetPreferredHeight(margin);
@@ -3755,7 +3875,8 @@ namespace TMPro
             ParseInputText();
 
             m_AutoSizeIterationCount = 0;
-            float preferredWidth = CalculatePreferredValues(ref fontSize, margin, false, false).x;
+            TextWrappingModes wrapMode = m_TextWrappingMode == TextWrappingModes.Normal || m_TextWrappingMode == TextWrappingModes.NoWrap ? TextWrappingModes.NoWrap : TextWrappingModes.PreserveWhitespaceNoWrap;
+            float preferredWidth = CalculatePreferredValues(ref fontSize, margin, false, wrapMode).x;
 
             m_isPreferredWidthDirty = false;
 
@@ -3765,11 +3886,6 @@ namespace TMPro
         }
 
 
-        /// <summary>
-        /// Method to calculate the preferred width of a text object.
-        /// </summary>
-        /// <param name="margin"></param>
-        /// <returns></returns>
         float GetPreferredWidth(Vector2 margin)
         {
             float fontSize = m_enableAutoSizing ? m_fontSizeMax : m_fontSize;
@@ -3780,7 +3896,26 @@ namespace TMPro
             m_charWidthAdjDelta = 0;
 
             m_AutoSizeIterationCount = 0;
-            float preferredWidth = CalculatePreferredValues(ref fontSize, margin, false, false).x;
+            TextWrappingModes wrapMode = m_TextWrappingMode == TextWrappingModes.Normal || m_TextWrappingMode == TextWrappingModes.NoWrap ? TextWrappingModes.NoWrap : TextWrappingModes.PreserveWhitespaceNoWrap;
+            float preferredWidth = CalculatePreferredValues(ref fontSize, margin, false, wrapMode).x;
+
+            //Debug.Log("GetPreferredWidth() Called. Returning width of " + preferredWidth);
+
+            return preferredWidth;
+        }
+
+
+        float GetPreferredWidth(Vector2 margin, TextWrappingModes wrapMode)
+        {
+            float fontSize = m_enableAutoSizing ? m_fontSizeMax : m_fontSize;
+
+            // Reset auto sizing point size bounds
+            m_minFontSize = m_fontSizeMin;
+            m_maxFontSize = m_fontSizeMax;
+            m_charWidthAdjDelta = 0;
+
+            m_AutoSizeIterationCount = 0;
+            float preferredWidth = CalculatePreferredValues(ref fontSize, margin, false, wrapMode).x;
 
             //Debug.Log("GetPreferredWidth() Called. Returning width of " + preferredWidth);
 
@@ -3822,7 +3957,7 @@ namespace TMPro
 
             while (m_IsAutoSizePointSizeSet == false)
             {
-                preferredHeight = CalculatePreferredValues(ref fontSize, margin, m_enableAutoSizing, m_enableWordWrapping).y;
+                preferredHeight = CalculatePreferredValues(ref fontSize, margin, m_enableAutoSizing, m_TextWrappingMode).y;
                 m_AutoSizeIterationCount += 1;
             }
 
@@ -3858,7 +3993,7 @@ namespace TMPro
 
             while (m_IsAutoSizePointSizeSet == false)
             {
-                preferredHeight = CalculatePreferredValues(ref fontSize, margin, m_enableAutoSizing, m_enableWordWrapping).y;
+                preferredHeight = CalculatePreferredValues(ref fontSize, margin, m_enableAutoSizing, m_TextWrappingMode).y;
                 m_AutoSizeIterationCount += 1;
             }
 
@@ -3929,7 +4064,7 @@ namespace TMPro
         /// Method to calculate the preferred width and height of the text object.
         /// </summary>
         /// <returns></returns>
-        protected virtual Vector2 CalculatePreferredValues(ref float fontSize, Vector2 marginSize, bool isTextAutoSizingEnabled, bool isWordWrappingEnabled)
+        protected virtual Vector2 CalculatePreferredValues(ref float fontSize, Vector2 marginSize, bool isTextAutoSizingEnabled, TextWrappingModes textWrapMode)
         {
             //Debug.Log("*** CalculatePreferredValues() ***"); // ***** Frame: " + Time.frameCount);
 
@@ -3985,9 +4120,7 @@ namespace TMPro
 
             m_cSpacing = 0; // Amount of space added between characters as a result of the use of the <cspace> tag.
             m_monoSpacing = 0;
-            //float lineOffsetDelta = 0;
             m_xAdvance = 0; // Used to track the position of each character.
-            float maxXAdvance = 0; // Used to determine Preferred Width.
 
             tag_LineIndent = 0; // Used for indentation of text.
             tag_Indent = 0;
@@ -4011,15 +4144,12 @@ namespace TMPro
             m_marginLeft = 0;
             m_marginRight = 0;
 
-            float lineMarginLeft = 0;
-            float lineMarginRight = 0;
-
             m_width = -1;
             float widthOfTextArea = marginWidth + 0.0001f - m_marginLeft - m_marginRight;
 
             // Used by Unity's Auto Layout system.
-            float renderedWidth = 0;
-            float renderedHeight = 0;
+            m_RenderedWidth = 0;
+            m_RenderedHeight = 0;
             float textWidth = 0;
             m_isCalculatingPreferredValues = true;
 
@@ -4168,7 +4298,7 @@ namespace TMPro
 
                 // Look up Character Data from Dictionary and cache it.
                 #region Look up Character Data
-                //float baselineOffset = 0;
+                float baselineOffset = 0;
                 float elementAscentLine = 0;
                 float elementDescentLine = 0;
                 if (m_textElementType == TMP_TextElementType.Sprite)
@@ -4236,7 +4366,6 @@ namespace TMPro
                     }
 
                     currentElementScale = adjustedScale * m_fontScaleMultiplier * m_cached_TextElement.scale;
-                    //baselineOffset = m_currentFontAsset.faceInfo.baseline * m_fontScale * m_fontScaleMultiplier * m_currentFontAsset.faceInfo.scale;
 
                     m_internalCharacterInfo[m_characterCount].elementType = TMP_TextElementType.Character;
                 }
@@ -4265,7 +4394,6 @@ namespace TMPro
                 #region Handle Kerning
                 TMP_GlyphValueRecord glyphAdjustments = new TMP_GlyphValueRecord();
                 float characterSpacingAdjustment = m_characterSpacing;
-                m_GlyphHorizontalAdvanceAdjustment = 0;
                 if (m_enableKerning)
                 {
                     TMP_GlyphPairAdjustmentRecord adjustmentPair;
@@ -4276,7 +4404,7 @@ namespace TMPro
                         uint nextGlyphIndex = m_textInfo.characterInfo[m_characterCount + 1].textElement.m_GlyphIndex;
                         uint key = nextGlyphIndex << 16 | baseGlyphIndex;
 
-                        if (m_currentFontAsset.m_FontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out adjustmentPair))
+                        if (m_currentFontAsset.m_FontFeatureTable.m_GlyphPairAdjustmentRecordLookup.TryGetValue(key, out adjustmentPair))
                         {
                             glyphAdjustments = adjustmentPair.m_FirstAdjustmentRecord.m_GlyphValueRecord;
                             characterSpacingAdjustment = (adjustmentPair.m_FeatureLookupFlags & FontFeatureLookupFlags.IgnoreSpacingAdjustments) == FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
@@ -4288,15 +4416,70 @@ namespace TMPro
                         uint previousGlyphIndex = m_textInfo.characterInfo[m_characterCount - 1].textElement.m_GlyphIndex;
                         uint key = baseGlyphIndex << 16 | previousGlyphIndex;
 
-                        if (m_currentFontAsset.m_FontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out adjustmentPair))
+                        if (m_currentFontAsset.m_FontFeatureTable.m_GlyphPairAdjustmentRecordLookup.TryGetValue(key, out adjustmentPair))
                         {
                             glyphAdjustments += adjustmentPair.m_SecondAdjustmentRecord.m_GlyphValueRecord;
                             characterSpacingAdjustment = (adjustmentPair.m_FeatureLookupFlags & FontFeatureLookupFlags.IgnoreSpacingAdjustments) == FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
                         }
                     }
 
-                    m_GlyphHorizontalAdvanceAdjustment = glyphAdjustments.m_XAdvance;
+                    m_internalCharacterInfo[m_characterCount].adjustedHorizontalAdvance = glyphAdjustments.m_XAdvance;
                 }
+                #endregion
+
+                // Handle Diacritical Marks
+                #region Handle Diacritical Marks
+                bool isBaseGlyph = TMP_TextParsingUtilities.IsBaseGlyph((uint)charCode);
+
+                if (isBaseGlyph)
+                    m_LastBaseGlyphIndex = m_characterCount;
+
+                if (!isBaseGlyph && /* m_MarkToBaseEnabled && */ m_characterCount > 0)
+                {
+                    Glyph baseGlyph = m_textInfo.characterInfo[m_LastBaseGlyphIndex].textElement.glyph;
+                    uint baseGlyphIndex = baseGlyph.index;
+                    uint markGlyphIndex = m_cached_TextElement.glyphIndex;
+                    uint key = markGlyphIndex << 16 | baseGlyphIndex;
+
+                    // TODO: Add Type to glyph make it easier to identify the glyph type.
+                    MarkToBaseAdjustmentRecord glyphAdjustmentRecord;
+
+                    if (m_currentFontAsset.fontFeatureTable.m_MarkToBaseAdjustmentRecordLookup.TryGetValue(key, out glyphAdjustmentRecord))
+                    {
+                        float advanceOffset = (m_internalCharacterInfo[m_LastBaseGlyphIndex].origin - m_xAdvance) / currentElementScale;
+
+                        glyphAdjustments.xPlacement = advanceOffset + glyphAdjustmentRecord.baseGlyphAnchorPoint.xCoordinate - glyphAdjustmentRecord.markPositionAdjustment.xPositionAdjustment;
+                        glyphAdjustments.yPlacement = glyphAdjustmentRecord.baseGlyphAnchorPoint.yCoordinate - glyphAdjustmentRecord.markPositionAdjustment.yPositionAdjustment;
+
+                        characterSpacingAdjustment = 0;
+                    }
+                }
+
+                if (!isBaseGlyph && /* m_MarkToMarkEnabled && */ m_characterCount > 0)
+                {
+                    MarkToMarkAdjustmentRecord glyphAdjustmentRecord;
+
+                    Glyph baseGlyph = m_textInfo.characterInfo[m_characterCount - 1].textElement.glyph;
+                    uint baseGlyphIndex = baseGlyph.index;
+                    uint markGlyphIndex = m_cached_TextElement.glyphIndex;
+                    uint key = markGlyphIndex << 16 | baseGlyphIndex;
+
+                    if (m_currentFontAsset.fontFeatureTable.m_MarkToMarkAdjustmentRecordLookup.TryGetValue(key, out glyphAdjustmentRecord))
+                    {
+                        float baseMarkOrigin = (m_internalCharacterInfo[m_characterCount - 1].origin - m_xAdvance) / currentElementScale;
+                        float currentBaseline = baselineOffset - m_lineOffset + m_baselineOffset;
+                        float baseMarkBaseline = (m_internalCharacterInfo[m_characterCount - 1].baseLine - currentBaseline) / currentElementScale;
+
+                        glyphAdjustments.xPlacement = baseMarkOrigin + glyphAdjustmentRecord.baseMarkGlyphAnchorPoint.xCoordinate - glyphAdjustmentRecord.combiningMarkPositionAdjustment.xPositionAdjustment;
+                        glyphAdjustments.yPlacement = baseMarkBaseline + glyphAdjustmentRecord.baseMarkGlyphAnchorPoint.yCoordinate - glyphAdjustmentRecord.combiningMarkPositionAdjustment.yPositionAdjustment;
+
+                        characterSpacingAdjustment = 0;
+                    }
+                }
+
+                // Adjust relevant text metrics
+                elementAscentLine += glyphAdjustments.yPlacement;
+                elementDescentLine += glyphAdjustments.yPlacement;
                 #endregion
 
 
@@ -4330,7 +4513,8 @@ namespace TMPro
                     boldSpacingAdjustment = m_currentFontAsset.boldSpacing;
                 #endregion Handle Style Padding
 
-                m_internalCharacterInfo[m_characterCount].baseLine = 0 - m_lineOffset + m_baselineOffset;
+                m_internalCharacterInfo[m_characterCount].origin = m_xAdvance + glyphAdjustments.xPlacement * currentElementScale;
+                m_internalCharacterInfo[m_characterCount].baseLine = (baselineOffset - m_lineOffset + m_baselineOffset) + glyphAdjustments.yPlacement * currentElementScale;
 
                 // Compute text metrics
                 #region Compute Ascender & Descender values
@@ -4347,8 +4531,8 @@ namespace TMPro
                 float adjustedAscender = elementAscender;
                 float adjustedDescender = elementDescender;
 
-                bool isFirstCharacterOfLine = m_characterCount == m_firstCharacterOfLine;
                 // Max line ascender and descender in line space
+                bool isFirstCharacterOfLine = m_characterCount == m_firstCharacterOfLine;
                 if (isFirstCharacterOfLine || isWhiteSpace == false)
                 {
                     // Special handling for Superscript and Subscript where we use the unadjusted line ascender and descender
@@ -4402,7 +4586,7 @@ namespace TMPro
 
                 // Setup Mesh for visible text elements. ie. not a SPACE / LINEFEED / CARRIAGE RETURN.
                 #region Handle Visible Characters
-                if (charCode == 9 || (isWhiteSpace == false && charCode != 0x200B && charCode != 0xAD && charCode != 0x03) || (charCode == 0xAD && isSoftHyphenIgnored == false) || m_textElementType == TMP_TextElementType.Sprite)
+                if (charCode == 9 || ((textWrapMode == TextWrappingModes.PreserveWhitespace || textWrapMode == TextWrappingModes.PreserveWhitespaceNoWrap) && isWhiteSpace) || (isWhiteSpace == false && charCode != 0x200B && charCode != 0xAD && charCode != 0x03) || (charCode == 0xAD && isSoftHyphenIgnored == false) || m_textElementType == TMP_TextElementType.Sprite)
                 {
                     //float marginLeft = m_marginLeft;
                     //float marginRight = m_marginRight;
@@ -4423,10 +4607,10 @@ namespace TMPro
 
                     // Handling of Horizontal Bounds
                     #region Current Line Horizontal Bounds Check
-                    if (textWidth > widthOfTextArea * (isJustifiedOrFlush ? 1.05f : 1.0f))
+                    if (isBaseGlyph && textWidth > widthOfTextArea * (isJustifiedOrFlush ? 1.05f : 1.0f))
                     {
                         // Handle Line Breaking (if still possible)
-                        if (isWordWrappingEnabled && m_characterCount != m_firstCharacterOfLine) // && isFirstWord == false)
+                        if (textWrapMode != TextWrappingModes.NoWrap && textWrapMode != TextWrappingModes.PreserveWhitespaceNoWrap && m_characterCount != m_firstCharacterOfLine)
                         {
                             // Restore state to previous safe line breaking
                             i = RestoreWordWrappingState(ref internalWordWrapState);
@@ -4518,14 +4702,6 @@ namespace TMPro
                             m_firstCharacterOfLine = m_characterCount;
                             m_lineVisibleCharacterCount = 0;
 
-                            // Compute Preferred Width & Height
-                            renderedWidth += m_xAdvance;
-
-                            if (isWordWrappingEnabled)
-                                renderedHeight = m_maxTextAscender - m_ElementDescender;
-                            else
-                                renderedHeight = Mathf.Max(renderedHeight, lineAscender - lineDescender);
-
                             // Store the state of the line before starting on the new line.
                             SaveWordWrappingState(ref internalLineState, i, m_characterCount - 1);
 
@@ -4557,8 +4733,9 @@ namespace TMPro
                     }
                     #endregion
 
-                    lineMarginLeft = m_marginLeft;
-                    lineMarginRight = m_marginRight;
+                    // Compute Preferred Width & Height
+                    m_RenderedWidth = Mathf.Max(m_RenderedWidth, textWidth + m_marginLeft + m_marginRight);
+                    m_RenderedHeight = m_maxTextAscender - m_ElementDescender;
 
                 }
                 #endregion Handle Visible Characters
@@ -4609,8 +4786,6 @@ namespace TMPro
                 #region Carriage Return
                 if (charCode == 13)
                 {
-                    maxXAdvance = Mathf.Max(maxXAdvance, renderedWidth + m_xAdvance);
-                    renderedWidth = 0;
                     m_xAdvance = 0 + tag_Indent;
                 }
                 #endregion Carriage Return
@@ -4635,17 +4810,6 @@ namespace TMPro
 
                     // Update maxDescender and maxVisibleDescender
                     m_ElementDescender = m_ElementDescender < lineDescender ? m_ElementDescender : lineDescender;
-
-                    // Store PreferredWidth paying attention to linefeed and last character of text.
-                    if (m_characterCount == totalCharacterCount - 1)
-                        renderedWidth = Mathf.Max(maxXAdvance, renderedWidth + textWidth + lineMarginLeft + lineMarginRight);
-                    else
-                    {
-                        maxXAdvance = Mathf.Max(maxXAdvance, renderedWidth + textWidth + lineMarginLeft + lineMarginRight);
-                        renderedWidth = 0;
-                    }
-
-                    renderedHeight = m_maxTextAscender - m_ElementDescender;
 
                     // Add new line if not last lines or character.
                     if (charCode == 10 || charCode == 11 || charCode == 0x2D || charCode == 0x2028 || charCode == 0x2029)
@@ -4692,7 +4856,7 @@ namespace TMPro
 
                 // Save State of Mesh Creation for handling of Word Wrapping
                 #region Save Word Wrapping State
-                if (isWordWrappingEnabled || m_overflowMode == TextOverflowModes.Truncate || m_overflowMode == TextOverflowModes.Ellipsis)
+                if ((textWrapMode != TextWrappingModes.NoWrap && textWrapMode != TextWrappingModes.PreserveWhitespaceNoWrap) || m_overflowMode == TextOverflowModes.Truncate || m_overflowMode == TextOverflowModes.Ellipsis)
                 {
                     if ((isWhiteSpace || charCode == 0x200B || charCode == 0x2D || charCode == 0xAD) && !m_isNonBreakingSpace && charCode != 0xA0 && charCode != 0x2007 && charCode != 0x2011 && charCode != 0x202F && charCode != 0x2060)
                     {
@@ -4789,19 +4953,19 @@ namespace TMPro
             m_isCalculatingPreferredValues = false;
 
             // Adjust Preferred Width and Height to account for Margins.
-            renderedWidth += m_margin.x > 0 ? m_margin.x : 0;
-            renderedWidth += m_margin.z > 0 ? m_margin.z : 0;
+            m_RenderedWidth += m_margin.x > 0 ? m_margin.x : 0;
+            m_RenderedWidth += m_margin.z > 0 ? m_margin.z : 0;
 
-            renderedHeight += m_margin.y > 0 ? m_margin.y : 0;
-            renderedHeight += m_margin.w > 0 ? m_margin.w : 0;
+            m_RenderedHeight += m_margin.y > 0 ? m_margin.y : 0;
+            m_RenderedHeight += m_margin.w > 0 ? m_margin.w : 0;
 
             // Round Preferred Values to nearest 5/100.
-            renderedWidth = (int)(renderedWidth * 100 + 1f) / 100f;
-            renderedHeight = (int)(renderedHeight * 100 + 1f) / 100f;
+            m_RenderedWidth = (int)(m_RenderedWidth * 100 + 1f) / 100f;
+            m_RenderedHeight = (int)(m_RenderedHeight * 100 + 1f) / 100f;
 
             //Debug.Log("Preferred Values: (" + renderedWidth + ", " + renderedHeight + ") with Recursive count of " + m_recursiveCount);
 
-            return new Vector2(renderedWidth, renderedHeight);
+            return new Vector2(m_RenderedWidth, m_RenderedHeight);
         }
 
 
@@ -5011,7 +5175,7 @@ namespace TMPro
         //}
 
 
-        protected void InsertNewLine(int i, float baseScale, float currentElementScale, float currentEmScale, float glyphAdjustment, float boldSpacingAdjustment, float characterSpacingAdjustment, float width, float lineGap, ref bool isMaxVisibleDescenderSet, ref float maxVisibleDescender)
+        internal void InsertNewLine(int i, float baseScale, float currentElementScale, float currentEmScale, float boldSpacingAdjustment, float characterSpacingAdjustment, float width, float lineGap, ref bool isMaxVisibleDescenderSet, ref float maxVisibleDescender)
         {
             k_InsertNewLineMarker.Begin();
 
@@ -5044,14 +5208,16 @@ namespace TMPro
 
             m_textInfo.lineInfo[m_lineNumber].characterCount = m_textInfo.lineInfo[m_lineNumber].lastCharacterIndex - m_textInfo.lineInfo[m_lineNumber].firstCharacterIndex + 1;
             m_textInfo.lineInfo[m_lineNumber].visibleCharacterCount = m_lineVisibleCharacterCount;
+            m_textInfo.lineInfo[m_lineNumber].visibleSpaceCount = m_lineVisibleSpaceCount;
             m_textInfo.lineInfo[m_lineNumber].lineExtents.min = new Vector2(m_textInfo.characterInfo[m_firstVisibleCharacterOfLine].bottomLeft.x, lineDescender);
             m_textInfo.lineInfo[m_lineNumber].lineExtents.max = new Vector2(m_textInfo.characterInfo[m_lastVisibleCharacterOfLine].topRight.x, lineAscender);
             m_textInfo.lineInfo[m_lineNumber].length = m_textInfo.lineInfo[m_lineNumber].lineExtents.max.x;
             m_textInfo.lineInfo[m_lineNumber].width = width;
 
-            float maxAdvanceOffset = (glyphAdjustment * currentElementScale + (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment + boldSpacingAdjustment) * currentEmScale - m_cSpacing) * (1 - m_charWidthAdjDelta);
+            float glyphAdjustment = m_textInfo.characterInfo[m_lastVisibleCharacterOfLine].adjustedHorizontalAdvance;
+            float maxAdvanceOffset = (glyphAdjustment * currentElementScale + (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment + boldSpacingAdjustment) * currentEmScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
             float adjustedHorizontalAdvance = m_textInfo.lineInfo[m_lineNumber].maxAdvance = m_textInfo.characterInfo[m_lastVisibleCharacterOfLine].xAdvance + (m_isRightToLeft ? maxAdvanceOffset : - maxAdvanceOffset);
-            m_textInfo.characterInfo[lastCharacterIndex].xAdvance = adjustedHorizontalAdvance;
+            m_textInfo.characterInfo[m_lastVisibleCharacterOfLine].xAdvance = adjustedHorizontalAdvance;
 
             m_textInfo.lineInfo[m_lineNumber].baseline = 0 - m_lineOffset;
             m_textInfo.lineInfo[m_lineNumber].ascender = lineAscender;
@@ -5060,6 +5226,7 @@ namespace TMPro
 
             m_firstCharacterOfLine = m_characterCount; // Store first character of the next line.
             m_lineVisibleCharacterCount = 0;
+            m_lineVisibleSpaceCount = 0;
 
             // Store the state of the line before starting on the new line.
             SaveWordWrappingState(ref m_SavedLineState, i, m_characterCount - 1);
@@ -5098,7 +5265,7 @@ namespace TMPro
         /// <param name="state"></param>
         /// <param name="index"></param>
         /// <param name="count"></param>
-        protected void SaveWordWrappingState(ref WordWrapState state, int index, int count)
+        internal void SaveWordWrappingState(ref WordWrapState state, int index, int count)
         {
             // Multi Font & Material support related
             state.currentFontAsset = m_currentFontAsset;
@@ -5109,6 +5276,7 @@ namespace TMPro
             state.previous_WordBreak = index;
             state.total_CharacterCount = count;
             state.visible_CharacterCount = m_lineVisibleCharacterCount;
+            state.visibleSpaceCount = m_lineVisibleSpaceCount;
             //state.visible_CharacterCount = m_visibleCharacterCount;
             //state.visible_SpriteCount = m_visibleSpriteCount;
             state.visible_LinkCount = m_textInfo.linkCount;
@@ -5119,7 +5287,6 @@ namespace TMPro
 
             state.fontStyle = m_FontStyleInternal;
             state.italicAngle = m_ItalicAngle;
-            //state.maxFontScale = m_maxFontScale;
             state.fontScaleMultiplier = m_fontScaleMultiplier;
             state.currentFontSize = m_currentFontSize;
 
@@ -5134,13 +5301,15 @@ namespace TMPro
 
             state.preferredWidth = m_preferredWidth;
             state.preferredHeight = m_preferredHeight;
+            state.renderedWidth = m_RenderedWidth;
+            state.renderedHeight = m_RenderedHeight;
             state.meshExtents = m_meshExtents;
 
             state.lineNumber = m_lineNumber;
             state.lineOffset = m_lineOffset;
             state.baselineOffset = m_baselineOffset;
             state.isDrivenLineSpacing = m_IsDrivenLineSpacing;
-            state.glyphHorizontalAdvanceAdjustment = m_GlyphHorizontalAdvanceAdjustment;
+            state.lastBaseGlyphIndex = m_LastBaseGlyphIndex;
 
             state.cSpace = m_cSpacing;
             state.mSpace = m_monoSpacing;
@@ -5152,6 +5321,7 @@ namespace TMPro
             state.vertexColor = m_htmlColor;
             state.underlineColor = m_underlineColor;
             state.strikethroughColor = m_strikethroughColor;
+            state.highlightState = m_HighlightState;
 
             state.isNonBreakingSpace = m_isNonBreakingSpace;
             state.tagNoParsing = tag_NoParsing;
@@ -5187,7 +5357,7 @@ namespace TMPro
         /// </summary>
         /// <param name="state"></param>
         /// <returns></returns>
-        protected int RestoreWordWrappingState(ref WordWrapState state)
+        internal int RestoreWordWrappingState(ref WordWrapState state)
         {
             int index = state.previous_WordBreak;
 
@@ -5199,6 +5369,7 @@ namespace TMPro
 
             m_characterCount = state.total_CharacterCount + 1;
             m_lineVisibleCharacterCount = state.visible_CharacterCount;
+            m_lineVisibleSpaceCount = state.visibleSpaceCount;
             //m_visibleCharacterCount = state.visible_CharacterCount;
             //m_visibleSpriteCount = state.visible_SpriteCount;
             m_textInfo.linkCount = state.visible_LinkCount;
@@ -5210,7 +5381,6 @@ namespace TMPro
             m_FontStyleInternal = state.fontStyle;
             m_ItalicAngle = state.italicAngle;
             m_fontScaleMultiplier = state.fontScaleMultiplier;
-            //m_maxFontScale = state.maxFontScale;
             m_currentFontSize = state.currentFontSize;
 
             m_xAdvance = state.xAdvance;
@@ -5224,13 +5394,15 @@ namespace TMPro
 
             m_preferredWidth = state.preferredWidth;
             m_preferredHeight = state.preferredHeight;
+            m_RenderedWidth = state.renderedWidth;
+            m_RenderedHeight = state.renderedHeight;
             m_meshExtents = state.meshExtents;
 
             m_lineNumber = state.lineNumber;
             m_lineOffset = state.lineOffset;
             m_baselineOffset = state.baselineOffset;
             m_IsDrivenLineSpacing = state.isDrivenLineSpacing;
-            m_GlyphHorizontalAdvanceAdjustment = state.glyphHorizontalAdvanceAdjustment;
+            m_LastBaseGlyphIndex = state.lastBaseGlyphIndex;
 
             m_cSpacing = state.cSpace;
             m_monoSpacing = state.mSpace;
@@ -5242,6 +5414,7 @@ namespace TMPro
             m_htmlColor = state.vertexColor;
             m_underlineColor = state.underlineColor;
             m_strikethroughColor = state.strikethroughColor;
+            m_HighlightState = state.highlightState;
 
             m_isNonBreakingSpace = state.isNonBreakingSpace;
             tag_NoParsing = state.tagNoParsing;
@@ -5543,10 +5716,10 @@ namespace TMPro
 
 
             // setup Vertex Colors
-            m_textInfo.meshInfo[materialIndex].colors32[0 + index_X4] = characterInfoArray[i].vertex_BL.color;
-            m_textInfo.meshInfo[materialIndex].colors32[1 + index_X4] = characterInfoArray[i].vertex_TL.color;
-            m_textInfo.meshInfo[materialIndex].colors32[2 + index_X4] = characterInfoArray[i].vertex_TR.color;
-            m_textInfo.meshInfo[materialIndex].colors32[3 + index_X4] = characterInfoArray[i].vertex_BR.color;
+            m_textInfo.meshInfo[materialIndex].colors32[0 + index_X4] = m_ConvertToLinearSpace ? characterInfoArray[i].vertex_BL.color.GammaToLinear() : characterInfoArray[i].vertex_BL.color;
+            m_textInfo.meshInfo[materialIndex].colors32[1 + index_X4] = m_ConvertToLinearSpace ? characterInfoArray[i].vertex_TL.color.GammaToLinear() : characterInfoArray[i].vertex_TL.color;
+            m_textInfo.meshInfo[materialIndex].colors32[2 + index_X4] = m_ConvertToLinearSpace ? characterInfoArray[i].vertex_TR.color.GammaToLinear() : characterInfoArray[i].vertex_TR.color;
+            m_textInfo.meshInfo[materialIndex].colors32[3 + index_X4] = m_ConvertToLinearSpace ? characterInfoArray[i].vertex_BR.color.GammaToLinear() : characterInfoArray[i].vertex_BR.color;
 
             m_textInfo.meshInfo[materialIndex].vertexCount = index_X4 + 4;
         }
@@ -5681,10 +5854,10 @@ namespace TMPro
 
 
             // setup Vertex Colors
-            m_textInfo.meshInfo[materialIndex].colors32[0 + index_X4] = characterInfoArray[i].vertex_BL.color;
-            m_textInfo.meshInfo[materialIndex].colors32[1 + index_X4] = characterInfoArray[i].vertex_TL.color;
-            m_textInfo.meshInfo[materialIndex].colors32[2 + index_X4] = characterInfoArray[i].vertex_TR.color;
-            m_textInfo.meshInfo[materialIndex].colors32[3 + index_X4] = characterInfoArray[i].vertex_BR.color;
+            m_textInfo.meshInfo[materialIndex].colors32[0 + index_X4] = m_ConvertToLinearSpace ? characterInfoArray[i].vertex_BL.color.GammaToLinear() : characterInfoArray[i].vertex_BL.color;
+            m_textInfo.meshInfo[materialIndex].colors32[1 + index_X4] = m_ConvertToLinearSpace ? characterInfoArray[i].vertex_TL.color.GammaToLinear() : characterInfoArray[i].vertex_TL.color;
+            m_textInfo.meshInfo[materialIndex].colors32[2 + index_X4] = m_ConvertToLinearSpace ? characterInfoArray[i].vertex_TR.color.GammaToLinear() : characterInfoArray[i].vertex_TR.color;
+            m_textInfo.meshInfo[materialIndex].colors32[3 + index_X4] = m_ConvertToLinearSpace ? characterInfoArray[i].vertex_BR.color.GammaToLinear() : characterInfoArray[i].vertex_BR.color;
 
             m_textInfo.meshInfo[materialIndex].vertexCount = index_X4 + 4;
         }
@@ -5777,10 +5950,8 @@ namespace TMPro
             Vector2 uv1 = new Vector2(uv0.x, (underlineGlyphRect.y + underlineGlyphRect.height + m_padding) / atlasHeight);  // top left
             Vector2 uv2 = new Vector2((underlineGlyphRect.x - startPadding + (float)underlineGlyphRect.width / 2) / atlasWidth, uv1.y); // Mid Top Left
             Vector2 uv3 = new Vector2(uv2.x, uv0.y); // Mid Bottom Left
-            Vector2 uv4 = new Vector2((underlineGlyphRect.x + endPadding + (float)underlineGlyphRect.width / 2) / atlasWidth, uv1.y); // Mid Top Right
-            Vector2 uv5 = new Vector2(uv4.x, uv0.y); // Mid Bottom right
-            Vector2 uv6 = new Vector2((underlineGlyphRect.x + endPadding + underlineGlyphRect.width) / atlasWidth, uv1.y); // End Part - Bottom Right
-            Vector2 uv7 = new Vector2(uv6.x, uv0.y); // End Part - Top Right
+            Vector2 uv4 = new Vector2((underlineGlyphRect.x + endPadding + underlineGlyphRect.width) / atlasWidth, uv1.y); // End Part - Bottom Right
+            Vector2 uv5 = new Vector2(uv4.x, uv0.y); // End Part - Top Right
 
             // Left Part of the Underline
             uvs0[0 + index] = uv0; // BL
@@ -5788,17 +5959,19 @@ namespace TMPro
             uvs0[2 + index] = uv2; // TR
             uvs0[3 + index] = uv3; // BR
 
+            Vector2 uvTexelSize = new Vector2(1.0f / atlasWidth, 1.0f / atlasHeight);
+
             // Middle Part of the Underline
-            uvs0[4 + index] = new Vector2(uv2.x - uv2.x * 0.001f, uv0.y);
-            uvs0[5 + index] = new Vector2(uv2.x - uv2.x * 0.001f, uv1.y);
-            uvs0[6 + index] = new Vector2(uv2.x + uv2.x * 0.001f, uv1.y);
-            uvs0[7 + index] = new Vector2(uv2.x + uv2.x * 0.001f, uv0.y);
+            uvs0[4 + index] = new Vector2(uv2.x - uvTexelSize.x, uv0.y);
+            uvs0[5 + index] = new Vector2(uv2.x - uvTexelSize.x, uv1.y);
+            uvs0[6 + index] = new Vector2(uv2.x + uvTexelSize.x, uv1.y);
+            uvs0[7 + index] = new Vector2(uv2.x + uvTexelSize.x, uv0.y);
 
             // Right Part of the Underline
-            uvs0[8 + index] = uv5;
-            uvs0[9 + index] = uv4;
-            uvs0[10 + index] = uv6;
-            uvs0[11 + index] = uv7;
+            uvs0[8 + index] = uv3;
+            uvs0[9 + index] = uv2;
+            uvs0[10 + index] = uv4;
+            uvs0[11 + index] = uv5;
             #endregion
 
             // UNDERLINE UV2
@@ -5905,13 +6078,14 @@ namespace TMPro
             GlyphRect glyphRect = m_Underline.character.glyph.glyphRect;
 
             // Calculate UV
-            Vector2 uv0 = new Vector2(((float)glyphRect.x + glyphRect.width / 2) / atlasWidth, (glyphRect.y + (float)glyphRect.height / 2) / atlasHeight);  // bottom left
+            Vector2 uvGlyphCenter = new Vector2((glyphRect.x + (float)glyphRect.width / 2) / atlasWidth, (glyphRect.y + (float)glyphRect.height / 2) / atlasHeight);
+            Vector2 uvTexelSize = new Vector2(1.0f / atlasWidth, 1.0f / atlasHeight);
 
             // UVs for the Quad
-            uvs0[0 + index] = uv0; // BL
-            uvs0[1 + index] = uv0; // TL
-            uvs0[2 + index] = uv0; // TR
-            uvs0[3 + index] = uv0; // BR
+            uvs0[0 + index] = uvGlyphCenter - uvTexelSize; // BL
+            uvs0[1 + index] = uvGlyphCenter + new Vector2(-uvTexelSize.x, uvTexelSize.y); // TL
+            uvs0[2 + index] = uvGlyphCenter + uvTexelSize; // TR
+            uvs0[3 + index] = uvGlyphCenter + new Vector2(uvTexelSize.x, -uvTexelSize.y); // BR
             #endregion
 
             // HIGHLIGHT UV2
@@ -5925,7 +6099,7 @@ namespace TMPro
             #endregion
 
             // HIGHLIGHT VERTEX COLORS
-            #region
+            #region HIGHLIGHT VERTEX COLORS
             // Alpha is the lower of the vertex color or tag color alpha used.
             highlightColor.a = m_fontColor32.a < highlightColor.a ? m_fontColor32.a : highlightColor.a;
 
@@ -5968,7 +6142,7 @@ namespace TMPro
 
                 }
 
-                m_enableWordWrapping = TMP_Settings.enableWordWrapping;
+                m_TextWrappingMode = TMP_Settings.textWrappingMode;
                 m_enableKerning = TMP_Settings.enableKerning;
                 m_enableExtraPadding = TMP_Settings.enableExtraPadding;
                 m_tintAllSprites = TMP_Settings.enableTintAllSprites;
@@ -6149,7 +6323,7 @@ namespace TMPro
             if (character != null)
             {
                 // Add character to font asset lookup cache
-                //fontAsset.AddCharacterToLookupCache(unicode, character);
+                fontAsset.AddCharacterToLookupCache(unicode, character);
 
                 return character;
             }
@@ -6167,7 +6341,7 @@ namespace TMPro
                     m_currentMaterial = m_materialReferences[0].material;
 
                     // Add character to font asset lookup cache
-                    //fontAsset.AddCharacterToLookupCache(unicode, character);
+                    fontAsset.AddCharacterToLookupCache(unicode, character);
 
                     return character;
                 }
@@ -6179,7 +6353,7 @@ namespace TMPro
                 if (character != null)
                 {
                     // Add character to font asset lookup cache
-                    //fontAsset.AddCharacterToLookupCache(unicode, character);
+                    fontAsset.AddCharacterToLookupCache(unicode, character);
 
                     return character;
                 }
@@ -6201,7 +6375,7 @@ namespace TMPro
             if (character != null)
             {
                 // Add character to font asset lookup cache
-                //fontAsset.AddCharacterToLookupCache(unicode, character);
+                fontAsset.AddCharacterToLookupCache(unicode, character);
 
                 return character;
             }
@@ -6213,7 +6387,7 @@ namespace TMPro
             if (character != null)
             {
                 // Add character to font asset lookup cache
-                //fontAsset.AddCharacterToLookupCache(unicode, character);
+                fontAsset.AddCharacterToLookupCache(unicode, character);
 
                 return character;
             }
@@ -6310,6 +6484,12 @@ namespace TMPro
             targetTextComponent.firstVisibleCharacter = 0;
             targetTextComponent.linkedTextComponent = null;
             targetTextComponent.parentLinkedComponent = null;
+        }
+
+        protected void DoMissingGlyphCallback(int unicode, int stringIndex, TMP_FontAsset fontAsset)
+        {
+            // Event to allow users to modify the content of the text info before the text is rendered.
+            OnMissingCharacter?.Invoke(unicode, stringIndex, m_text, fontAsset, this);
         }
 
 
@@ -6824,6 +7004,12 @@ namespace TMPro
             return value;
         }
 
+        void ClearMarkupTagAttributes()
+        {
+            int length = m_xmlAttribute.Length;
+            for (int i = 0; i < length; i++)
+                m_xmlAttribute[i] = new RichTextTagAttribute();
+        }
 
         /// <summary>
         /// Function to identify and validate the rich tag. Returns the position of the > if the tag was valid.
@@ -6838,18 +7024,9 @@ namespace TMPro
             byte attributeFlag = 0;
 
             int attributeIndex = 0;
-            m_xmlAttribute[attributeIndex].nameHashCode = 0;
-            m_xmlAttribute[attributeIndex].valueHashCode = 0;
-            m_xmlAttribute[attributeIndex].valueStartIndex = 0;
-            m_xmlAttribute[attributeIndex].valueLength = 0;
-            TagValueType tagValueType = m_xmlAttribute[attributeIndex].valueType = TagValueType.None;
-            TagUnitType tagUnitType = m_xmlAttribute[attributeIndex].unitType = TagUnitType.Pixels;
-
-            // Clear attribute name hash codes
-            m_xmlAttribute[1].nameHashCode = 0;
-            m_xmlAttribute[2].nameHashCode = 0;
-            m_xmlAttribute[3].nameHashCode = 0;
-            m_xmlAttribute[4].nameHashCode = 0;
+            ClearMarkupTagAttributes();
+            TagValueType tagValueType = TagValueType.None;
+            TagUnitType tagUnitType = TagUnitType.Pixels;
 
             endIndex = startIndex;
             bool isTagSet = false;
@@ -6900,7 +7077,7 @@ namespace TMPro
                             tagUnitType = TagUnitType.Pixels;
                             tagValueType = m_xmlAttribute[attributeIndex].valueType = TagValueType.StringValue;
                             m_xmlAttribute[attributeIndex].valueStartIndex = tagCharCount - 1;
-                            m_xmlAttribute[attributeIndex].valueHashCode = (m_xmlAttribute[attributeIndex].valueHashCode << 5) + m_xmlAttribute[attributeIndex].valueHashCode ^ unicode;
+                            m_xmlAttribute[attributeIndex].valueHashCode = (m_xmlAttribute[attributeIndex].valueHashCode << 5) + m_xmlAttribute[attributeIndex].valueHashCode ^ TMP_TextUtilities.ToUpperFast((char)unicode);
                             m_xmlAttribute[attributeIndex].valueLength += 1;
                         }
                     }
@@ -6966,7 +7143,7 @@ namespace TMPro
                             // Compute HashCode value for the named tag.
                             if (unicode != '"')
                             {
-                                m_xmlAttribute[attributeIndex].valueHashCode = (m_xmlAttribute[attributeIndex].valueHashCode << 5) + m_xmlAttribute[attributeIndex].valueHashCode ^ unicode;
+                                m_xmlAttribute[attributeIndex].valueHashCode = (m_xmlAttribute[attributeIndex].valueHashCode << 5) + m_xmlAttribute[attributeIndex].valueHashCode ^ TMP_TextUtilities.ToUpperFast((char)unicode);
                                 m_xmlAttribute[attributeIndex].valueLength += 1;
                             }
                             else
@@ -7010,7 +7187,7 @@ namespace TMPro
                 }
 
                 if (attributeFlag == 0)
-                    m_xmlAttribute[attributeIndex].nameHashCode = (m_xmlAttribute[attributeIndex].nameHashCode << 3) - m_xmlAttribute[attributeIndex].nameHashCode + unicode;
+                    m_xmlAttribute[attributeIndex].nameHashCode = (m_xmlAttribute[attributeIndex].nameHashCode << 5) + m_xmlAttribute[attributeIndex].nameHashCode ^ TMP_TextUtilities.ToUpperFast((char)unicode);
 
                 if (attributeFlag == 2 && unicode == ' ')
                     attributeFlag = 0;
@@ -7029,9 +7206,10 @@ namespace TMPro
             #region Rich Text Tag Processing
             #if !RICH_TEXT_ENABLED
             // Special handling of the no parsing tag </noparse> </NOPARSE> tag
-            if (tag_NoParsing && (m_xmlAttribute[0].nameHashCode != 53822163 && m_xmlAttribute[0].nameHashCode != 49429939))
+            if (tag_NoParsing && (m_xmlAttribute[0].nameHashCode != (int)MarkupTag.SLASH_NO_PARSE))
                 return false;
-            else if (m_xmlAttribute[0].nameHashCode == 53822163 || m_xmlAttribute[0].nameHashCode == 49429939)
+
+            if (m_xmlAttribute[0].nameHashCode == (int)MarkupTag.SLASH_NO_PARSE)
             {
                 tag_NoParsing = false;
                 return true;
@@ -7070,17 +7248,15 @@ namespace TMPro
                 float value = 0;
                 float fontScale;
 
-                switch (m_xmlAttribute[0].nameHashCode)
+                switch ((MarkupTag)m_xmlAttribute[0].nameHashCode)
                 {
-                    case 98: // <b>
-                    case 66: // <B>
+                    case MarkupTag.BOLD:
                         m_FontStyleInternal |= FontStyles.Bold;
                         m_fontStyleStack.Add(FontStyles.Bold);
 
                         m_FontWeightInternal = FontWeight.Bold;
                         return true;
-                    case 427: // </b>
-                    case 395: // </B>
+                    case MarkupTag.SLASH_BOLD:
                         if ((m_fontStyle & FontStyles.Bold) != FontStyles.Bold)
                         {
                             if (m_fontStyleStack.Remove(FontStyles.Bold) == 0)
@@ -7090,12 +7266,11 @@ namespace TMPro
                             }
                         }
                         return true;
-                    case 105: // <i>
-                    case 73: // <I>
+                    case MarkupTag.ITALIC:
                         m_FontStyleInternal |= FontStyles.Italic;
                         m_fontStyleStack.Add(FontStyles.Italic);
 
-                        if (m_xmlAttribute[1].nameHashCode == 276531 || m_xmlAttribute[1].nameHashCode == 186899)
+                        if (m_xmlAttribute[1].nameHashCode == (int)MarkupTag.ANGLE)
                         {
                             m_ItalicAngle = (int)ConvertToFloat(m_htmlTag, m_xmlAttribute[1].valueStartIndex, m_xmlAttribute[1].valueLength);
 
@@ -7108,8 +7283,7 @@ namespace TMPro
                         m_ItalicAngleStack.Add(m_ItalicAngle);
 
                         return true;
-                    case 434: // </i>
-                    case 402: // </I>
+                    case MarkupTag.SLASH_ITALIC:
                         if ((m_fontStyle & FontStyles.Italic) != FontStyles.Italic)
                         {
                             m_ItalicAngle = m_ItalicAngleStack.Remove();
@@ -7118,12 +7292,11 @@ namespace TMPro
                                 m_FontStyleInternal &= ~FontStyles.Italic;
                         }
                         return true;
-                    case 115: // <s>
-                    case 83: // <S>
+                    case MarkupTag.STRIKETHROUGH:
                         m_FontStyleInternal |= FontStyles.Strikethrough;
                         m_fontStyleStack.Add(FontStyles.Strikethrough);
 
-                        if (m_xmlAttribute[1].nameHashCode == 281955 || m_xmlAttribute[1].nameHashCode == 192323)
+                        if (m_xmlAttribute[1].nameHashCode == (int)MarkupTag.COLOR)
                         {
                             m_strikethroughColor = HexCharsToColor(m_htmlTag, m_xmlAttribute[1].valueStartIndex, m_xmlAttribute[1].valueLength);
                             m_strikethroughColor.a = m_htmlColor.a < m_strikethroughColor.a ? (byte)(m_htmlColor.a) : (byte)(m_strikethroughColor .a);
@@ -7134,8 +7307,7 @@ namespace TMPro
                         m_strikethroughColorStack.Add(m_strikethroughColor);
 
                         return true;
-                    case 444: // </s>
-                    case 412: // </S>
+                    case MarkupTag.SLASH_STRIKETHROUGH:
                         if ((m_fontStyle & FontStyles.Strikethrough) != FontStyles.Strikethrough)
                         {
                             if (m_fontStyleStack.Remove(FontStyles.Strikethrough) == 0)
@@ -7144,15 +7316,14 @@ namespace TMPro
 
                         m_strikethroughColor = m_strikethroughColorStack.Remove();
                         return true;
-                    case 117: // <u>
-                    case 85: // <U>
+                    case MarkupTag.UNDERLINE:
                         m_FontStyleInternal |= FontStyles.Underline;
                         m_fontStyleStack.Add(FontStyles.Underline);
 
-                        if (m_xmlAttribute[1].nameHashCode == 281955 || m_xmlAttribute[1].nameHashCode == 192323)
+                        if (m_xmlAttribute[1].nameHashCode == (int)MarkupTag.COLOR)
                         {
                             m_underlineColor = HexCharsToColor(m_htmlTag, m_xmlAttribute[1].valueStartIndex, m_xmlAttribute[1].valueLength);
-                            m_underlineColor.a = m_htmlColor.a < m_underlineColor.a ? (byte)(m_htmlColor.a) : (byte)(m_underlineColor.a);
+                            m_underlineColor.a = m_htmlColor.a < m_underlineColor.a ? (m_htmlColor.a) : (m_underlineColor.a);
                         }
                         else
                             m_underlineColor = m_htmlColor;
@@ -7160,20 +7331,16 @@ namespace TMPro
                         m_underlineColorStack.Add(m_underlineColor);
 
                         return true;
-                    case 446: // </u>
-                    case 414: // </U>
+                    case MarkupTag.SLASH_UNDERLINE:
                         if ((m_fontStyle & FontStyles.Underline) != FontStyles.Underline)
                         {
-                            m_underlineColor = m_underlineColorStack.Remove();
-
                             if (m_fontStyleStack.Remove(FontStyles.Underline) == 0)
                                 m_FontStyleInternal &= ~FontStyles.Underline;
                         }
 
                         m_underlineColor = m_underlineColorStack.Remove();
                         return true;
-                    case 43045: // <mark=#FF00FF80>
-                    case 30245: // <MARK>
+                    case MarkupTag.MARK:
                         m_FontStyleInternal |= FontStyles.Highlight;
                         m_fontStyleStack.Add(FontStyles.Highlight);
 
@@ -7183,24 +7350,21 @@ namespace TMPro
                         // Handle Mark Tag and potential attributes
                         for (int i = 0; i < m_xmlAttribute.Length && m_xmlAttribute[i].nameHashCode != 0; i++)
                         {
-                            int nameHashCode = m_xmlAttribute[i].nameHashCode;
-
-                            switch (nameHashCode)
+                            switch ((MarkupTag)m_xmlAttribute[i].nameHashCode)
                             {
                                 // Mark tag
-                                case 43045:
-                                case 30245:
+                                case MarkupTag.MARK:
                                     if (m_xmlAttribute[i].valueType == TagValueType.ColorValue)
                                         highlightColor = HexCharsToColor(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
                                     break;
 
                                 // Color attribute
-                                case 281955:
+                                case MarkupTag.COLOR:
                                     highlightColor = HexCharsToColor(m_htmlTag, m_xmlAttribute[i].valueStartIndex, m_xmlAttribute[i].valueLength);
                                     break;
 
                                 // Padding attribute
-                                case 15087385:
+                                case MarkupTag.PADDING:
                                     int paramCount = GetAttributeParameters(m_htmlTag, m_xmlAttribute[i].valueStartIndex, m_xmlAttribute[i].valueLength, ref m_attributeParameterValues);
                                     if (paramCount != 4) return false;
 
@@ -7212,22 +7376,21 @@ namespace TMPro
 
                         highlightColor.a = m_htmlColor.a < highlightColor.a ? (byte)(m_htmlColor.a) : (byte)(highlightColor.a);
 
-                        HighlightState state = new HighlightState(highlightColor, highlightPadding);
-                        m_HighlightStateStack.Push(state);
+                        m_HighlightState = new HighlightState(highlightColor, highlightPadding);
+                        m_HighlightStateStack.Push(m_HighlightState);
 
                         return true;
-                    case 155892: // </mark>
-                    case 143092: // </MARK>
+                    case MarkupTag.SLASH_MARK:
                         if ((m_fontStyle & FontStyles.Highlight) != FontStyles.Highlight)
                         {
                             m_HighlightStateStack.Remove();
+                            m_HighlightState = m_HighlightStateStack.current;
 
                             if (m_fontStyleStack.Remove(FontStyles.Highlight) == 0)
                                 m_FontStyleInternal &= ~FontStyles.Highlight;
                         }
                         return true;
-                    case 6552: // <sub>
-                    case 4728: // <SUB>
+                    case MarkupTag.SUBSCRIPT:
                         m_fontScaleMultiplier *= m_currentFontAsset.faceInfo.subscriptSize > 0 ? m_currentFontAsset.faceInfo.subscriptSize : 1;
                         m_baselineOffsetStack.Push(m_baselineOffset);
                         fontScale = (m_currentFontSize / m_currentFontAsset.faceInfo.pointSize * m_currentFontAsset.faceInfo.scale * (m_isOrthographic ? 1 : 0.1f));
@@ -7236,8 +7399,7 @@ namespace TMPro
                         m_fontStyleStack.Add(FontStyles.Subscript);
                         m_FontStyleInternal |= FontStyles.Subscript;
                         return true;
-                    case 22673: // </sub>
-                    case 20849: // </SUB>
+                    case MarkupTag.SLASH_SUBSCRIPT:
                         if ((m_FontStyleInternal & FontStyles.Subscript) == FontStyles.Subscript)
                         {
                             if (m_fontScaleMultiplier < 1)
@@ -7250,8 +7412,7 @@ namespace TMPro
                                 m_FontStyleInternal &= ~FontStyles.Subscript;
                         }
                         return true;
-                    case 6566: // <sup>
-                    case 4742: // <SUP>
+                    case MarkupTag.SUPERSCRIPT:
                         m_fontScaleMultiplier *= m_currentFontAsset.faceInfo.superscriptSize > 0 ? m_currentFontAsset.faceInfo.superscriptSize : 1;
                         m_baselineOffsetStack.Push(m_baselineOffset);
                         fontScale = (m_currentFontSize / m_currentFontAsset.faceInfo.pointSize * m_currentFontAsset.faceInfo.scale * (m_isOrthographic ? 1 : 0.1f));
@@ -7260,8 +7421,7 @@ namespace TMPro
                         m_fontStyleStack.Add(FontStyles.Superscript);
                         m_FontStyleInternal |= FontStyles.Superscript;
                         return true;
-                    case 22687: // </sup>
-                    case 20863: // </SUP>
+                    case MarkupTag.SLASH_SUPERSCRIPT:
                         if ((m_FontStyleInternal & FontStyles.Superscript) == FontStyles.Superscript)
                         {
                             if (m_fontScaleMultiplier < 1)
@@ -7274,8 +7434,7 @@ namespace TMPro
                                 m_FontStyleInternal &= ~FontStyles.Superscript;
                         }
                         return true;
-                    case -330774850: // <font-weight>
-                    case 2012149182: // <FONT-WEIGHT>
+                    case MarkupTag.FONT_WEIGHT:
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
 
                         // Reject tag if value is invalid.
@@ -7315,8 +7474,7 @@ namespace TMPro
                         m_FontWeightStack.Add(m_FontWeightInternal);
 
                         return true;
-                    case -1885698441: // </font-weight>
-                    case 457225591: // </FONT-WEIGHT>
+                    case MarkupTag.SLASH_FONT_WEIGHT:
                         m_FontWeightStack.Remove();
 
                         if (m_FontStyleInternal == FontStyles.Bold)
@@ -7325,8 +7483,7 @@ namespace TMPro
                             m_FontWeightInternal = m_FontWeightStack.Peek();
 
                         return true;
-                    case 6380: // <pos=000.00px> <pos=0em> <pos=50%>
-                    case 4556: // <POS>
+                    case MarkupTag.POSITION:
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
 
                         // Reject tag if value is invalid.
@@ -7348,12 +7505,10 @@ namespace TMPro
                                 return true;
                         }
                         return false;
-                    case 22501: // </pos>
-                    case 20677: // </POS>
+                    case MarkupTag.SLASH_POSITION:
                         m_isIgnoringAlignment = false;
                         return true;
-                    case 16034505: // <voffset>
-                    case 11642281: // <VOFFSET>
+                    case MarkupTag.VERTICAL_OFFSET:
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
 
                         // Reject tag if value is invalid.
@@ -7372,12 +7527,10 @@ namespace TMPro
                                 return false;
                         }
                         return false;
-                    case 54741026: // </voffset>
-                    case 50348802: // </VOFFSET>
+                    case MarkupTag.SLASH_VERTICAL_OFFSET:
                         m_baselineOffset = 0;
                         return true;
-                    case 43991: // <page>
-                    case 31191: // <PAGE>
+                    case MarkupTag.PAGE:
                         // This tag only works when Overflow - Page mode is used.
                         if (m_overflowMode == TextOverflowModes.Page)
                         {
@@ -7387,21 +7540,13 @@ namespace TMPro
                             m_isNewPage = true;
                         }
                         return true;
-                    // <BR> tag is now handled inline where it is replaced by a linefeed or \n.
-                    //case 544: // <BR>
-                    //case 800: // <br>
-                    //    m_forceLineBreak = true;
-                    //    return true;
-                    case 43969: // <nobr>
-                    case 31169: // <NOBR>
+                    case MarkupTag.NO_BREAK:
                         m_isNonBreakingSpace = true;
                         return true;
-                    case 156816: // </nobr>
-                    case 144016: // </NOBR>
+                    case MarkupTag.SLASH_NO_BREAK:
                         m_isNonBreakingSpace = false;
                         return true;
-                    case 45545: // <size=>
-                    case 32745: // <SIZE>
+                    case MarkupTag.SIZE:
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
 
                         // Reject tag if value is invalid.
@@ -7438,18 +7583,16 @@ namespace TMPro
                                 return true;
                         }
                         return false;
-                    case 158392: // </size>
-                    case 145592: // </SIZE>
+                    case MarkupTag.SLASH_SIZE:
                         m_currentFontSize = m_sizeStack.Remove();
                         return true;
-                    case 41311: // <font=xx>
-                    case 28511: // <FONT>
+                    case MarkupTag.FONT:
                         int fontHashCode = m_xmlAttribute[0].valueHashCode;
                         int materialAttributeHashCode = m_xmlAttribute[1].nameHashCode;
                         int materialHashCode = m_xmlAttribute[1].valueHashCode;
 
                         // Special handling for <font=default> or <font=Default>
-                        if (fontHashCode == 764638571 || fontHashCode == 523367755)
+                        if (fontHashCode == (int)MarkupTag.DEFAULT)
                         {
                             m_currentFontAsset = m_materialReferences[0].fontAsset;
                             m_currentMaterial = m_materialReferences[0].material;
@@ -7499,7 +7642,7 @@ namespace TMPro
 
                             m_materialReferenceStack.Add(m_materialReferences[m_currentMaterialIndex]);
                         }
-                        else if (materialAttributeHashCode == 103415287 || materialAttributeHashCode == 72669687) // using material attribute
+                        else if (materialAttributeHashCode == (int)MarkupTag.MATERIAL) // using material attribute
                         {
                             if (MaterialReferenceManager.TryGetMaterial(materialHashCode, out tempMaterial))
                             {
@@ -7533,8 +7676,7 @@ namespace TMPro
                         m_currentFontAsset = tempFont;
 
                         return true;
-                    case 154158: // </font>
-                    case 141358: // </FONT>
+                    case MarkupTag.SLASH_FONT:
                         {
                             MaterialReference materialReference = m_materialReferenceStack.Remove();
 
@@ -7544,12 +7686,11 @@ namespace TMPro
 
                             return true;
                         }
-                    case 103415287: // <material="material name">
-                    case 72669687: // <MATERIAL>
+                    case MarkupTag.MATERIAL:
                         materialHashCode = m_xmlAttribute[0].valueHashCode;
 
                         // Special handling for <material=default> or <material=Default>
-                        if (materialHashCode == 764638571 || materialHashCode == 523367755)
+                        if (materialHashCode == (int)MarkupTag.DEFAULT)
                         {
                             // Check if material font atlas texture matches that of the current font asset.
                             //if (m_currentFontAsset.atlas.GetInstanceID() != m_currentMaterial.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID()) return false;
@@ -7596,8 +7737,7 @@ namespace TMPro
                             m_materialReferenceStack.Add(m_materialReferences[m_currentMaterialIndex]);
                         }
                         return true;
-                    case 374360934: // </material>
-                    case 343615334: // </MATERIAL>
+                    case MarkupTag.SLASH_MATERIAL:
                         {
                             //if (m_currentMaterial.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID() != m_materialReferenceStack.PreviousItem().material.GetTexture(ShaderUtilities.ID_MainTex).GetInstanceID())
                             //    return false;
@@ -7609,8 +7749,7 @@ namespace TMPro
 
                             return true;
                         }
-                    case 320078: // <space=000.00>
-                    case 230446: // <SPACE>
+                    case MarkupTag.SPACE:
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
 
                         // Reject tag if value is invalid.
@@ -7629,19 +7768,17 @@ namespace TMPro
                                 return false;
                         }
                         return false;
-                    case 276254: // <alpha=#FF>
-                    case 186622: // <ALPHA>
+                    case MarkupTag.ALPHA:
                         if (m_xmlAttribute[0].valueLength != 3) return false;
 
                         m_htmlColor.a = (byte)(HexToInt(m_htmlTag[7]) * 16 + HexToInt(m_htmlTag[8]));
                         return true;
 
-                    case 1750458: // <a name=" ">
+                    case MarkupTag.A:
                         return false;
-                    case 426: // </a>
+                    case MarkupTag.SLASH_A:
                         return true;
-                    case 43066: // <link="name">
-                    case 30266: // <LINK>
+                    case MarkupTag.LINK:
                         if (m_isParsingText && !m_isCalculatingPreferredValues)
                         {
                             int index = m_textInfo.linkCount;
@@ -7658,8 +7795,7 @@ namespace TMPro
                             m_textInfo.linkInfo[index].SetLinkID(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
                         }
                         return true;
-                    case 155913: // </link>
-                    case 143113: // </LINK>
+                    case MarkupTag.SLASH_LINK:
                         if (m_isParsingText && !m_isCalculatingPreferredValues)
                         {
                             if (m_textInfo.linkCount < m_textInfo.linkInfo.Length)
@@ -7670,38 +7806,35 @@ namespace TMPro
                             }
                         }
                         return true;
-                    case 275917: // <align=>
-                    case 186285: // <ALIGN>
-                        switch (m_xmlAttribute[0].valueHashCode)
+                    case MarkupTag.ALIGN:
+                        switch ((MarkupTag)m_xmlAttribute[0].valueHashCode)
                         {
-                            case 3774683: // <align=left>
+                            case MarkupTag.LEFT: // <align=left>
                                 m_lineJustification = HorizontalAlignmentOptions.Left;
                                 m_lineJustificationStack.Add(m_lineJustification);
                                 return true;
-                            case 136703040: // <align=right>
+                            case MarkupTag.RIGHT: // <align=right>
                                 m_lineJustification = HorizontalAlignmentOptions.Right;
                                 m_lineJustificationStack.Add(m_lineJustification);
                                 return true;
-                            case -458210101: // <align=center>
+                            case MarkupTag.CENTER: // <align=center>
                                 m_lineJustification = HorizontalAlignmentOptions.Center;
                                 m_lineJustificationStack.Add(m_lineJustification);
                                 return true;
-                            case -523808257: // <align=justified>
+                            case MarkupTag.JUSTIFIED: // <align=justified>
                                 m_lineJustification = HorizontalAlignmentOptions.Justified;
                                 m_lineJustificationStack.Add(m_lineJustification);
                                 return true;
-                            case 122383428: // <align=flush>
+                            case MarkupTag.FLUSH: // <align=flush>
                                 m_lineJustification = HorizontalAlignmentOptions.Flush;
                                 m_lineJustificationStack.Add(m_lineJustification);
                                 return true;
                         }
                         return false;
-                    case 1065846: // </align>
-                    case 976214: // </ALIGN>
+                    case MarkupTag.SLASH_ALIGN:
                         m_lineJustification = m_lineJustificationStack.Remove();
                         return true;
-                    case 327550: // <width=xx>
-                    case 237918: // <WIDTH>
+                    case MarkupTag.WIDTH:
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
 
                         // Reject tag if value is invalid.
@@ -7720,8 +7853,7 @@ namespace TMPro
                                 break;
                         }
                         return true;
-                    case 1117479: // </width>
-                    case 1027847: // </WIDTH>
+                    case MarkupTag.SLASH_WIDTH:
                         m_width = -1;
                         return true;
                     // STYLE tag is now handled inline and replaced by its definition.
@@ -7763,8 +7895,7 @@ namespace TMPro
                     //            ValidateHtmlTag(style.styleClosingTagArray, i + 1, out i);
                     //    }
                     //    return true;
-                    case 281955: // <color> <color=#FF00FF> or <color=#FF00FF00>
-                    case 192323: // <COLOR=#FF00FF>
+                    case MarkupTag.COLOR:
                         // <color=#FFF> 3 Hex (short hand)
                         if (m_htmlTag[6] == 35 && tagCharCount == 10)
                         {
@@ -7797,7 +7928,7 @@ namespace TMPro
                         // <color=name>
                         switch (m_xmlAttribute[0].valueHashCode)
                         {
-                            case 125395: // <color=red>
+                            case (int)MarkupTag.RED: // <color=red>
                                 m_htmlColor = Color.red;
                                 m_colorStack.Add(m_htmlColor);
                                 return true;
@@ -7805,7 +7936,7 @@ namespace TMPro
                                 m_htmlColor = new Color32(173, 216, 230, 255);
                                 m_colorStack.Add(m_htmlColor);
                                 return true;
-                            case 3573310: // <color=blue>
+                            case (int)MarkupTag.BLUE: // <color=blue>
                                 m_htmlColor = Color.blue;
                                 m_colorStack.Add(m_htmlColor);
                                 return true;
@@ -7813,35 +7944,34 @@ namespace TMPro
                                 m_htmlColor = new Color32(128, 128, 128, 255);
                                 m_colorStack.Add(m_htmlColor);
                                 return true;
-                            case 117905991: // <color=black>
+                            case (int)MarkupTag.BLACK: // <color=black>
                                 m_htmlColor = Color.black;
                                 m_colorStack.Add(m_htmlColor);
                                 return true;
-                            case 121463835: // <color=green>
+                            case (int)MarkupTag.GREEN: // <color=green>
                                 m_htmlColor = Color.green;
                                 m_colorStack.Add(m_htmlColor);
                                 return true;
-                            case 140357351: // <color=white>
+                            case (int)MarkupTag.WHITE: // <color=white>
                                 m_htmlColor = Color.white;
                                 m_colorStack.Add(m_htmlColor);
                                 return true;
-                            case 26556144: // <color=orange>
+                            case (int)MarkupTag.ORANGE: // <color=orange>
                                 m_htmlColor = new Color32(255, 128, 0, 255);
                                 m_colorStack.Add(m_htmlColor);
                                 return true;
-                            case -36881330: // <color=purple>
+                            case (int)MarkupTag.PURPLE: // <color=purple>
                                 m_htmlColor = new Color32(160, 32, 240, 255);
                                 m_colorStack.Add(m_htmlColor);
                                 return true;
-                            case 554054276: // <color=yellow>
+                            case (int)MarkupTag.YELLOW: // <color=yellow>
                                 m_htmlColor = Color.yellow;
                                 m_colorStack.Add(m_htmlColor);
                                 return true;
                         }
                         return false;
 
-                    case 100149144: //<gradient>
-                    case 69403544:  // <GRADIENT>
+                    case MarkupTag.GRADIENT:
                         int gradientPresetHashCode = m_xmlAttribute[0].valueHashCode;
                         TMP_ColorGradient tempColorGradientPreset;
 
@@ -7873,10 +8003,9 @@ namespace TMPro
                             // Get attribute name
                             int nameHashCode = m_xmlAttribute[i].nameHashCode;
 
-                            switch (nameHashCode)
+                            switch ((MarkupTag)nameHashCode)
                             {
-                                case 45819: // tint
-                                case 33019: // TINT
+                                case MarkupTag.TINT:
                                     m_colorGradientPresetIsTinted = ConvertToFloat(m_htmlTag, m_xmlAttribute[i].valueStartIndex, m_xmlAttribute[i].valueLength) != 0;
                                     break;
                             }
@@ -7888,13 +8017,11 @@ namespace TMPro
 
                         return true;
 
-                    case 371094791: // </gradient>
-                    case 340349191: // </GRADIENT>
+                    case MarkupTag.SLASH_GRADIENT:
                         m_colorGradientPreset = m_colorGradientStack.Remove();
                         return true;
 
-                    case 1983971: // <cspace=xx.x>
-                    case 1356515: // <CSPACE>
+                    case MarkupTag.CHARACTER_SPACE:
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
 
                         // Reject tag if value is invalid.
@@ -7912,8 +8039,7 @@ namespace TMPro
                                 return false;
                         }
                         return true;
-                    case 7513474: // </cspace>
-                    case 6886018: // </CSPACE>
+                    case MarkupTag.SLASH_CHARACTER_SPACE:
                         if (!m_isParsingText) return true;
 
                         // Adjust xAdvance to remove extra space from last character.
@@ -7924,8 +8050,7 @@ namespace TMPro
                         }
                         m_cSpacing = 0;
                         return true;
-                    case 2152041: // <mspace=xx.x>
-                    case 1524585: // <MSPACE>
+                    case MarkupTag.MONOSPACE:
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
 
                         // Reject tag if value is invalid.
@@ -7943,18 +8068,15 @@ namespace TMPro
                                 return false;
                         }
                         return true;
-                    case 7681544: // </mspace>
-                    case 7054088: // </MSPACE>
+                    case MarkupTag.SLASH_MONOSPACE:
                         m_monoSpacing = 0;
                         return true;
-                    case 280416: // <class="name">
+                    case MarkupTag.CLASS:
                         return false;
-                    case 1071884: // </color>
-                    case 982252: // </COLOR>
+                    case MarkupTag.SLASH_COLOR:
                         m_htmlColor = m_colorStack.Remove();
                         return true;
-                    case 2068980: // <indent=10px> <indent=10em> <indent=50%>
-                    case 1441524: // <INDENT>
+                    case MarkupTag.INDENT:
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
 
                         // Reject tag if value is invalid.
@@ -7976,13 +8098,11 @@ namespace TMPro
 
                         m_xAdvance = tag_Indent;
                         return true;
-                    case 7598483: // </indent>
-                    case 6971027: // </INDENT>
+                    case MarkupTag.SLASH_INDENT:
                         tag_Indent = m_indentStack.Remove();
                         //m_xAdvance = tag_Indent;
                         return true;
-                    case 1109386397: // <line-indent>
-                    case -842656867: // <LINE-INDENT>
+                    case MarkupTag.LINE_INDENT:
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
 
                         // Reject tag if value is invalid.
@@ -8003,12 +8123,10 @@ namespace TMPro
 
                         m_xAdvance += tag_LineIndent;
                         return true;
-                    case -445537194: // </line-indent>
-                    case 1897386838: // </LINE-INDENT>
+                    case MarkupTag.SLASH_LINE_INDENT:
                         tag_LineIndent = 0;
                         return true;
-                    case 2246877: // <sprite=x>
-                    case 1619421: // <SPRITE>
+                    case MarkupTag.SPRITE:
                         int spriteAssetHashCode = m_xmlAttribute[0].valueHashCode;
                         TMP_SpriteAsset tempSpriteAsset;
                         m_spriteIndex = -1;
@@ -8091,17 +8209,15 @@ namespace TMPro
                             int nameHashCode = m_xmlAttribute[i].nameHashCode;
                             int index = 0;
 
-                            switch (nameHashCode)
+                            switch ((MarkupTag)nameHashCode)
                             {
-                                case 43347: // <sprite name="">
-                                case 30547: // <SPRITE NAME="">
+                                case MarkupTag.NAME:
                                     m_currentSpriteAsset = TMP_SpriteAsset.SearchForSpriteByHashCode(m_currentSpriteAsset, m_xmlAttribute[i].valueHashCode, true, out index);
                                     if (index == -1) return false;
 
                                     m_spriteIndex = index;
                                     break;
-                                case 295562: // <sprite index=>
-                                case 205930: // <SPRITE INDEX=>
+                                case MarkupTag.INDEX:
                                     index = (int)ConvertToFloat(m_htmlTag, m_xmlAttribute[1].valueStartIndex, m_xmlAttribute[1].valueLength);
 
                                     // Reject tag if value is invalid.
@@ -8112,16 +8228,13 @@ namespace TMPro
 
                                     m_spriteIndex = index;
                                     break;
-                                case 45819: // tint
-                                case 33019: // TINT
+                                case MarkupTag.TINT:
                                     m_tintSprite = ConvertToFloat(m_htmlTag, m_xmlAttribute[i].valueStartIndex, m_xmlAttribute[i].valueLength) != 0;
                                     break;
-                                case 281955: // color=#FF00FF80
-                                case 192323: // COLOR
+                                case MarkupTag.COLOR:
                                     m_spriteColor = HexCharsToColor(m_htmlTag, m_xmlAttribute[i].valueStartIndex, m_xmlAttribute[i].valueLength);
                                     break;
-                                case 39505: // anim="0,16,12"  start, end, fps
-                                case 26705: // ANIM
+                                case MarkupTag.ANIM:
                                     //Debug.Log("Start: " + m_xmlAttribute[i].valueStartIndex + "  Length: " + m_xmlAttribute[i].valueLength);
                                     int paramCount = GetAttributeParameters(m_htmlTag, m_xmlAttribute[i].valueStartIndex, m_xmlAttribute[i].valueLength, ref m_attributeParameterValues);
                                     if (paramCount != 3) return false;
@@ -8143,7 +8256,7 @@ namespace TMPro
 
                                 //    break;
                                 default:
-                                    if (nameHashCode != 2246877 && nameHashCode != 1619421)
+                                    if (nameHashCode != (int)MarkupTag.SPRITE)
                                         return false;
                                     break;
                             }
@@ -8156,51 +8269,42 @@ namespace TMPro
 
                         m_textElementType = TMP_TextElementType.Sprite;
                         return true;
-                    case 730022849: // <lowercase>
-                    case 514803617: // <LOWERCASE>
+                    case MarkupTag.LOWERCASE:
                         m_FontStyleInternal |= FontStyles.LowerCase;
                         m_fontStyleStack.Add(FontStyles.LowerCase);
                         return true;
-                    case -1668324918: // </lowercase>
-                    case -1883544150: // </LOWERCASE>
+                    case MarkupTag.SLASH_LOWERCASE:
                         if ((m_fontStyle & FontStyles.LowerCase) != FontStyles.LowerCase)
                         {
                             if (m_fontStyleStack.Remove(FontStyles.LowerCase) == 0)
                                 m_FontStyleInternal &= ~FontStyles.LowerCase;
                         }
                         return true;
-                    case 13526026: // <allcaps>
-                    case 9133802: // <ALLCAPS>
-                    case 781906058: // <uppercase>
-                    case 566686826: // <UPPERCASE>
+                    case MarkupTag.ALLCAPS:
+                    case MarkupTag.UPPERCASE:
                         m_FontStyleInternal |= FontStyles.UpperCase;
                         m_fontStyleStack.Add(FontStyles.UpperCase);
                         return true;
-                    case 52232547: // </allcaps>
-                    case 47840323: // </ALLCAPS>
-                    case -1616441709: // </uppercase>
-                    case -1831660941: // </UPPERCASE>
+                    case MarkupTag.SLASH_ALLCAPS:
+                    case MarkupTag.SLASH_UPPERCASE:
                         if ((m_fontStyle & FontStyles.UpperCase) != FontStyles.UpperCase)
                         {
                             if (m_fontStyleStack.Remove(FontStyles.UpperCase) == 0)
                                 m_FontStyleInternal &= ~FontStyles.UpperCase;
                         }
                         return true;
-                    case 766244328: // <smallcaps>
-                    case 551025096: // <SMALLCAPS>
+                    case MarkupTag.SMALLCAPS:
                         m_FontStyleInternal |= FontStyles.SmallCaps;
                         m_fontStyleStack.Add(FontStyles.SmallCaps);
                         return true;
-                    case -1632103439: // </smallcaps>
-                    case -1847322671: // </SMALLCAPS>
+                    case MarkupTag.SLASH_SMALLCAPS:
                         if ((m_fontStyle & FontStyles.SmallCaps) != FontStyles.SmallCaps)
                         {
                             if (m_fontStyleStack.Remove(FontStyles.SmallCaps) == 0)
                                 m_FontStyleInternal &= ~FontStyles.SmallCaps;
                         }
                         return true;
-                    case 2109854: // <margin=00.0> <margin=00em> <margin=50%>
-                    case 1482398: // <MARGIN>
+                    case MarkupTag.MARGIN:
                         // Check value type
                         switch (m_xmlAttribute[0].valueType)
                         {
@@ -8233,9 +8337,9 @@ namespace TMPro
                                     // Get attribute name
                                     int nameHashCode = m_xmlAttribute[i].nameHashCode;
 
-                                    switch (nameHashCode)
+                                    switch ((MarkupTag)nameHashCode)
                                     {
-                                        case 42823:  // <margin left=value>
+                                        case MarkupTag.LEFT:
                                             value = ConvertToFloat(m_htmlTag, m_xmlAttribute[i].valueStartIndex, m_xmlAttribute[i].valueLength); // px
 
                                             // Reject tag if value is invalid.
@@ -8256,7 +8360,7 @@ namespace TMPro
                                             m_marginLeft = m_marginLeft >= 0 ? m_marginLeft : 0;
                                             break;
 
-                                        case 315620: // <margin right=value>
+                                        case MarkupTag.RIGHT:
                                             value = ConvertToFloat(m_htmlTag, m_xmlAttribute[i].valueStartIndex, m_xmlAttribute[i].valueLength); // px
 
                                             // Reject tag if value is invalid.
@@ -8282,13 +8386,11 @@ namespace TMPro
                         }
 
                         return false;
-                    case 7639357: // </margin>
-                    case 7011901: // </MARGIN>
+                    case MarkupTag.SLASH_MARGIN:
                         m_marginLeft = 0;
                         m_marginRight = 0;
                         return true;
-                    case 1100728678: // <margin-left=xx.x>
-                    case -855002522: // <MARGIN-LEFT>
+                    case MarkupTag.MARGIN_LEFT:
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength); // px
 
                         // Reject tag if value is invalid.
@@ -8308,8 +8410,7 @@ namespace TMPro
                         }
                         m_marginLeft = m_marginLeft >= 0 ? m_marginLeft : 0;
                         return true;
-                    case -884817987: // <margin-right=xx.x>
-                    case -1690034531: // <MARGIN-RIGHT>
+                    case MarkupTag.MARGIN_RIGHT:
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength); // px
 
                         // Reject tag if value is invalid.
@@ -8329,8 +8430,7 @@ namespace TMPro
                         }
                         m_marginRight = m_marginRight >= 0 ? m_marginRight : 0;
                         return true;
-                    case 1109349752: // <line-height=xx.x>
-                    case -842693512: // <LINE-HEIGHT>
+                    case MarkupTag.LINE_HEIGHT:
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
 
                         // Reject tag if value is invalid.
@@ -8350,16 +8450,13 @@ namespace TMPro
                                 break;
                         }
                         return true;
-                    case -445573839: // </line-height>
-                    case 1897350193: // </LINE-HEIGHT>
+                    case MarkupTag.SLASH_LINE_HEIGHT:
                         m_lineHeight = TMP_Math.FLOAT_UNSET;
                         return true;
-                    case 15115642: // <noparse>
-                    case 10723418: // <NOPARSE>
+                    case MarkupTag.NO_PARSE:
                         tag_NoParsing = true;
                         return true;
-                    case 1913798: // <action>
-                    case 1286342: // <ACTION>
+                    case MarkupTag.ACTION:
                         int actionID = m_xmlAttribute[0].valueHashCode;
 
                         if (m_isParsingText)
@@ -8375,8 +8472,7 @@ namespace TMPro
                         // TMP_Action action = TMP_Action.GetAction(m_xmlAttribute[0].valueHashCode);
                         //}
                         return true;
-                    case 7443301: // </action>
-                    case 6815845: // </ACTION>
+                    case MarkupTag.SLASH_ACTION:
                         if (m_isParsingText)
                         {
                             Debug.Log("Action ID: [" + m_actionStack.CurrentItem() + "] Last character index: " + (m_characterCount - 1));
@@ -8384,8 +8480,7 @@ namespace TMPro
 
                         m_actionStack.Remove();
                         return true;
-                    case 315682: // <scale=xx.x>
-                    case 226050: // <SCALE=xx.x>
+                    case MarkupTag.SCALE:
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
 
                         // Reject tag if value is invalid.
@@ -8395,12 +8490,10 @@ namespace TMPro
                         m_isFXMatrixSet = true;
 
                         return true;
-                    case 1105611: // </scale>
-                    case 1015979: // </SCALE>
+                    case MarkupTag.SLASH_SCALE:
                         m_isFXMatrixSet = false;
                         return true;
-                    case 2227963: // <rotate=xx.x>
-                    case 1600507: // <ROTATE=xx.x>
+                    case MarkupTag.ROTATE:
                         // TODO: Add ability to use Random Rotation
 
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
@@ -8412,12 +8505,10 @@ namespace TMPro
                         m_isFXMatrixSet = true;
 
                         return true;
-                    case 7757466: // </rotate>
-                    case 7130010: // </ROTATE>
+                    case MarkupTag.SLASH_ROTATE:
                         m_isFXMatrixSet = false;
                         return true;
-                    case 317446: // <table>
-                    case 227814: // <TABLE>
+                    case MarkupTag.TABLE:
                         //switch (m_xmlAttribute[1].nameHashCode)
                         //{
                         //    case 327550: // width
@@ -8441,24 +8532,18 @@ namespace TMPro
                         //        break;
                         //}
                         return false;
-                    case 1107375: // </table>
-                    case 1017743: // </TABLE>
+                    case MarkupTag.SLASH_TABLE:
                         return true;
-                    case 926: // <tr>
-                    case 670: // <TR>
+                    case MarkupTag.TR:
                         return true;
-                    case 3229: // </tr>
-                    case 2973: // </TR>
+                    case MarkupTag.SLASH_TR:
                         return true;
-                    case 916: // <th>
-                    case 660: // <TH>
+                    case MarkupTag.TH:
                         // Set style to bold and center alignment
                         return true;
-                    case 3219: // </th>
-                    case 2963: // </TH>
+                    case MarkupTag.SLASH_TH:
                         return true;
-                    case 912: // <td>
-                    case 656: // <TD>
+                    case MarkupTag.TD:
                               // Style options
                         //for (int i = 1; i < m_xmlAttribute.Length && m_xmlAttribute[i].nameHashCode != 0; i++)
                         //{
@@ -8501,8 +8586,7 @@ namespace TMPro
                         //}
 
                         return false;
-                    case 3215: // </td>
-                    case 2959: // </TD>
+                    case MarkupTag.SLASH_TD:
                         return false;
                 }
             }

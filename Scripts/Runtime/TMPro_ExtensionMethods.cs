@@ -142,6 +142,27 @@ namespace TMPro
             return new Color32(r, g, b, a);
         }
 
+        internal static Color32 GammaToLinear(this Color32 c)
+        {
+            return new Color32(GammaToLinear(c.r), GammaToLinear(c.g), GammaToLinear(c.b), c.a);
+        }
+
+        static byte GammaToLinear(byte value)
+        {
+            float v = value / 255f;
+
+            if (v <= 0.04045f)
+                return (byte)(v / 12.92f * 255f);
+
+            if (v < 1.0f)
+                return (byte)(Mathf.Pow((v + 0.055f) / 1.055f, 2.4f) * 255);
+
+            if (v == 1.0f)
+                return 255;
+
+            return (byte)(Mathf.Pow(v, 2.2f) * 255);
+        }
+
         public static Color MinAlpha(this Color c1, Color c2)
         {
             float a = c1.a < c2.a ? c1.a : c2.a;

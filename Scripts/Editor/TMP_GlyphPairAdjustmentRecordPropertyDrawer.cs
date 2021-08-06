@@ -10,7 +10,7 @@ namespace TMPro.EditorUtilities
 {
 
     [CustomPropertyDrawer(typeof(TMP_GlyphPairAdjustmentRecord))]
-    public class TMP_GlyphPairAdjustmentRecordPropertyDrawer : PropertyDrawer
+    internal class TMP_GlyphPairAdjustmentRecordPropertyDrawer : PropertyDrawer
     {
         private bool isEditingEnabled = false;
         private bool isSelectable = false;

@@ -168,11 +168,11 @@ namespace TMPro.EditorUtilities
             string fileNameWithExtension = Path.GetFileName(filePathWithName);
             string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filePathWithName);
             string filePath = filePathWithName.Replace(fileNameWithExtension, "");
-
+            string uniquePath = AssetDatabase.GenerateUniqueAssetPath(filePath + fileNameWithoutExtension + ".asset");
 
             // Create new Sprite Asset
             TMP_SpriteAsset spriteAsset = ScriptableObject.CreateInstance<TMP_SpriteAsset>();
-            AssetDatabase.CreateAsset(spriteAsset, filePath + fileNameWithoutExtension + ".asset");
+            AssetDatabase.CreateAsset(spriteAsset, uniquePath);
 
             spriteAsset.version = "1.1.0";
 
