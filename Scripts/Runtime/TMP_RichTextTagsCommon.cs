@@ -5,11 +5,10 @@ using UnityEngine.Bindings;
 namespace TMPro
 {
     /// <summary>
-    /// Rich Text Tags and Attribute definitions and their respective HashCode values.
+    /// Rich text markup tags and attribute definitions and respective hash code values.
     /// </summary>
-    internal enum MarkupTag : int
+    internal enum MarkupTag
     {
-        // Rich Text Tags
         BOLD = 66,                          // <b>
         SLASH_BOLD = 1613,                  // </b>
         ITALIC = 73,                        // <i>
@@ -81,6 +80,15 @@ namespace TMPro
         ROTATE = -1000007783,               // <rotate>
         SLASH_ROTATE = -764695562,          // </rotate>
 
+        TABLE = 226476955,                  // <table>
+        SLASH_TABLE = -979118220,           // </table>
+        TH = 5862489,                       // <th>
+        SLASH_TH = 193346070,               // </th>
+        TR = 5862467,                       // <tr>
+        SLASH_TR = 193346060,               // </tr>
+        TD = 5862485,                       // <td>
+        SLASH_TD = 193346074,               // </td>
+
         LOWERCASE = -1506899689,            // <lowercase>
         SLASH_LOWERCASE = -1451284584,      // </lowercase>
         ALLCAPS = 218273952,                // <allcaps>
@@ -104,6 +112,7 @@ namespace TMPro
         MATERIAL = 825491659,           // <font="Name of font asset" material="Name of material">
         HREF = 2535353,                 // <a href="url">text to be displayed.</a>
         ANGLE = 75347905,               // <i angle="40">Italic Slant Angle</i>
+        PADDING = -2144568463,
 
         // Named Colors
         RED = 91635,

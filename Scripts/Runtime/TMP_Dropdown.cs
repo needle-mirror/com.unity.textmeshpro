@@ -60,6 +60,8 @@ namespace TMPro
             private string m_Text;
             [SerializeField]
             private Sprite m_Image;
+            [SerializeField]
+            private Color m_Color = Color.white;
 
             /// <summary>
             /// The text associated with the option.
@@ -70,6 +72,11 @@ namespace TMPro
             /// The image associated with the option.
             /// </summary>
             public Sprite image { get { return m_Image; } set { m_Image = value; } }
+
+            /// <summary>
+            /// The color associated with the option.
+            /// </summary>
+            public Color color { get { return m_Color; } set { m_Color = value; } }
 
             public OptionData() { }
 
@@ -88,10 +95,12 @@ namespace TMPro
             /// </summary>
             /// <param name="text">Optional text for the option.</param>
             /// <param name="image">Optional image for the option.</param>
-            public OptionData(string text, Sprite image)
+            /// <param name="image">Optional color for the option.</param>
+            public OptionData(string text, Sprite image, Color color)
             {
                 this.text = text;
                 this.image = image;
+                this.color = color;
             }
         }
 
@@ -124,6 +133,10 @@ namespace TMPro
         /// UnityEvent callback for when a dropdown current option is changed.
         /// </summary>
         public class DropdownEvent : UnityEvent<int> { }
+
+        static readonly OptionData k_NothingOption = new OptionData { text = "Nothing" };
+        static readonly OptionData k_EverythingOption = new OptionData { text = "Everything" };
+        static readonly OptionData k_MixedOption = new OptionData { text = "Mixed..." };
 
         // Template used to create the dropdown.
         [SerializeField]
@@ -181,6 +194,9 @@ namespace TMPro
 
         [SerializeField]
         private int m_Value;
+
+        [SerializeField]
+        private bool m_MultiSelect;
 
         [Space]
 
@@ -421,7 +437,11 @@ namespace TMPro
             if (Application.isPlaying && (value == m_Value || options.Count == 0))
                 return;
 
-            m_Value = Mathf.Clamp(value, m_Placeholder ? -1 : 0, options.Count - 1);
+            if (m_MultiSelect)
+                m_Value = value;
+            else
+                m_Value = Mathf.Clamp(value, m_Placeholder ? -1 : 0, options.Count - 1);
+
             RefreshShownValue();
 
             if (sendCallback)
@@ -434,6 +454,8 @@ namespace TMPro
 
         public bool IsExpanded { get { return m_Dropdown != null; } }
 
+        public bool MultiSelect { get { return m_MultiSelect; } set { m_MultiSelect = value; } }
+
         protected TMP_Dropdown() { }
 
         protected override void Awake()
@@ -444,7 +466,7 @@ namespace TMPro
             #endif
 
             if (m_CaptionImage)
-                m_CaptionImage.enabled = (m_CaptionImage.sprite != null);
+                m_CaptionImage.enabled = (m_CaptionImage.sprite != null && m_CaptionImage.color.a > 0);
 
             if (m_Template)
                 m_Template.gameObject.SetActive(false);
@@ -494,8 +516,25 @@ namespace TMPro
         {
             OptionData data = s_NoOptionData;
 
-            if (options.Count > 0 && m_Value >= 0)
-                data = options[Mathf.Clamp(m_Value, 0, options.Count - 1)];
+            if (options.Count > 0)
+            {
+                if (m_MultiSelect)
+                {
+                    int firstActiveFlag = FirstActiveFlagIndex(m_Value);
+                    if (m_Value == 0 || firstActiveFlag >= options.Count)
+                        data = k_NothingOption;
+                    else if (IsEverythingValue(options.Count, m_Value))
+                        data = k_EverythingOption;
+                    else if (Mathf.IsPowerOfTwo(m_Value) && m_Value > 0)
+                        data = options[firstActiveFlag];
+                    else
+                        data = k_MixedOption;
+                }
+                else if (m_Value >= 0)
+                {
+                    data = options[Mathf.Clamp(m_Value, 0, options.Count - 1)];
+                }
+            }
 
             if (m_CaptionText)
             {
@@ -507,11 +546,9 @@ namespace TMPro
 
             if (m_CaptionImage)
             {
-                if (data != null)
-                    m_CaptionImage.sprite = data.image;
-                else
-                    m_CaptionImage.sprite = null;
-                m_CaptionImage.enabled = (m_CaptionImage.sprite != null);
+                m_CaptionImage.sprite = data.image;
+                m_CaptionImage.color = data.color;
+                m_CaptionImage.enabled = (m_CaptionImage.sprite != null && m_CaptionImage.color.a > 0);
             }
 
             if (m_Placeholder)
@@ -808,6 +845,44 @@ namespace TMPro
             m_Items.Clear();
 
             Toggle prev = null;
+            if (m_MultiSelect && options.Count > 0)
+            {
+                DropdownItem item = AddItem(k_NothingOption, value == 0, itemTemplate, m_Items);
+                if (item.image != null)
+                    item.image.gameObject.SetActive(false);
+
+                Toggle nothingToggle = item.toggle;
+                nothingToggle.isOn = value == 0;
+                nothingToggle.onValueChanged.AddListener(x => OnSelectItem(nothingToggle));
+                prev = nothingToggle;
+
+                bool isEverythingValue = IsEverythingValue(options.Count, value);
+                item = AddItem(k_EverythingOption, isEverythingValue, itemTemplate, m_Items);
+                if (item.image != null)
+                    item.image.gameObject.SetActive(false);
+
+                Toggle everythingToggle = item.toggle;
+                everythingToggle.isOn = isEverythingValue;
+                everythingToggle.onValueChanged.AddListener(x => OnSelectItem(everythingToggle));
+
+                // Automatically set up explicit navigation
+                if (prev != null)
+                {
+                    Navigation prevNav = prev.navigation;
+                    Navigation toggleNav = item.toggle.navigation;
+                    prevNav.mode = Navigation.Mode.Explicit;
+                    toggleNav.mode = Navigation.Mode.Explicit;
+
+                    prevNav.selectOnDown = item.toggle;
+                    prevNav.selectOnRight = item.toggle;
+                    toggleNav.selectOnLeft = prev;
+                    toggleNav.selectOnUp = prev;
+
+                    prev.navigation = prevNav;
+                    item.toggle.navigation = toggleNav;
+                }
+            }
+
             for (int i = 0; i < options.Count; ++i)
             {
                 OptionData data = options[i];
@@ -816,7 +891,11 @@ namespace TMPro
                     continue;
 
                 // Automatically set up a toggle state change listener
-                item.toggle.isOn = value == i;
+                if (m_MultiSelect)
+                    item.toggle.isOn = (value & (1 << i)) != 0;
+                else
+                    item.toggle.isOn = value == i;
+
                 item.toggle.onValueChanged.AddListener(x => OnSelectItem(item.toggle));
 
                 // Select current option
@@ -893,6 +972,29 @@ namespace TMPro
             itemTemplate.gameObject.SetActive(false);
 
             m_Blocker = CreateBlocker(rootCanvas);
+        }
+
+        static bool IsEverythingValue(int count, int value)
+        {
+            var result = true;
+            for (var i = 0; i < count; i++)
+            {
+                if ((value & 1 << i) == 0)
+                    result = false;
+            }
+
+            return result;
+        }
+
+        static int EverythingValue(int count)
+        {
+            int result = 0;
+            for (var i = 0; i < count; i++)
+            {
+                result |= 1 << i;
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -1044,10 +1146,12 @@ namespace TMPro
             // Set the item's data
             if (item.text)
                 item.text.text = data.text;
+
             if (item.image)
             {
                 item.image.sprite = data.image;
-                item.image.enabled = (item.image.sprite != null);
+                item.image.color = data.color;
+                item.image.enabled = (item.image.sprite != null && data.color.a > 0);
             }
 
             items.Add(item);
@@ -1133,13 +1237,10 @@ namespace TMPro
         // Change the value and hide the dropdown.
         private void OnSelectItem(Toggle toggle)
         {
-            if (!toggle.isOn)
-                toggle.isOn = true;
-
             int selectedIndex = -1;
             Transform tr = toggle.transform;
             Transform parent = tr.parent;
-            for (int i = 0; i < parent.childCount; i++)
+            for (int i = 1; i < parent.childCount; i++)
             {
                 if (parent.GetChild(i) == tr)
                 {
@@ -1152,8 +1253,65 @@ namespace TMPro
             if (selectedIndex < 0)
                 return;
 
-            value = selectedIndex;
+            if (m_MultiSelect)
+            {
+                switch (selectedIndex)
+                {
+                    case 0: // Nothing
+                        value = 0;
+                        for (var i = 3; i < parent.childCount; i++)
+                        {
+                            var toggleComponent = parent.GetChild(i).GetComponentInChildren<Toggle>();
+                            if (toggleComponent)
+                                toggleComponent.SetIsOnWithoutNotify(false);
+                        }
+
+                        toggle.isOn = true;
+                        break;
+                    case 1: // Everything
+                        value = EverythingValue(options.Count);
+                        for (var i = 3; i < parent.childCount; i++)
+                        {
+                            var toggleComponent = parent.GetChild(i).GetComponentInChildren<Toggle>();
+                            if (toggleComponent)
+                                toggleComponent.SetIsOnWithoutNotify(i > 2);
+                        }
+                        break;
+                    default:
+                        var flagValue = 1 << (selectedIndex - 2);
+                        var wasSelected = (value & flagValue) != 0;
+                        toggle.SetIsOnWithoutNotify(!wasSelected);
+
+                        if (wasSelected)
+                            value &= ~flagValue;
+                        else
+                            value |= flagValue;
+
+                        break;
+                }
+            }
+            else
+            {
+                if (!toggle.isOn)
+                    toggle.SetIsOnWithoutNotify(true);
+
+                value = selectedIndex;
+            }
+
             Hide();
+        }
+
+        static int FirstActiveFlagIndex(int value)
+        {
+            if (value == 0)
+                return 0;
+
+            const int bits = sizeof(int) * 8;
+            for (var i = 0; i < bits; i++)
+                if ((value & 1 << i) != 0)
+                    return i;
+
+            return 0;
         }
     }
 }

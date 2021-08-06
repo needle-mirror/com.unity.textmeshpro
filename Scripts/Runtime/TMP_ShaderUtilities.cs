@@ -15,6 +15,36 @@ namespace TMPro
         public static int ID_FaceDilate;
         public static int ID_Shininess;
 
+        /// <summary>
+        /// Property ID for the _OutlineOffset1 shader property used by URP and HDRP shaders
+        /// </summary>
+        public static int ID_OutlineOffset1;
+
+        /// <summary>
+        /// Property ID for the _OutlineOffset2 shader property used by URP and HDRP shaders
+        /// </summary>
+        public static int ID_OutlineOffset2;
+
+        /// <summary>
+        /// Property ID for the _OutlineOffset3 shader property used by URP and HDRP shaders
+        /// </summary>
+        public static int ID_OutlineOffset3;
+
+        /// <summary>
+        /// Property ID for the ID_AdditiveOutlineMode shader property used by URP and HDRP shaders
+        /// </summary>
+        public static int ID_OutlineMode;
+
+        /// <summary>
+        /// Property ID for the _IsoPerimeter shader property used by URP and HDRP shaders
+        /// </summary>
+        public static int ID_IsoPerimeter;
+
+        /// <summary>
+        /// Property ID for the _Softness shader property used by URP and HDRP shaders
+        /// </summary>
+        public static int ID_Softness;
+
         public static int ID_UnderlayColor;
         public static int ID_UnderlayOffsetX;
         public static int ID_UnderlayOffsetY;
@@ -158,6 +188,14 @@ namespace TMPro
                 ID_FaceColor = Shader.PropertyToID("_FaceColor");
                 ID_FaceDilate = Shader.PropertyToID("_FaceDilate");
                 ID_Shininess = Shader.PropertyToID("_FaceShininess");
+
+                ID_OutlineOffset1 = Shader.PropertyToID("_OutlineOffset1");
+                ID_OutlineOffset2 = Shader.PropertyToID("_OutlineOffset2");
+                ID_OutlineOffset3 = Shader.PropertyToID("_OutlineOffset3");
+                ID_OutlineMode = Shader.PropertyToID("_OutlineMode");
+
+                ID_IsoPerimeter = Shader.PropertyToID("_IsoPerimeter");
+                ID_Softness = Shader.PropertyToID("_Softness");
 
                 ID_UnderlayColor = Shader.PropertyToID("_UnderlayColor");
                 ID_UnderlayOffsetX = Shader.PropertyToID("_UnderlayOffsetX");
@@ -365,6 +403,12 @@ namespace TMPro
                 return extraPadding + 1.0f;
             }
 
+            // Special handling for new SRP Shaders
+            if (material.HasProperty(ID_IsoPerimeter))
+            {
+                return ComputePaddingForProperties(material) + 0.25f + extraPadding;
+            }
+
             Vector4 padding = Vector4.zero;
             Vector4 maxPadding = Vector4.zero;
 
@@ -379,6 +423,7 @@ namespace TMPro
             float glowOffset = 0;
             float glowOuter = 0;
 
+            float gradientScale = 0;
             float uniformPadding = 0;
             // Iterate through each of the assigned materials to find the max values to set the padding.
 
@@ -421,10 +466,28 @@ namespace TMPro
                 if (material.HasProperty(ID_ScaleRatio_C))
                     scaleRatio_C = material.GetFloat(ID_ScaleRatio_C);
 
-                float offsetX = material.GetFloat(ID_UnderlayOffsetX) * scaleRatio_C;
-                float offsetY = material.GetFloat(ID_UnderlayOffsetY) * scaleRatio_C;
-                float dilate = material.GetFloat(ID_UnderlayDilate) * scaleRatio_C;
-                float softness = material.GetFloat(ID_UnderlaySoftness) * scaleRatio_C;
+                float offsetX = 0;
+                float offsetY = 0;
+                float dilate = 0;
+                float softness = 0;
+
+                if (material.HasProperty(ID_UnderlayOffset))
+                {
+                    Vector2 underlayOffset = material.GetVector(ID_UnderlayOffset);
+                    offsetX = underlayOffset.x;
+                    offsetY = underlayOffset.y;
+
+                    dilate = material.GetFloat(ID_UnderlayDilate);
+                    softness = material.GetFloat(ID_UnderlaySoftness);
+                }
+                else if (material.HasProperty(ID_UnderlayOffsetX))
+                {
+
+                    offsetX = material.GetFloat(ID_UnderlayOffsetX) * scaleRatio_C;
+                    offsetY = material.GetFloat(ID_UnderlayOffsetY) * scaleRatio_C;
+                    dilate = material.GetFloat(ID_UnderlayDilate) * scaleRatio_C;
+                    softness = material.GetFloat(ID_UnderlaySoftness) * scaleRatio_C;
+                }
 
                 padding.x = Mathf.Max(padding.x, faceDilate + dilate + softness - offsetX);
                 padding.y = Mathf.Max(padding.y, faceDilate + dilate + softness - offsetY);
@@ -452,7 +515,7 @@ namespace TMPro
             maxPadding.z = maxPadding.z < padding.z ? padding.z : maxPadding.z;
             maxPadding.w = maxPadding.w < padding.w ? padding.w : maxPadding.w;
 
-            float gradientScale = material.GetFloat(ID_GradientScale);
+            gradientScale = material.GetFloat(ID_GradientScale);
             padding *= gradientScale;
 
             // Set UniformPadding to the maximum value of any of its components.
@@ -463,6 +526,48 @@ namespace TMPro
             return uniformPadding + 1.25f;
         }
 
+
+        static float ComputePaddingForProperties(Material mat)
+        {
+            Vector4 dilation = mat.GetVector(ID_IsoPerimeter);
+            Vector2 outlineOffset1 = mat.GetVector(ID_OutlineOffset1);
+            Vector2 outlineOffset2 = mat.GetVector(ID_OutlineOffset2);
+            Vector2 outlineOffset3 = mat.GetVector(ID_OutlineOffset3);
+            bool isOutlineModeEnabled = mat.GetFloat(ID_OutlineMode) != 0;
+
+            Vector4 softness = mat.GetVector(ID_Softness);
+            float gradientScale = mat.GetFloat(ID_GradientScale);
+
+            // Face
+            float padding = Mathf.Max(0, dilation.x + softness.x * 0.5f);
+
+            // Outlines
+            if (!isOutlineModeEnabled)
+            {
+                padding = Mathf.Max(padding, dilation.y + softness.y * 0.5f + Mathf.Max(Mathf.Abs(outlineOffset1.x), Mathf.Abs(outlineOffset1.y)));
+                padding = Mathf.Max(padding, dilation.z + softness.z * 0.5f + Mathf.Max(Mathf.Abs(outlineOffset2.x), Mathf.Abs(outlineOffset2.y)));
+                padding = Mathf.Max(padding, dilation.w + softness.w * 0.5f + Mathf.Max(Mathf.Abs(outlineOffset3.x), Mathf.Abs(outlineOffset3.y)));
+            }
+            else
+            {
+                float offsetOutline1 = Mathf.Max(Mathf.Abs(outlineOffset1.x), Mathf.Abs(outlineOffset1.y));
+                float offsetOutline2 = Mathf.Max(Mathf.Abs(outlineOffset2.x), Mathf.Abs(outlineOffset2.y));
+
+                padding = Mathf.Max(padding, dilation.y + softness.y * 0.5f + offsetOutline1);
+                padding = Mathf.Max(padding, dilation.z + softness.z * 0.5f + offsetOutline2);
+
+                float maxOffset = Mathf.Max(offsetOutline1, offsetOutline2);
+                padding += Mathf.Max(0 ,(dilation.w + softness.w * 0.5f) - Mathf.Max(0, padding - maxOffset));
+            }
+
+            // Underlay
+            Vector2 underlayOffset = mat.GetVector(ID_UnderlayOffset);
+            float underlayDilation = mat.GetFloat(ID_UnderlayDilate);
+            float underlaySoftness = mat.GetFloat(ID_UnderlaySoftness);
+            padding = Mathf.Max(padding, underlayDilation + underlaySoftness * 0.5f + Mathf.Max(Mathf.Abs(underlayOffset.x), Mathf.Abs(underlayOffset.y)));
+
+            return padding * gradientScale;
+        }
 
         // Function to determine how much extra padding is required as a result of material properties like dilate, outline thickness, softness, glow, etc...
         public static float GetPadding(Material[] materials, bool enableExtraPadding, bool isBold)

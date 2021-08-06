@@ -81,9 +81,11 @@ namespace TMPro
     {
         public string sourceFontFileName;
         public string sourceFontFileGUID;
+        public int faceIndex;
         public int pointSizeSamplingMode;
         public int pointSize;
         public int padding;
+        public int paddingMode;
         public int packingMode;
         public int atlasWidth;
         public int atlasHeight;
@@ -100,9 +102,11 @@ namespace TMPro
         {
             this.sourceFontFileName = string.Empty;
             this.sourceFontFileGUID = sourceFontFileGUID;
+            this.faceIndex = 0;
             this.pointSize = pointSize;
             this.pointSizeSamplingMode = pointSizeSamplingMode;
             this.padding = padding;
+            this.paddingMode = 2;
             this.packingMode = packingMode;
             this.atlasWidth = atlasWidth;
             this.atlasHeight = atlasHeight;
@@ -228,7 +232,7 @@ namespace TMPro
 
         /// <summary>
         /// Determines if the Character Spacing property of the text object will affect the kerning pair.
-        /// This is mostly relevant when using Diacritical marks to prevent Character Spacing from altering the 
+        /// This is mostly relevant when using Diacritical marks to prevent Character Spacing from altering the spacing.
         /// </summary>
         public bool ignoreSpacingAdjustments
         {

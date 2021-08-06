@@ -27,8 +27,19 @@ namespace TMPro
         public Vector3[] normals;
         public Vector4[] tangents;
 
-        public Vector2[] uvs0;
+        /// <summary>
+        /// UV0 contains the following information
+        /// X, Y are the UV coordinates of the glyph in the atlas texture.
+        /// Z is the texture index in the texture atlas array
+        /// W is the SDF Scale where a negative value represents bold text
+        /// </summary>
+        public Vector4[] uvs0;
+
+        /// <summary>
+        ///
+        /// </summary>
         public Vector2[] uvs2;
+
         //public Vector2[] uvs4;
         public Color32[] colors32;
         public int[] triangles;
@@ -63,7 +74,7 @@ namespace TMPro
             this.vertexCount = 0;
 
             this.vertices = new Vector3[sizeX4];
-            this.uvs0 = new Vector2[sizeX4];
+            this.uvs0 = new Vector4[sizeX4];
             this.uvs2 = new Vector2[sizeX4];
             //this.uvs4 = new Vector2[sizeX4]; // SDF scale data
             this.colors32 = new Color32[sizeX4];
@@ -140,7 +151,7 @@ namespace TMPro
             this.vertexCount = 0;
 
             this.vertices = new Vector3[size_x_s0];
-            this.uvs0 = new Vector2[size_x_s0];
+            this.uvs0 = new Vector4[size_x_s0];
             this.uvs2 = new Vector2[size_x_s0];
             //this.uvs4 = new Vector2[sizeX8]; // SDF scale data
             this.colors32 = new Color32[size_x_s0];

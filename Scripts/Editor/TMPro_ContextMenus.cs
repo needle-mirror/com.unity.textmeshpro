@@ -193,11 +193,22 @@ namespace TMPro.EditorUtilities
             ShaderUtilities.GetShaderPropertyIDs(); // Make sure we have valid Property IDs
             if (mat.HasProperty(ShaderUtilities.ID_GradientScale))
             {
+                bool isSRPShader = mat.HasProperty(ShaderUtilities.ID_IsoPerimeter);
+
                 // Copy unique properties of the SDF Material
                 var texture = mat.GetTexture(ShaderUtilities.ID_MainTex);
                 var gradientScale = mat.GetFloat(ShaderUtilities.ID_GradientScale);
-                var texWidth = mat.GetFloat(ShaderUtilities.ID_TextureWidth);
-                var texHeight = mat.GetFloat(ShaderUtilities.ID_TextureHeight);
+
+                float texWidth = 0, texHeight = 0;
+                float normalWeight = 0, boldWeight = 0;
+
+                if (!isSRPShader)
+                {
+                    texWidth = mat.GetFloat(ShaderUtilities.ID_TextureWidth);
+                    texHeight = mat.GetFloat(ShaderUtilities.ID_TextureHeight);
+                    normalWeight = mat.GetFloat(ShaderUtilities.ID_WeightNormal);
+                    boldWeight = mat.GetFloat(ShaderUtilities.ID_WeightBold);
+                }
 
                 var stencilId = 0.0f;
                 var stencilComp = 0.0f;
@@ -208,9 +219,6 @@ namespace TMPro.EditorUtilities
                     stencilComp = mat.GetFloat(ShaderUtilities.ID_StencilComp);
                 }
 
-                var normalWeight = mat.GetFloat(ShaderUtilities.ID_WeightNormal);
-                var boldWeight = mat.GetFloat(ShaderUtilities.ID_WeightBold);
-
                 // Reset the material
                 Unsupported.SmartReset(mat);
 
@@ -220,17 +228,20 @@ namespace TMPro.EditorUtilities
                 // Copy unique material properties back to the material.
                 mat.SetTexture(ShaderUtilities.ID_MainTex, texture);
                 mat.SetFloat(ShaderUtilities.ID_GradientScale, gradientScale);
-                mat.SetFloat(ShaderUtilities.ID_TextureWidth, texWidth);
-                mat.SetFloat(ShaderUtilities.ID_TextureHeight, texHeight);
+
+                if (!isSRPShader)
+                {
+                    mat.SetFloat(ShaderUtilities.ID_TextureWidth, texWidth);
+                    mat.SetFloat(ShaderUtilities.ID_TextureHeight, texHeight);
+                    mat.SetFloat(ShaderUtilities.ID_WeightNormal, normalWeight);
+                    mat.SetFloat(ShaderUtilities.ID_WeightBold, boldWeight);
+                }
 
                 if (mat.HasProperty(ShaderUtilities.ID_StencilID))
                 {
                     mat.SetFloat(ShaderUtilities.ID_StencilID, stencilId);
                     mat.SetFloat(ShaderUtilities.ID_StencilComp, stencilComp);
                 }
-
-                mat.SetFloat(ShaderUtilities.ID_WeightNormal, normalWeight);
-                mat.SetFloat(ShaderUtilities.ID_WeightBold, boldWeight);
             }
             else
             {
@@ -378,6 +389,8 @@ namespace TMPro.EditorUtilities
             }
 
             fontAsset.ClearFontAssetData(true);
+
+            TMP_ResourceManager.RebuildFontAssetCache();
 
             TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
         }

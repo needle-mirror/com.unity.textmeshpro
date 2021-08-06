@@ -1,10 +1,9 @@
 {
   "name": "com.unity.textmeshpro",
   "displayName": "TextMeshPro",
-  "version": "3.0.6",
-  "unity": "2020.1",
-  "unityRelease": "0a10",
-  "description": "TextMeshPro is the ultimate text solution for Unity. It's the perfect replacement for Unity's UI Text and the legacy Text Mesh.\n\nPowerful and easy to use, TextMeshPro (also known as TMP) uses Advanced Text Rendering techniques along with a set of custom shaders; delivering substantial visual quality improvements while giving users incredible flexibility when it comes to text styling and texturing.\n\nTextMeshPro provides Improved Control over text formatting and layout with features like character, word, line and paragraph spacing, kerning, justified text, Links, over 30 Rich Text Tags available, support for Multi Font & Sprites, Custom Styles and more.\n\nGreat performance. Since the geometry created by TextMeshPro uses two triangles per character just like Unity's text components, this improved visual quality and flexibility comes at no additional performance cost.",
+  "version": "3.2.0-pre.1",
+  "unity": "2020.3",
+  "description": "TextMeshPro is the ultimate text solution for Unity. It's the perfect replacement for Unity's UI Text and the legacy Text Mesh.\n\nPowerful and easy to use, TextMeshPro (also known as TMP) uses Advanced Text Rendering techniques along with a set of custom shaders; delivering substantial visual quality improvements while giving users incredible flexibility when it comes to text styling and texturing.\n\nTextMeshPro provides Improved Control over text formatting and layout with features like character, word, line and paragraph spacing, kerning, justified text, Links, over 30 Rich Text Tags available, support for Multi Font & Sprites, Custom Styles and more.\n\nGreat performance. Since the geometry created by TextMeshPro uses two triangles per character just like Unity's text components, this improved visual quality and flexibility comes at no additional performance cost.\n\n\n\nUPGRADE NOTE\n--------------------\nThis latest release of the TMP package includes updated TMP Essential Resources and TMP Examples & Extras. Be sure to update those via the \"Window - TextMeshPro - Import...\" menu options.",
   "keywords": [
     "TextMeshPro",
     "TextMesh Pro",
@@ -19,9 +18,9 @@
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.textmeshpro.git",
     "type": "git",
-    "revision": "01e57e3b7de18af9dfe9baaa0a0ff5cc4765c899"
+    "revision": "38d43e0ed4859fa888049f3a65fa5b6109210dbd"
   },
   "upmCi": {
-    "footprint": "bfe9ad7192cdd29486fc5980b5ac7d0b3fafcec6"
+    "footprint": "ec24329e088da4547721e7cb0e1400c64b32b68f"
   }
 }

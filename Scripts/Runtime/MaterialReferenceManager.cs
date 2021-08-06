@@ -110,7 +110,8 @@ namespace TMPro
             m_FontMaterialReferenceLookup.Add(hashCode, spriteAsset.material);
 
             // Compatibility check
-            if (spriteAsset.hashCode == 0) spriteAsset.hashCode = hashCode;
+            if (spriteAsset.hashCode == 0)
+                spriteAsset.hashCode = hashCode;
         }
 
 
@@ -522,7 +523,7 @@ namespace TMPro
             this.fontAsset = fontAsset;
             this.spriteAsset = spriteAsset;
             this.material = material;
-            this.isDefaultMaterial = material.GetInstanceID() == fontAsset.material.GetInstanceID() ? true : false;
+            this.isDefaultMaterial = material.GetInstanceID() == fontAsset.material.GetInstanceID();
             this.isFallbackMaterial = false;
             this.fallbackMaterial = null;
             this.padding = padding;
@@ -578,12 +579,10 @@ namespace TMPro
             materialReferences[index].fontAsset = fontAsset;
             materialReferences[index].spriteAsset = null;
             materialReferences[index].material = material;
-            materialReferences[index].isDefaultMaterial = materialID == fontAsset.material.GetInstanceID() ? true : false;
-            //materialReferences[index].padding = 0;
+            materialReferences[index].isDefaultMaterial = materialID == fontAsset.material.GetInstanceID();
             materialReferences[index].referenceCount = 0;
 
             return index;
-
         }
 
 
@@ -616,7 +615,6 @@ namespace TMPro
             materialReferences[index].spriteAsset = spriteAsset;
             materialReferences[index].material = material;
             materialReferences[index].isDefaultMaterial = true;
-            //materialReferences[index].padding = 0;
             materialReferences[index].referenceCount = 0;
 
             return index;

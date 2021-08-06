@@ -13,18 +13,6 @@ namespace TMPro
         internal Dictionary<uint, int> m_GlyphIndexLookup;
 
         /// <summary>
-        /// The version of the sprite asset class.
-        /// Version 1.1.0 updates the asset data structure to be compatible with new font asset structure.
-        /// </summary>
-        public string version
-        {
-            get { return m_Version; }
-            internal set { m_Version = value; }
-        }
-        [SerializeField]
-        private string m_Version;
-
-        /// <summary>
         /// Information about the sprite asset's face.
         /// </summary>
         public FaceInfo faceInfo
@@ -197,7 +185,7 @@ namespace TMPro
                 spriteCharacter.glyph = m_SpriteGlyphLookup[glyphIndex];
                 spriteCharacter.textAsset = this;
 
-                int nameHashCode = m_SpriteCharacterTable[i].hashCode;
+                int nameHashCode = TMP_TextUtilities.GetHashCode(m_SpriteCharacterTable[i].name);
 
                 if (m_NameLookup.ContainsKey(nameHashCode) == false)
                     m_NameLookup.Add(nameHashCode, i);

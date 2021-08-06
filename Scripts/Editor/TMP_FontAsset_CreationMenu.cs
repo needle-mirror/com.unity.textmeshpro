@@ -158,6 +158,15 @@ namespace TMPro
                 return;
             }
 
+            // Make sure TMP Essential Resources have been imported in the user project.
+            if (TMP_Settings.instance == null)
+            {
+                Debug.Log("Unable to create font asset. Please import the TMP Essential Resources.");
+
+                // Show Window to Import TMP Essential Resources
+                return;
+            }
+
             for (int i = 0; i < targets.Length; i++)
             {
                 Object target = targets[i];
@@ -175,7 +184,7 @@ namespace TMPro
 
         static void CreateFontAssetFromSelectedObject(Object target)
         {
-            Font sourceFont = (Font)target;
+            Font font = (Font)target;
 
             string sourceFontFilePath = AssetDatabase.GetAssetPath(target);
 
@@ -188,9 +197,9 @@ namespace TMPro
             FontEngine.InitializeFontEngine();
 
             // Load Font Face
-            if (FontEngine.LoadFontFace(sourceFont, 90) != FontEngineError.Success)
+            if (FontEngine.LoadFontFace(font, 90) != FontEngineError.Success)
             {
-                Debug.LogWarning("Unable to load font face for [" + sourceFont.name + "]. Make sure \"Include Font Data\" is enabled in the Font Import Settings.", sourceFont);
+                Debug.LogWarning("Unable to load font face for [" + font.name + "]. Make sure \"Include Font Data\" is enabled in the Font Import Settings.", font);
                 return;
             }
 
@@ -199,13 +208,15 @@ namespace TMPro
             AssetDatabase.CreateAsset(fontAsset, newAssetFilePathWithName);
 
             fontAsset.version = "1.1.0";
-
             fontAsset.faceInfo = FontEngine.GetFaceInfo();
 
             // Set font reference and GUID
+            fontAsset.sourceFontFile = font;
             fontAsset.m_SourceFontFileGUID = AssetDatabase.AssetPathToGUID(sourceFontFilePath);
-            fontAsset.m_SourceFontFile_EditorRef = sourceFont;
+            fontAsset.m_SourceFontFile_EditorRef = font;
+
             fontAsset.atlasPopulationMode = AtlasPopulationMode.Dynamic;
+            fontAsset.clearDynamicDataOnBuild = TMP_Settings.clearDynamicDataOnBuild;
 
             // Default atlas resolution is 1024 x 1024.
             int atlasWidth = fontAsset.atlasWidth = 1024;
@@ -250,7 +261,7 @@ namespace TMPro
             fontAsset.creationSettings = new FontAssetCreationSettings(fontAsset.m_SourceFontFileGUID, fontAsset.faceInfo.pointSize, 0, atlasPadding, 0, 1024, 1024, 7, string.Empty, (int)GlyphRenderMode.SDFAA);
 
             // Not sure if this is still necessary in newer versions of Unity.
-            EditorUtility.SetDirty(fontAsset);
+            //EditorUtility.SetDirty(fontAsset);
 
             AssetDatabase.SaveAssets();
         }

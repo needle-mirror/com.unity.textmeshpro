@@ -113,7 +113,7 @@ namespace TMPro
                     vertices[vertexIndex + 3] = br;
 
                     // Update the UV to point to the new sprite
-                    Vector2[] uvs0 = meshInfo.uvs0;
+                    Vector4[] uvs0 = meshInfo.uvs0;
 
                     Vector2 uv0 = new Vector2((float)spriteCharacter.glyph.glyphRect.x / spriteAsset.spriteSheet.width, (float)spriteCharacter.glyph.glyphRect.y / spriteAsset.spriteSheet.height);
                     Vector2 uv1 = new Vector2(uv0.x, (float)(spriteCharacter.glyph.glyphRect.y + spriteCharacter.glyph.glyphRect.height) / spriteAsset.spriteSheet.height);
@@ -127,7 +127,7 @@ namespace TMPro
 
                     // Update the modified vertex attributes
                     meshInfo.mesh.vertices = vertices;
-                    meshInfo.mesh.uv = uvs0;
+                    meshInfo.mesh.SetUVs(0, uvs0);
                     m_TextComponent.UpdateGeometry(meshInfo.mesh, materialIndex);
 
 

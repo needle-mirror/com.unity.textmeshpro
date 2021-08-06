@@ -9,7 +9,7 @@ namespace TMPro
     [RequireComponent(typeof(MeshRenderer))]
     [AddComponentMenu("Mesh/TextMeshPro - Text")]
     [ExecuteAlways]
-    [HelpURL("https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.0")]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.2")]
     public partial class TextMeshPro : TMP_Text, ILayoutElement
     {
         // Public Properties and Serializable Properties
@@ -416,7 +416,7 @@ namespace TMPro
                     mesh.vertices = m_textInfo.meshInfo[i].vertices;
 
                 if ((flags & TMP_VertexDataUpdateFlags.Uv0) == TMP_VertexDataUpdateFlags.Uv0)
-                    mesh.uv = m_textInfo.meshInfo[i].uvs0;
+                    mesh.SetUVs(0, m_textInfo.meshInfo[i].uvs0);
 
                 if ((flags & TMP_VertexDataUpdateFlags.Uv2) == TMP_VertexDataUpdateFlags.Uv2)
                     mesh.uv2 = m_textInfo.meshInfo[i].uvs2;
@@ -456,7 +456,7 @@ namespace TMPro
 
                 //mesh.MarkDynamic();
                 mesh.vertices = m_textInfo.meshInfo[i].vertices;
-                mesh.uv = m_textInfo.meshInfo[i].uvs0;
+                mesh.SetUVs(0, m_textInfo.meshInfo[i].uvs0);
                 mesh.uv2 = m_textInfo.meshInfo[i].uvs2;
                 //mesh.uv4 = m_textInfo.meshInfo[i].uvs4;
                 mesh.colors32 = m_textInfo.meshInfo[i].colors32;
