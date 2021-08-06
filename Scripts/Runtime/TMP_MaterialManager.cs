@@ -605,6 +605,9 @@ namespace TMPro
             float dst_weightNormal = destination.GetFloat(ShaderUtilities.ID_WeightNormal);
             float dst_weightBold = destination.GetFloat(ShaderUtilities.ID_WeightBold);
 
+            // Make sure the same shader is used
+            destination.shader = source.shader;
+
             // Copy all material properties
             destination.CopyPropertiesFromMaterial(source);
 

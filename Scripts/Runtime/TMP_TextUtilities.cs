@@ -2212,6 +2212,9 @@ namespace TMPro
         /// <returns></returns>
         public static int GetHashCode(string s)
         {
+            if (string.IsNullOrEmpty(s))
+                return 0;
+
             int hashCode = 0;
 
             for (int i = 0; i < s.Length; i++)
@@ -2244,6 +2247,21 @@ namespace TMPro
 
             for (int i = 0; i < s.Length; i++)
                 hashCode = (hashCode << 5) + hashCode ^ ToLowerFast(s[i]);
+
+            return hashCode;
+        }
+
+        /// <summary>
+        /// Function which returns a simple hash code from a string converted to uppercase.
+        /// </summary>
+        /// <param name="s">The string from which to compute the hash code.</param>
+        /// <returns>The computed hash code.</returns>
+        public static uint GetHashCodeCaseInSensitive(string s)
+        {
+            uint hashCode = 0;
+
+            for (int i = 0; i < s.Length; i++)
+                hashCode = (hashCode << 5) + hashCode ^ ToUpperFast(s[i]);
 
             return hashCode;
         }

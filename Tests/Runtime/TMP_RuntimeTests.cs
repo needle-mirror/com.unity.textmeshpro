@@ -1,9 +1,8 @@
 ﻿using UnityEngine;
-using UnityEngine.TestTools;
 using NUnit.Framework;
 using System.IO;
-using System.Collections;
 using System.Collections.Generic;
+
 
 namespace TMPro
 {
@@ -18,7 +17,7 @@ namespace TMPro
         // Characters: 104  Spaces: 14  Words: 15  Lines:
         private const string m_TextBlock_01 = "Unity 2017 introduces new features that help teams of artists and developers build experiences together.";
 
-        // Characters: 1500  Spaces: 228  Words: 241 
+        // Characters: 1500  Spaces: 228  Words: 241
         private const string m_TextBlock_02 = "The European languages are members of the same family. Their separate existence is a myth. For science, music, sport, etc, Europe uses the same vocabulary. The languages only differ in their grammar, their pronunciation and their most common words." +
             "Everyone realizes why a new common language would be desirable: one could refuse to pay expensive translators.To achieve this, it would be necessary to have uniform grammar, pronunciation and more common words.If several languages coalesce, the grammar of the resulting language is more simple and regular than that of the individual languages." +
             "The new common language will be more simple and regular than the existing European languages.It will be as simple as Occidental; in fact, it will be Occidental.To an English person, it will seem like simplified English, as a skeptical Cambridge friend of mine told me what Occidental is. The European languages are members of the same family." +
@@ -41,7 +40,7 @@ namespace TMPro
             "Phasellus leo dolor, tempus non, auctor et, hendrerit quis, nisi.Curabitur ligula sapien, tincidunt non, euismod vitae, posuere imperdiet, leo.Maecenas malesuada. Praesent congue erat at massa.Sed cursus turpis vitae tortor.Donec posuere vulputate arcu. Phasellus accumsan cursus velit. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Sed aliquam, nisi quis porttitor congue, elit erat euismod orci, ac placerat dolor lectus quis orci.Phasellus consectetuer vestibulum elit.Aenean tellus metus, bibendum sed, posuere ac, mattis non, nunc.Vestibulum fringilla pede sit amet augue." +
             "In turpis. Pellentesque posuere. Praesent turpis. Aenean posuere, tortor sed cursus feugiat, nunc augue blandit nunc, eu sollicitudin urna dolor sagittis lacus. Donec elit libero, sodales nec, volutpat a, suscipit non, turpis.Nullam sagittis. Suspendisse pulvinar, augue ac venenatis condimentum, sem libero volutpat nibh, nec pellentesque velit pede quis nunc. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce id purus.Ut varius tincidunt libero.Phasellus dolor.Maecenas vestibulum mollis";
 
-        // 
+        //
         private const string m_TextBlock_05 = "This block of text contains <b>bold</b> and <i>italicized</i> characters.";
 
         private const string m_TextBlock_06 = "<align=center><style=H1><#ffffff><u>Multiple<#80f0ff> Alignment</color> per text object</u></color></style></align><line-height=2em>\n" +
@@ -87,7 +86,7 @@ namespace TMPro
         public void Parsing_TextInfo_WordWrapDisabled(int sourceTextIndex, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
             m_TextComponent.text = testStrings[sourceTextIndex];
-            m_TextComponent.enableWordWrapping = false;
+            m_TextComponent.textWrappingMode = TextWrappingModes.NoWrap;
             m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
 
             // Size the RectTransform
@@ -116,7 +115,7 @@ namespace TMPro
         public void Parsing_TextInfo_WordWrapEnabled(int sourceTextIndex, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
             m_TextComponent.text = testStrings[sourceTextIndex];
-            m_TextComponent.enableWordWrapping = true;
+            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
             m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
 
             // Size the RectTransform
@@ -143,7 +142,7 @@ namespace TMPro
         public void Parsing_TextInfo_AlignmentTopJustified(int sourceTextIndex, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
             m_TextComponent.text = testStrings[sourceTextIndex];
-            m_TextComponent.enableWordWrapping = true;
+            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
             m_TextComponent.alignment = TextAlignmentOptions.TopJustified;
 
             // Size the RectTransform
@@ -169,7 +168,7 @@ namespace TMPro
         public void Parsing_TextInfo_RichText(int sourceTextIndex, int characterCount, int spaceCount, int wordCount, int lineCount)
         {
             m_TextComponent.text = testStrings[sourceTextIndex];
-            m_TextComponent.enableWordWrapping = true;
+            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
             m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
 
             // Size the RectTransform

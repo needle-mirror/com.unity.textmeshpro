@@ -350,6 +350,8 @@ namespace TMPro.EditorUtilities
 
             fontAsset.ClearFontAssetData(true);
 
+            TMP_ResourceManager.RebuildFontAssetCache();
+
             TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
         }
 

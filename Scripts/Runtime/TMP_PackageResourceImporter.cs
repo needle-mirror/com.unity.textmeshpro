@@ -8,7 +8,7 @@ using UnityEditor;
 
 namespace TMPro
 {
-    [System.Serializable]
+    [Serializable]
     public class TMP_PackageResourceImporter
     {
         bool m_EssentialResourcesImported;
@@ -228,6 +228,150 @@ namespace TMPro
             EditorWindow editorWindow = this;
 
             Vector2 windowSize = new Vector2(640, 210);
+            editorWindow.minSize = windowSize;
+            editorWindow.maxSize = windowSize;
+        }
+    }
+
+
+    [Serializable]
+    internal class TMP_ShaderPackageImporter
+    {
+        bool m_ShadersImported;
+
+        const string s_TMPShaderPackageGUID = "e02b76aaf840d38469530d159da03749";
+
+        public void OnDestroy() { }
+
+        public void OnGUI()
+        {
+            GUILayout.BeginVertical();
+            {
+                // Display options to import Essential resources
+                GUILayout.BeginVertical(EditorStyles.helpBox);
+                {
+                    //GUILayout.Label("TextMeshPro Resources Update", EditorStyles.boldLabel);
+                    GUILayout.Label("This release of the TMP package includes updated resources.\n\nPlease use the menu options located in \"Window\\TextMeshPro\\...\" to import the updated\n\"TMP Essential Resources\" and \"TMP Examples & Extras\".\n\nAs usual please be sure to backup any of the files and resources that you may have added or modified in the \"Assets\\TextMesh Pro\\...\" folders.", new GUIStyle(EditorStyles.label) { wordWrap = true } );
+                    GUILayout.Space(5f);
+
+                    GUI.enabled = !m_ShadersImported;
+                    // if (GUILayout.Button("Update TMP Shaders"))
+                    // {
+                    //     string packagePath = AssetDatabase.GUIDToAssetPath(s_TMPShaderPackageGUID);
+                    //
+                    //     if (string.IsNullOrEmpty(packagePath))
+                    //         return;
+                    //
+                    //     AssetDatabase.importPackageCompleted += ImportCallback;
+                    //     AssetDatabase.ImportPackage(packagePath, true);
+                    // }
+                    GUILayout.Space(5f);
+                    GUI.enabled = true;
+                }
+                GUILayout.EndVertical();
+            }
+            GUILayout.EndVertical();
+            GUILayout.Space(5f);
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="packageName"></param>
+        void ImportCallback(string packageName)
+        {
+            if (packageName == "TMP Shaders")
+            {
+                m_ShadersImported = true;
+
+                EditorWindow window = TMP_ShaderPackageImporterWindow.importerWindow;
+
+                if (window != null)
+                    window.Close();
+            }
+
+            Debug.Log("[" + packageName + "] have been imported.");
+
+            AssetDatabase.importPackageCompleted -= ImportCallback;
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="interactive"></param>
+        internal static void ImportShaders(bool interactive)
+        {
+            string packagePath = AssetDatabase.GUIDToAssetPath(s_TMPShaderPackageGUID);
+
+            if (string.IsNullOrEmpty(packagePath))
+                return;
+
+            AssetDatabase.ImportPackage(packagePath, interactive);
+        }
+    }
+
+
+    internal class TMP_ShaderPackageImporterWindow : EditorWindow
+    {
+        [SerializeField]
+        TMP_ShaderPackageImporter m_ResourceImporter;
+
+        internal static TMP_ShaderPackageImporterWindow importerWindow;
+
+        public static void ShowPackageImporterWindow()
+        {
+            if (importerWindow == null)
+            {
+                importerWindow = GetWindow<TMP_ShaderPackageImporterWindow>(true, "TextMeshPro Resources Update", true);
+            }
+        }
+
+        void OnEnable()
+        {
+            // Set Editor Window Size
+            SetEditorWindowSize();
+
+            if (m_ResourceImporter == null)
+                m_ResourceImporter = new TMP_ShaderPackageImporter();
+        }
+
+        void OnDestroy()
+        {
+            m_ResourceImporter.OnDestroy();
+        }
+
+        void OnGUI()
+        {
+            Rect p = position;
+
+            if (p.x < 10)
+            {
+                p.x = 10;
+                position = p;
+            }
+
+            if (p.y < 190)
+            {
+                p.y = 190;
+                position = p;
+            }
+
+            m_ResourceImporter.OnGUI();
+        }
+
+        void OnInspectorUpdate()
+        {
+            Repaint();
+        }
+
+        /// <summary>
+        /// Limits the minimum size of the editor window.
+        /// </summary>
+        void SetEditorWindowSize()
+        {
+            EditorWindow editorWindow = this;
+
+            Vector2 windowSize = new Vector2(640, 117);
             editorWindow.minSize = windowSize;
             editorWindow.maxSize = windowSize;
         }

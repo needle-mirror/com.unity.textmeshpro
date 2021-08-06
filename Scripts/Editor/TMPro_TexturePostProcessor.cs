@@ -13,6 +13,8 @@ namespace TMPro.EditorUtilities
     {
         private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
+            bool textureImported = false;
+
             foreach (var asset in importedAssets)
             {
                 // Return if imported asset path is outside of the project.
@@ -28,19 +30,28 @@ namespace TMPro.EditorUtilities
                     // Only refresh font asset definition if font asset was previously initialized.
                     if (fontAsset != null && fontAsset.m_CharacterLookupDictionary != null)
                         TMP_EditorResourceManager.RegisterFontAssetForDefinitionRefresh(fontAsset);
+
+                    continue;
                 }
 
                 if (assetType == typeof(Texture2D))
-                {
-                    Texture2D tex = AssetDatabase.LoadAssetAtPath(asset, typeof(Texture2D)) as Texture2D;
-
-                    if (tex == null)
-                        continue;
-
-                    TMPro_EventManager.ON_SPRITE_ASSET_PROPERTY_CHANGED(true, tex);
-                    Resources.UnloadAsset(tex);
-                }
+                    textureImported = true;
             }
+
+            // If textures were imported, issue callback to any potential text objects that might require updating.
+            if (textureImported)
+                TMPro_EventManager.ON_SPRITE_ASSET_PROPERTY_CHANGED(true, null);
+        }
+    }
+
+    internal class TMP_FontAssetPostProcessor : UnityEditor.AssetModificationProcessor
+    {
+        static AssetDeleteResult OnWillDeleteAsset(string path, RemoveAssetOptions opt)
+        {
+            if (AssetDatabase.GetMainAssetTypeAtPath(path) == typeof(TMP_FontAsset))
+                TMP_ResourceManager.RebuildFontAssetCache();
+
+            return AssetDeleteResult.DidNotDelete;
         }
     }
 }

@@ -73,7 +73,7 @@ namespace TMPro.EditorUtilities
             m_DescentLineProperty = m_FaceInfoProperty.FindPropertyRelative("m_DescentLine");
 
             m_spriteAtlas_prop = serializedObject.FindProperty("spriteSheet");
-            m_material_prop = serializedObject.FindProperty("material");
+            m_material_prop = serializedObject.FindProperty("m_Material");
             m_SpriteCharacterTableProperty = serializedObject.FindProperty("m_SpriteCharacterTable");
             m_SpriteGlyphTableProperty = serializedObject.FindProperty("m_SpriteGlyphTable");
 
@@ -648,7 +648,10 @@ namespace TMPro.EditorUtilities
             if (serializedObject.ApplyModifiedProperties() || evt_cmd == k_UndoRedo || isAssetDirty)
             {
                 if (m_SpriteAsset.m_IsSpriteAssetLookupTablesDirty || evt_cmd == k_UndoRedo)
+                {
                     m_SpriteAsset.UpdateLookupTables();
+                    TMP_ResourceManager.RebuildFontAssetCache();
+                }
 
                 TMPro_EventManager.ON_SPRITE_ASSET_PROPERTY_CHANGED(true, m_SpriteAsset);
 

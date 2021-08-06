@@ -182,9 +182,8 @@ namespace TMPro
             TMP_InputField inputField = root.AddComponent<TMP_InputField>();
             SetDefaultColorTransitionValues(inputField);
 
-            // Use UI.Mask for Unity 5.0 - 5.1 and 2D RectMask for Unity 5.2 and up
             RectMask2D rectMask = textArea.AddComponent<RectMask2D>();
-            #if UNITY_2019_4_OR_NEWER && !UNITY_2019_4_1 && !UNITY_2019_4_2 && !UNITY_2019_4_3 && !UNITY_2019_4_4 && !UNITY_2019_4_5 && !UNITY_2019_4_6 && !UNITY_2019_4_7 && !UNITY_2019_4_8 && !UNITY_2019_4_9 && !UNITY_2019_4_10 && !UNITY_2019_4_11
+            #if UNITY_2019_4_OR_NEWER
             rectMask.padding = new Vector4(-8, -5, -8, -5);
             #endif
 
@@ -198,7 +197,7 @@ namespace TMPro
 
             TextMeshProUGUI text = childText.AddComponent<TextMeshProUGUI>();
             text.text = "";
-            text.enableWordWrapping = false;
+            text.textWrappingMode = TextWrappingModes.NoWrap;
             text.extraPadding = true;
             text.richText = true;
             SetDefaultTextValues(text);
@@ -207,7 +206,7 @@ namespace TMPro
             placeholder.text = "Enter text...";
             placeholder.fontSize = 14;
             placeholder.fontStyle = FontStyles.Italic;
-            placeholder.enableWordWrapping = false;
+            placeholder.textWrappingMode = TextWrappingModes.NoWrap;
             placeholder.extraPadding = true;
 
             // Make placeholder color half as opaque as normal text color.

@@ -11,6 +11,7 @@
         public int characterCount;
         public int visibleCharacterCount;
         public int spaceCount;
+        public int visibleSpaceCount;
         public int wordCount;
         public int firstCharacterIndex;
         public int firstVisibleCharacterIndex;

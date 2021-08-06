@@ -1,13 +1,46 @@
-﻿#if UNITY_EDITOR
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.TextCore.LowLevel;
 
 
 namespace TMPro
 {
-    public class TMP_EditorResourceManager
+    static class EditorEventCallbacks
+    {
+        [InitializeOnLoadMethod]
+        internal static void InitializeFontAssetResourceChangeCallBacks()
+        {
+            TMP_FontAsset.RegisterResourceForUpdate += TMP_EditorResourceManager.RegisterResourceForUpdate;
+            TMP_FontAsset.RegisterResourceForReimport += TMP_EditorResourceManager.RegisterResourceForReimport;
+            TMP_FontAsset.OnFontAssetTextureChanged += TMP_EditorResourceManager.AddTextureToAsset;
+            TMP_FontAsset.SetAtlasTextureIsReadable +=  FontEngineEditorUtilities.SetAtlasTextureIsReadable;
+            TMP_FontAsset.GetSourceFontRef += TMP_EditorResourceManager.GetSourceFontRef;
+            TMP_FontAsset.SetSourceFontGUID += TMP_EditorResourceManager.SetSourceFontGUID;
+
+            // Callback to handle clearing dynamic font asset data when closing the Editor
+            EditorApplication.quitting += () =>
+            {
+                // Find all font assets in the project
+                string searchPattern = "t:TMP_FontAsset";
+                string[] fontAssetGUIDs = AssetDatabase.FindAssets(searchPattern);
+
+                for (int i = 0; i < fontAssetGUIDs.Length; i++)
+                {
+                    string fontAssetPath = AssetDatabase.GUIDToAssetPath(fontAssetGUIDs[i]);
+                    TMP_FontAsset fontAsset = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(fontAssetPath);
+
+                    if (fontAsset != null && (fontAsset.atlasPopulationMode == AtlasPopulationMode.Dynamic || fontAsset.atlasPopulationMode == AtlasPopulationMode.DynamicOS) && fontAsset.clearDynamicDataOnBuild && fontAsset.atlasTexture.width != 0)
+                    {
+                        Debug.Log("Clearing [" + fontAsset.name + "] dynamic font asset data.");
+                        fontAsset.ClearFontAssetDataInternal();
+                    }
+                }
+            };
+        }
+    }
+
+    internal class TMP_EditorResourceManager
     {
         private static TMP_EditorResourceManager s_Instance;
 
@@ -23,7 +56,7 @@ namespace TMPro
         /// <summary>
         /// Get a singleton instance of the manager.
         /// </summary>
-        public static TMP_EditorResourceManager instance
+        internal static TMP_EditorResourceManager instance
         {
             get
             {
@@ -63,6 +96,10 @@ namespace TMPro
         /// <param name="obj"></param>
         internal static void RegisterResourceForReimport(Object obj)
         {
+            // Return if referenced object is not a persistent asset
+            if (!EditorUtility.IsPersistent(obj))
+                return;
+
             instance.InternalRegisterResourceForReimport(obj);
         }
 
@@ -80,9 +117,13 @@ namespace TMPro
         /// <summary>
         /// Register resource to be updated.
         /// </summary>
-        /// <param name="textObject"></param>
+        /// <param name="obj"></param>
         internal static void RegisterResourceForUpdate(Object obj)
         {
+            // Return if referenced object is not a persistent asset
+            if (!EditorUtility.IsPersistent(obj))
+                return;
+
             instance.InternalRegisterResourceForUpdate(obj);
         }
 
@@ -117,6 +158,44 @@ namespace TMPro
             m_FontAssetDefinitionRefreshQueue.Add(fontAsset);
         }
 
+        /// <summary>
+        /// Add texture as sub asset to the referenced object.
+        /// </summary>
+        /// <param name="tex">The texture to be added as sub object.</param>
+        /// <param name="obj">The object to which this texture sub object will be added.</param>
+        internal static void AddTextureToAsset(Texture tex, Object obj)
+        {
+            // Return if referenced object is not a persistent asset
+            if (!EditorUtility.IsPersistent(obj))
+                return;
+
+            if (tex != null)
+                AssetDatabase.AddObjectToAsset(tex, obj);
+
+            RegisterResourceForReimport(obj);
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="guid"></param>
+        /// <returns></returns>
+        internal static Font GetSourceFontRef(string guid)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            return AssetDatabase.LoadAssetAtPath<Font>(path);
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="font"></param>
+        /// <returns></returns>
+        internal static string SetSourceFontGUID(Font font)
+        {
+            return AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(font));
+        }
+
         void DoPostRenderUpdates()
         {
             // Handle objects that need updating
@@ -127,7 +206,7 @@ namespace TMPro
                 Object obj = m_ObjectUpdateQueue[i];
                 if (obj != null)
                 {
-                    EditorUtility.SetDirty(obj);
+                    //EditorUtility.SetDirty(obj);
                 }
             }
 
@@ -148,7 +227,11 @@ namespace TMPro
                 Object obj = m_ObjectReImportQueue[i];
                 if (obj != null)
                 {
-                    AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(obj));
+                    string assetPath = AssetDatabase.GetAssetPath(obj);
+
+                    // Exclude Assets not located in the project
+                    if (assetPath.StartsWith("Assets/", System.StringComparison.OrdinalIgnoreCase))
+                        AssetDatabase.ImportAsset(assetPath);
                 }
             }
 
@@ -181,4 +264,3 @@ namespace TMPro
         }
     }
 }
-#endif

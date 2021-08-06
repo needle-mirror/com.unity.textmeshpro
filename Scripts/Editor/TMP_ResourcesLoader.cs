@@ -1,10 +1,54 @@
-﻿using UnityEditor;
+﻿using System.Collections;
+using UnityEditor;
 using UnityEngine;
-using System.Collections;
+
 
 namespace TMPro.EditorUtilities
 {
+    /*
+    [InitializeOnLoad]
+    class EssentialResourcesManager
+    {
+        private const string s_TMPShaderIncludeGUID = "407bc68d299748449bbf7f48ee690f8d";
+        const string k_EssentialResourcesShaderVersionCheckKey = "TMP.EssentialResources.ShaderVersionCheck";
 
+        static EssentialResourcesManager()
+        {
+            bool shaderSearched = SessionState.GetBool(k_EssentialResourcesShaderVersionCheckKey, false);
+
+            if (!EditorApplication.isPlayingOrWillChangePlaymode && !shaderSearched)
+                CheckShaderVersions();
+        }
+
+        static void CheckShaderVersions()
+        {
+            // Get path to TMP shader include file.
+            string assetPath = AssetDatabase.GUIDToAssetPath(s_TMPShaderIncludeGUID);
+
+            if (string.IsNullOrEmpty(assetPath))
+                return;
+
+            AssetImporter importer = AssetImporter.GetAtPath(assetPath);
+
+            if (importer != null && string.IsNullOrEmpty(importer.userData))
+            {
+                // Show Shader Import Window
+                TMP_EditorCoroutine.StartCoroutine(ShowShaderPackageImporterWindow());
+            }
+
+            SessionState.SetBool(k_EssentialResourcesShaderVersionCheckKey, true);
+        }
+
+        static IEnumerator ShowShaderPackageImporterWindow()
+        {
+            yield return new WaitForSeconds(5.0f);
+
+            TMP_ShaderPackageImporterWindow.ShowPackageImporterWindow();
+        }
+    }
+    */
+
+    /*
     //[InitializeOnLoad]
     class TMP_ResourcesLoader
     {
@@ -30,7 +74,6 @@ namespace TMPro.EditorUtilities
             //TMPro.TMP_Settings.LoadDefaultSettings();
             //TMPro.TMP_StyleSheet.LoadDefaultStyleSheet();
         }
-
 
 
         //[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -65,4 +108,5 @@ namespace TMPro.EditorUtilities
     //        }
     //    }
     //}
+    */
 }

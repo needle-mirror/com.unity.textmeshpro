@@ -80,7 +80,7 @@ namespace TMPro
         /// <summary>
         /// Function to clear the counters of the text object.
         /// </summary>
-        public void Clear()
+        internal void Clear()
         {
             characterCount = 0;
             spaceCount = 0;
@@ -169,10 +169,10 @@ namespace TMPro
         /// <summary>
         /// Function to clear and initialize the lineInfo array.
         /// </summary>
-        public void ClearLineInfo()
+        internal void ClearLineInfo()
         {
             if (this.lineInfo == null)
-                this.lineInfo = new TMP_LineInfo[2];
+                this.lineInfo = new TMP_LineInfo[1];
 
             int length = this.lineInfo.Length;
 
@@ -182,19 +182,21 @@ namespace TMPro
                 this.lineInfo[i].spaceCount = 0;
                 this.lineInfo[i].wordCount = 0;
                 this.lineInfo[i].controlCharacterCount = 0;
-                this.lineInfo[i].width = 0;
+
+                this.lineInfo[i].visibleCharacterCount = 0;
+                this.lineInfo[i].visibleSpaceCount = 0;
 
                 this.lineInfo[i].ascender = k_InfinityVectorNegative.x;
+                this.lineInfo[i].baseline = 0;
                 this.lineInfo[i].descender = k_InfinityVectorPositive.x;
+                this.lineInfo[i].maxAdvance = 0;
 
                 this.lineInfo[i].marginLeft = 0;
                 this.lineInfo[i].marginRight = 0;
 
                 this.lineInfo[i].lineExtents.min = k_InfinityVectorPositive;
                 this.lineInfo[i].lineExtents.max = k_InfinityVectorNegative;
-
-                this.lineInfo[i].maxAdvance = 0;
-                //this.lineInfo[i].maxScale = 0;
+                this.lineInfo[i].width = 0;
             }
         }
 
