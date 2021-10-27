@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿/*
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 
 
 namespace TMPro
@@ -44,9 +46,9 @@ namespace TMPro
             public int familyNameHashCode;
             public int styleNameHashCode;
             public long familyNameAndStyleHashCode;
-            public readonly TMP_FontAsset fontAsset;
+            public readonly FontAsset fontAsset;
 
-            public FontAssetRef(int nameHashCode, int familyNameHashCode, int styleNameHashCode, TMP_FontAsset fontAsset)
+            public FontAssetRef(int nameHashCode, int familyNameHashCode, int styleNameHashCode, FontAsset fontAsset)
             {
                 this.nameHashCode = nameHashCode;
                 this.familyNameHashCode = familyNameHashCode;
@@ -57,8 +59,8 @@ namespace TMPro
         }
 
         static readonly Dictionary<int, FontAssetRef> s_FontAssetReferences = new Dictionary<int, FontAssetRef>();
-        static readonly Dictionary<int, TMP_FontAsset> s_FontAssetNameReferenceLookup = new Dictionary<int, TMP_FontAsset>();
-        static readonly Dictionary<long, TMP_FontAsset> s_FontAssetFamilyNameAndStyleReferenceLookup = new Dictionary<long, TMP_FontAsset>();
+        static readonly Dictionary<int, FontAsset> s_FontAssetNameReferenceLookup = new Dictionary<int, FontAsset>();
+        static readonly Dictionary<long, FontAsset> s_FontAssetFamilyNameAndStyleReferenceLookup = new Dictionary<long, FontAsset>();
         static readonly List<int> s_FontAssetRemovalList = new List<int>(16);
 
         static readonly int k_RegularStyleHashCode = TMP_TextUtilities.GetHashCode("Regular");
@@ -67,73 +69,21 @@ namespace TMPro
         /// Add font asset to resource manager.
         /// </summary>
         /// <param name="fontAsset">Font asset to be added to the resource manager.</param>
-        public static void AddFontAsset(TMP_FontAsset fontAsset)
+        //[System.Obsolete("AddFontAsset() has been deprecated. Use TextResourceManager.AddFontAsset() instead. (UnityUpgradable) -> TextResourceManager.AddFontAsset()")]
+        public static void AddFontAsset(FontAsset fontAsset)
         {
-            int instanceID = fontAsset.instanceID;
-
-            if (!s_FontAssetReferences.ContainsKey(instanceID))
-            {
-                FontAssetRef fontAssetRef = new FontAssetRef(fontAsset.hashCode, fontAsset.familyNameHashCode, fontAsset.styleNameHashCode, fontAsset);
-                s_FontAssetReferences.Add(instanceID, fontAssetRef);
-
-                // Add font asset to name reference lookup
-                if (!s_FontAssetNameReferenceLookup.ContainsKey(fontAssetRef.nameHashCode))
-                    s_FontAssetNameReferenceLookup.Add(fontAssetRef.nameHashCode, fontAsset);
-
-                // Add font asset to family name and style lookup
-                if (!s_FontAssetFamilyNameAndStyleReferenceLookup.ContainsKey(fontAssetRef.familyNameAndStyleHashCode))
-                    s_FontAssetFamilyNameAndStyleReferenceLookup.Add(fontAssetRef.familyNameAndStyleHashCode, fontAsset);
-            }
-            else
-            {
-                FontAssetRef fontAssetRef = s_FontAssetReferences[instanceID];
-
-                // Return if font asset name, family and style name have not changed.
-                if (fontAssetRef.nameHashCode == fontAsset.hashCode && fontAssetRef.familyNameHashCode == fontAsset.familyNameHashCode && fontAssetRef.styleNameHashCode == fontAsset.styleNameHashCode)
-                    return;
-
-                // Check if font asset name has changed
-                if (fontAssetRef.nameHashCode != fontAsset.hashCode)
-                {
-                    s_FontAssetNameReferenceLookup.Remove(fontAssetRef.nameHashCode);
-
-                    fontAssetRef.nameHashCode = fontAsset.hashCode;
-
-                    if (!s_FontAssetNameReferenceLookup.ContainsKey(fontAssetRef.nameHashCode))
-                        s_FontAssetNameReferenceLookup.Add(fontAssetRef.nameHashCode, fontAsset);
-                }
-
-                // Check if family or style name has changed
-                if (fontAssetRef.familyNameHashCode != fontAsset.familyNameHashCode || fontAssetRef.styleNameHashCode != fontAsset.styleNameHashCode)
-                {
-                    s_FontAssetFamilyNameAndStyleReferenceLookup.Remove(fontAssetRef.familyNameAndStyleHashCode);
-
-                    fontAssetRef.familyNameHashCode = fontAsset.familyNameHashCode;
-                    fontAssetRef.styleNameHashCode = fontAsset.styleNameHashCode;
-                    fontAssetRef.familyNameAndStyleHashCode = (long) fontAsset.styleNameHashCode << 32 | (uint) fontAsset.familyNameHashCode;
-
-                    if (!s_FontAssetFamilyNameAndStyleReferenceLookup.ContainsKey(fontAssetRef.familyNameAndStyleHashCode))
-                        s_FontAssetFamilyNameAndStyleReferenceLookup.Add(fontAssetRef.familyNameAndStyleHashCode, fontAsset);
-                }
-
-                s_FontAssetReferences[instanceID] = fontAssetRef;
-            }
+            // Obsolete. Use TextResourceManager.AddFontAsset() instead.
         }
 
         /// <summary>
         /// Remove font asset from resource manager.
         /// </summary>
         /// <param name="fontAsset">Font asset to be removed from the resource manager.</param>
-        // public static void RemoveFontAsset(TMP_FontAsset fontAsset)
-        // {
-        //     int hashCode = fontAsset.hashCode;
-        //
-        //     if (s_FontAssetNameReferenceLookup.ContainsKey(hashCode))
-        //     {
-        //         s_FontAssetNameReferenceLookup.Remove(hashCode);
-        //         s_FontAssetReferences.Remove(fontAsset);
-        //     }
-        // }
+        //[System.Obsolete("RemovedFontAsset() has been deprecated. Use TextResourceManager.RemoveFontAsset() instead. (UnityUpgradable) -> TextResourceManager.RemoveFontAsset()")]
+        public static void RemoveFontAsset(FontAsset fontAsset)
+        {
+            // Obsolete. Use TextResourceManager.RemoveFontAsset() instead.
+        }
 
         /// <summary>
         /// Try getting a reference to the font asset using the hash code calculated from its file name.
@@ -141,7 +91,7 @@ namespace TMPro
         /// <param name="nameHashcode"></param>
         /// <param name="fontAsset"></param>
         /// <returns></returns>
-        internal static bool TryGetFontAssetByName(int nameHashcode, out TMP_FontAsset fontAsset)
+        internal static bool TryGetFontAssetByName(int nameHashcode, out FontAsset fontAsset)
         {
             fontAsset = null;
 
@@ -155,7 +105,7 @@ namespace TMPro
         /// <param name="styleNameHashCode"></param>
         /// <param name="fontAsset"></param>
         /// <returns></returns>
-        internal static bool TryGetFontAssetByFamilyName(int familyNameHashCode, int styleNameHashCode, out TMP_FontAsset fontAsset)
+        internal static bool TryGetFontAssetByFamilyName(int familyNameHashCode, int styleNameHashCode, out FontAsset fontAsset)
         {
             fontAsset = null;
 
@@ -177,7 +127,7 @@ namespace TMPro
             {
                 FontAssetRef fontAssetRef = pair.Value;
 
-                TMP_FontAsset fontAsset = fontAssetRef.fontAsset;
+                FontAsset fontAsset = fontAssetRef.fontAsset;
 
                 if (fontAsset == null)
                 {
@@ -201,19 +151,8 @@ namespace TMPro
             }
             s_FontAssetRemovalList.Clear();
 
-            TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, null);
+            TextEventManager.ON_FONT_PROPERTY_CHANGED(true, null);
         }
-
-        // internal static void RebuildFontAssetCache(int instanceID)
-        // {
-        //     // Iterate over loaded font assets to update affected font assets
-        //     for (int i = 0; i < s_FontAssetReferences.Count; i++)
-        //     {
-        //         TMP_FontAsset fontAsset = s_FontAssetReferences[i];
-        //
-        //         if (fontAsset.FallbackSearchQueryLookup.Contains(instanceID))
-        //             fontAsset.ReadFontAssetDefinition();
-        //     }
-        // }
     }
 }
+*/

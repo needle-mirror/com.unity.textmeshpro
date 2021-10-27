@@ -2,15 +2,13 @@
 
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Threading;
-using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 using UnityEngine.UI;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 
 
 namespace TMPro
@@ -445,6 +443,10 @@ namespace TMPro
                         case RuntimePlatform.PS5:
                         #endif
                     #endif
+                    #if UNITY_2019_4_OR_NEWER
+                    case RuntimePlatform.GameCoreXboxOne:
+                    case RuntimePlatform.GameCoreXboxSeries:
+                    #endif
                     case RuntimePlatform.Switch:
                         return m_HideSoftKeyboard;
                     default:
@@ -469,6 +471,10 @@ namespace TMPro
                         case RuntimePlatform.PS5:
                         #endif
                     #endif
+                    #if UNITY_2019_4_OR_NEWER
+                    case RuntimePlatform.GameCoreXboxOne:
+                    case RuntimePlatform.GameCoreXboxSeries:
+                    #endif
                     case RuntimePlatform.Switch:
                         SetPropertyUtility.SetStruct(ref m_HideSoftKeyboard, value);
                         break;
@@ -490,6 +496,7 @@ namespace TMPro
             switch (Application.platform)
             {
                 case RuntimePlatform.Android:
+                    return m_TouchKeyboardAllowsInPlaceEditing;
                 case RuntimePlatform.IPhonePlayer:
                 case RuntimePlatform.tvOS:
                 #if UNITY_2020_2_OR_NEWER
@@ -497,6 +504,10 @@ namespace TMPro
                     #if !(UNITY_2020_2_1 || UNITY_2020_2_2)
                     case RuntimePlatform.PS5:
                     #endif
+                #endif
+                #if UNITY_2019_4_OR_NEWER
+                case RuntimePlatform.GameCoreXboxOne:
+                case RuntimePlatform.GameCoreXboxSeries:
                 #endif
                 case RuntimePlatform.Switch:
                     return false;
@@ -727,7 +738,7 @@ namespace TMPro
         /// <summary>
         /// Sets the Font Asset on both Placeholder and Input child objects.
         /// </summary>
-        public TMP_FontAsset fontAsset
+        public FontAsset fontAsset
         {
             get { return m_GlobalFontAsset; }
             set
@@ -740,7 +751,7 @@ namespace TMPro
             }
         }
         [SerializeField]
-        protected TMP_FontAsset m_GlobalFontAsset;
+        protected FontAsset m_GlobalFontAsset;
 
         /// <summary>
         /// Determines if the whole text will be selected when focused.
@@ -1131,7 +1142,7 @@ namespace TMPro
             }
 
             // Subscribe to event fired when text object has been regenerated.
-            TMPro_EventManager.TEXT_CHANGED_EVENT.Add(ON_TEXT_CHANGED);
+            TextEventManager.TEXT_CHANGED_EVENT.Add(ON_TEXT_CHANGED);
         }
 
         protected override void OnDisable()
@@ -1161,7 +1172,7 @@ namespace TMPro
             m_Mesh = null;
 
             // Unsubscribe to event triggered when text object has been regenerated
-            TMPro_EventManager.TEXT_CHANGED_EVENT.Remove(ON_TEXT_CHANGED);
+            TextEventManager.TEXT_CHANGED_EVENT.Remove(ON_TEXT_CHANGED);
 
             base.OnDisable();
         }
@@ -1418,8 +1429,11 @@ namespace TMPro
 
         private bool InPlaceEditing()
         {
+            if (m_TouchKeyboardAllowsInPlaceEditing)
+                return true;
+
             if (Application.platform == RuntimePlatform.WSAPlayerX86 || Application.platform == RuntimePlatform.WSAPlayerX64 || Application.platform == RuntimePlatform.WSAPlayerARM)
-                return !TouchScreenKeyboard.isSupported || m_TouchKeyboardAllowsInPlaceEditing;
+                return !TouchScreenKeyboard.isSupported;
 
             if (TouchScreenKeyboard.isSupported && shouldHideSoftKeyboard)
                 return true;
@@ -1428,6 +1442,32 @@ namespace TMPro
                 return false;
 
             return true;
+        }
+
+        // In-place editing can change state if a hardware keyboard becomes available or is hidden while the input field is activated.
+        private bool InPlaceEditingChanged()
+        {
+            #if UNITY_2019_1_OR_NEWER
+                return m_TouchKeyboardAllowsInPlaceEditing != TouchScreenKeyboard.isInPlaceEditingAllowed;
+            #else
+                return false;
+            #endif
+        }
+
+        // Returns true if the TouchScreenKeyboard should be used. On Android and Chrome OS, we only want to use the
+        // TouchScreenKeyboard if in-place editing is not allowed (i.e. when we do not have a hardware keyboard available).
+        private bool TouchScreenKeyboardShouldBeUsed()
+        {
+            RuntimePlatform platform = Application.platform;
+            switch (platform)
+            {
+                #if UNITY_2019_1_OR_NEWER
+                case RuntimePlatform.Android:
+                    return !TouchScreenKeyboard.isInPlaceEditingAllowed;
+                #endif
+                default:
+                    return TouchScreenKeyboard.isSupported;
+            }
         }
 
         void UpdateStringPositionFromKeyboard()
@@ -1486,6 +1526,11 @@ namespace TMPro
                 // Reset as we are already activated.
                 m_ShouldActivateNextUpdate = false;
             }
+
+            // If the device's state changed in a way that affects whether we should use a touchscreen keyboard or not,
+            // then deactivate the input field.
+            if (isFocused && InPlaceEditingChanged())
+                DeactivateInputField();
 
             // Handle double click to reset / deselect Input Field when ResetOnActivation is false.
             if (!isFocused && m_SelectionStillActive)
@@ -3705,7 +3750,7 @@ namespace TMPro
 
             // Compute the width of the caret which is based on the line height of the primary font asset.
             //float width = m_CaretWidth;
-            TMP_FontAsset fontAsset = m_TextComponent.font;
+            FontAsset fontAsset = m_TextComponent.font;
             float baseScale = (m_TextComponent.fontSize / fontAsset.m_FaceInfo.pointSize * fontAsset.m_FaceInfo.scale);
             float width = m_CaretWidth * fontAsset.faceInfo.lineHeight * baseScale * 0.05f;
 
@@ -4129,7 +4174,13 @@ namespace TMPro
             if (EventSystem.current.currentSelectedGameObject != gameObject)
                 EventSystem.current.SetSelectedGameObject(gameObject);
 
-            if (TouchScreenKeyboard.isSupported && shouldHideSoftKeyboard == false)
+            // Cache the value of isInPlaceEditingAllowed, because on UWP this involves calling into native code
+            // The value only needs to be updated once when the TouchKeyboard is opened.
+            #if UNITY_2019_1_OR_NEWER
+            m_TouchKeyboardAllowsInPlaceEditing = TouchScreenKeyboard.isInPlaceEditingAllowed;
+            #endif
+
+            if (TouchScreenKeyboardShouldBeUsed() && shouldHideSoftKeyboard == false)
             {
                 if (inputSystem != null && inputSystem.touchSupported)
                 {
@@ -4153,16 +4204,10 @@ namespace TMPro
                     }
                     //}
                 }
-
-                // Cache the value of isInPlaceEditingAllowed, because on UWP this involves calling into native code
-                // The value only needs to be updated once when the TouchKeyboard is opened.
-                #if UNITY_2019_1_OR_NEWER
-                m_TouchKeyboardAllowsInPlaceEditing = TouchScreenKeyboard.isInPlaceEditingAllowed;
-                #endif
             }
             else
             {
-                if (!TouchScreenKeyboard.isSupported && m_ReadOnly == false && inputSystem != null)
+                if (!TouchScreenKeyboardShouldBeUsed() && m_ReadOnly == false && inputSystem != null)
                     inputSystem.imeCompositionMode = IMECompositionMode.On;
 
                 OnFocus();
@@ -4240,7 +4285,7 @@ namespace TMPro
 
                 m_SelectionStillActive = true;
 
-                if (m_ResetOnDeActivation || m_ReleaseSelection)
+                if (m_ResetOnDeActivation || m_ReleaseSelection || clearSelection)
                 {
                     //m_StringPosition = m_StringSelectPosition = 0;
                     //m_CaretPosition = m_CaretSelectPosition = 0;
@@ -4532,7 +4577,7 @@ namespace TMPro
         /// Function to conveniently set the Font Asset of both Placeholder and Input Field text object.
         /// </summary>
         /// <param name="fontAsset"></param>
-        public void SetGlobalFontAsset(TMP_FontAsset fontAsset)
+        public void SetGlobalFontAsset(FontAsset fontAsset)
         {
             TMP_Text placeholderTextComponent = m_Placeholder as TMP_Text;
 

@@ -1,7 +1,7 @@
-﻿using UnityEngine;
+﻿using System.IO;
+using UnityEngine;
+using UnityEngine.TextCore.Text;
 using UnityEditor;
-using System.IO;
-using System.Collections;
 
 
 namespace TMPro.EditorUtilities
@@ -303,18 +303,16 @@ namespace TMPro.EditorUtilities
 
                 mat.SetTexture(ShaderUtilities.ID_MainTex, m_copiedTexture);
             }
-
-            //DestroyImmediate(m_copiedAtlasProperties);
         }
         #endif
 
-
+        /*
         // Context Menus for TMPro Font Assets
         //This function is used for debugging and fixing potentially broken font atlas links.
         [MenuItem("CONTEXT/TMP_FontAsset/Extract Atlas", false, 2100)]
         static void ExtractAtlas(MenuCommand command)
         {
-            TMP_FontAsset font = command.context as TMP_FontAsset;
+            FontAsset font = command.context as FontAsset;
 
             string fontPath = AssetDatabase.GetAssetPath(font);
             string texPath = Path.GetDirectoryName(fontPath) + "/" + Path.GetFileNameWithoutExtension(fontPath) + " Atlas.png";
@@ -339,7 +337,9 @@ namespace TMPro.EditorUtilities
             AssetDatabase.Refresh();
             DestroyImmediate(tex);
         }
+        */
 
+        /*
         /// <summary>
         ///
         /// </summary>
@@ -347,23 +347,11 @@ namespace TMPro.EditorUtilities
         [MenuItem("CONTEXT/TMP_FontAsset/Update Atlas Texture...", false, 2000)]
         static void RegenerateFontAsset(MenuCommand command)
         {
-            TMP_FontAsset fontAsset = command.context as TMP_FontAsset;
+            FontAsset fontAsset = command.context as FontAsset;
 
             if (fontAsset != null)
             {
                 TMPro_FontAssetCreatorWindow.ShowFontAtlasCreatorWindow(fontAsset);
-            }
-        }
-
-        [MenuItem("CONTEXT/TMP_FontAsset/Force Upgrade To Version 1.1.0...", false, 2010)]
-        static void ForceFontAssetUpgrade(MenuCommand command)
-        {
-            TMP_FontAsset fontAsset = command.context as TMP_FontAsset;
-
-            if (fontAsset != null)
-            {
-                fontAsset.UpgradeFontAsset();
-                TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
             }
         }
 
@@ -381,22 +369,24 @@ namespace TMPro.EditorUtilities
         [MenuItem("CONTEXT/TMP_FontAsset/Reset", false, 100)]
         static void ClearFontAssetData(MenuCommand command)
         {
-            TMP_FontAsset fontAsset = command.context as TMP_FontAsset;
+            FontAsset fontAsset = command.context as FontAsset;
 
-            if (fontAsset != null && Selection.activeObject != fontAsset)
-            {
+            if (fontAsset == null)
+                return;
+
+            if (Selection.activeObject != fontAsset)
                 Selection.activeObject = fontAsset;
-            }
 
             fontAsset.ClearFontAssetData(true);
 
-            TMP_ResourceManager.RebuildFontAssetCache();
+            TextResourceManager.RebuildFontAssetCache();
 
-            TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
+            TextEventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
         }
+        */
 
-
-        [MenuItem("CONTEXT/TrueTypeFontImporter/Create TMP Font Asset...", false, 200)]
+        /*
+        [MenuItem("CONTEXT/TrueTypeFontImporter/Create Font Asset...", false, 200)]
         static void CreateFontAsset(MenuCommand command)
         {
             TrueTypeFontImporter importer = command.context as TrueTypeFontImporter;
@@ -409,5 +399,6 @@ namespace TMPro.EditorUtilities
                     TMPro_FontAssetCreatorWindow.ShowFontAtlasCreatorWindow(sourceFontFile);
             }
         }
+        */
     }
 }

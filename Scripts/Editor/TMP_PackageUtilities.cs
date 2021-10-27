@@ -1,14 +1,14 @@
-﻿using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEditor;
-using System;
-using System.IO;
-using System.Linq;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Threading;
 using TMPro.EditorUtilities;
+using UnityEngine;
+using UnityEngine.TextCore.Text;
+using UnityEditor;
 
 
 namespace TMPro
@@ -396,7 +396,7 @@ namespace TMPro
                             if (guidIndex != -1)
                             {
                                 string guid = line.Substring(guidIndex + 6, 32);
-                                TMP_FontAsset fontAsset = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(AssetDatabase.GUIDToAssetPath(guid));
+                                FontAsset fontAsset = AssetDatabase.LoadAssetAtPath<FontAsset>(AssetDatabase.GUIDToAssetPath(guid));
                                 if (fontAsset != null)
                                 {
                                     samplingPointSize = fontAsset.faceInfo.pointSize;
@@ -623,7 +623,7 @@ namespace TMPro
             typeof(RenderTexture),
             typeof(Shader),
             typeof(TerrainData),
-            typeof(TextAsset),
+            typeof(UnityEngine.TextAsset),
             typeof(Texture2D),
             typeof(Texture2DArray),
             typeof(Texture3D),

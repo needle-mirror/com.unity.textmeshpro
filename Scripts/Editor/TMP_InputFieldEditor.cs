@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.TextCore.Text;
 using UnityEditor;
 using UnityEditor.UI;
 using UnityEditor.AnimatedValues;
@@ -158,7 +158,7 @@ namespace TMPro.EditorUtilities
                 if (EditorGUI.EndChangeCheck())
                 {
                     TMP_InputField inputField = target as TMP_InputField;
-                    inputField.SetGlobalFontAsset(m_GlobalFontAsset.objectReferenceValue as TMP_FontAsset);
+                    inputField.SetGlobalFontAsset(m_GlobalFontAsset.objectReferenceValue as FontAsset);
                 }
 
 

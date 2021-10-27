@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using UnityEngine.TextCore;
+using UnityEngine.TextCore.Text;
 using System;
 
 
@@ -405,7 +405,7 @@ namespace TMPro
         public TMP_TextProcessingStack<Color32> strikethroughColorStack;
         public TMP_TextProcessingStack<Color32> highlightColorStack;
         public TMP_TextProcessingStack<HighlightState> highlightStateStack;
-        public TMP_TextProcessingStack<TMP_ColorGradient> colorGradientStack;
+        public TMP_TextProcessingStack<TextColorGradient> colorGradientStack;
         public TMP_TextProcessingStack<float> sizeStack;
         public TMP_TextProcessingStack<float> indentStack;
         public TMP_TextProcessingStack<FontWeight> fontWeightStack;
@@ -416,8 +416,8 @@ namespace TMPro
         public TMP_TextProcessingStack<HorizontalAlignmentOptions> lineJustificationStack;
         public int spriteAnimationID;
 
-        public TMP_FontAsset currentFontAsset;
-        public TMP_SpriteAsset currentSpriteAsset;
+        public FontAsset currentFontAsset;
+        public SpriteAsset currentSpriteAsset;
         public Material currentMaterial;
         public int currentMaterialIndex;
 
@@ -425,6 +425,9 @@ namespace TMPro
 
         public bool tagNoParsing;
         public bool isNonBreakingSpace;
+
+        public Quaternion fxRotation;
+        public Vector3 fxScale;
     }
 
 

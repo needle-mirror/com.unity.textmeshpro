@@ -9,7 +9,7 @@ namespace TMPro
     [RequireComponent(typeof(MeshRenderer))]
     [AddComponentMenu("Mesh/TextMeshPro - Text")]
     [ExecuteAlways]
-    [HelpURL("https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.2")]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.textmeshpro@4.0")]
     public partial class TextMeshPro : TMP_Text, ILayoutElement
     {
         // Public Properties and Serializable Properties
@@ -78,19 +78,6 @@ namespace TMPro
             get { return m_autoSizeTextContainer; }
 
             set { if (m_autoSizeTextContainer == value) return; m_autoSizeTextContainer = value; if (m_autoSizeTextContainer) { TMP_UpdateManager.RegisterTextElementForLayoutRebuild(this); SetLayoutDirty(); } }
-        }
-
-
-        /// <summary>
-        /// Returns a reference to the Text Container
-        /// </summary>
-        [Obsolete("The TextContainer is now obsolete. Use the RectTransform instead.")]
-        public TextContainer textContainer
-        {
-            get
-            {
-                return null;
-            }
         }
 
 

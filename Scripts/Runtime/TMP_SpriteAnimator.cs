@@ -1,7 +1,8 @@
-﻿using UnityEngine;
-using UnityEngine.TextCore;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.TextCore.Text;
+
 
 namespace TMPro
 {
@@ -39,7 +40,7 @@ namespace TMPro
         }
 
 
-        public void DoSpriteAnimation(int currentCharacter, TMP_SpriteAsset spriteAsset, int start, int end, int framerate)
+        public void DoSpriteAnimation(int currentCharacter, SpriteAsset spriteAsset, int start, int end, int framerate)
         {
             bool isPlaying;
 
@@ -52,7 +53,7 @@ namespace TMPro
         }
 
 
-        IEnumerator DoSpriteAnimationInternal(int currentCharacter, TMP_SpriteAsset spriteAsset, int start, int end, int framerate)
+        IEnumerator DoSpriteAnimationInternal(int currentCharacter, SpriteAsset spriteAsset, int start, int end, int framerate)
         {
             if (m_TextComponent == null) yield break;
 
@@ -85,7 +86,7 @@ namespace TMPro
                     elapsedTime = 0;
 
                     // Return if sprite was truncated or replaced by the Ellipsis character.
-                    char character = m_TextComponent.textInfo.characterInfo[currentCharacter].character;
+                    uint character = m_TextComponent.textInfo.characterInfo[currentCharacter].character;
                     if (character == 0x03 || character == 0x2026)
                     {
                         m_animations.Remove(currentCharacter);
@@ -93,7 +94,7 @@ namespace TMPro
                     }
 
                     // Get a reference to the current sprite
-                    TMP_SpriteCharacter spriteCharacter = spriteAsset.spriteCharacterTable[currentFrame];
+                    SpriteCharacter spriteCharacter = spriteAsset.spriteCharacterTable[currentFrame];
 
                     // Update the vertices for the new sprite
                     Vector3[] vertices = meshInfo.vertices;

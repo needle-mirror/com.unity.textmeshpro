@@ -18,14 +18,19 @@
     "defineConstraints": [],
     "versionDefines": [
         {
-            "name": "com.unity.textcore",
-            "expression": "1.0.0-preview.0",
-            "define": "TEXTCORE_1_0_OR_NEWER"
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "10.7.0",
+            "define": "HDRP_10_7_OR_NEWER"
         },
         {
             "name": "com.unity.render-pipelines.high-definition",
-            "expression": "7.5.0",
-            "define": "HDRP_7_5_OR_NEWER"
+            "expression": "11.0.0",
+            "define": "HDRP_11_OR_NEWER"
+        },
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "12.0.0",
+            "define": "HDRP_12_OR_NEWER"
         }
     ],
     "noEngineReferences": false

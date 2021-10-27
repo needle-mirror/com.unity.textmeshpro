@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
+using UnityEngine.TextCore.Text;
 using UnityEditor;
+
 
 namespace TMPro.EditorUtilities
 {
@@ -142,7 +144,7 @@ namespace TMPro.EditorUtilities
             {
                 // There's been at least one undo/redo since the last time this GUI got constructed.
                 // Maybe the undo/redo was for this material? Assume that is was.
-                TMPro_EventManager.ON_MATERIAL_PROPERTY_CHANGED(true, m_Material);
+                TextEventManager.ON_MATERIAL_PROPERTY_CHANGED(true, m_Material);
             }
 
             s_LastSeenUndoRedoCount = s_UndoRedoCount;
@@ -162,7 +164,7 @@ namespace TMPro.EditorUtilities
             DoGUI();
             if (EditorGUI.EndChangeCheck())
             {
-                TMPro_EventManager.ON_MATERIAL_PROPERTY_CHANGED(true, m_Material);
+                TextEventManager.ON_MATERIAL_PROPERTY_CHANGED(true, m_Material);
             }
 
             DoDragAndDropEnd();
@@ -172,7 +174,7 @@ namespace TMPro.EditorUtilities
         {
             base.AssignNewShaderToMaterial(material, oldShader, newShader);
 
-            TMPro_EventManager.ON_MATERIAL_PROPERTY_CHANGED(true, material);
+            TextEventManager.ON_MATERIAL_PROPERTY_CHANGED(true, material);
         }
 
         /// <summary>Override this method to create the specific shader GUI.</summary>
@@ -291,7 +293,7 @@ namespace TMPro.EditorUtilities
         void DoTexture(string name, string label, System.Type type, bool withTilingOffset = false, string[] speedNames = null)
         {
             float objFieldSize = 60f;
-            bool smallLayout = EditorGUIUtility.currentViewWidth <= 440f && (withTilingOffset || speedNames != null);
+            bool smallLayout = EditorGUIUtility.currentViewWidth <= 330f && (withTilingOffset || speedNames != null);
             float controlHeight = smallLayout ? objFieldSize * 2 : objFieldSize;
 
             MaterialProperty property = FindProperty(name, m_Properties);
@@ -654,7 +656,7 @@ namespace TMPro.EditorUtilities
             else if (evt.type == EventType.DragExited)
             {
                 if (IsNewShader())
-                    TMPro_EventManager.ON_MATERIAL_PROPERTY_CHANGED(true, m_Material);
+                    TextEventManager.ON_MATERIAL_PROPERTY_CHANGED(true, m_Material);
             }
         }
 
@@ -667,7 +669,7 @@ namespace TMPro.EditorUtilities
             }
 
             Texture currentTex = m_Material.GetTexture(ShaderUtilities.ID_MainTex);
-            TMP_FontAsset requiredFontAsset = null;
+            FontAsset requiredFontAsset = null;
             if (droppedTex != currentTex)
             {
                 requiredFontAsset = TMP_EditorUtility.FindMatchingFontAsset(droppedMaterial);
@@ -689,7 +691,7 @@ namespace TMPro.EditorUtilities
                     }
                 }
 
-                TMPro_EventManager.ON_DRAG_AND_DROP_MATERIAL_CHANGED(o, m_Material, droppedMaterial);
+                TextEventManager.ON_DRAG_AND_DROP_MATERIAL_CHANGED(o, m_Material, droppedMaterial);
                 EditorUtility.SetDirty(o);
             }
         }

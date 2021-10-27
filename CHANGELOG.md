@@ -1,6 +1,25 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [4.0.0-pre.1] - 2021-10-27
+### Changes
+- Fixed incorrect character spacing when using the &lt;scale&gt; tag. See [forum post](https://forum.unity.com/threads/inconsistent-spacing-between-characters-when-scaling-width.1156967/) for details.
+- Added Unicode code point range for Arabic Mark glyphs. See [forum post](https://forum.unity.com/threads/no-kerning-pairs-on-tmp-font-import.620587/#post-7428380) for details.
+- Added support for creating multiple Sprite Assets at once by selecting multiple sprite textures and using the "Create - TextMeshPro - Sprite Asset" context menu.
+- Added new class definition type to the glyph class. This new property will only be visible when included in a new release of the Unity Editor.
+- Fixed incorrect update of SDF Scale when text object scale is zero. The previous optimization where SDF Scale only gets updated when lossy scale change exceeds 20% of the previous value remains. See [forum post](https://forum.unity.com/threads/3-2-0-pre-1-text-as-squares-in-rare-case.1164875/) for details.
+- Fixed text objects not being visible when using a mixture of &lt;TextMeshPro&gt; objects with &lg;TextMeshProUGUI&gt; objects in Screenspace Overlay when these objects share the same material preset. See [forum post](https://forum.unity.com/threads/text-missing-on-apple-m1-mac-builds.1021987/) for details.
+- Updated TMP Essential Resources to include updated shaders to address texture mapping issue with one of the SDF shaders.
+- Fixed a few inspector issues related to fallback glyph caching when adding, deleting and reordering fallback font asset lists.
+- Minor change to the Font Asset Creator to prevent setting a face size of zero when using Auto Sizing mode. Case #1368638.
+- Fixed incorrect selection of font face in the Font Asset Creator when using the "Update Atlas Texture" button in the Font Asset inspector. Case #1366468.
+- Fixed incorrect Character Set selection being recalled when using the "Update Atlas Texture" button in the Font Asset inspector. Case #1368517.
+- Fixed scene remaining dirty after undoing a change to a TMP text component which dirtied the scene. Case #1296400
+- Improved Android / Chrome OS hardware keyboard support.
+- Fixed incorrect parsing of invalid UTF16 and UTF32 character sequences. Case #1367695
+- Added new example to the TMP Examples & Extras to showcase new HDRP shaders and inspector.
+- Added support for GameCore platform support in the TMP Input Field.
+
 ## [3.2.0-pre.1] - 2021-08-06
 ## [2.2.0-preview.1] - 2021-08-06
 ## [1.6.0-preview.1] - 2021-08-06

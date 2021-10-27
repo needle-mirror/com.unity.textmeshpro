@@ -1,7 +1,7 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Serialization;
-using System.Collections;
-using System.Collections.Generic;
+using UnityEngine.TextCore.Text;
 
 
 #pragma warning disable 0649 // Disabled warnings related to serialized fields not assigned in this script but used in the editor.
@@ -135,12 +135,13 @@ namespace TMPro
         /// <summary>
         /// Returns the Default Font Asset to be used by newly created text objects.
         /// </summary>
-        public static TMP_FontAsset defaultFontAsset
+        public static FontAsset defaultFontAsset
         {
             get { return instance.m_defaultFontAsset; }
+            set { instance.m_defaultFontAsset = value; }
         }
         [SerializeField]
-        private TMP_FontAsset m_defaultFontAsset;
+        private FontAsset m_defaultFontAsset;
 
         /// <summary>
         /// The relative path to a Resources folder in the project.
@@ -227,12 +228,13 @@ namespace TMPro
         /// <summary>
         /// Returns the list of Fallback Fonts defined in the TMP Settings file.
         /// </summary>
-        public static List<TMP_FontAsset> fallbackFontAssets
+        public static List<FontAsset> fallbackFontAssets
         {
             get { return instance.m_fallbackFontAssets; }
+            set { instance.m_fallbackFontAssets = value; }
         }
         [SerializeField]
-        private List<TMP_FontAsset> m_fallbackFontAssets;
+        private List<FontAsset> m_fallbackFontAssets;
 
         /// <summary>
         /// Controls whether or not TMP will create a matching material preset or use the default material of the fallback font asset.
@@ -256,12 +258,13 @@ namespace TMPro
         /// <summary>
         /// The Default Sprite Asset to be used by default.
         /// </summary>
-        public static TMP_SpriteAsset defaultSpriteAsset
+        public static SpriteAsset defaultSpriteAsset
         {
             get { return instance.m_defaultSpriteAsset; }
+            set { instance.m_defaultSpriteAsset = value; }
         }
         [SerializeField]
-        private TMP_SpriteAsset m_defaultSpriteAsset;
+        private SpriteAsset m_defaultSpriteAsset;
 
         /// <summary>
         /// The relative path to a Resources folder in the project.
@@ -319,12 +322,13 @@ namespace TMPro
         /// <summary>
         /// The Default Style Sheet used by the text objects.
         /// </summary>
-        public static TMP_StyleSheet defaultStyleSheet
+        public static TextStyleSheet defaultStyleSheet
         {
             get { return instance.m_defaultStyleSheet; }
+            set { instance.m_defaultStyleSheet = value; }
         }
         [SerializeField]
-        private TMP_StyleSheet m_defaultStyleSheet;
+        private TextStyleSheet m_defaultStyleSheet;
 
         /// <summary>
         /// The relative path to a Resources folder in the project that contains the TMP Style Sheets.
@@ -339,22 +343,22 @@ namespace TMPro
         /// <summary>
         /// Text file that contains the leading characters used for line breaking for Asian languages.
         /// </summary>
-        public static TextAsset leadingCharacters
+        public static UnityEngine.TextAsset leadingCharacters
         {
             get { return instance.m_leadingCharacters; }
         }
         [SerializeField]
-        private TextAsset m_leadingCharacters;
+        private UnityEngine.TextAsset m_leadingCharacters;
 
         /// <summary>
         /// Text file that contains the following characters used for line breaking for Asian languages.
         /// </summary>
-        public static TextAsset followingCharacters
+        public static UnityEngine.TextAsset followingCharacters
         {
             get { return instance.m_followingCharacters; }
         }
         [SerializeField]
-        private TextAsset m_followingCharacters;
+        private UnityEngine.TextAsset m_followingCharacters;
 
         /// <summary>
         ///
@@ -406,13 +410,13 @@ namespace TMPro
         {
             get
             {
-                if (TMP_Settings.s_Instance == null)
+                if (s_Instance == null)
                 {
-                    TMP_Settings.s_Instance = Resources.Load<TMP_Settings>("TMP Settings");
+                    s_Instance = Resources.Load<TMP_Settings>("TMP Settings");
 
                     #if UNITY_EDITOR
                     // Make sure TextMesh Pro UPM packages resources have been added to the user project
-                    if (TMP_Settings.s_Instance == null)
+                    if (s_Instance == null && Time.frameCount != 0)
                     {
                         // Open TMP Resources Importer
                         TMP_PackageResourceImporterWindow.ShowPackageImporterWindow();
@@ -420,7 +424,7 @@ namespace TMPro
                     #endif
                 }
 
-                return TMP_Settings.s_Instance;
+                return s_Instance;
             }
         }
 
@@ -459,7 +463,7 @@ namespace TMPro
         /// Returns the Font Asset defined in the TMP Settings file.
         /// </summary>
         /// <returns></returns>
-        public static TMP_FontAsset GetFontAsset()
+        public static FontAsset GetFontAsset()
         {
             if (TMP_Settings.instance == null) return null;
 
@@ -471,7 +475,7 @@ namespace TMPro
         /// Returns the Sprite Asset defined in the TMP Settings file.
         /// </summary>
         /// <returns></returns>
-        public static TMP_SpriteAsset GetSpriteAsset()
+        public static SpriteAsset GetSpriteAsset()
         {
             if (TMP_Settings.instance == null) return null;
 
@@ -483,7 +487,7 @@ namespace TMPro
         /// Returns the Style Sheet defined in the TMP Settings file.
         /// </summary>
         /// <returns></returns>
-        public static TMP_StyleSheet GetStyleSheet()
+        public static TextStyleSheet GetStyleSheet()
         {
             if (TMP_Settings.instance == null) return null;
 
@@ -495,7 +499,7 @@ namespace TMPro
         {
             //Debug.Log("Loading Line Breaking Rules for Asian Languages.");
 
-            if (TMP_Settings.instance == null) return;
+            if (instance == null) return;
 
             if (s_Instance.m_linebreakingRules == null)
                 s_Instance.m_linebreakingRules = new LineBreakingTable();
@@ -510,22 +514,14 @@ namespace TMPro
         /// </summary>
         /// <param name="file"></param>
         /// <returns></returns>
-        private static Dictionary<int, char> GetCharacters(TextAsset file)
+        private static HashSet<uint> GetCharacters(UnityEngine.TextAsset file)
         {
-            Dictionary<int, char> dict = new Dictionary<int, char>();
+            HashSet<uint> dict = new HashSet<uint>();
             string text = file.text;
 
             for (int i = 0; i < text.Length; i++)
             {
-                char c = text[i];
-                // Check to make sure we don't include duplicates
-                if (dict.ContainsKey((int)c) == false)
-                {
-                    dict.Add((int)c, c);
-                    //Debug.Log("Adding [" + (int)c + "] to dictionary.");
-                }
-                //else
-                //    Debug.Log("Character [" + text[i] + "] is a duplicate.");
+                dict.Add(text[i]);
             }
 
             return dict;
@@ -534,8 +530,8 @@ namespace TMPro
 
         public class LineBreakingTable
         {
-            public Dictionary<int, char> leadingCharacters;
-            public Dictionary<int, char> followingCharacters;
+            public HashSet<uint> leadingCharacters;
+            public HashSet<uint> followingCharacters;
         }
     }
 }

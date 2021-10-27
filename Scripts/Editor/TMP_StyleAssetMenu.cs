@@ -1,7 +1,7 @@
-﻿using UnityEngine;
+﻿using System.IO;
+using UnityEngine;
+using UnityEngine.TextCore.Text;
 using UnityEditor;
-using System.IO;
-using System.Collections;
 
 
 namespace TMPro.EditorUtilities
@@ -10,8 +10,8 @@ namespace TMPro.EditorUtilities
     public static class TMP_StyleAssetMenu
     {
 
-        [MenuItem("Assets/Create/TextMeshPro/Style Sheet", false, 120)]
-        public static void CreateTextMeshProObjectPerform()
+        [MenuItem("Assets/Create/TextMeshPro/Style Sheet", false, 200)]
+        internal static void CreateTextMeshProObjectPerform()
         {
             string filePath;
             if (Selection.assetGUIDs.Length == 0)
@@ -32,14 +32,13 @@ namespace TMPro.EditorUtilities
                 }
             }
 
-
             string filePathWithName = AssetDatabase.GenerateUniqueAssetPath(filePath + "/Text StyleSheet.asset");
 
             //// Create new Style Sheet Asset.
-            TMP_StyleSheet styleSheet = ScriptableObject.CreateInstance<TMP_StyleSheet>();
+            TextStyleSheet styleSheet = ScriptableObject.CreateInstance<TextStyleSheet>();
 
             // Create Normal default style
-            TMP_Style style = new TMP_Style("Normal", string.Empty, string.Empty);
+            TextStyle style = new TextStyle("Normal", string.Empty, string.Empty);
             styleSheet.styles.Add(style);
 
             AssetDatabase.CreateAsset(styleSheet, filePathWithName);
@@ -52,5 +51,4 @@ namespace TMPro.EditorUtilities
             EditorGUIUtility.PingObject(styleSheet);
         }
     }
-
 }

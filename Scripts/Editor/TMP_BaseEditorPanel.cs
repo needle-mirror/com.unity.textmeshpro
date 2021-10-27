@@ -1,7 +1,8 @@
-using UnityEngine;
-using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
+using UnityEngine.TextCore.Text;
+using UnityEditor;
 
 
 namespace TMPro.EditorUtilities
@@ -75,7 +76,7 @@ namespace TMPro.EditorUtilities
         protected static readonly GUIContent k_ExtraSettingsLabel = new GUIContent("Extra Settings");
         protected static string[] k_UiStateLabel = new string[] { "<i>(Click to collapse)</i> ", "<i>(Click to expand)</i> " };
 
-        static Dictionary<int, TMP_Style> k_AvailableStyles = new Dictionary<int, TMP_Style>();
+        static Dictionary<int, TextStyle> k_AvailableStyles = new Dictionary<int, TextStyle>();
         protected Dictionary<int, int> m_TextStyleIndexLookup = new Dictionary<int, int>();
 
         protected struct Foldout
@@ -104,7 +105,7 @@ namespace TMPro.EditorUtilities
         protected int m_MaterialPresetSelectionIndex;
         protected bool m_IsPresetListDirty;
 
-        protected List<TMP_Style> m_Styles = new List<TMP_Style>();
+        protected List<TextStyle> m_Styles = new List<TextStyle>();
         protected GUIContent[] m_StyleNames;
         protected int m_StyleSelectionIndex;
 
@@ -269,7 +270,7 @@ namespace TMPro.EditorUtilities
                 m_StyleNames = GetStyleNames();
 
             // Register to receive events when style sheets are modified.
-            TMPro_EventManager.TEXT_STYLE_PROPERTY_EVENT.Add(ON_TEXT_STYLE_CHANGED);
+            TextEventManager.TEXT_STYLE_PROPERTY_EVENT.Add(ON_TEXT_STYLE_CHANGED);
 
             // Initialize the Event Listener for Undo Events.
             Undo.undoRedoPerformed += OnUndoRedo;
@@ -285,7 +286,7 @@ namespace TMPro.EditorUtilities
                 Undo.undoRedoPerformed -= OnUndoRedo;
 
             // Unregister from style sheet related events.
-            TMPro_EventManager.TEXT_STYLE_PROPERTY_EVENT.Remove(ON_TEXT_STYLE_CHANGED);
+            TextEventManager.TEXT_STYLE_PROPERTY_EVENT.Remove(ON_TEXT_STYLE_CHANGED);
         }
 
         // Event received when Text Styles are changed.
@@ -313,7 +314,6 @@ namespace TMPro.EditorUtilities
             {
                 m_TextComponent.havePropertiesChanged = true;
                 m_HavePropertiesChanged = false;
-                EditorUtility.SetDirty(target);
             }
         }
 
@@ -339,7 +339,11 @@ namespace TMPro.EditorUtilities
 
             // LEFT HANDLE
             Vector3 oldLeft = (m_HandlePoints[0] + m_HandlePoints[1]) * 0.5f;
+            //#if UNITY_2022_1_OR_NEWER
+            //Vector3 newLeft = Handles.FreeMoveHandle(oldLeft, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
+            //#else
             Vector3 newLeft = Handles.FreeMoveHandle(oldLeft, Quaternion.identity, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
+            //#endif
             bool hasChanged = false;
             if (oldLeft != newLeft)
             {
@@ -354,7 +358,11 @@ namespace TMPro.EditorUtilities
 
             // TOP HANDLE
             Vector3 oldTop = (m_HandlePoints[1] + m_HandlePoints[2]) * 0.5f;
+            //#if UNITY_2022_1_OR_NEWER
+            //Vector3 newTop = Handles.FreeMoveHandle(oldTop, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
+            //#else
             Vector3 newTop = Handles.FreeMoveHandle(oldTop, Quaternion.identity, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
+            //#endif
             if (oldTop != newTop)
             {
                 oldTop = matrix.MultiplyPoint(oldTop);
@@ -368,7 +376,11 @@ namespace TMPro.EditorUtilities
 
             // RIGHT HANDLE
             Vector3 oldRight = (m_HandlePoints[2] + m_HandlePoints[3]) * 0.5f;
+            //#if UNITY_2022_1_OR_NEWER
+            //Vector3 newRight = Handles.FreeMoveHandle(oldRight, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
+            //#else
             Vector3 newRight = Handles.FreeMoveHandle(oldRight, Quaternion.identity, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
+            //#endif
             if (oldRight != newRight)
             {
                 oldRight = matrix.MultiplyPoint(oldRight);
@@ -382,7 +394,11 @@ namespace TMPro.EditorUtilities
 
             // BOTTOM HANDLE
             Vector3 oldBottom = (m_HandlePoints[3] + m_HandlePoints[0]) * 0.5f;
+            //#if UNITY_2022_1_OR_NEWER
+            //Vector3 newBottom = Handles.FreeMoveHandle(oldBottom, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
+            //#else
             Vector3 newBottom = Handles.FreeMoveHandle(oldBottom, Quaternion.identity, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
+            //#endif
             if (oldBottom != newBottom)
             {
                 oldBottom = matrix.MultiplyPoint(oldBottom);
@@ -847,16 +863,16 @@ namespace TMPro.EditorUtilities
                 rect.x += EditorGUIUtility.labelWidth;
                 rect.width = rect.width - EditorGUIUtility.labelWidth;
 
-                switch ((ColorMode)colorMode.enumValueIndex)
+                switch ((ColorGradientMode)colorMode.enumValueIndex)
                 {
-                    case ColorMode.Single:
+                    case ColorGradientMode.Single:
                         TMP_EditorUtility.DrawColorProperty(rect, topLeft);
 
                         topRight.colorValue = topLeft.colorValue;
                         bottomLeft.colorValue = topLeft.colorValue;
                         bottomRight.colorValue = topLeft.colorValue;
                         break;
-                    case ColorMode.HorizontalGradient:
+                    case ColorGradientMode.HorizontalGradient:
                         rect.width /= 2f;
 
                         TMP_EditorUtility.DrawColorProperty(rect, topLeft);
@@ -868,7 +884,7 @@ namespace TMPro.EditorUtilities
                         bottomLeft.colorValue = topLeft.colorValue;
                         bottomRight.colorValue = topRight.colorValue;
                         break;
-                    case ColorMode.VerticalGradient:
+                    case ColorGradientMode.VerticalGradient:
                         TMP_EditorUtility.DrawColorProperty(rect, topLeft);
 
                         rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight * (EditorGUIUtility.wideMode ? 1 : 2));
@@ -879,7 +895,7 @@ namespace TMPro.EditorUtilities
                         topRight.colorValue = topLeft.colorValue;
                         bottomRight.colorValue = bottomLeft.colorValue;
                         break;
-                    case ColorMode.FourCornersGradient:
+                    case ColorGradientMode.FourCornersGradient:
                         rect.width /= 2f;
 
                         TMP_EditorUtility.DrawColorProperty(rect, topLeft);
@@ -906,7 +922,7 @@ namespace TMPro.EditorUtilities
                     if (obj != null)
                     {
                         obj.ApplyModifiedProperties();
-                        TMPro_EventManager.ON_COLOR_GRADIENT_PROPERTY_CHANGED(m_FontColorGradientPresetProp.objectReferenceValue as TMP_ColorGradient);
+                        TextEventManager.ON_COLOR_GRADIENT_PROPERTY_CHANGED(m_FontColorGradientPresetProp.objectReferenceValue as TextColorGradient);
                     }
                 }
 
@@ -1223,7 +1239,7 @@ namespace TMPro.EditorUtilities
         /// </summary>
         protected GUIContent[] GetMaterialPresets()
         {
-            TMP_FontAsset fontAsset = m_FontAssetProp.objectReferenceValue as TMP_FontAsset;
+            FontAsset fontAsset = m_FontAssetProp.objectReferenceValue as FontAsset;
             if (fontAsset == null) return null;
 
             m_MaterialPresets = TMP_EditorUtility.FindMaterialReferences(fontAsset);
@@ -1253,7 +1269,7 @@ namespace TMPro.EditorUtilities
             m_Styles.Clear();
 
             // First style on the list is always the Normal default style.
-            TMP_Style styleNormal = TMP_Style.NormalStyle;
+            TextStyle styleNormal = TextStyle.NormalStyle;
 
             m_Styles.Add(styleNormal);
             m_TextStyleIndexLookup.Add(styleNormal.hashCode, 0);
@@ -1261,7 +1277,7 @@ namespace TMPro.EditorUtilities
             k_AvailableStyles.Add(styleNormal.hashCode, styleNormal);
 
             // Get styles from Style Sheet potentially assigned to the text object.
-            TMP_StyleSheet localStyleSheet = (TMP_StyleSheet)m_StyleSheetAssetProp.objectReferenceValue;
+            TextStyleSheet localStyleSheet = (TextStyleSheet)m_StyleSheetAssetProp.objectReferenceValue;
 
             if (localStyleSheet != null)
             {
@@ -1269,7 +1285,7 @@ namespace TMPro.EditorUtilities
 
                 for (int i = 0; i < styleCount; i++)
                 {
-                    TMP_Style style = localStyleSheet.styles[i];
+                    TextStyle style = localStyleSheet.styles[i];
 
                     if (k_AvailableStyles.ContainsKey(style.hashCode) == false)
                     {
@@ -1281,7 +1297,7 @@ namespace TMPro.EditorUtilities
             }
 
             // Get styles from TMP Settings' default style sheet.
-            TMP_StyleSheet globalStyleSheet = TMP_Settings.defaultStyleSheet;
+            TextStyleSheet globalStyleSheet = TMP_Settings.defaultStyleSheet;
 
             if (globalStyleSheet != null)
             {
@@ -1289,7 +1305,7 @@ namespace TMPro.EditorUtilities
 
                 for (int i = 0; i < styleCount; i++)
                 {
-                    TMP_Style style = globalStyleSheet.styles[i];
+                    TextStyle style = globalStyleSheet.styles[i];
 
                     if (k_AvailableStyles.ContainsKey(style.hashCode) == false)
                     {

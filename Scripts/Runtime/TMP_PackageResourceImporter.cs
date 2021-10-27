@@ -3,6 +3,7 @@
 using System;
 using System.IO;
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 using UnityEditor;
 
 
@@ -91,7 +92,7 @@ namespace TMPro
             if (packageName == "TMP Essential Resources")
             {
                 m_EssentialResourcesImported = true;
-                TMPro_EventManager.ON_RESOURCES_LOADED();
+                TextEventManager.ON_RESOURCES_LOADED();
 
                 #if UNITY_2018_3_OR_NEWER
                 SettingsService.NotifySettingsProviderChanged();

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 using UnityEditor;
 using UnityEditorInternal;
 
@@ -87,7 +88,7 @@ namespace TMPro.EditorUtilities
 
         SerializedProperty m_PropStyleSheet;
         SerializedProperty m_PropStyleSheetsResourcePath;
-        ReorderableList m_List;
+        ReorderableList m_GlobalFallbackFontAssetList;
 
         SerializedProperty m_PropColorGradientPresetsPath;
 
@@ -141,21 +142,21 @@ namespace TMPro.EditorUtilities
 
             m_PropColorGradientPresetsPath = serializedObject.FindProperty("m_defaultColorGradientPresetsPath");
 
-            m_List = new ReorderableList(serializedObject, serializedObject.FindProperty("m_fallbackFontAssets"), true, true, true, true);
+            m_GlobalFallbackFontAssetList = new ReorderableList(serializedObject, serializedObject.FindProperty("m_fallbackFontAssets"), true, true, true, true);
 
-            m_List.drawElementCallback = (rect, index, isActive, isFocused) =>
-            {
-                var element = m_List.serializedProperty.GetArrayElementAtIndex(index);
-                rect.y += 2;
-                EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), element, GUIContent.none);
-            };
-
-            m_List.drawHeaderCallback = rect =>
+            m_GlobalFallbackFontAssetList.drawHeaderCallback = rect =>
             {
                 EditorGUI.LabelField(rect, Styles.fallbackFontAssetsListLabel);
             };
 
-            m_List.onReorderCallback = itemList =>
+            m_GlobalFallbackFontAssetList.drawElementCallback = (rect, index, isActive, isFocused) =>
+            {
+                var element = m_GlobalFallbackFontAssetList.serializedProperty.GetArrayElementAtIndex(index);
+                rect.y += 2;
+                EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), element, GUIContent.none);
+            };
+
+            m_GlobalFallbackFontAssetList.onChangedCallback = itemList =>
             {
                 m_IsFallbackGlyphCacheDirty = true;
             };
@@ -211,7 +212,7 @@ namespace TMPro.EditorUtilities
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             GUILayout.Label(Styles.fallbackFontAssetsLabel, EditorStyles.boldLabel);
             EditorGUI.BeginChangeCheck();
-            m_List.DoLayoutList();
+            m_GlobalFallbackFontAssetList.DoLayoutList();
             if (EditorGUI.EndChangeCheck())
                 m_IsFallbackGlyphCacheDirty = true;
 
@@ -313,7 +314,7 @@ namespace TMPro.EditorUtilities
             {
                 serializedObject.ApplyModifiedProperties();
 
-                TMP_StyleSheet styleSheet = m_PropStyleSheet.objectReferenceValue as TMP_StyleSheet;
+                UnityEngine.TextCore.Text.TextStyleSheet styleSheet = m_PropStyleSheet.objectReferenceValue as UnityEngine.TextCore.Text.TextStyleSheet;
                 if (styleSheet != null)
                     styleSheet.RefreshStyles();
             }
@@ -349,13 +350,13 @@ namespace TMPro.EditorUtilities
             EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
 
-            if (m_IsFallbackGlyphCacheDirty)
-                TMP_ResourceManager.RebuildFontAssetCache();
+            if (m_IsFallbackGlyphCacheDirty || evt_cmd == k_UndoRedo)
+                TextResourceManager.RebuildFontAssetCache();
 
             if (serializedObject.ApplyModifiedProperties() || evt_cmd == k_UndoRedo)
             {
                 EditorUtility.SetDirty(target);
-                TMPro_EventManager.ON_TMP_SETTINGS_CHANGED();
+                TextEventManager.ON_TMP_SETTINGS_CHANGED();
             }
         }
     }

@@ -1,6 +1,7 @@
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 using UnityEditor;
-using UnityEditor.Presets;
+
 
 namespace TMPro.EditorUtilities
 {
@@ -194,7 +195,7 @@ namespace TMPro.EditorUtilities
                 for (int i = 0; i < targets.Length; i++)
                 {
                     //Debug.Log("Undo & Redo Performed detected in Editor Panel. Event ID:" + Undo.GetCurrentGroup());
-                    TMPro_EventManager.ON_TEXTMESHPRO_PROPERTY_CHANGED(true, targets[i] as TextMeshPro);
+                    TextEventManager.ON_TEXTMESHPRO_PROPERTY_CHANGED(true, targets[i] as TextMeshPro);
                     s_EventId = undoEventId;
                 }
             }

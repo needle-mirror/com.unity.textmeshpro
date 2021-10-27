@@ -1,11 +1,9 @@
-﻿using UnityEngine;
-using UnityEngine.Serialization;
-using UnityEngine.TextCore;
-using UnityEngine.TextCore.LowLevel;
-using System;
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
+using UnityEngine.Serialization;
+using UnityEngine.TextCore.Text;
 
 
 namespace TMPro
@@ -128,8 +126,8 @@ namespace TMPro
     [Serializable]
     public struct TMP_FontWeightPair
     {
-        public TMP_FontAsset regularTypeface;
-        public TMP_FontAsset italicTypeface;
+        public FontAsset regularTypeface;
+        public FontAsset italicTypeface;
     }
 
 
@@ -379,7 +377,7 @@ namespace TMPro
         /// <param name="unicode">The character to find.</param>
         /// <param name="character">out parameter containing the glyph for the specified character (if found).</param>
         /// <returns></returns>
-        public static TMP_FontAsset SearchForCharacter(TMP_FontAsset font, uint unicode, out TMP_Character character)
+        public static FontAsset SearchForCharacter(FontAsset font, uint unicode, out Character character)
         {
             if (k_searchedFontAssets == null)
                 k_searchedFontAssets = new List<int>();
@@ -397,13 +395,13 @@ namespace TMPro
         /// <param name="unicode"></param>
         /// <param name="character"></param>
         /// <returns></returns>
-        public static TMP_FontAsset SearchForCharacter(List<TMP_FontAsset> fonts, uint unicode, out TMP_Character character)
+        public static FontAsset SearchForCharacter(List<FontAsset> fonts, uint unicode, out Character character)
         {
             return SearchForCharacterInternal(fonts, unicode, out character);
         }
 
 
-        private static TMP_FontAsset SearchForCharacterInternal(TMP_FontAsset font, uint unicode, out TMP_Character character)
+        private static FontAsset SearchForCharacterInternal(FontAsset font, uint unicode, out Character character)
         {
             character = null;
 
@@ -417,7 +415,7 @@ namespace TMPro
             {
                 for (int i = 0; i < font.fallbackFontAssetTable.Count && character == null; i++)
                 {
-                    TMP_FontAsset temp = font.fallbackFontAssetTable[i];
+                    FontAsset temp = font.fallbackFontAssetTable[i];
                     if (temp == null) continue;
 
                     int id = temp.GetInstanceID();
@@ -439,7 +437,7 @@ namespace TMPro
         }
 
 
-        private static TMP_FontAsset SearchForCharacterInternal(List<TMP_FontAsset> fonts, uint unicode, out TMP_Character character)
+        private static FontAsset SearchForCharacterInternal(List<FontAsset> fonts, uint unicode, out Character character)
         {
             character = null;
 
@@ -447,7 +445,7 @@ namespace TMPro
             {
                 for (int i = 0; i < fonts.Count; i++)
                 {
-                    TMP_FontAsset fontAsset = SearchForCharacterInternal(fonts[i], unicode, out character);
+                    FontAsset fontAsset = SearchForCharacterInternal(fonts[i], unicode, out character);
 
                     if (fontAsset != null)
                         return fontAsset;

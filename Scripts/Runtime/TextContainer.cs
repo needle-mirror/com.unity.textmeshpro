@@ -43,7 +43,7 @@ namespace TMPro
         private TextContainerAnchors m_anchorPosition = TextContainerAnchors.Middle;
 
 
-        // Rect which defines the Rectangle 
+        // Rect which defines the Rectangle
         public Rect rect
         {
             get { return m_rect; }
@@ -58,7 +58,7 @@ namespace TMPro
             get { return new Vector2(m_rect.width, m_rect.height); }
             set { /*Debug.Log("Size has changed.");*/ if (new Vector2(m_rect.width, m_rect.height) != value) { SetRect(value); m_hasChanged = true; m_isDefaultWidth = false; m_isDefaultHeight = false; OnContainerChanged(); } }
         }
-      
+
 
         // Sets the width of the Text Container.
         public float width
@@ -152,7 +152,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public TextMeshPro textMeshPro
         {
@@ -174,7 +174,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         protected override void OnEnable()
         {
@@ -185,7 +185,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         protected override void OnDisable()
         {
@@ -194,7 +194,7 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         void OnContainerChanged()
         {
@@ -219,7 +219,7 @@ namespace TMPro
 
 #if UNITY_EDITOR
         /// <summary>
-        /// 
+        ///
         /// </summary>
         protected override void OnValidate()
         {

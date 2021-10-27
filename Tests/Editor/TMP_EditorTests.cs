@@ -184,6 +184,180 @@ namespace TMPro
             Assert.AreEqual(m_TextComponent.textInfo.lineCount, lineCount);
         }
 
+        // =============================================
+        // Markup tag specific tests
+        // =============================================
+
+        [Test]
+        [TestCase("<scale=1.0>ABC</scale>", -35.0f, -33.8069763f, -33.8069763f, -32.6139526f, -32.6139526f, -31.3162785f)]
+        [TestCase("<scale=0.8>ABC</scale>", -35.0f, -34.0455818f, -34.0455818f, -33.0911636f, -33.0911636f, -32.0530243f)]
+        [TestCase("<scale=1.2>ABC</scale>", -35.0f, -33.5683708f, -33.5683708f, -32.1367455f, -32.1367455f, -30.5795345f)]
+        public void MarkupTag_Scale(string sourceText, float origin1, float advance1, float origin2, float advance2, float origin3, float advance3)
+        {
+            m_TextComponent.text = sourceText;
+            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
+            m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
+
+            // Size the RectTransform
+            m_TextComponent.rectTransform.sizeDelta = new Vector2(70, 35);
+
+            // Force text generation to populate the TextInfo data structure.
+            m_TextComponent.ForceMeshUpdate();
+
+            Assert.AreEqual(origin1, m_TextComponent.textInfo.characterInfo[0].origin);
+            Assert.AreEqual(advance1, m_TextComponent.textInfo.characterInfo[0].xAdvance);
+            Assert.AreEqual(origin2, m_TextComponent.textInfo.characterInfo[1].origin);
+            Assert.AreEqual(advance2, m_TextComponent.textInfo.characterInfo[1].xAdvance);
+            Assert.AreEqual(origin3, m_TextComponent.textInfo.characterInfo[2].origin);
+            Assert.AreEqual(advance3, m_TextComponent.textInfo.characterInfo[2].xAdvance);
+        }
+
+        [Test]
+        [TestCase("<size=12>ABC</size>", -35.0f, -34.2046509f, -34.2046509f, -33.4093018f, -33.4093018f, -32.5441856f)]
+        [TestCase("<size=-6>ABC</size>", -35.0f, -34.2046509f, -34.2046509f, -33.4093018f, -33.4093018f, -32.5441856f)]
+        [TestCase("<size=+6>ABC</size>", -35.0f, -33.4093018f, -33.4093018f, -31.8186054f, -31.8186054f, -30.0883713f)]
+        [TestCase("<size=50%>ABC</size>", -35.0f,  -34.4034882f, -34.4034882f, -33.8069763f, -33.8069763f, -33.1581383f)]
+        [TestCase("<size=150%>DEF</size>", -35.0f, -33.0534897f, -33.0534897f, -31.2639542f, -31.2639542f, -29.6000004f)]
+        [TestCase("<size=0.5em>ABC</size>", -35.0f,  -34.4034882f, -34.4034882f, -33.8069763f, -33.8069763f, -33.1581383f)]
+        [TestCase("<size=1.5em>DEF</size>", -35.0f, -33.0534897f, -33.0534897f, -31.2639542f, -31.2639542f, -29.6000004f)]
+        public void MarkupTag_Size(string sourceText, float origin1, float advance1, float origin2, float advance2, float origin3, float advance3)
+        {
+            m_TextComponent.text = sourceText;
+            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
+            m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
+
+            // Size the RectTransform
+            m_TextComponent.rectTransform.sizeDelta = new Vector2(70, 35);
+
+            // Force text generation to populate the TextInfo data structure.
+            m_TextComponent.ForceMeshUpdate();
+
+            Assert.AreEqual(origin1, m_TextComponent.textInfo.characterInfo[0].origin);
+            Assert.AreEqual(advance1, m_TextComponent.textInfo.characterInfo[0].xAdvance);
+            Assert.AreEqual(origin2, m_TextComponent.textInfo.characterInfo[1].origin);
+            Assert.AreEqual(advance2, m_TextComponent.textInfo.characterInfo[1].xAdvance);
+            Assert.AreEqual(origin3, m_TextComponent.textInfo.characterInfo[2].origin);
+            Assert.AreEqual(advance3, m_TextComponent.textInfo.characterInfo[2].xAdvance);
+        }
+
+        [Test]
+        [TestCase("<cspace=30>ABC</cspace>", -35.0f, -30.8069763f, -30.8069763f, -26.6139526f, -26.6139526f, -25.3162804f)]
+        [TestCase("<cspace=2em>ABC</cspace>", -35.0f, -30.2069759f, -30.2069759f, -25.4139519f, -25.4139519f, -24.1162796f)]
+        public void MarkupTag_Cspace(string sourceText, float origin1, float advance1, float origin2, float advance2, float origin3, float advance3)
+        {
+            m_TextComponent.text = sourceText;
+            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
+            m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
+
+            // Size the RectTransform
+            m_TextComponent.rectTransform.sizeDelta = new Vector2(70, 35);
+
+            // Force text generation to populate the TextInfo data structure.
+            m_TextComponent.ForceMeshUpdate();
+
+            Assert.AreEqual(origin1, m_TextComponent.textInfo.characterInfo[0].origin);
+            Assert.AreEqual(advance1, m_TextComponent.textInfo.characterInfo[0].xAdvance);
+            Assert.AreEqual(origin2, m_TextComponent.textInfo.characterInfo[1].origin);
+            Assert.AreEqual(advance2, m_TextComponent.textInfo.characterInfo[1].xAdvance);
+            Assert.AreEqual(origin3, m_TextComponent.textInfo.characterInfo[2].origin);
+            Assert.AreEqual(advance3, m_TextComponent.textInfo.characterInfo[2].xAdvance);
+
+        }
+
+        [Test]
+        [TestCase("<mspace=30>ABC</mspace>", -34.0965118f, -32.0f, -31.1279068f, -29.0f, -28.1593018f, -26.0f)]
+        [TestCase("<mspace=2em>ABC</mspace>", -33.7965126f, -31.3999996f, -30.2279072f, -27.7999992f, -26.6593018f, -24.1999989f)]
+        public void MarkupTag_Mspace(string sourceText, float origin1, float advance1, float origin2, float advance2, float origin3, float advance3)
+        {
+            m_TextComponent.text = sourceText;
+            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
+            m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
+
+            // Size the RectTransform
+            m_TextComponent.rectTransform.sizeDelta = new Vector2(70, 35);
+
+            // Force text generation to populate the TextInfo data structure.
+            m_TextComponent.ForceMeshUpdate();
+
+            Assert.AreEqual(origin1, m_TextComponent.textInfo.characterInfo[0].origin);
+            Assert.AreEqual(advance1, m_TextComponent.textInfo.characterInfo[0].xAdvance);
+            Assert.AreEqual(origin2, m_TextComponent.textInfo.characterInfo[1].origin);
+            Assert.AreEqual(advance2, m_TextComponent.textInfo.characterInfo[1].xAdvance);
+            Assert.AreEqual(origin3, m_TextComponent.textInfo.characterInfo[2].origin);
+            Assert.AreEqual(advance3, m_TextComponent.textInfo.characterInfo[2].xAdvance);
+        }
+
+        [Test]
+        [TestCase("A<space=18>B<space=18>C", -35.0f, -33.8069763f, -32.0069771f, -30.8139534f, -29.0139542f, -27.7162781f)]
+        [TestCase("A<space=1em>B<space=1em>C", -35.0f, -33.8069763f, -32.0069771f, -30.8139534f, -29.0139542f, -27.7162781f)]
+        public void MarkupTag_Space(string sourceText, float origin1, float advance1, float origin2, float advance2, float origin3, float advance3)
+        {
+            m_TextComponent.text = sourceText;
+            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
+            m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
+
+            // Size the RectTransform
+            m_TextComponent.rectTransform.sizeDelta = new Vector2(70, 35);
+
+            // Force text generation to populate the TextInfo data structure.
+            m_TextComponent.ForceMeshUpdate();
+
+            Assert.AreEqual(origin1, m_TextComponent.textInfo.characterInfo[0].origin);
+            Assert.AreEqual(advance1, m_TextComponent.textInfo.characterInfo[0].xAdvance);
+            Assert.AreEqual(origin2, m_TextComponent.textInfo.characterInfo[1].origin);
+            Assert.AreEqual(advance2, m_TextComponent.textInfo.characterInfo[1].xAdvance);
+            Assert.AreEqual(origin3, m_TextComponent.textInfo.characterInfo[2].origin);
+            Assert.AreEqual(advance3, m_TextComponent.textInfo.characterInfo[2].xAdvance);
+        }
+
+        [Test]
+        [TestCase("A<pos=10%>B<pos=20%>C", -35.0f, -33.8069763f, -28.0f, -26.8069763f, -21.0f, -19.7023258f)]
+        [TestCase("A<pos=70>B<pos=140>C", -35.0f, -33.8069763f, -28.0f, -26.8069763f, -21.0f, -19.7023258f)]
+        [TestCase("A<pos=1.5em>B<pos=3em>CC", -35.0f, -33.8069763f, -32.2999992f, -31.1069775f, -29.6000004f, -28.3023262f)]
+        public void MarkupTag_Pos(string sourceText, float origin1, float advance1, float origin2, float advance2, float origin3, float advance3)
+        {
+            m_TextComponent.text = sourceText;
+            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
+            m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
+
+            // Size the RectTransform
+            m_TextComponent.rectTransform.sizeDelta = new Vector2(70, 35);
+
+            // Force text generation to populate the TextInfo data structure.
+            m_TextComponent.ForceMeshUpdate();
+
+            Assert.AreEqual(origin1, m_TextComponent.textInfo.characterInfo[0].origin);
+            Assert.AreEqual(advance1, m_TextComponent.textInfo.characterInfo[0].xAdvance);
+            Assert.AreEqual(origin2, m_TextComponent.textInfo.characterInfo[1].origin);
+            Assert.AreEqual(advance2, m_TextComponent.textInfo.characterInfo[1].xAdvance);
+            Assert.AreEqual(origin3, m_TextComponent.textInfo.characterInfo[2].origin);
+            Assert.AreEqual(advance3, m_TextComponent.textInfo.characterInfo[2].xAdvance);
+        }
+
+        [Test]
+        [TestCase("<indent=18>ABC", -33.2000008f, -32.0069771f, -32.0069771f, -30.8139534f, -30.8139534f, -29.5162792f)]
+        [TestCase("<indent=1em>ABC", -33.2000008f, -32.0069771f, -32.0069771f, -30.8139534f, -30.8139534f, -29.5162792f)]
+        [TestCase("<indent=2.5%>ABC", -33.25f, -32.0569763f, -32.0569763f, -30.8639526f, -30.8639526f, -29.5662804f)]
+        public void MarkupTag_Indent(string sourceText, float origin1, float advance1, float origin2, float advance2, float origin3, float advance3)
+        {
+            m_TextComponent.text = sourceText;
+            m_TextComponent.textWrappingMode = TextWrappingModes.Normal;
+            m_TextComponent.alignment = TextAlignmentOptions.TopLeft;
+
+            // Size the RectTransform
+            m_TextComponent.rectTransform.sizeDelta = new Vector2(70, 35);
+
+            // Force text generation to populate the TextInfo data structure.
+            m_TextComponent.ForceMeshUpdate();
+
+            Assert.AreEqual(origin1, m_TextComponent.textInfo.characterInfo[0].origin);
+            Assert.AreEqual(advance1, m_TextComponent.textInfo.characterInfo[0].xAdvance);
+            Assert.AreEqual(origin2, m_TextComponent.textInfo.characterInfo[1].origin);
+            Assert.AreEqual(advance2, m_TextComponent.textInfo.characterInfo[1].xAdvance);
+            Assert.AreEqual(origin3, m_TextComponent.textInfo.characterInfo[2].origin);
+            Assert.AreEqual(advance3, m_TextComponent.textInfo.characterInfo[2].xAdvance);
+        }
+
 
         // Add tests that check position of individual characters in a complex block of text.
         // These test also use the data contained inside the TMP_TextInfo class.

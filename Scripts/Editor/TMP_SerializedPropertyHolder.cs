@@ -1,11 +1,12 @@
 ﻿using UnityEngine;
-using UnityEditor;
+using UnityEngine.TextCore.Text;
+
 
 namespace TMPro
 {
     class TMP_SerializedPropertyHolder : ScriptableObject
     {
-        public TMP_FontAsset fontAsset;
+        public FontAsset fontAsset;
         public uint firstCharacter;
         public uint secondCharacter;
 

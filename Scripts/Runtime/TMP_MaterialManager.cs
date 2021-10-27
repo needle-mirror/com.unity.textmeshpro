@@ -1,8 +1,8 @@
 ﻿//#define TMP_DEBUG_MODE
 
-using UnityEngine;
 using System.Collections.Generic;
-
+using UnityEngine;
+using UnityEngine.TextCore.Text;
 using UnityEngine.UI;
 
 
@@ -340,7 +340,7 @@ namespace TMPro
         }
 
 
-        internal static Material GetFallbackMaterial(TMP_FontAsset fontAsset, Material sourceMaterial, int atlasIndex)
+        internal static Material GetFallbackMaterial(FontAsset fontAsset, Material sourceMaterial, int atlasIndex)
         {
             int sourceMaterialID = sourceMaterial.GetInstanceID();
             Texture tex = fontAsset.atlasTextures[atlasIndex];
