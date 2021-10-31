@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using UnityEngine;
+using UnityEngine.TextCore;
 
 
 namespace TMPro
@@ -161,18 +162,19 @@ namespace TMPro
     [DebuggerDisplay("Unicode '{character}'  ({((uint)character).ToString(\"X\")})")]
     public struct TMP_CharacterInfo
     {
-        public char character; // Should be changed to an uint to handle UTF32
-        /// <summary>
-        /// Index of the character in the raw string.
-        /// </summary>
-        public int index; // Index of the character in the input string.
-        public int stringLength;
         public TMP_TextElementType elementType;
 
+        public char character; // Should be changed to an uint to handle UTF32
+
+        /// <summary>
+        /// Index of the character in the source text.
+        /// </summary>
+        public int index;
+        public int stringLength;
+
         public TMP_TextElement textElement;
+        public Glyph alternativeGlyph;
         public TMP_FontAsset fontAsset;
-        public TMP_SpriteAsset spriteAsset;
-        public int spriteIndex;
         public Material material;
         public int materialReferenceIndex;
         public bool isUsingAlternateTypeface;

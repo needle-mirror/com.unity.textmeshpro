@@ -9,8 +9,8 @@ using System.Text.RegularExpressions;
 namespace TMPro.EditorUtilities
 {
 
-    [CustomPropertyDrawer(typeof(TMP_GlyphPairAdjustmentRecord))]
-    internal class TMP_GlyphPairAdjustmentRecordPropertyDrawer : PropertyDrawer
+    [CustomPropertyDrawer(typeof(GlyphPairAdjustmentRecord))]
+    internal class GlyphPairAdjustmentRecordPropertyDrawer : PropertyDrawer
     {
         private bool isEditingEnabled = false;
         private bool isSelectable = false;
@@ -42,10 +42,10 @@ namespace TMPro.EditorUtilities
             Rect rect;
 
             isEditingEnabled = GUI.enabled;
-            isSelectable = label.text == "Selectable" ? true : false;
+            isSelectable = label.text == "Selectable";
 
             if (isSelectable)
-                GUILayoutUtility.GetRect(position.width, 75);
+                GUILayoutUtility.GetRect(position.width, 80);
             else
                 GUILayoutUtility.GetRect(position.width, 55);
 
@@ -62,7 +62,7 @@ namespace TMPro.EditorUtilities
                 EditorGUI.LabelField(new Rect(position.x + (64 - labelWidth) / 2, position.y + 60, 64f, 18f), new GUIContent("ID: <color=#FFFF80>" + prop_FirstGlyphIndex.intValue + "</color>"), style);
 
                 GUI.enabled = isEditingEnabled;
-                EditorGUIUtility.labelWidth = 30f;
+                EditorGUIUtility.labelWidth = 25f;
 
                 rect = new Rect(position.x + 70, position.y + 10, (width - 70) - padding, 18);
                 EditorGUI.PropertyField(rect, prop_FirstGlyphValueRecord.FindPropertyRelative("m_XPlacement"), new GUIContent("OX:"));
@@ -148,7 +148,7 @@ namespace TMPro.EditorUtilities
                 EditorGUI.LabelField(new Rect(position.width / 2 + 20 + (64 - labelWidth) / 2, position.y + 60, 64f, 18f), new GUIContent("ID: <color=#FFFF80>" + prop_SecondGlyphIndex.intValue + "</color>"), style);
 
                 GUI.enabled = isEditingEnabled;
-                EditorGUIUtility.labelWidth = 30f;
+                EditorGUIUtility.labelWidth = 25f;
 
                 rect = new Rect(position.width / 2 + 20 + 70, position.y + 10, (width - 70) - padding, 18);
                 EditorGUI.PropertyField(rect, prop_SecondGlyphValueRecord.FindPropertyRelative("m_XPlacement"), new GUIContent("OX:"));
@@ -227,11 +227,11 @@ namespace TMPro.EditorUtilities
             // Font Feature Lookup Flags
             if (isSelectable)
             {
-                EditorGUIUtility.labelWidth = 55f;
+                EditorGUIUtility.labelWidth = 50f;
 
-                rect.x = position.width - 255;
-                rect.y += 23;
-                rect.width = 270; // width - 70 - padding;
+                rect.width = position.width * 0.5f;
+                rect.x = rect.width + 16;
+                rect.y += 28;
 
                 FontFeatureLookupFlags flags = (FontFeatureLookupFlags)prop_FontFeatureLookupFlags.intValue;
 
@@ -242,7 +242,6 @@ namespace TMPro.EditorUtilities
                     prop_FontFeatureLookupFlags.intValue = (int)flags;
                 }
             }
-
         }
 
         bool ValidateInput(string source)
@@ -385,7 +384,5 @@ namespace TMPro.EditorUtilities
                 Graphics.DrawTexture(glyphDrawPosition, atlasTexture, texCoords, 0, 0, 0, 0, new Color(1f, 1f, 1f), mat);
             }
         }
-
-
     }
 }

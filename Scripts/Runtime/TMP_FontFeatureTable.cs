@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.TextCore.LowLevel;
 
 
 namespace TMPro
@@ -33,7 +34,7 @@ namespace TMPro
         /// <summary>
         /// List that contains the glyph pair adjustment records.
         /// </summary>
-        public List<TMP_GlyphPairAdjustmentRecord> glyphPairAdjustmentRecords
+        public List<GlyphPairAdjustmentRecord> glyphPairAdjustmentRecords
         {
             get { return m_GlyphPairAdjustmentRecords; }
             set { m_GlyphPairAdjustmentRecords = value; }
@@ -68,7 +69,7 @@ namespace TMPro
         internal List<LigatureSubstitutionRecord> m_LigatureSubstitutionRecords;
 
         [SerializeField]
-        internal List<TMP_GlyphPairAdjustmentRecord> m_GlyphPairAdjustmentRecords;
+        internal List<GlyphPairAdjustmentRecord> m_GlyphPairAdjustmentRecords;
 
         [SerializeField]
         internal List<MarkToBaseAdjustmentRecord> m_MarkToBaseAdjustmentRecords;
@@ -83,7 +84,7 @@ namespace TMPro
 
         internal Dictionary<uint, List<LigatureSubstitutionRecord>> m_LigatureSubstitutionRecordLookup;
 
-        internal Dictionary<uint, TMP_GlyphPairAdjustmentRecord> m_GlyphPairAdjustmentRecordLookup;
+        internal Dictionary<uint, GlyphPairAdjustmentRecord> m_GlyphPairAdjustmentRecordLookup;
 
         internal Dictionary<uint, MarkToBaseAdjustmentRecord> m_MarkToBaseAdjustmentRecordLookup;
 
@@ -98,8 +99,8 @@ namespace TMPro
             m_LigatureSubstitutionRecords = new List<LigatureSubstitutionRecord>();
             m_LigatureSubstitutionRecordLookup = new Dictionary<uint, List<LigatureSubstitutionRecord>>();
 
-            m_GlyphPairAdjustmentRecords = new List<TMP_GlyphPairAdjustmentRecord>();
-            m_GlyphPairAdjustmentRecordLookup = new Dictionary<uint, TMP_GlyphPairAdjustmentRecord>();
+            m_GlyphPairAdjustmentRecords = new List<GlyphPairAdjustmentRecord>();
+            m_GlyphPairAdjustmentRecordLookup = new Dictionary<uint, GlyphPairAdjustmentRecord>();
 
             m_MarkToBaseAdjustmentRecords = new List<MarkToBaseAdjustmentRecord>();
             m_MarkToBaseAdjustmentRecordLookup = new Dictionary<uint, MarkToBaseAdjustmentRecord>();
@@ -122,6 +123,9 @@ namespace TMPro
                 m_GlyphPairAdjustmentRecords = m_GlyphPairAdjustmentRecords.OrderBy(s => s.firstAdjustmentRecord.glyphIndex).ThenBy(s => s.secondAdjustmentRecord.glyphIndex).ToList();
         }
 
+        /// <summary>
+        /// Sort the Mark-to-Base Adjustment Table records.
+        /// </summary>
         public void SortMarkToBaseAdjustmentRecords()
         {
             // Sort List of Kerning Info
@@ -129,6 +133,9 @@ namespace TMPro
                 m_MarkToBaseAdjustmentRecords = m_MarkToBaseAdjustmentRecords.OrderBy(s => s.baseGlyphID).ThenBy(s => s.markGlyphID).ToList();
         }
 
+        /// <summary>
+        /// Sort the Mark-to-Mark Adjustment Table records.
+        /// </summary>
         public void SortMarkToMarkAdjustmentRecords()
         {
             // Sort List of Kerning Info

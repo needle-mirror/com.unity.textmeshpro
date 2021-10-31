@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
-using UnityEditor;
+using UnityEngine.TextCore.LowLevel;
+
 
 namespace TMPro
 {
@@ -9,6 +10,6 @@ namespace TMPro
         public uint firstCharacter;
         public uint secondCharacter;
 
-        public TMP_GlyphPairAdjustmentRecord glyphPairAdjustmentRecord = new TMP_GlyphPairAdjustmentRecord(new TMP_GlyphAdjustmentRecord(), new TMP_GlyphAdjustmentRecord());
+        public GlyphPairAdjustmentRecord glyphPairAdjustmentRecord = new GlyphPairAdjustmentRecord(new GlyphAdjustmentRecord(), new GlyphAdjustmentRecord());
     }
 }

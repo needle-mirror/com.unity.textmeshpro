@@ -269,8 +269,6 @@ namespace TMPro.EditorUtilities
 
                 mat.SetTexture(ShaderUtilities.ID_MainTex, m_copiedTexture);
             }
-
-            //DestroyImmediate(m_copiedAtlasProperties);
         }
         #endif
 
@@ -343,10 +341,11 @@ namespace TMPro.EditorUtilities
         {
             TMP_FontAsset fontAsset = command.context as TMP_FontAsset;
 
-            if (fontAsset != null && Selection.activeObject != fontAsset)
-            {
+            if (fontAsset == null)
+                return;
+
+            if (Selection.activeObject != fontAsset)
                 Selection.activeObject = fontAsset;
-            }
 
             fontAsset.ClearFontAssetData(true);
 

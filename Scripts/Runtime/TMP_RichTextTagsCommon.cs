@@ -158,6 +158,7 @@ namespace TMPro
         FALSE = 85422813,
 
         INVALID = 1585415185,
+        NOTDEF = 612146780,             // .notdef
 
         NORMAL = -1183493901,           // <style="Normal">
         DEFAULT = -620974005,           // <font="Default">

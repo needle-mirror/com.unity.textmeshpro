@@ -13,6 +13,10 @@ namespace TMPro.EditorUtilities
     {
         private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
+            // Only run post processor after the Editor has been fully loaded.
+            if (Time.frameCount == 0)
+                return;
+
             bool textureImported = false;
 
             foreach (var asset in importedAssets)

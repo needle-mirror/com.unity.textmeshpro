@@ -7,6 +7,7 @@ using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.TextCore;
+using UnityEngine.TextCore.LowLevel;
 using UnityEngine.UI;
 
 
@@ -1493,8 +1494,9 @@ namespace TMPro
         //protected TMP_LinkInfo tag_LinkInfo = new TMP_LinkInfo();
 
         protected bool m_isParsingText;
-        protected Matrix4x4 m_FXMatrix;
-        protected bool m_isFXMatrixSet;
+        //protected Vector3 m_FXTranslation;
+        protected Quaternion m_FXRotation;
+        protected Vector3 m_FXScale;
 
         /// <summary>
         /// Array containing the Unicode characters to be parsed.
@@ -2177,7 +2179,7 @@ namespace TMPro
                             writeIndex += 1;
                             continue;
                         case 117: // \u0000 for UTF-16 Unicode
-                            if (srcLength > readIndex + 5)
+                            if (srcLength > readIndex + 5 && IsValidUTF16(m_TextBackingArray, readIndex + 2))
                             {
                                 if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
 
@@ -2191,7 +2193,7 @@ namespace TMPro
                             }
                             break;
                         case 85: // \U00000000 for UTF-32 Unicode
-                            if (srcLength > readIndex + 9)
+                            if (srcLength > readIndex + 9 && IsValidUTF32(m_TextBackingArray, readIndex + 2))
                             {
                                 if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
 
@@ -4114,6 +4116,8 @@ namespace TMPro
             m_baselineOffset = 0; // Used by subscript characters.
             m_baselineOffsetStack.Clear();
 
+            m_FXScale = Vector3.one;
+
             m_lineOffset = 0; // Amount of space between lines (font line spacing + m_linespacing).
             m_lineHeight = TMP_Math.FLOAT_UNSET;
             float lineGap = m_currentFontAsset.faceInfo.lineHeight - (m_currentFontAsset.faceInfo.ascentLine - m_currentFontAsset.faceInfo.descentLine);
@@ -4138,6 +4142,7 @@ namespace TMPro
             m_lineNumber = 0;
             m_startOfLineAscender = 0;
             m_IsDrivenLineSpacing = false;
+            m_LastBaseGlyphIndex = int.MinValue;
 
             float marginWidth = marginSize.x;
             float marginHeight = marginSize.y;
@@ -4163,9 +4168,7 @@ namespace TMPro
             // Initialize struct to track states of word wrapping
             bool isFirstWordOfLine = true;
             m_isNonBreakingSpace = false;
-            //bool isLastBreakingChar = false;
-            bool isLastCharacterCJK = false;
-            //int lastSoftLineBreak = 0;
+            bool ignoreNonBreakingSpace = false;
 
             CharacterSubstitution characterToSubstitute = new CharacterSubstitution(-1, 0);
             bool isSoftHyphenIgnored = false;
@@ -4181,6 +4184,10 @@ namespace TMPro
             for (int i = 0; i < m_TextProcessingArray.Length && m_TextProcessingArray[i].unicode != 0; i++)
             {
                 int charCode = m_TextProcessingArray[i].unicode;
+
+                // Skip characters that have been substituted.
+                if (charCode == 0x1A)
+                    continue;
 
                 // Parse Rich Text Tag
                 #region Parse Rich Text Tag
@@ -4304,8 +4311,8 @@ namespace TMPro
                 if (m_textElementType == TMP_TextElementType.Sprite)
                 {
                     // If a sprite is used as a fallback then get a reference to it and set the color to white.
-                    m_currentSpriteAsset = m_textInfo.characterInfo[m_characterCount].spriteAsset;
-                    m_spriteIndex = m_textInfo.characterInfo[m_characterCount].spriteIndex;
+                    m_currentSpriteAsset = m_textInfo.characterInfo[m_characterCount].textElement.textAsset as TMP_SpriteAsset;
+                    m_spriteIndex = (int)m_textInfo.characterInfo[m_characterCount].textElement.glyphIndex;
 
                     TMP_SpriteCharacter sprite = m_currentSpriteAsset.spriteCharacterTable[m_spriteIndex];
                     if (sprite == null) continue;
@@ -4384,7 +4391,8 @@ namespace TMPro
                 m_internalCharacterInfo[m_characterCount].character = (char)charCode;
 
                 // Cache glyph metrics
-                GlyphMetrics currentGlyphMetrics = m_cached_TextElement.m_Glyph.metrics;
+                Glyph altGlyph = m_textInfo.characterInfo[m_characterCount].alternativeGlyph;
+                GlyphMetrics currentGlyphMetrics = altGlyph == null ? m_cached_TextElement.m_Glyph.metrics : altGlyph.metrics;
 
                 // Optimization to avoid calling this more than once per character.
                 bool isWhiteSpace = charCode <= 0xFFFF && char.IsWhiteSpace((char)charCode);
@@ -4392,11 +4400,11 @@ namespace TMPro
 
                 // Handle Kerning if Enabled.
                 #region Handle Kerning
-                TMP_GlyphValueRecord glyphAdjustments = new TMP_GlyphValueRecord();
+                GlyphValueRecord glyphAdjustments = new GlyphValueRecord();
                 float characterSpacingAdjustment = m_characterSpacing;
                 if (m_enableKerning)
                 {
-                    TMP_GlyphPairAdjustmentRecord adjustmentPair;
+                    GlyphPairAdjustmentRecord adjustmentPair;
                     uint baseGlyphIndex = m_cached_TextElement.m_GlyphIndex;
 
                     if (m_characterCount < totalCharacterCount - 1)
@@ -4406,8 +4414,8 @@ namespace TMPro
 
                         if (m_currentFontAsset.m_FontFeatureTable.m_GlyphPairAdjustmentRecordLookup.TryGetValue(key, out adjustmentPair))
                         {
-                            glyphAdjustments = adjustmentPair.m_FirstAdjustmentRecord.m_GlyphValueRecord;
-                            characterSpacingAdjustment = (adjustmentPair.m_FeatureLookupFlags & FontFeatureLookupFlags.IgnoreSpacingAdjustments) == FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
+                            glyphAdjustments = adjustmentPair.firstAdjustmentRecord.glyphValueRecord;
+                            characterSpacingAdjustment = (adjustmentPair.featureLookupFlags & UnityEngine.TextCore.LowLevel.FontFeatureLookupFlags.IgnoreSpacingAdjustments) == UnityEngine.TextCore.LowLevel.FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
                         }
                     }
 
@@ -4418,14 +4426,15 @@ namespace TMPro
 
                         if (m_currentFontAsset.m_FontFeatureTable.m_GlyphPairAdjustmentRecordLookup.TryGetValue(key, out adjustmentPair))
                         {
-                            glyphAdjustments += adjustmentPair.m_SecondAdjustmentRecord.m_GlyphValueRecord;
-                            characterSpacingAdjustment = (adjustmentPair.m_FeatureLookupFlags & FontFeatureLookupFlags.IgnoreSpacingAdjustments) == FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
+                            glyphAdjustments += adjustmentPair.secondAdjustmentRecord.glyphValueRecord;
+                            characterSpacingAdjustment = (adjustmentPair.featureLookupFlags & UnityEngine.TextCore.LowLevel.FontFeatureLookupFlags.IgnoreSpacingAdjustments) == UnityEngine.TextCore.LowLevel.FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
                         }
                     }
 
-                    m_internalCharacterInfo[m_characterCount].adjustedHorizontalAdvance = glyphAdjustments.m_XAdvance;
+                    m_internalCharacterInfo[m_characterCount].adjustedHorizontalAdvance = glyphAdjustments.xAdvance;
                 }
                 #endregion
+
 
                 // Handle Diacritical Marks
                 #region Handle Diacritical Marks
@@ -4434,46 +4443,74 @@ namespace TMPro
                 if (isBaseGlyph)
                     m_LastBaseGlyphIndex = m_characterCount;
 
-                if (!isBaseGlyph && /* m_MarkToBaseEnabled && */ m_characterCount > 0)
+                if (m_characterCount > 0 && !isBaseGlyph)
                 {
-                    Glyph baseGlyph = m_textInfo.characterInfo[m_LastBaseGlyphIndex].textElement.glyph;
-                    uint baseGlyphIndex = baseGlyph.index;
-                    uint markGlyphIndex = m_cached_TextElement.glyphIndex;
-                    uint key = markGlyphIndex << 16 | baseGlyphIndex;
-
-                    // TODO: Add Type to glyph make it easier to identify the glyph type.
-                    MarkToBaseAdjustmentRecord glyphAdjustmentRecord;
-
-                    if (m_currentFontAsset.fontFeatureTable.m_MarkToBaseAdjustmentRecordLookup.TryGetValue(key, out glyphAdjustmentRecord))
+                    // Check for potential Mark-to-Base lookup if previous glyph was a base glyph
+                    if (m_LastBaseGlyphIndex != int.MinValue && m_LastBaseGlyphIndex == m_characterCount - 1)
                     {
-                        float advanceOffset = (m_internalCharacterInfo[m_LastBaseGlyphIndex].origin - m_xAdvance) / currentElementScale;
+                        Glyph baseGlyph = m_textInfo.characterInfo[m_LastBaseGlyphIndex].textElement.glyph;
+                        uint baseGlyphIndex = baseGlyph.index;
+                        uint markGlyphIndex = m_cached_TextElement.glyphIndex;
+                        uint key = markGlyphIndex << 16 | baseGlyphIndex;
 
-                        glyphAdjustments.xPlacement = advanceOffset + glyphAdjustmentRecord.baseGlyphAnchorPoint.xCoordinate - glyphAdjustmentRecord.markPositionAdjustment.xPositionAdjustment;
-                        glyphAdjustments.yPlacement = glyphAdjustmentRecord.baseGlyphAnchorPoint.yCoordinate - glyphAdjustmentRecord.markPositionAdjustment.yPositionAdjustment;
+                        if (m_currentFontAsset.fontFeatureTable.m_MarkToBaseAdjustmentRecordLookup.TryGetValue(key, out MarkToBaseAdjustmentRecord glyphAdjustmentRecord))
+                        {
+                            float advanceOffset = (m_internalCharacterInfo[m_LastBaseGlyphIndex].origin - m_xAdvance) / currentElementScale;
 
-                        characterSpacingAdjustment = 0;
+                            glyphAdjustments.xPlacement = advanceOffset + glyphAdjustmentRecord.baseGlyphAnchorPoint.xCoordinate - glyphAdjustmentRecord.markPositionAdjustment.xPositionAdjustment;
+                            glyphAdjustments.yPlacement = glyphAdjustmentRecord.baseGlyphAnchorPoint.yCoordinate - glyphAdjustmentRecord.markPositionAdjustment.yPositionAdjustment;
+
+                            characterSpacingAdjustment = 0;
+                        }
                     }
-                }
-
-                if (!isBaseGlyph && /* m_MarkToMarkEnabled && */ m_characterCount > 0)
-                {
-                    MarkToMarkAdjustmentRecord glyphAdjustmentRecord;
-
-                    Glyph baseGlyph = m_textInfo.characterInfo[m_characterCount - 1].textElement.glyph;
-                    uint baseGlyphIndex = baseGlyph.index;
-                    uint markGlyphIndex = m_cached_TextElement.glyphIndex;
-                    uint key = markGlyphIndex << 16 | baseGlyphIndex;
-
-                    if (m_currentFontAsset.fontFeatureTable.m_MarkToMarkAdjustmentRecordLookup.TryGetValue(key, out glyphAdjustmentRecord))
+                    else
                     {
-                        float baseMarkOrigin = (m_internalCharacterInfo[m_characterCount - 1].origin - m_xAdvance) / currentElementScale;
-                        float currentBaseline = baselineOffset - m_lineOffset + m_baselineOffset;
-                        float baseMarkBaseline = (m_internalCharacterInfo[m_characterCount - 1].baseLine - currentBaseline) / currentElementScale;
+                        // Iterate from previous glyph to last base glyph checking for any potential Mark-to-Mark lookups to apply. Otherwise check for potential Mark-to-Base lookup between the current glyph and last base glyph
+                        bool wasLookupApplied = false;
 
-                        glyphAdjustments.xPlacement = baseMarkOrigin + glyphAdjustmentRecord.baseMarkGlyphAnchorPoint.xCoordinate - glyphAdjustmentRecord.combiningMarkPositionAdjustment.xPositionAdjustment;
-                        glyphAdjustments.yPlacement = baseMarkBaseline + glyphAdjustmentRecord.baseMarkGlyphAnchorPoint.yCoordinate - glyphAdjustmentRecord.combiningMarkPositionAdjustment.yPositionAdjustment;
+                        // Check for any potential Mark-to-Mark lookups
+                        for (int characterLookupIndex = m_characterCount - 1; characterLookupIndex >= 0 && characterLookupIndex != m_LastBaseGlyphIndex; characterLookupIndex--)
+                        {
+                            // Handle any potential Mark-to-Mark lookup
+                            Glyph baseMarkGlyph = m_textInfo.characterInfo[characterLookupIndex].textElement.glyph;
+                            uint baseGlyphIndex = baseMarkGlyph.index;
+                            uint combiningMarkGlyphIndex = m_cached_TextElement.glyphIndex;
+                            uint key = combiningMarkGlyphIndex << 16 | baseGlyphIndex;
 
-                        characterSpacingAdjustment = 0;
+                            if (m_currentFontAsset.fontFeatureTable.m_MarkToMarkAdjustmentRecordLookup.TryGetValue(key, out MarkToMarkAdjustmentRecord glyphAdjustmentRecord))
+                            {
+                                float baseMarkOrigin = (m_textInfo.characterInfo[characterLookupIndex].origin - m_xAdvance) / currentElementScale;
+                                float currentBaseline = baselineOffset - m_lineOffset + m_baselineOffset;
+                                float baseMarkBaseline = (m_internalCharacterInfo[characterLookupIndex].baseLine - currentBaseline) / currentElementScale;
+
+                                glyphAdjustments.xPlacement = baseMarkOrigin + glyphAdjustmentRecord.baseMarkGlyphAnchorPoint.xCoordinate - glyphAdjustmentRecord.combiningMarkPositionAdjustment.xPositionAdjustment;
+                                glyphAdjustments.yPlacement = baseMarkBaseline + glyphAdjustmentRecord.baseMarkGlyphAnchorPoint.yCoordinate - glyphAdjustmentRecord.combiningMarkPositionAdjustment.yPositionAdjustment;
+
+                                characterSpacingAdjustment = 0;
+                                wasLookupApplied = true;
+                                break;
+                            }
+                        }
+
+                        // If no Mark-to-Mark lookups were applied, check for potential Mark-to-Base lookup.
+                        if (m_LastBaseGlyphIndex != int.MinValue && !wasLookupApplied)
+                        {
+                            // Handle lookup for Mark-to-Base
+                            Glyph baseGlyph = m_textInfo.characterInfo[m_LastBaseGlyphIndex].textElement.glyph;
+                            uint baseGlyphIndex = baseGlyph.index;
+                            uint markGlyphIndex = m_cached_TextElement.glyphIndex;
+                            uint key = markGlyphIndex << 16 | baseGlyphIndex;
+
+                            if (m_currentFontAsset.fontFeatureTable.m_MarkToBaseAdjustmentRecordLookup.TryGetValue(key, out MarkToBaseAdjustmentRecord glyphAdjustmentRecord))
+                            {
+                                float advanceOffset = (m_internalCharacterInfo[m_LastBaseGlyphIndex].origin - m_xAdvance) / currentElementScale;
+
+                                glyphAdjustments.xPlacement = advanceOffset + glyphAdjustmentRecord.baseGlyphAnchorPoint.xCoordinate - glyphAdjustmentRecord.markPositionAdjustment.xPositionAdjustment;
+                                glyphAdjustments.yPlacement = glyphAdjustmentRecord.baseGlyphAnchorPoint.yCoordinate - glyphAdjustmentRecord.markPositionAdjustment.yPositionAdjustment;
+
+                                characterSpacingAdjustment = 0;
+                            }
+                        }
                     }
                 }
 
@@ -4774,7 +4811,7 @@ namespace TMPro
                 }
                 else
                 {
-                    m_xAdvance += ((currentGlyphMetrics.horizontalAdvance + glyphAdjustments.xAdvance) * currentElementScale + (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment + boldSpacingAdjustment) * currentEmScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
+                    m_xAdvance += ((currentGlyphMetrics.horizontalAdvance * m_FXScale.x + glyphAdjustments.xAdvance) * currentElementScale + (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment + boldSpacingAdjustment) * currentEmScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
 
                     if (isWhiteSpace || charCode == 0x200B)
                         m_xAdvance += m_wordSpacing * currentEmScale;
@@ -4858,13 +4895,12 @@ namespace TMPro
                 #region Save Word Wrapping State
                 if ((textWrapMode != TextWrappingModes.NoWrap && textWrapMode != TextWrappingModes.PreserveWhitespaceNoWrap) || m_overflowMode == TextOverflowModes.Truncate || m_overflowMode == TextOverflowModes.Ellipsis)
                 {
-                    if ((isWhiteSpace || charCode == 0x200B || charCode == 0x2D || charCode == 0xAD) && !m_isNonBreakingSpace && charCode != 0xA0 && charCode != 0x2007 && charCode != 0x2011 && charCode != 0x202F && charCode != 0x2060)
+                    if ((isWhiteSpace || charCode == 0x200B || charCode == 0x2D || charCode == 0xAD) && (!m_isNonBreakingSpace || ignoreNonBreakingSpace) && charCode != 0xA0 && charCode != 0x2007 && charCode != 0x2011 && charCode != 0x202F && charCode != 0x2060)
                     {
                         // We store the state of numerous variables for the most recent Space, LineFeed or Carriage Return to enable them to be restored
                         // for Word Wrapping.
                         SaveWordWrappingState(ref internalWordWrapState, i, m_characterCount);
                         isFirstWordOfLine = false;
-                        isLastCharacterCJK = false;
 
                         // Reset soft line breaking point since we now have a valid hard break point.
                         internalSoftLineBreak.previous_WordBreak = -1;
@@ -4881,12 +4917,12 @@ namespace TMPro
                                charCode > 0xFE30 && charCode < 0xFE4F || /* CJK Compatibility Forms */
                                charCode > 0xFF00 && charCode < 0xFFEF))) /* CJK Halfwidth */
                     {
-                        bool isLeadingCharacter = TMP_Settings.linebreakingRules.leadingCharacters.ContainsKey(charCode);
-                        bool isFollowingCharacter = m_characterCount < totalCharacterCount - 1 && TMP_Settings.linebreakingRules.followingCharacters.ContainsKey(m_internalCharacterInfo[m_characterCount + 1].character);
+                        bool isCurrentLeadingCharacter = TMP_Settings.linebreakingRules.leadingCharacters.Contains((uint)charCode);
+                        bool isNextFollowingCharacter = m_characterCount < totalCharacterCount - 1 && TMP_Settings.linebreakingRules.followingCharacters.Contains(m_internalCharacterInfo[m_characterCount + 1].character);
 
-                        if (isFirstWordOfLine || isLeadingCharacter == false)
+                        if (isCurrentLeadingCharacter == false)
                         {
-                            if (isFollowingCharacter == false)
+                            if (isNextFollowingCharacter == false)
                             {
                                 SaveWordWrappingState(ref internalWordWrapState, i, m_characterCount);
                                 isFirstWordOfLine = false;
@@ -4901,26 +4937,25 @@ namespace TMPro
                                 SaveWordWrappingState(ref internalWordWrapState, i, m_characterCount);
                             }
                         }
+                        else
+                        {
+                            if (isFirstWordOfLine && isFirstCharacterOfLine)
+                            {
+                                // Special handling for non-breaking space and soft line breaks
+                                if (isWhiteSpace)
+                                    SaveWordWrappingState(ref m_SavedSoftLineBreakState, i, m_characterCount);
 
-                        isLastCharacterCJK = true;
-                    }
-                    else if (isLastCharacterCJK)
-                    {
-                        bool isLeadingCharacter = TMP_Settings.linebreakingRules.leadingCharacters.ContainsKey(charCode);
-
-                        if (isLeadingCharacter == false)
-                            SaveWordWrappingState(ref internalWordWrapState, i, m_characterCount);
-
-                        isLastCharacterCJK = false;
+                                SaveWordWrappingState(ref m_SavedWordWrapState, i, m_characterCount);
+                            }
+                        }
                     }
                     else if (isFirstWordOfLine)
                     {
                         // Special handling for non-breaking space and soft line breaks
-                        if (isWhiteSpace || (charCode == 0xAD && isSoftHyphenIgnored == false))
+                        if (isWhiteSpace && charCode != 0xA0 || (charCode == 0xAD && isSoftHyphenIgnored == false))
                             SaveWordWrappingState(ref internalSoftLineBreak, i, m_characterCount);
 
                         SaveWordWrappingState(ref internalWordWrapState, i, m_characterCount);
-                        isLastCharacterCJK = false;
                     }
                 }
                 #endregion Save Word Wrapping State
@@ -5326,6 +5361,9 @@ namespace TMPro
             state.isNonBreakingSpace = m_isNonBreakingSpace;
             state.tagNoParsing = tag_NoParsing;
 
+            state.fxRotation = m_FXRotation;
+            state.fxScale = m_FXScale;
+
             // XML Tag Stack
             state.basicStyleStack = m_fontStyleStack;
             state.italicAngleStack = m_ItalicAngleStack;
@@ -5418,6 +5456,9 @@ namespace TMPro
 
             m_isNonBreakingSpace = state.isNonBreakingSpace;
             tag_NoParsing = state.tagNoParsing;
+
+            m_FXRotation = state.fxRotation;
+            m_FXScale = state.fxScale;
 
             // XML Tag Stack
             m_fontStyleStack = state.basicStyleStack;
@@ -5531,7 +5572,8 @@ namespace TMPro
             // Setup UVs for the Character
             #region Setup UVs
 
-            GlyphRect glyphRect = m_cached_TextElement.m_Glyph.glyphRect;
+            Glyph altGlyph = m_textInfo.characterInfo[m_characterCount].alternativeGlyph;
+            GlyphRect glyphRect = altGlyph == null ? m_cached_TextElement.m_Glyph.glyphRect : altGlyph.glyphRect;
 
             Vector2 uv0;
             uv0.x = (glyphRect.x - padding - style_padding) / m_currentFontAsset.m_AtlasWidth;
@@ -5594,7 +5636,7 @@ namespace TMPro
             // Vertex Color Alpha
             if (m_tintAllSprites) m_tintSprite = true;
             Color32 spriteColor = m_tintSprite ? m_spriteColor.Multiply(vertexColor) : m_spriteColor;
-            spriteColor.a = spriteColor.a < m_fontColor32.a ? spriteColor.a = spriteColor.a < vertexColor.a ? spriteColor.a : vertexColor.a : m_fontColor32.a;
+            spriteColor.a = spriteColor.a < m_fontColor32.a ? spriteColor.a < vertexColor.a ? spriteColor.a : vertexColor.a : m_fontColor32.a;
 
             Color32 c0 = spriteColor;
             Color32 c1 = spriteColor;
@@ -6623,6 +6665,17 @@ namespace TMPro
             return 15;
         }
 
+        bool IsValidUTF16(TextBackingContainer text, int index)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                uint c = text[index + i];
+                if (!(c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F'))
+                    return false;
+            }
+
+            return true;
+        }
 
         /// <summary>
         /// Convert UTF-16 Hex to Char
@@ -6684,6 +6737,17 @@ namespace TMPro
             return unicode;
         }
 
+        bool IsValidUTF32(TextBackingContainer text, int index)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                uint c = text[index + i];
+                if (!(c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F'))
+                    return false;
+            }
+
+            return true;
+        }
 
         /// <summary>
         /// Convert UTF-32 Hex to Char
@@ -8486,27 +8550,24 @@ namespace TMPro
                         // Reject tag if value is invalid.
                         if (value == Int16.MinValue) return false;
 
-                        m_FXMatrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(value, 1, 1));
-                        m_isFXMatrixSet = true;
+                        m_FXScale = new Vector3(value, 1, 1);
 
                         return true;
                     case MarkupTag.SLASH_SCALE:
-                        m_isFXMatrixSet = false;
+                        m_FXScale = Vector3.one;
                         return true;
                     case MarkupTag.ROTATE:
-                        // TODO: Add ability to use Random Rotation
-
+                        // TODO: Add attribute to provide for ability to use Random Rotation
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
 
                         // Reject tag if value is invalid.
                         if (value == Int16.MinValue) return false;
 
-                        m_FXMatrix = Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(0, 0, value), Vector3.one);
-                        m_isFXMatrixSet = true;
+                        m_FXRotation = Quaternion.Euler(0, 0, value);
 
                         return true;
                     case MarkupTag.SLASH_ROTATE:
-                        m_isFXMatrixSet = false;
+                        m_FXRotation = Quaternion.identity;
                         return true;
                     case MarkupTag.TABLE:
                         //switch (m_xmlAttribute[1].nameHashCode)
@@ -8533,16 +8594,16 @@ namespace TMPro
                         //}
                         return false;
                     case MarkupTag.SLASH_TABLE:
-                        return true;
+                        return false;
                     case MarkupTag.TR:
-                        return true;
+                        return false;
                     case MarkupTag.SLASH_TR:
-                        return true;
+                        return false;
                     case MarkupTag.TH:
                         // Set style to bold and center alignment
-                        return true;
+                        return false;
                     case MarkupTag.SLASH_TH:
-                        return true;
+                        return false;
                     case MarkupTag.TD:
                               // Style options
                         //for (int i = 1; i < m_xmlAttribute.Length && m_xmlAttribute[i].nameHashCode != 0; i++)

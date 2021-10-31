@@ -15,13 +15,7 @@ namespace TMPro
         public string name
         {
             get { return m_Name; }
-            set
-            {
-                if (value == m_Name)
-                    return;
-
-                m_Name = value;
-            }
+            set { m_Name = value; }
         }
 
         // =============================================

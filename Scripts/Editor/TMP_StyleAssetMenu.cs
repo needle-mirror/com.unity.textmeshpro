@@ -11,7 +11,7 @@ namespace TMPro.EditorUtilities
     {
 
         [MenuItem("Assets/Create/TextMeshPro/Style Sheet", false, 120)]
-        public static void CreateTextMeshProObjectPerform()
+        internal static void CreateTextMeshProObjectPerform()
         {
             string filePath;
             if (Selection.assetGUIDs.Length == 0)
@@ -32,7 +32,6 @@ namespace TMPro.EditorUtilities
                 }
             }
 
-
             string filePathWithName = AssetDatabase.GenerateUniqueAssetPath(filePath + "/Text StyleSheet.asset");
 
             //// Create new Style Sheet Asset.
@@ -52,5 +51,4 @@ namespace TMPro.EditorUtilities
             EditorGUIUtility.PingObject(styleSheet);
         }
     }
-
 }

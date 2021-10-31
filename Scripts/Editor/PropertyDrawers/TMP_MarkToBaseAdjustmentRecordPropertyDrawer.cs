@@ -14,6 +14,7 @@ namespace TMPro.EditorUtilities
     {
         private bool isEditingEnabled = false;
         private bool isSelectable = false;
+        private bool isRecordDirty;
 
         private string m_PreviousInput;
 
@@ -37,7 +38,8 @@ namespace TMPro.EditorUtilities
             Rect rect;
 
             isEditingEnabled = GUI.enabled;
-            isSelectable = label.text == "Selectable" ? true : false;
+            isSelectable = label.text == "Selectable";
+            isRecordDirty = false;
 
             if (isSelectable)
                 GUILayoutUtility.GetRect(position.width, 75);
@@ -63,13 +65,7 @@ namespace TMPro.EditorUtilities
                     EditorGUI.DelayedIntField(new Rect(position.x + (64 - labelWidth) / 2, position.y + 60, 64, 18), prop_BaseGlyphID, new GUIContent("ID:"));
                     if (EditorGUI.EndChangeCheck())
                     {
-                        TMP_FontAsset fontAsset = property.serializedObject.targetObject as TMP_FontAsset;
-                        if (fontAsset != null)
-                        {
-                            property.serializedObject.ApplyModifiedProperties();
-                            fontAsset.ReadFontAssetDefinition();
-                            TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
-                        }
+                        isRecordDirty = true;
                     }
                 }
 
@@ -102,13 +98,7 @@ namespace TMPro.EditorUtilities
                     EditorGUI.DelayedIntField(new Rect(position.width / 2 + 20 + (64 - labelWidth) / 2, position.y + 60, 64, 18), prop_MarkGlyphID, new GUIContent("ID:"));
                     if (EditorGUI.EndChangeCheck())
                     {
-                         TMP_FontAsset fontAsset = property.serializedObject.targetObject as TMP_FontAsset;
-                         if (fontAsset != null)
-                         {
-                             property.serializedObject.ApplyModifiedProperties();
-                             fontAsset.ReadFontAssetDefinition();
-                             TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
-                         }
+                        isRecordDirty = true;
                     }
                 }
 
@@ -122,6 +112,18 @@ namespace TMPro.EditorUtilities
                 EditorGUI.PropertyField(rect, prop_MarkAdjustmentRecord.FindPropertyRelative("m_YPositionAdjustment"), new GUIContent("Y:"));
 
                 DrawGlyph((uint)prop_MarkGlyphID.intValue, new Rect(position.width / 2 + 20, position.y, position.width, position.height), property);
+            }
+
+            if (isRecordDirty)
+            {
+                TMP_FontAsset fontAsset = property.serializedObject.targetObject as TMP_FontAsset;
+
+                if (fontAsset != null)
+                {
+                    property.serializedObject.ApplyModifiedProperties();
+                    fontAsset.ReadFontAssetDefinition();
+                    TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
+                }
             }
         }
 

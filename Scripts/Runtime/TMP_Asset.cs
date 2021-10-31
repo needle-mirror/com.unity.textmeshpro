@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using UnityEngine.Serialization;
+using UnityEngine.TextCore;
 
 namespace TMPro
 {
@@ -48,6 +49,15 @@ namespace TMPro
         }
 
         /// <summary>
+        /// Information about the face of the asset.
+        /// </summary>
+        public FaceInfo faceInfo
+        {
+            get { return m_FaceInfo; }
+            internal set { m_FaceInfo = value; }
+        }
+
+        /// <summary>
         /// The material used by this asset.
         /// </summary>
         public Material material
@@ -86,6 +96,9 @@ namespace TMPro
         internal int m_InstanceID;
 
         internal int m_HashCode;
+
+        [SerializeField]
+        internal FaceInfo m_FaceInfo;
 
         [SerializeField][FormerlySerializedAs("material")]
         internal Material m_Material;
