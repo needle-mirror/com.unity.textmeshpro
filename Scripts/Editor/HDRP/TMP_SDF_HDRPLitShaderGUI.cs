@@ -1,4 +1,4 @@
-﻿#if HDRP_7_5_OR_NEWER
+﻿#if HDRP_10_7_OR_NEWER
 using UnityEngine;
 using UnityEditor;
 
@@ -8,12 +8,6 @@ namespace TMPro.EditorUtilities
 {
     internal class TMP_SDF_HDRPLitShaderGUI : TMP_BaseHDRPLitShaderGUI
     {
-        // private readonly MaterialUIBlockList uiBlocks = new MaterialUIBlockList
-        // {
-        //     new SurfaceOptionUIBlock(MaterialUIBlock.Expandable.Base, features: SurfaceOptionUIBlock.Features.Lit),
-        //     new AdvancedOptionsUIBlock(MaterialUIBlock.Expandable.Advance, AdvancedOptionsUIBlock.Features.StandardLit) //AdvancedOptionsUIBlock.Features.Instancing | AdvancedOptionsUIBlock.Features.AddPrecomputedVelocity)
-        // };
-
         static ShaderFeature s_OutlineFeature, s_UnderlayFeature, s_BevelFeature, s_GlowFeature, s_MaskFeature;
 
         static bool s_Face = true, s_Outline = true, s_Outline2 = true, s_Outline3 = true, s_Underlay = true, s_Lighting = true, s_Glow, s_Bevel, s_Light, s_Bump, s_Env;
@@ -77,9 +71,6 @@ namespace TMPro.EditorUtilities
         {
             // Remove the ShaderGraphUIBlock to avoid having duplicated properties in the UI.
             uiBlocks.RemoveAll(b => b is ShaderGraphUIBlock);
-
-            // Insert the color block just after the Surface Option block.
-            //uiBlocks.Insert(1, new SurfaceOptionUIBlock(MaterialUIBlock.Expandable.Base, features: SurfaceOptionUIBlock.Features.Lit));
         }
 
         protected override void DoGUI()
@@ -130,11 +121,13 @@ namespace TMPro.EditorUtilities
             EditorGUILayout.Space();
             EditorGUILayout.Space();
 
-            using (var changed = new EditorGUI.ChangeCheckScope())
-            {
-                uiBlocks.OnGUI(m_Editor, m_Properties);
-                ApplyKeywordsAndPassesIfNeeded(changed.changed, uiBlocks.materials);
-            }
+            // Draw HDRP panels
+            uiBlocks.OnGUI(m_Editor, m_Properties);
+            #if HDRP_12_OR_NEWER
+            ValidateMaterial(m_Material);
+            #else
+            SetupMaterialKeywordsAndPass(m_Material);
+            #endif
         }
 
         void DoFacePanel()

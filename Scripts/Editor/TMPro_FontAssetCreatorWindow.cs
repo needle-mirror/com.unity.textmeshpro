@@ -63,9 +63,8 @@ namespace TMPro.EditorUtilities
                 window.LoadFontCreationSettings(fontAsset.creationSettings);
 
                 // Override settings to inject character list from font asset
-                window.m_CharacterSetSelectionMode = 6;
-                window.m_CharacterSequence = TMP_EditorUtility.GetUnicodeCharacterSequence(TMP_FontAsset.GetCharactersArray(fontAsset));
-
+                //window.m_CharacterSetSelectionMode = 6;
+                //window.m_CharacterSequence = TMP_EditorUtility.GetUnicodeCharacterSequence(TMP_FontAsset.GetCharactersArray(fontAsset));
 
                 window.m_ReferencedFontAsset = fontAsset;
                 window.m_SavedFontAtlas = fontAsset.atlasTexture;
@@ -106,7 +105,7 @@ namespace TMPro.EditorUtilities
 
         string[] m_FontSizingOptions = { "Auto Sizing", "Custom Size" };
         int m_PointSizeSamplingMode;
-        string[] m_FontResolutionLabels = { "8", "16","32", "64", "128", "256", "512", "1024", "2048", "4096", "8192" };
+        string[] m_FontResolutionLabels = { "8", "16", "32", "64", "128", "256", "512", "1024", "2048", "4096", "8192" };
         int[] m_FontAtlasResolutions = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };
         string[] m_FontCharacterSets = { "ASCII", "Extended ASCII", "ASCII Lowercase", "ASCII Uppercase", "Numbers + Symbols", "Custom Range", "Unicode Range (Hex)", "Custom Characters", "Characters from File" };
         enum FontPackingModes { Fast = 0, Optimum = 4 };
@@ -686,7 +685,7 @@ namespace TMPro.EditorUtilities
                     m_IsFontAtlasInvalid = true;
                 }
 
-                m_IncludeFontFeatures = EditorGUILayout.Toggle("Get Kerning Pairs", m_IncludeFontFeatures);
+                m_IncludeFontFeatures = EditorGUILayout.Toggle("Get Font Features", m_IncludeFontFeatures);
 
                 EditorGUILayout.Space();
             }
@@ -846,7 +845,7 @@ namespace TMPro.EditorUtilities
                                     m_PointSize = (maxPointSize + minPointSize) / 2;
 
                                     bool optimumPointSizeFound = false;
-                                    for (int iteration = 0; iteration < 15 && optimumPointSizeFound == false; iteration++)
+                                    for (int iteration = 0; iteration < 15 && optimumPointSizeFound == false && m_PointSize > 0; iteration++)
                                     {
                                         m_AtlasGenerationProgressLabel = "Packing glyphs - Pass (" + iteration + ")";
 
@@ -1222,7 +1221,7 @@ namespace TMPro.EditorUtilities
 
             missingGlyphReport = "Font: <b>" + colorTag2 + m_FaceInfo.familyName + "</color></b>  Style: <b>" + colorTag2 + m_FaceInfo.styleName + "</color></b>";
 
-            missingGlyphReport += "\nPoint Size: <b>" + colorTag2 + m_FaceInfo.pointSize + "</color></b>   SP/PD Ratio: <b>" + colorTag2 +  ((float)m_Padding / m_FaceInfo.pointSize).ToString("0.0%" + "</color></b>");
+            missingGlyphReport += "\nPoint Size: <b>" + colorTag2 + m_FaceInfo.pointSize + "</color></b>   Padding: <b>" + colorTag2 + m_Padding + "</color></b>   SP/PD Ratio: <b>" + colorTag2 + ((float)m_Padding / m_FaceInfo.pointSize).ToString("0.0%" + "</color></b>");
 
             missingGlyphReport += "\n\nCharacters included: <color=#ffff00><b>" + m_FontCharacterTable.Count + "/" + m_CharacterCount + "</b></color>";
             missingGlyphReport += "\nMissing characters: <color=#ffff00><b>" + m_MissingCharacters.Count + "</b></color>";
@@ -1430,7 +1429,7 @@ namespace TMPro.EditorUtilities
 
                 // Get and Add Kerning Pairs to Font Asset
                 if (m_IncludeFontFeatures)
-                    fontAsset.fontFeatureTable = GetKerningTable();
+                    fontAsset.fontFeatureTable = GetAllFontFeatures();
 
 
                 // Add Font Atlas as Sub-Asset
@@ -1481,7 +1480,7 @@ namespace TMPro.EditorUtilities
 
                 // Get and Add Kerning Pairs to Font Asset
                 if (m_IncludeFontFeatures)
-                    fontAsset.fontFeatureTable = GetKerningTable();
+                    fontAsset.fontFeatureTable = GetAllFontFeatures();
 
                 // Destroy Assets that will be replaced.
                 if (fontAsset.atlasTextures != null && fontAsset.atlasTextures.Length > 0)
@@ -1611,7 +1610,7 @@ namespace TMPro.EditorUtilities
 
                 // Get and Add Kerning Pairs to Font Asset
                 if (m_IncludeFontFeatures)
-                    fontAsset.fontFeatureTable = GetKerningTable();
+                    fontAsset.fontFeatureTable = GetAllFontFeatures();
 
                 // Add Font Atlas as Sub-Asset
                 fontAsset.atlasTextures = new Texture2D[] { m_FontAtlasTexture };
@@ -1671,7 +1670,7 @@ namespace TMPro.EditorUtilities
                 // Get and Add Kerning Pairs to Font Asset
                 // TODO: Check and preserve existing adjustment pairs.
                 if (m_IncludeFontFeatures)
-                    fontAsset.fontFeatureTable = GetKerningTable();
+                    fontAsset.fontFeatureTable = GetAllFontFeatures();
 
                 // Destroy Assets that will be replaced.
                 if (fontAsset.atlasTextures != null && fontAsset.atlasTextures.Length > 0)
@@ -1797,6 +1796,7 @@ namespace TMPro.EditorUtilities
         {
             m_SourceFont = AssetDatabase.LoadAssetAtPath<Font>(AssetDatabase.GUIDToAssetPath(settings.sourceFontFileGUID));
             m_SourceFontFaceIndex = settings.faceIndex;
+            m_SourceFontFaces = GetFontFaces();
             m_PointSizeSamplingMode  = settings.pointSizeSamplingMode;
             m_PointSize = settings.pointSize;
             m_Padding = settings.padding;
@@ -1925,24 +1925,134 @@ namespace TMPro.EditorUtilities
         }
 
 
-        // Get Kerning Pairs
-        public TMP_FontFeatureTable GetKerningTable()
+        /// <summary>
+        ///
+        /// </summary>
+        /// <returns></returns>
+        TMP_FontFeatureTable GetAllFontFeatures()
+        {
+            TMP_FontFeatureTable fontFeatureTable = new TMP_FontFeatureTable();
+
+            PopulateGlyphAdjustmentTable(fontFeatureTable);
+
+            #if TEXTCORE_FONT_ENGINE_1_5_OR_NEWER
+            PopulateLigatureTable(fontFeatureTable);
+
+            PopulateDiacriticalMarkAdjustmentTables(fontFeatureTable);
+            #endif
+
+            return fontFeatureTable;
+        }
+
+        void PopulateGlyphAdjustmentTable(TMP_FontFeatureTable fontFeatureTable)
         {
             GlyphPairAdjustmentRecord[] adjustmentRecords = FontEngine.GetGlyphPairAdjustmentTable(m_AvailableGlyphsToAdd.ToArray());
 
             if (adjustmentRecords == null)
-                return null;
-
-            TMP_FontFeatureTable fontFeatureTable = new TMP_FontFeatureTable();
+                return;
 
             for (int i = 0; i < adjustmentRecords.Length && adjustmentRecords[i].firstAdjustmentRecord.glyphIndex != 0; i++)
             {
-                fontFeatureTable.glyphPairAdjustmentRecords.Add(new TMP_GlyphPairAdjustmentRecord(adjustmentRecords[i]));
+                fontFeatureTable.glyphPairAdjustmentRecords.Add(adjustmentRecords[i]);
             }
 
             fontFeatureTable.SortGlyphPairAdjustmentRecords();
-
-            return fontFeatureTable;
         }
+
+        #if TEXTCORE_FONT_ENGINE_1_5_OR_NEWER
+        void PopulateLigatureTable(TMP_FontFeatureTable fontFeatureTable)
+        {
+            UnityEngine.TextCore.LowLevel.LigatureSubstitutionRecord[] ligatureRecords = FontEngine.GetLigatureSubstitutionRecords(m_AvailableGlyphsToAdd);
+            if (ligatureRecords != null)
+                AddLigatureRecords(fontFeatureTable, ligatureRecords);
+        }
+
+        void AddLigatureRecords(TMP_FontFeatureTable fontFeatureTable, UnityEngine.TextCore.LowLevel.LigatureSubstitutionRecord[] records)
+        {
+            for (int i = 0; i < records.Length; i++)
+            {
+                UnityEngine.TextCore.LowLevel.LigatureSubstitutionRecord record = records[i];
+
+                if (records[i].componentGlyphIDs == null || records[i].ligatureGlyphID == 0)
+                    return;
+
+                uint firstComponentGlyphIndex = record.componentGlyphIDs[0];
+
+                LigatureSubstitutionRecord newRecord = new LigatureSubstitutionRecord() { componentGlyphIDs = record.componentGlyphIDs, ligatureGlyphID = record.ligatureGlyphID };
+
+                // Add new record to lookup
+                if (!fontFeatureTable.m_LigatureSubstitutionRecordLookup.ContainsKey(firstComponentGlyphIndex))
+                {
+                    fontFeatureTable.m_LigatureSubstitutionRecordLookup.Add(firstComponentGlyphIndex, new List<LigatureSubstitutionRecord> { newRecord });
+                }
+                else
+                {
+                    fontFeatureTable.m_LigatureSubstitutionRecordLookup[firstComponentGlyphIndex].Add(newRecord);
+                }
+
+                fontFeatureTable.m_LigatureSubstitutionRecords.Add(newRecord);
+            }
+        }
+
+        void PopulateDiacriticalMarkAdjustmentTables(TMP_FontFeatureTable fontFeatureTable)
+        {
+            UnityEngine.TextCore.LowLevel.MarkToBaseAdjustmentRecord[] markToBaseRecords = FontEngine.GetMarkToBaseAdjustmentRecords(m_AvailableGlyphsToAdd);
+            if (markToBaseRecords != null)
+                AddMarkToBaseAdjustmentRecords(fontFeatureTable, markToBaseRecords);
+
+            UnityEngine.TextCore.LowLevel.MarkToMarkAdjustmentRecord[] markToMarkRecords = FontEngine.GetMarkToMarkAdjustmentRecords(m_AvailableGlyphsToAdd);
+            if (markToMarkRecords != null)
+                AddMarkToMarkAdjustmentRecords(fontFeatureTable, markToMarkRecords);
+
+        }
+
+        void AddMarkToBaseAdjustmentRecords(TMP_FontFeatureTable fontFeatureTable, UnityEngine.TextCore.LowLevel.MarkToBaseAdjustmentRecord[] records)
+        {
+            float emScale = (float)m_FaceInfo.pointSize / m_FaceInfo.unitsPerEM;
+
+            for (int i = 0; i < records.Length; i++)
+            {
+                UnityEngine.TextCore.LowLevel.MarkToBaseAdjustmentRecord record = records[i];
+
+                uint key = record.markGlyphID << 16 | record.baseGlyphID;
+
+                if (fontFeatureTable.m_MarkToBaseAdjustmentRecordLookup.ContainsKey(key))
+                    continue;
+
+                MarkToBaseAdjustmentRecord newRecord = new MarkToBaseAdjustmentRecord {
+                    baseGlyphID = record.baseGlyphID,
+                    baseGlyphAnchorPoint = new GlyphAnchorPoint { xCoordinate = record.baseGlyphAnchorPoint.xCoordinate * emScale, yCoordinate = record.baseGlyphAnchorPoint.yCoordinate * emScale },
+                    markGlyphID = record.markGlyphID,
+                    markPositionAdjustment = new MarkPositionAdjustment { xPositionAdjustment = record.markPositionAdjustment.xPositionAdjustment * emScale, yPositionAdjustment = record.markPositionAdjustment.yPositionAdjustment * emScale } };
+
+                fontFeatureTable.MarkToBaseAdjustmentRecords.Add(newRecord);
+                fontFeatureTable.m_MarkToBaseAdjustmentRecordLookup.Add(key, newRecord);
+            }
+        }
+
+        void AddMarkToMarkAdjustmentRecords(TMP_FontFeatureTable fontFeatureTable, UnityEngine.TextCore.LowLevel.MarkToMarkAdjustmentRecord[] records)
+        {
+            float emScale = (float)m_FaceInfo.pointSize / m_FaceInfo.unitsPerEM;
+
+            for (int i = 0; i < records.Length; i++)
+            {
+                UnityEngine.TextCore.LowLevel.MarkToMarkAdjustmentRecord record = records[i];
+
+                uint key = record.combiningMarkGlyphID << 16 | record.baseMarkGlyphID;
+
+                if (fontFeatureTable.m_MarkToMarkAdjustmentRecordLookup.ContainsKey(key))
+                    continue;
+
+                MarkToMarkAdjustmentRecord newRecord = new MarkToMarkAdjustmentRecord {
+                    baseMarkGlyphID = record.baseMarkGlyphID,
+                    baseMarkGlyphAnchorPoint = new GlyphAnchorPoint { xCoordinate = record.baseMarkGlyphAnchorPoint.xCoordinate * emScale, yCoordinate = record.baseMarkGlyphAnchorPoint.yCoordinate * emScale},
+                    combiningMarkGlyphID = record.combiningMarkGlyphID,
+                    combiningMarkPositionAdjustment = new MarkPositionAdjustment { xPositionAdjustment = record.combiningMarkPositionAdjustment.xPositionAdjustment * emScale, yPositionAdjustment = record.combiningMarkPositionAdjustment.yPositionAdjustment * emScale } };
+
+                fontFeatureTable.MarkToMarkAdjustmentRecords.Add(newRecord);
+                fontFeatureTable.m_MarkToMarkAdjustmentRecordLookup.Add(key, newRecord);
+            }
+        }
+        #endif
     }
 }

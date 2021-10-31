@@ -303,8 +303,6 @@ namespace TMPro.EditorUtilities
 
                 mat.SetTexture(ShaderUtilities.ID_MainTex, m_copiedTexture);
             }
-
-            //DestroyImmediate(m_copiedAtlasProperties);
         }
         #endif
 
@@ -383,10 +381,11 @@ namespace TMPro.EditorUtilities
         {
             TMP_FontAsset fontAsset = command.context as TMP_FontAsset;
 
-            if (fontAsset != null && Selection.activeObject != fontAsset)
-            {
+            if (fontAsset == null)
+                return;
+
+            if (Selection.activeObject != fontAsset)
                 Selection.activeObject = fontAsset;
-            }
 
             fontAsset.ClearFontAssetData(true);
 
@@ -395,7 +394,10 @@ namespace TMPro.EditorUtilities
             TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
         }
 
-
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="command"></param>
         [MenuItem("CONTEXT/TrueTypeFontImporter/Create TMP Font Asset...", false, 200)]
         static void CreateFontAsset(MenuCommand command)
         {

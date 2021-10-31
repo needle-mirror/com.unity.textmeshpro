@@ -85,7 +85,7 @@ namespace TMPro
                     elapsedTime = 0;
 
                     // Return if sprite was truncated or replaced by the Ellipsis character.
-                    char character = m_TextComponent.textInfo.characterInfo[currentCharacter].character;
+                    uint character = m_TextComponent.textInfo.characterInfo[currentCharacter].character;
                     if (character == 0x03 || character == 0x2026)
                     {
                         m_animations.Remove(currentCharacter);

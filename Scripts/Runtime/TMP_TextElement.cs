@@ -51,7 +51,7 @@ namespace TMPro
         // =============================================
 
         [SerializeField]
-        protected TextElementType m_ElementType;
+        internal TextElementType m_ElementType;
 
         [SerializeField]
         internal uint m_Unicode;

@@ -8,7 +8,6 @@ using System.Collections.Generic;
 
 namespace TMPro.EditorUtilities
 {
-
     public static class TMP_EditorUtility
     {
         /// <summary>
@@ -43,10 +42,9 @@ namespace TMPro.EditorUtilities
         [SerializeField]
         private static string m_PackageFullPath;
 
-        
         // Static Fields Related to locating the TextMesh Pro Asset
         private static string folderPath = "Not Found";
-        
+
         private static EditorWindow Gameview;
         private static bool isInitialized = false;
 
@@ -58,7 +56,7 @@ namespace TMPro.EditorUtilities
         }
 
 
-        public static void RepaintAll()
+        internal static void RepaintAll()
         {
             if (isInitialized == false)
             {
@@ -80,7 +78,7 @@ namespace TMPro.EditorUtilities
         /// <returns>
         /// The new asset.
         /// </returns>
-        public static T CreateAsset<T>(string name) where T : ScriptableObject
+        internal static T CreateAsset<T>(string name) where T : ScriptableObject
         {
             string path = AssetDatabase.GetAssetPath(Selection.activeObject);
             if (path.Length == 0)
@@ -107,7 +105,7 @@ namespace TMPro.EditorUtilities
 
 
         // Function used to find all materials which reference a font atlas so we can update all their references.
-        public static Material[] FindMaterialReferences(TMP_FontAsset fontAsset)
+        internal static Material[] FindMaterialReferences(TMP_FontAsset fontAsset)
         {
             List<Material> refs = new List<Material>();
             Material mat = fontAsset.material;
@@ -139,7 +137,7 @@ namespace TMPro.EditorUtilities
 
 
         // Function used to find the Font Asset which matches the given Material Preset and Font Atlas Texture.
-        public static TMP_FontAsset FindMatchingFontAsset(Material mat)
+        internal static TMP_FontAsset FindMatchingFontAsset(Material mat)
         {
             if (mat.GetTexture(ShaderUtilities.ID_MainTex) == null) return null;
 
@@ -251,7 +249,7 @@ namespace TMPro.EditorUtilities
         /// </summary>
         /// <param name="characterSet"></param>
         /// <returns></returns>
-        public static string GetDecimalCharacterSequence(int[] characterSet)
+        internal static string GetDecimalCharacterSequence(int[] characterSet)
         {
             if (characterSet == null || characterSet.Length == 0)
                 return string.Empty;
@@ -294,7 +292,7 @@ namespace TMPro.EditorUtilities
         /// </summary>
         /// <param name="characterSet"></param>
         /// <returns></returns>
-        public static string GetUnicodeCharacterSequence(int[] characterSet)
+        internal static string GetUnicodeCharacterSequence(int[] characterSet)
         {
             if (characterSet == null || characterSet.Length == 0)
                 return string.Empty;
@@ -333,12 +331,12 @@ namespace TMPro.EditorUtilities
 
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="rect"></param>
         /// <param name="thickness"></param>
         /// <param name="color"></param>
-        public static void DrawBox(Rect rect, float thickness, Color color)
+        internal static void DrawBox(Rect rect, float thickness, Color color)
         {
             EditorGUI.DrawRect(new Rect(rect.x - thickness, rect.y + thickness, rect.width + thickness * 2, thickness), color);
             EditorGUI.DrawRect(new Rect(rect.x - thickness, rect.y + thickness, thickness, rect.height - thickness * 2), color);
@@ -352,7 +350,7 @@ namespace TMPro.EditorUtilities
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static int GetHorizontalAlignmentGridValue(int value)
+        internal static int GetHorizontalAlignmentGridValue(int value)
         {
             if ((value & 0x1) == 0x1)
                 return 0;
@@ -375,7 +373,7 @@ namespace TMPro.EditorUtilities
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static int GetVerticalAlignmentGridValue(int value)
+        internal static int GetVerticalAlignmentGridValue(int value)
         {
             if ((value & 0x100) == 0x100)
                 return 0;
@@ -393,7 +391,7 @@ namespace TMPro.EditorUtilities
             return 0;
         }
 
-        public static void DrawColorProperty(Rect rect, SerializedProperty property)
+        internal static void DrawColorProperty(Rect rect, SerializedProperty property)
         {
             int oldIndent = EditorGUI.indentLevel;
             EditorGUI.indentLevel = 0;
@@ -423,8 +421,8 @@ namespace TMPro.EditorUtilities
             }
             EditorGUI.indentLevel = oldIndent;
         }
-        
-        public static bool EditorToggle(Rect position, bool value, GUIContent content, GUIStyle style)
+
+        internal static bool EditorToggle(Rect position, bool value, GUIContent content, GUIStyle style)
         {
             var id = GUIUtility.GetControlID(content, FocusType.Keyboard, position);
             var evt = Event.current;
@@ -443,7 +441,7 @@ namespace TMPro.EditorUtilities
                 EditorGUIUtility.editingTextField = false;
                 HandleUtility.Repaint();
             }
-            
+
             return GUI.Toggle(position, id, value, content, style);
         }
 

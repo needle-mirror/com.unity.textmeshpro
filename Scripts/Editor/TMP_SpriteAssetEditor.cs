@@ -836,7 +836,6 @@ namespace TMPro.EditorUtilities
         void CopyCharacterSerializedProperty(SerializedProperty source, ref SerializedProperty target)
         {
             target.FindPropertyRelative("m_Name").stringValue = source.FindPropertyRelative("m_Name").stringValue;
-            target.FindPropertyRelative("m_HashCode").intValue = source.FindPropertyRelative("m_HashCode").intValue;
             target.FindPropertyRelative("m_Unicode").intValue = source.FindPropertyRelative("m_Unicode").intValue;
             target.FindPropertyRelative("m_GlyphIndex").intValue = source.FindPropertyRelative("m_GlyphIndex").intValue;
             target.FindPropertyRelative("m_Scale").floatValue = source.FindPropertyRelative("m_Scale").floatValue;

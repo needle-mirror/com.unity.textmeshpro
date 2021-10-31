@@ -138,6 +138,7 @@ namespace TMPro
         public static TMP_FontAsset defaultFontAsset
         {
             get { return instance.m_defaultFontAsset; }
+            set { instance.m_defaultFontAsset = value; }
         }
         [SerializeField]
         private TMP_FontAsset m_defaultFontAsset;
@@ -230,6 +231,7 @@ namespace TMPro
         public static List<TMP_FontAsset> fallbackFontAssets
         {
             get { return instance.m_fallbackFontAssets; }
+            set { instance.m_fallbackFontAssets = value; }
         }
         [SerializeField]
         private List<TMP_FontAsset> m_fallbackFontAssets;
@@ -259,6 +261,7 @@ namespace TMPro
         public static TMP_SpriteAsset defaultSpriteAsset
         {
             get { return instance.m_defaultSpriteAsset; }
+            set { instance.m_defaultSpriteAsset = value; }
         }
         [SerializeField]
         private TMP_SpriteAsset m_defaultSpriteAsset;
@@ -322,6 +325,7 @@ namespace TMPro
         public static TMP_StyleSheet defaultStyleSheet
         {
             get { return instance.m_defaultStyleSheet; }
+            set { instance.m_defaultStyleSheet = value; }
         }
         [SerializeField]
         private TMP_StyleSheet m_defaultStyleSheet;
@@ -406,13 +410,13 @@ namespace TMPro
         {
             get
             {
-                if (TMP_Settings.s_Instance == null)
+                if (s_Instance == null)
                 {
-                    TMP_Settings.s_Instance = Resources.Load<TMP_Settings>("TMP Settings");
+                    s_Instance = Resources.Load<TMP_Settings>("TMP Settings");
 
                     #if UNITY_EDITOR
                     // Make sure TextMesh Pro UPM packages resources have been added to the user project
-                    if (TMP_Settings.s_Instance == null)
+                    if (s_Instance == null && Time.frameCount != 0)
                     {
                         // Open TMP Resources Importer
                         TMP_PackageResourceImporterWindow.ShowPackageImporterWindow();
@@ -420,7 +424,7 @@ namespace TMPro
                     #endif
                 }
 
-                return TMP_Settings.s_Instance;
+                return s_Instance;
             }
         }
 
@@ -495,7 +499,7 @@ namespace TMPro
         {
             //Debug.Log("Loading Line Breaking Rules for Asian Languages.");
 
-            if (TMP_Settings.instance == null) return;
+            if (instance == null) return;
 
             if (s_Instance.m_linebreakingRules == null)
                 s_Instance.m_linebreakingRules = new LineBreakingTable();
@@ -510,22 +514,14 @@ namespace TMPro
         /// </summary>
         /// <param name="file"></param>
         /// <returns></returns>
-        private static Dictionary<int, char> GetCharacters(TextAsset file)
+        private static HashSet<uint> GetCharacters(TextAsset file)
         {
-            Dictionary<int, char> dict = new Dictionary<int, char>();
+            HashSet<uint> dict = new HashSet<uint>();
             string text = file.text;
 
             for (int i = 0; i < text.Length; i++)
             {
-                char c = text[i];
-                // Check to make sure we don't include duplicates
-                if (dict.ContainsKey((int)c) == false)
-                {
-                    dict.Add((int)c, c);
-                    //Debug.Log("Adding [" + (int)c + "] to dictionary.");
-                }
-                //else
-                //    Debug.Log("Character [" + text[i] + "] is a duplicate.");
+                dict.Add(text[i]);
             }
 
             return dict;
@@ -534,8 +530,8 @@ namespace TMPro
 
         public class LineBreakingTable
         {
-            public Dictionary<int, char> leadingCharacters;
-            public Dictionary<int, char> followingCharacters;
+            public HashSet<uint> leadingCharacters;
+            public HashSet<uint> followingCharacters;
         }
     }
 }

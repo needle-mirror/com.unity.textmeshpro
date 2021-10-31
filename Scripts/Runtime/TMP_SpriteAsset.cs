@@ -12,17 +12,6 @@ namespace TMPro
         internal Dictionary<int, int> m_NameLookup;
         internal Dictionary<uint, int> m_GlyphIndexLookup;
 
-        /// <summary>
-        /// Information about the sprite asset's face.
-        /// </summary>
-        public FaceInfo faceInfo
-        {
-            get { return m_FaceInfo; }
-            internal set { m_FaceInfo = value; }
-        }
-        [SerializeField]
-        internal FaceInfo m_FaceInfo;
-
         // The texture which contains the sprites.
         public Texture spriteSheet;
 
@@ -96,20 +85,17 @@ namespace TMPro
         /// <returns></returns>
         Material GetDefaultSpriteMaterial()
         {
-            //isEditingAsset = true;
             ShaderUtilities.GetShaderPropertyIDs();
 
             // Add a new material
             Shader shader = Shader.Find("TextMeshPro/Sprite");
             Material tempMaterial = new Material(shader);
             tempMaterial.SetTexture(ShaderUtilities.ID_MainTex, spriteSheet);
-            tempMaterial.hideFlags = HideFlags.HideInHierarchy;
 
             #if UNITY_EDITOR
             UnityEditor.AssetDatabase.AddObjectToAsset(tempMaterial, this);
             UnityEditor.AssetDatabase.ImportAsset(UnityEditor.AssetDatabase.GetAssetPath(this));
             #endif
-            //isEditingAsset = false;
 
             return tempMaterial;
         }

@@ -291,7 +291,7 @@ namespace TMPro.EditorUtilities
         void DoTexture(string name, string label, System.Type type, bool withTilingOffset = false, string[] speedNames = null)
         {
             float objFieldSize = 60f;
-            bool smallLayout = EditorGUIUtility.currentViewWidth <= 440f && (withTilingOffset || speedNames != null);
+            bool smallLayout = EditorGUIUtility.currentViewWidth <= 330f && (withTilingOffset || speedNames != null);
             float controlHeight = smallLayout ? objFieldSize * 2 : objFieldSize;
 
             MaterialProperty property = FindProperty(name, m_Properties);
