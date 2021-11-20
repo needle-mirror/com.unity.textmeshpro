@@ -1,6 +1,56 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [4.0.0-pre.2] - 2021-11-20
+### Changes
+- Fixed italic horizontal displacement of punctuation. (TMPB-133)
+- Updated Input Field to not restore the original text when the X in the HoloLens keyboard is pressed.
+- Fixed MissingReferenceException when changing scenes. See case [TMPB-120](https://issuetracker.unity3d.com/issues/missingreferenceexception-thrown-when-changing-scenes) and forum [thread](https://forum.unity.com/threads/tmpro-submeshui-error-when-changing-scenes.1129724/) for more info.
+- Fixed Undo operation not correctly undoing some newly created TMP objects. Case #1400391
+- Fixed glyphs not being drawn in the various font asset inspector tables although present in the glyph table until unselecting and re-selecting the font asset.
+- Fixed incorrect line breaking when using a mixture of Latin and CJK text.
+- Fixed potential NullReferenceException when creating font asset with multiple atlas textures. See [forum post](https://forum.unity.com/threads/how-can-i-submit-bugs-or-issues-for-tmp.628687/#post-8186100) for details.
+- Fixed potential issue when using the &lt;mark&gt; tag in conjunction with Ellipsis.
+- Added new "Get Font Features" option in the Generation Settings of Font Assets to provide control over fetching of font feature data.
+- Fix potential duplication of Ligature data when using Dynamic Font Assets.
+- Added new "duospace" attribute to the &lt;mspace=value&gt; markup tag where the spacing of the '.', ':' and ',' characters will be half of the value. This was added as an option when displaying numerical values using this markup tag.
+- With the addition of support for new OpenType Layout features such as Ligatures, Mark-to-Base and Mark-to-Mark, we have made the following changes:
+  - The "Kerning" option in the Extra Settings of the text component inspector has been replaced by a new popup menu to independently control these features which are "kern", "liga", "mark" and "mkmk"
+  - The "enableKerning" property has been deprecated and replaced by the "fontFeatures" property which is a list that contains which features are enabled on the text component.
+- Fixed two potential NullReferenceException related to missing material references or materials on SubMesh text objects. See [forum post](https://forum.unity.com/threads/tmpro-submeshui-error-when-changing-scenes.1129724/#post-8462771) for details.
+- Fixed for text alignment mode Justified and Flush blending not working correctly when using &lt;NBSP&gt; in the text.
+- Fixed external keyboard on iOS/tvOS and Android when Hide Soft Keyboard is used
+- - Fixed a potential IndexOutOfRangeException when trying to select any portions of text in an Input Field whose child text component is using Overflow mode Truncate or Ellipsis where due to RectTransform width and / or height restrictions have results in the text being fully truncated. Case #1361032 
+- Fixed incorrect character sequencing in the Input Field when using Japanese IME in UWP builds. Case #1374755
+- Fixed several potential IndexOutOfRangeException in the Input Field when text is fully truncated when using Text Overflow mode Ellipsis or Truncate.
+- Fixed Input Field incorrect caretPosition and / or stringPosition properties when updating these via scripting. Case #1334622
+- Fixed incorrect event handling on UWP and Hololens 2. Case #1357718 and Case #1351006
+- Fixed Input Field OnSelect event potentially firing twice on some mobile devices including Microsoft Surfaces.
+- Fixed Input Field incorrect caret insertion position when text contains a Carriage Return &lt;CR&gt; at the end of a line. Case #1362068
+- Added support for &lt;CR&gt; markup tag.
+- Added value range check for the text component margins located in the text component extra settings. Case #1365554
+- Added new overload to the TMP_FontAsset.CreateFontAsset() to enable creating font asset instances using a file path.
+- Added new TMP_ResourceManager.RemoveFontAsset() function to remove a font asset from the TMP Resource Manager. This new function would typically be used prior to unloading bundles and / or resources.
+- Warnings about potentially missing character 0x5F used to display underline or strikethrough will only be displayed when using those features when Display Warning is enabled in the TMP Settings.
+- Fixed incorrect handling of '-' at the end of a line when using Text Overflow Page mode. Case #1382173
+- Fixed incorrect line breaking when a hyphen '-' is preceded by a space. Case #1391990
+- When using Text Wrapping Mode - Preserve White Space or Preserve White Space No Wrap, the &lt;ZWSP&gt; character will now contribute to the preferred height when it is the first and only character on a new line.
+- Added ClearFontAssetGlyphCache() function to the TMP_ResourcesManager to enable clearing the font asset fallback glyph cache.
+- Added new &lt;ZWJ&gt; markup tag.
+- Added ability to define a list of fallback text assets in the TMP Settings to be used for Emojis.
+- Added new property "emojiFallbackSupport" to text components which is also exposed in the extra settings section of the text component inspector. When enabled, this will prioritize searching the Emoji Fallback Text Assets before the primary font asset for characters defined as Emoji in Unicode 14.0. See [forum post](https://forum.unity.com/threads/fallback-to-emojis-before-fonts.1186174/) for details.
+- Fixed duplicated character when using custom validator in conjunction with soft keyboard. Case #1387772
+- The &lt;noparse&gt; markup tag will now also affect inline markup tags like &lt;br&gt;, &lt;shy&gt;, etc.
+- Fixed newly created StyleSheets having two Normal styles.
+- Added new Double Pass SDF shader and example scene to the TMP Examples & Extras to showcase this new shader.
+- Added new context menu option to manually "clear dynamic data" of a dynamic font asset. This performs the same clearing of data as the "Clear Dynamic Data on Build" option when manually triggered.
+- Added new &lt;a href="url"&gt; markup tag which can be used as follows: "See &lt;a href="http://url..."&gt;this link&lt;/a&gt; for details.". This new markup tag is similar to the &lt;link&gt; tag but does not use an ID.
+- Added new "A" style to the Default Style Sheet referenced in the TMP Settings. This "A" style defines the styling of the new &lt;a&gt; markup tag.
+- The TMP_Text.parseCtrlCharacters property which controls the interpretation and parsing of escape characters in the text component's Text Input box in the inspector, will now apply to all methods of setting the text on the component. Case #1400008
+- Fixed potential Null Reference Exception when editing the name of a sprite character. Case #1396591
+- Fixed issue where TMP_FontAsset.HasCharacters would return false when called prior to font asset initialization. Case #1394817
+- Minor TMP_InputField UI improvement where "Hide Mobile Input" property will be disabled when "Hide Soft Keyboard" property is disabled. Case #1388243
+
 ## [4.0.0-pre.1] - 2021-10-27
 ### Changes
 - Fixed incorrect character spacing when using the &lt;scale&gt; tag. See [forum post](https://forum.unity.com/threads/inconsistent-spacing-between-characters-when-scaling-width.1156967/) for details.
@@ -19,6 +69,7 @@ These are the release notes for the TextMesh Pro UPM package which was first int
 - Fixed incorrect parsing of invalid UTF16 and UTF32 character sequences. Case #1367695
 - Added new example to the TMP Examples & Extras to showcase new HDRP shaders and inspector.
 - Added support for GameCore platform support in the TMP Input Field.
+- Added new Ligature Table to Font Assets allowing users to manually define Ligatures. This is a first pass at adding support for Ligatures.
 
 ## [3.2.0-pre.1] - 2021-08-06
 ## [2.2.0-preview.1] - 2021-08-06

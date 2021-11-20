@@ -9,6 +9,7 @@
   * [Signed Distance Fields](FontAssetsSDF)
   * [Dynamic Fonts](FontAssetsDynamicFonts)
   * [The Fallback Chain](FontAssetsFallback)
+  * [Color emojis](ColorEmojis)
 * [Rich Text Tags](RichText)
   * [Supported Tags](RichTextSupportedTags)
   * [<align>](RichTextAlignment)

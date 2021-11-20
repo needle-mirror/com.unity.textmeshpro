@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
+using System.Collections;
+using UnityEngine.TextCore;
 using UnityEngine.TextCore.Text;
-
+using TextAsset = UnityEngine.TextCore.Text.TextAsset;
 
 #pragma warning disable 0649 // Disabled warnings related to serialized fields not assigned in this script but used in the editor.
 
@@ -44,13 +46,30 @@ namespace TMPro
         /// <summary>
         /// Controls if Kerning is enabled on newly created text objects by default.
         /// </summary>
+        [System.Obsolete("The \"enableKerning\" property has been deprecated. Use the \"fontFeatures\" property to control what features are enabled by default on newly created text components.")]
         public static bool enableKerning
         {
-            get { return instance.m_enableKerning; }
+            get
+            {
+                if (instance.m_ActiveFontFeatures != null)
+                    return instance.m_ActiveFontFeatures.Contains(OTL_FeatureTag.kern);
+
+                return instance.m_enableKerning;
+            }
         }
         [SerializeField]
         private bool m_enableKerning;
 
+        /// <summary>
+        /// Controls which font features are enabled by default on newly created text objects.
+        /// </summary>
+        public static List<OTL_FeatureTag> fontFeatures
+        {
+            get { return instance.m_ActiveFontFeatures; }
+        }
+        [SerializeField]
+        private List<OTL_FeatureTag> m_ActiveFontFeatures = new List<OTL_FeatureTag> { 0 };
+        
         /// <summary>
         /// Controls if Extra Padding is enabled on newly created text objects by default.
         /// </summary>
@@ -299,6 +318,17 @@ namespace TMPro
         private uint m_MissingCharacterSpriteUnicode;
 
         /// <summary>
+        /// list of Fallback Text Assets (Font Assets and Sprite Assets) used to lookup characters defined in the Unicode as Emojis.
+        /// </summary>
+        public static List<TextAsset> emojiFallbackTextAssets
+        {
+            get => instance.m_EmojiFallbackTextAssets;
+            set => instance.m_EmojiFallbackTextAssets = value;
+        }
+        [SerializeField]
+        private List<TextAsset> m_EmojiFallbackTextAssets;
+
+        /// <summary>
         /// Determines if sprites will be scaled relative to the primary font asset assigned to the text object or relative to the current font asset.
         /// </summary>
         //public static SpriteRelativeScaling spriteRelativeScaling
@@ -422,6 +452,15 @@ namespace TMPro
                         TMP_PackageResourceImporterWindow.ShowPackageImporterWindow();
                     }
                     #endif
+
+                    // Convert use of the "enableKerning" property to the new "fontFeature" property.
+                    if (s_Instance != null && s_Instance.m_ActiveFontFeatures.Count == 1 && s_Instance.m_ActiveFontFeatures[0] == 0)
+                    {
+                        s_Instance.m_ActiveFontFeatures.Clear();
+                        
+                        if (s_Instance.m_enableKerning)
+                            s_Instance.m_ActiveFontFeatures.Add(OTL_FeatureTag.kern);
+                    }
                 }
 
                 return s_Instance;
@@ -516,15 +555,13 @@ namespace TMPro
         /// <returns></returns>
         private static HashSet<uint> GetCharacters(UnityEngine.TextAsset file)
         {
-            HashSet<uint> dict = new HashSet<uint>();
+            HashSet<uint> ruleSet = new HashSet<uint>();
             string text = file.text;
 
             for (int i = 0; i < text.Length; i++)
-            {
-                dict.Add(text[i]);
-            }
+                ruleSet.Add(text[i]);
 
-            return dict;
+            return ruleSet;
         }
 
 

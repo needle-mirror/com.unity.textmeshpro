@@ -13,7 +13,7 @@ namespace TMPro.EditorUtilities
 {
     public static class TMP_SpriteAssetMenu
     {
-        [MenuItem("Assets/Create/TextMeshPro/Sprite Asset", false, 150)]
+        //[MenuItem("Assets/Create/TextMeshPro/Sprite Asset", false, 150)]
         static void CreateSpriteAsset()
         {
             Object[] targets = Selection.objects;

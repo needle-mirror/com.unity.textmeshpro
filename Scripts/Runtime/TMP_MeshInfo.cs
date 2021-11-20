@@ -603,7 +603,7 @@ namespace TMPro
 
 
             //Swap UVs0
-            Vector2 uvs;
+            Vector4 uvs;
             uvs = uvs0[dst_Index + 0];
             uvs0[dst_Index + 0] = uvs0[src_Index + 0];
             uvs0[src_Index + 0] = uvs;

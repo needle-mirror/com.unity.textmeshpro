@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.TextCore.Text;
+using UnityEngine;
 
 
 namespace TMPro

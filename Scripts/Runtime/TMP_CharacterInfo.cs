@@ -166,6 +166,8 @@ namespace TMPro
         public TMP_TextElementType elementType;
 
         public char character; // Should be changed to an uint to handle UTF32
+
+        /// Index of the character in the raw string.
         public int index;
         public int stringLength;
 

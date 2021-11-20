@@ -436,7 +436,13 @@ namespace TMPro
             }
             else
             {
+                // TODO: Need to add material property copy for bitmap materials as well
                 fallbackMaterial = new Material(targetMaterial);
+                fallbackMaterial.hideFlags = HideFlags.HideAndDontSave;
+
+                #if UNITY_EDITOR
+                fallbackMaterial.name += " + " + tex.name;
+                #endif
             }
 
             fallback = new FallbackMaterial();

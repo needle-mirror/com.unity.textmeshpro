@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.TextCore.Text;
 using UnityEditor;
-
+using UnityEngine.TextCore.Text;
 
 namespace TMPro.EditorUtilities
 {
@@ -58,6 +57,7 @@ namespace TMPro.EditorUtilities
         static readonly GUIContent k_RichTextLabel = new GUIContent("Rich Text", "Enables the use of rich text tags such as <color> and <font>.");
         static readonly GUIContent k_EscapeCharactersLabel = new GUIContent("Parse Escape Characters", "Whether to display strings such as \"\\n\" as is or replace them by the character they represent.");
         static readonly GUIContent k_VisibleDescenderLabel = new GUIContent("Visible Descender", "Compute descender values from visible characters only. Used to adjust layout behavior when hiding and revealing characters dynamically.");
+        static readonly GUIContent k_EmojiFallbackSupportLabel = new GUIContent("Emoji Fallback Support", "When text contains Emojis, try using and displaying those from the potential Text Assets assigned in the TMP Settings Emoji Fallback Text Assets.");
         static readonly GUIContent k_SpriteAssetLabel = new GUIContent("Sprite Asset", "The Sprite Asset used when NOT specifically referencing one using <sprite=\"Sprite Asset Name\">.");
         static readonly GUIContent k_StyleSheetAssetLabel = new GUIContent("Style Sheet Asset", "The Style Sheet Asset used by this text object.");
 
@@ -65,7 +65,7 @@ namespace TMPro.EditorUtilities
         static readonly GUIContent k_VerticalMappingLabel = new GUIContent("Vertical Mapping", "Vertical UV mapping when using a shader with a texture face option.");
         static readonly GUIContent k_LineOffsetLabel = new GUIContent("Line Offset", "Adds an horizontal offset to each successive line. Used for slanted texturing.");
 
-        static readonly GUIContent k_KerningLabel = new GUIContent("Kerning", "Enables character specific spacing between pairs of characters.");
+        static readonly GUIContent k_FontFeaturesLabel = new GUIContent("Font Features", "Font features available for the primary font asset assigned to the text component.");
         static readonly GUIContent k_PaddingLabel = new GUIContent("Extra Padding", "Adds some padding between the characters and the edge of the text mesh. Can reduce graphical errors when displaying small text.");
 
         static readonly GUIContent k_LeftLabel = new GUIContent("Left");
@@ -148,7 +148,7 @@ namespace TMPro.EditorUtilities
         protected SerializedProperty m_LinkedTextComponentProp;
         protected SerializedProperty m_ParentLinkedTextComponentProp;
 
-        protected SerializedProperty m_EnableKerningProp;
+        protected SerializedProperty m_FontFeaturesActiveProp;
 
         protected SerializedProperty m_IsRichTextProp;
 
@@ -160,6 +160,8 @@ namespace TMPro.EditorUtilities
         protected SerializedProperty m_UseMaxVisibleDescenderProp;
         protected SerializedProperty m_GeometrySortingOrderProp;
         protected SerializedProperty m_IsTextObjectScaleStaticProp;
+
+        protected SerializedProperty m_EmojiFallbackSupportProp;
 
         protected SerializedProperty m_SpriteAssetProp;
 
@@ -180,6 +182,8 @@ namespace TMPro.EditorUtilities
 
         protected Vector3[] m_RectCorners = new Vector3[4];
         protected Vector3[] m_HandlePoints = new Vector3[4];
+
+        private static readonly string[] k_FontFeatures = new string[] { "kern", "liga", "mark", "mkmk" };
 
         protected virtual void OnEnable()
         {
@@ -227,7 +231,7 @@ namespace TMPro.EditorUtilities
             m_LinkedTextComponentProp = serializedObject.FindProperty("m_linkedTextComponent");
             m_ParentLinkedTextComponentProp = serializedObject.FindProperty("parentLinkedComponent");
 
-            m_EnableKerningProp = serializedObject.FindProperty("m_enableKerning");
+            m_FontFeaturesActiveProp = serializedObject.FindProperty("m_ActiveFontFeatures");
 
             m_EnableExtraPaddingProp = serializedObject.FindProperty("m_enableExtraPadding");
             m_IsRichTextProp = serializedObject.FindProperty("m_isRichText");
@@ -237,6 +241,8 @@ namespace TMPro.EditorUtilities
 
             m_GeometrySortingOrderProp = serializedObject.FindProperty("m_geometrySortingOrder");
             m_IsTextObjectScaleStaticProp = serializedObject.FindProperty("m_IsTextObjectScaleStatic");
+
+            m_EmojiFallbackSupportProp = serializedObject.FindProperty("m_EmojiFallbackSupport");
 
             m_SpriteAssetProp = serializedObject.FindProperty("m_spriteAsset");
 
@@ -268,6 +274,25 @@ namespace TMPro.EditorUtilities
             // Get Styles from Style Sheet
             if (TMP_Settings.instance != null)
                 m_StyleNames = GetStyleNames();
+            
+            // Get list of font features for the primary font asset assigned to the text component
+            // FontEngine.LoadFontFace(m_TextComponent.font.SourceFont_EditorRef);
+            // OTL_Table gposTable = UnityEngine.TextCore.LowLevel.FontEngine.GetOpenTypeLayoutTable(OTL_TableType.GPOS);
+            // OTL_Table gsubTable = UnityEngine.TextCore.LowLevel.FontEngine.GetOpenTypeLayoutTable(OTL_TableType.GSUB);
+            //
+            // HashSet<string> fontFeatures = new HashSet<string>();
+            //
+            // foreach (OTL_Feature feature in gposTable.features)
+            // {
+            //     fontFeatures.Add(feature.tag);
+            // }
+            //
+            // foreach (OTL_Feature feature in gsubTable.features)
+            // {
+            //     fontFeatures.Add(feature.tag);
+            // }
+            //
+            // m_FontFeatures = fontFeatures.OrderBy(item => item).ToArray();
 
             // Register to receive events when style sheets are modified.
             TextEventManager.TEXT_STYLE_PROPERTY_EVENT.Add(ON_TEXT_STYLE_CHANGED);
@@ -339,11 +364,11 @@ namespace TMPro.EditorUtilities
 
             // LEFT HANDLE
             Vector3 oldLeft = (m_HandlePoints[0] + m_HandlePoints[1]) * 0.5f;
-            //#if UNITY_2022_1_OR_NEWER
-            //Vector3 newLeft = Handles.FreeMoveHandle(oldLeft, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
-            //#else
+            #if UNITY_2022_1_OR_NEWER
+            Vector3 newLeft = Handles.FreeMoveHandle(oldLeft, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
+            #else
             Vector3 newLeft = Handles.FreeMoveHandle(oldLeft, Quaternion.identity, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
-            //#endif
+            #endif
             bool hasChanged = false;
             if (oldLeft != newLeft)
             {
@@ -358,11 +383,11 @@ namespace TMPro.EditorUtilities
 
             // TOP HANDLE
             Vector3 oldTop = (m_HandlePoints[1] + m_HandlePoints[2]) * 0.5f;
-            //#if UNITY_2022_1_OR_NEWER
-            //Vector3 newTop = Handles.FreeMoveHandle(oldTop, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
-            //#else
+            #if UNITY_2022_1_OR_NEWER
+            Vector3 newTop = Handles.FreeMoveHandle(oldTop, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
+            #else
             Vector3 newTop = Handles.FreeMoveHandle(oldTop, Quaternion.identity, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
-            //#endif
+            #endif
             if (oldTop != newTop)
             {
                 oldTop = matrix.MultiplyPoint(oldTop);
@@ -376,11 +401,11 @@ namespace TMPro.EditorUtilities
 
             // RIGHT HANDLE
             Vector3 oldRight = (m_HandlePoints[2] + m_HandlePoints[3]) * 0.5f;
-            //#if UNITY_2022_1_OR_NEWER
-            //Vector3 newRight = Handles.FreeMoveHandle(oldRight, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
-            //#else
+            #if UNITY_2022_1_OR_NEWER
+            Vector3 newRight = Handles.FreeMoveHandle(oldRight, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
+            #else
             Vector3 newRight = Handles.FreeMoveHandle(oldRight, Quaternion.identity, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
-            //#endif
+            #endif
             if (oldRight != newRight)
             {
                 oldRight = matrix.MultiplyPoint(oldRight);
@@ -394,11 +419,11 @@ namespace TMPro.EditorUtilities
 
             // BOTTOM HANDLE
             Vector3 oldBottom = (m_HandlePoints[3] + m_HandlePoints[0]) * 0.5f;
-            //#if UNITY_2022_1_OR_NEWER
-            //Vector3 newBottom = Handles.FreeMoveHandle(oldBottom, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
-            //#else
+            #if UNITY_2022_1_OR_NEWER
+            Vector3 newBottom = Handles.FreeMoveHandle(oldBottom, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
+            #else
             Vector3 newBottom = Handles.FreeMoveHandle(oldBottom, Quaternion.identity, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
-            //#endif
+            #endif
             if (oldBottom != newBottom)
             {
                 oldBottom = matrix.MultiplyPoint(oldBottom);
@@ -1104,6 +1129,18 @@ namespace TMPro.EditorUtilities
             DrawMarginProperty(m_MarginProp, k_MarginsLabel);
             if (EditorGUI.EndChangeCheck())
             {
+                // Value range check on margins to make sure they are not excessive.
+                Vector4 margins = m_MarginProp.vector4Value;
+                Vector2 textContainerSize = m_RectTransform.sizeDelta;
+
+                margins.x = Mathf.Clamp(margins.x, -textContainerSize.x, textContainerSize.x);
+                margins.z = Mathf.Clamp(margins.z, -textContainerSize.x, textContainerSize.x);
+
+                margins.y = Mathf.Clamp(margins.y, -textContainerSize.y, textContainerSize.y);
+                margins.w = Mathf.Clamp(margins.w, -textContainerSize.y, textContainerSize.y);
+
+                m_MarginProp.vector4Value = margins;
+
                 m_HavePropertiesChanged = true;
             }
 
@@ -1159,6 +1196,15 @@ namespace TMPro.EditorUtilities
             EditorGUILayout.Space();
         }
 
+        protected void DrawEmojiFallbackSupport()
+        {
+            EditorGUI.BeginChangeCheck();
+
+            EditorGUILayout.PropertyField(m_EmojiFallbackSupportProp, k_EmojiFallbackSupportLabel);
+            if (EditorGUI.EndChangeCheck())
+                m_HavePropertiesChanged = true;
+        }
+
         protected void DrawSpriteAsset()
         {
             EditorGUI.BeginChangeCheck();
@@ -1211,15 +1257,50 @@ namespace TMPro.EditorUtilities
             EditorGUILayout.Space();
         }
 
-        protected void DrawKerning()
+        protected void DrawFontFeatures()
         {
-            // KERNING
+            int srcMask = 0;
+
+            int featureCount = m_FontFeaturesActiveProp.arraySize;
+            for (int i = 0; i < featureCount; i++)
+            {
+                SerializedProperty activeFeatureProperty = m_FontFeaturesActiveProp.GetArrayElementAtIndex(i);
+                
+                for (int j = 0; j < k_FontFeatures.Length; j++)
+                {
+                    if (activeFeatureProperty.intValue == k_FontFeatures[j].TagToInt())
+                    {
+                        srcMask |= 0x1 << j;
+                        break;
+                    }
+                }
+            }
+
             EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(m_EnableKerningProp, k_KerningLabel);
+            
+            int mask = EditorGUILayout.MaskField(k_FontFeaturesLabel, srcMask, k_FontFeatures);
+            
             if (EditorGUI.EndChangeCheck())
             {
+                m_FontFeaturesActiveProp.ClearArray();
+
+                int writeIndex = 0;
+                
+                for (int i = 0; i < k_FontFeatures.Length; i++)
+                {
+                    int bit = 0x1 << i;
+                    if ((mask & bit) == bit)
+                    {
+                        m_FontFeaturesActiveProp.InsertArrayElementAtIndex(writeIndex);
+                        SerializedProperty newFeature = m_FontFeaturesActiveProp.GetArrayElementAtIndex(writeIndex);
+                        newFeature.intValue = k_FontFeatures[i].TagToInt();
+
+                        writeIndex += 1;
+                    }
+                }
+
                 m_HavePropertiesChanged = true;
-            }
+            }   
         }
 
         protected void DrawPadding()

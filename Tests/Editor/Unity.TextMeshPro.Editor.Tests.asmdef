@@ -1,17 +1,28 @@
 {
     "name": "Unity.TextMeshPro.Editor.Tests",
+    "rootNamespace": "",
     "references": [
         "Unity.TextMeshPro",
-        "Unity.TextMeshPro.Editor"
+        "Unity.TextMeshPro.Editor",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "UnityEditor.UI",
+        "UnityEngine.UI"
     ],
-    "optionalUnityReferences": [
-        "TestAssemblies"
-    ],
-	"defineConstraints": [
-	"UNITY_INCLUDE_TESTS"
-	],
     "includePlatforms": [
         "Editor"
     ],
-    "excludePlatforms": []
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS",
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

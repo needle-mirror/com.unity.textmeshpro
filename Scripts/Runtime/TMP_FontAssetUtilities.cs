@@ -113,9 +113,14 @@ namespace TMPro
                 {
                     if (temp.characterLookupTable.TryGetValue(unicode, out character))
                     {
-                        isAlternativeTypeface = true;
+                        if (character.textAsset != null)
+                        {
+                            isAlternativeTypeface = true;
+                            return character;
+                        }
 
-                        return character;
+                        // Remove character from lookup table
+                        temp.characterLookupTable.Remove(unicode);
                     }
 
                     if (temp.atlasPopulationMode == UnityEngine.TextCore.Text.AtlasPopulationMode.Dynamic || temp.atlasPopulationMode == UnityEngine.TextCore.Text.AtlasPopulationMode.DynamicOS)
@@ -150,7 +155,13 @@ namespace TMPro
 
             // Search the source font asset for the requested character.
             if (sourceFontAsset.characterLookupTable.TryGetValue(unicode, out character))
-                return character;
+            {
+                if (character.textAsset != null)
+                    return character;
+
+                // Remove character from lookup table
+                sourceFontAsset.characterLookupTable.Remove(unicode);
+            }
 
             if (sourceFontAsset.atlasPopulationMode == UnityEngine.TextCore.Text.AtlasPopulationMode.Dynamic || sourceFontAsset.atlasPopulationMode == UnityEngine.TextCore.Text.AtlasPopulationMode.DynamicOS)
             {
@@ -240,6 +251,51 @@ namespace TMPro
 
                 if (character != null)
                     return character;
+            }
+
+            return null;
+        }
+
+        internal static TextElement GetTextElementFromTextAssets(uint unicode, FontAsset sourceFontAsset, List<TextAsset> textAssets, bool includeFallbacks, FontStyles fontStyle, FontWeight fontWeight, out bool isAlternativeTypeface)
+        {
+            isAlternativeTypeface = false;
+
+            // Make sure font asset list is valid
+            if (textAssets == null || textAssets.Count == 0)
+                return null;
+
+            if (includeFallbacks)
+            {
+                if (k_SearchedAssets == null)
+                    k_SearchedAssets = new HashSet<int>();
+                else
+                    k_SearchedAssets.Clear();
+            }
+
+            int textAssetCount = textAssets.Count;
+
+            for (int i = 0; i < textAssetCount; i++)
+            {
+                TextAsset textAsset = textAssets[i];
+
+                if (textAsset == null) continue;
+
+                if (textAsset.GetType() == typeof(FontAsset))
+                {
+                    FontAsset fontAsset = textAsset as FontAsset;
+                    var character = GetCharacterFromFontAsset_Internal(unicode, fontAsset, includeFallbacks, fontStyle, fontWeight, out isAlternativeTypeface);
+
+                    if (character != null)
+                        return character;
+                }
+                else
+                {
+                    SpriteAsset spriteAsset = textAsset as SpriteAsset;
+                    SpriteCharacter spriteCharacter = GetSpriteCharacterFromSpriteAsset_Internal(unicode, spriteAsset, true);
+
+                    if (spriteCharacter != null)
+                        return spriteCharacter;
+                }
             }
 
             return null;
@@ -364,7 +420,7 @@ namespace TMPro
         private static bool k_IsFontEngineInitialized;
 
         /*
-        private static bool TryGetCharacterFromFontFile(uint unicode, TMP_FontAsset fontAsset, out TMP_Character character)
+        private static bool TryGetCharacterFromFontFile(uint unicode, FontAsset fontAsset, out TMP_Character character)
         {
             character = null;
 
@@ -406,7 +462,7 @@ namespace TMPro
         }
 
 
-        public static bool TryGetGlyphFromFontFile(uint glyphIndex, TMP_FontAsset fontAsset, out Glyph glyph)
+        public static bool TryGetGlyphFromFontFile(uint glyphIndex, FontAsset fontAsset, out Glyph glyph)
         {
             glyph = null;
 

@@ -24,6 +24,11 @@
         },
         {
             "name": "com.unity.render-pipelines.high-definition",
+            "expression": "10.7.0",
+            "define": "HDRP_10_7_OR_NEWER"
+        },
+        {
+            "name": "com.unity.render-pipelines.high-definition",
             "expression": "11.0.0",
             "define": "HDRP_11_OR_NEWER"
         },

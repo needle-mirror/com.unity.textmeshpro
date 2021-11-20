@@ -166,7 +166,7 @@ namespace TMPro.EditorUtilities
             mat.shaderKeywords = m_copiedProperties.shaderKeywords;
 
             // Let TextMeshPro Objects that this mat has changed.
-            TMPro_EventManager.ON_MATERIAL_PROPERTY_CHANGED(true, mat);
+            TextEventManager.ON_MATERIAL_PROPERTY_CHANGED(true, mat);
         }
 
 
@@ -248,7 +248,7 @@ namespace TMPro.EditorUtilities
                 Unsupported.SmartReset(mat);
             }
 
-            TMPro_EventManager.ON_MATERIAL_PROPERTY_CHANGED(true, mat);
+            TextEventManager.ON_MATERIAL_PROPERTY_CHANGED(true, mat);
         }
 
 
@@ -374,18 +374,71 @@ namespace TMPro.EditorUtilities
             if (fontAsset == null)
                 return;
 
-            if (Selection.activeObject != fontAsset)
+            if (fontAsset != null && Selection.activeObject != fontAsset)
                 Selection.activeObject = fontAsset;
 
             fontAsset.ClearFontAssetData(true);
 
-            TextResourceManager.RebuildFontAssetCache();
+            TMP_ResourceManager.RebuildFontAssetCache();
 
             TextEventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
         }
-        */
 
-        /*
+        /// <summary>
+        /// Clear Character and Glyph data (only).
+        /// </summary>
+        /// <param name="command"></param>
+        [MenuItem("CONTEXT/TMP_FontAsset/Clear Dynamic Data", true, 2100)]
+        static bool ClearFontCharacterDataValidate(MenuCommand command)
+            return AssetDatabase.IsOpenForEdit(command.context);
+        }
+
+        [MenuItem("CONTEXT/TMP_FontAsset/Clear Dynamic Data", false, 2100)]
+        static void ClearFontCharacterData(MenuCommand command)
+        {
+            FontAsset fontAsset = command.context as FontAsset;
+
+            if (fontAsset == null)
+                return;
+
+            if (Selection.activeObject != fontAsset)
+                Selection.activeObject = fontAsset;
+
+            fontAsset.ClearCharacterAndGlyphTablesInternal();
+
+            TextEventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
+
+        /// <summary>
+        /// Import all font features
+        /// </summary>
+        /// <param name="command"></param>
+        #if TEXTCORE_FONT_ENGINE_1_5_OR_NEWER
+        [MenuItem("CONTEXT/TMP_FontAsset/Import Font Features", true, 2110)]
+        static bool ReimportFontFeaturesValidate(MenuCommand command)
+        {
+            fontAsset.ClearFontAssetData(true);
+        }
+
+        [MenuItem("CONTEXT/TMP_FontAsset/Import Font Features", false, 2110)]
+        static void ReimportFontFeatures(MenuCommand command)
+        {
+            FontAsset fontAsset = command.context as FontAsset;
+            TextResourceManager.RebuildFontAssetCache();
+            if (fontAsset == null)
+                return;
+
+            if (Selection.activeObject != fontAsset)
+                Selection.activeObject = fontAsset;
+
+            fontAsset.ImportFontFeatures();
+
+            TextEventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
+        }
+        #endif
+
+        /// <summary>
+        /// </summary>
+        /// <param name="command"></param>
         [MenuItem("CONTEXT/TrueTypeFontImporter/Create Font Asset...", false, 200)]
         static void CreateFontAsset(MenuCommand command)
         {

@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Packages/com.unity.TextMeshPro/Editor Resources/GUID CONVERT.json.meta
 guid: 2ade62400bece1a4f9093a91ca22b276
+========
+guid: dffa0eeca877bb9478996a94c4ec0d40
+>>>>>>>> master:Packages/com.unity.TextMeshPro/ValidationExceptions.json.meta
 TextScriptImporter:
   externalObjects: {}
   userData: 

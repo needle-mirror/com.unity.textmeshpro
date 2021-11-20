@@ -17,7 +17,7 @@ namespace TMPro.EditorUtilities
             public static readonly GUIContent defaultFontAssetPathLabel = new GUIContent("Path:        Resources/", "The relative path to a Resources folder where the Font Assets and Material Presets are located.\nExample \"Fonts & Materials/\"");
 
             public static readonly GUIContent fallbackFontAssetsLabel = new GUIContent("Fallback Font Assets", "The Font Assets that will be searched to locate and replace missing characters from a given Font Asset.");
-            public static readonly GUIContent fallbackFontAssetsListLabel = new GUIContent("Fallback Font Assets List", "The Font Assets that will be searched to locate and replace missing characters from a given Font Asset.");
+            public static readonly GUIContent fallbackFontAssetsListLabel = new GUIContent("Font Asset List", "The Font Assets that will be searched to locate and replace missing characters from a given Font Asset.");
 
             public static readonly GUIContent fallbackMaterialSettingsLabel = new GUIContent("Fallback Material Settings");
             public static readonly GUIContent matchMaterialPresetLabel = new GUIContent("Match Material Presets");
@@ -39,12 +39,13 @@ namespace TMPro.EditorUtilities
 
             public static readonly GUIContent textWrappingModeLabel = new GUIContent("Text Wrapping Mode");
             public static readonly GUIContent kerningLabel = new GUIContent("Kerning");
+            public static readonly GUIContent fontFeaturesLabel = new GUIContent("Font Features", "Font features that should be set by default on the text component.");
             public static readonly GUIContent extraPaddingLabel = new GUIContent("Extra Padding");
             public static readonly GUIContent tintAllSpritesLabel = new GUIContent("Tint All Sprites");
             public static readonly GUIContent parseEscapeCharactersLabel = new GUIContent("Parse Escape Sequence");
 
             public static readonly GUIContent dynamicFontSystemSettingsLabel = new GUIContent("Dynamic Font System Settings");
-            public static readonly GUIContent getFontFeaturesAtRuntime = new GUIContent("Get Font Features at Runtime", "Determines if Glyph Adjustment Data will be retrieved from font files at runtime when new characters and glyphs are added to font assets.");
+            public static readonly GUIContent getFontFeaturesAtRuntime = new GUIContent("Get Font Features at Runtime", "Determines if OpenType font features should be retrieved from source font files as new characters and glyphs are added to font assets.");
             public static readonly GUIContent dynamicAtlasTextureGroup = new GUIContent("Dynamic Atlas Texture Group");
 
             public static readonly GUIContent missingGlyphLabel = new GUIContent("Missing Character Unicode", "The character to be displayed when the requested character is not found in any font asset or fallbacks.");
@@ -55,6 +56,7 @@ namespace TMPro.EditorUtilities
             public static readonly GUIContent missingSpriteCharacterUnicodeLabel = new GUIContent("Missing Sprite Unicode", "The unicode value for the sprite character to be displayed when the requested sprite character is not found in any sprite assets or fallbacks.");
             public static readonly GUIContent enableEmojiSupportLabel = new GUIContent("iOS Emoji Support", "Enables Emoji support for Touch Screen Keyboards on target devices.");
             //public static readonly GUIContent spriteRelativeScale = new GUIContent("Relative Scaling", "Determines if the sprites will be scaled relative to the primary font asset assigned to the text object or relative to the current font asset.");
+            public static readonly GUIContent emojifallbackTextAssetsListLabel = new GUIContent("Fallback Emoji Text Assets", "The Text Assets that will be searched to display characters defined as Emojis in the Unicode.");
 
             public static readonly GUIContent spriteAssetsPathLabel = new GUIContent("Path:        Resources/", "The relative path to a Resources folder where the Sprite Assets are located.\nExample \"Sprite Assets/\"");
 
@@ -85,6 +87,7 @@ namespace TMPro.EditorUtilities
         SerializedProperty m_PropEnableEmojiSupport;
         SerializedProperty m_PropSpriteAssetPath;
 
+        ReorderableList m_EmojiFallbackTextAssetList;
 
         SerializedProperty m_PropStyleSheet;
         SerializedProperty m_PropStyleSheetsResourcePath;
@@ -95,7 +98,7 @@ namespace TMPro.EditorUtilities
         SerializedProperty m_PropMatchMaterialPreset;
         SerializedProperty m_PropHideSubTextObjects;
         SerializedProperty m_PropTextWrappingMode;
-        SerializedProperty m_PropKerning;
+        SerializedProperty m_PropFontFeatures;
         SerializedProperty m_PropExtraPadding;
         SerializedProperty m_PropTintAllSprites;
         SerializedProperty m_PropParseEscapeCharacters;
@@ -113,6 +116,8 @@ namespace TMPro.EditorUtilities
 
         private const string k_UndoRedo = "UndoRedoPerformed";
         private bool m_IsFallbackGlyphCacheDirty;
+        
+        private static readonly string[] k_FontFeatures = new string[] { "kern", "liga", "mark", "mkmk" };
 
         public void OnEnable()
         {
@@ -142,6 +147,7 @@ namespace TMPro.EditorUtilities
 
             m_PropColorGradientPresetsPath = serializedObject.FindProperty("m_defaultColorGradientPresetsPath");
 
+            // Global Fallback ReorderableList
             m_GlobalFallbackFontAssetList = new ReorderableList(serializedObject, serializedObject.FindProperty("m_fallbackFontAssets"), true, true, true, true);
 
             m_GlobalFallbackFontAssetList.drawHeaderCallback = rect =>
@@ -161,11 +167,32 @@ namespace TMPro.EditorUtilities
                 m_IsFallbackGlyphCacheDirty = true;
             };
 
+            // Emoji Fallback ReorderableList
+            m_EmojiFallbackTextAssetList = new ReorderableList(serializedObject, serializedObject.FindProperty("m_EmojiFallbackTextAssets"), true, true, true, true);
+
+            m_EmojiFallbackTextAssetList.drawHeaderCallback = rect =>
+            {
+                EditorGUI.LabelField(rect, "Text Asset List");
+            };
+
+            m_EmojiFallbackTextAssetList.drawElementCallback = (rect, index, isActive, isFocused) =>
+            {
+                var element = m_EmojiFallbackTextAssetList.serializedProperty.GetArrayElementAtIndex(index);
+                rect.y += 2;
+                EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), element, GUIContent.none);
+            };
+
+            m_EmojiFallbackTextAssetList.onChangedCallback = itemList =>
+            {
+                m_IsFallbackGlyphCacheDirty = true;
+            };
+
             m_PropMatchMaterialPreset = serializedObject.FindProperty("m_matchMaterialPreset");
             m_PropHideSubTextObjects = serializedObject.FindProperty("m_HideSubTextObjects");
 
             m_PropTextWrappingMode = serializedObject.FindProperty("m_TextWrappingMode");
-            m_PropKerning = serializedObject.FindProperty("m_enableKerning");
+            
+            m_PropFontFeatures = serializedObject.FindProperty("m_ActiveFontFeatures");
             m_PropExtraPadding = serializedObject.FindProperty("m_enableExtraPadding");
             m_PropTintAllSprites = serializedObject.FindProperty("m_enableTintAllSprites");
             m_PropParseEscapeCharacters = serializedObject.FindProperty("m_enableParseEscapeCharacters");
@@ -229,10 +256,11 @@ namespace TMPro.EditorUtilities
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             GUILayout.Label(Styles.dynamicFontSystemSettingsLabel, EditorStyles.boldLabel);
             EditorGUI.indentLevel = 1;
-            EditorGUILayout.PropertyField(m_GetFontFeaturesAtRuntime, Styles.getFontFeaturesAtRuntime);
             EditorGUILayout.PropertyField(m_PropMissingGlyphCharacter, Styles.missingGlyphLabel);
-            EditorGUILayout.PropertyField(m_PropClearDynamicDataOnBuild, Styles.clearDynamicDataOnBuildLabel);
             EditorGUILayout.PropertyField(m_PropWarningsDisabled, Styles.disableWarningsLabel);
+            EditorGUILayout.Space();
+            EditorGUILayout.PropertyField(m_GetFontFeaturesAtRuntime, Styles.getFontFeaturesAtRuntime);
+            EditorGUILayout.PropertyField(m_PropClearDynamicDataOnBuild, Styles.clearDynamicDataOnBuildLabel);
             //EditorGUILayout.PropertyField(m_DynamicAtlasTextureManager, Styles.dynamicAtlasTextureManager);
             EditorGUI.indentLevel = 0;
 
@@ -274,7 +302,8 @@ namespace TMPro.EditorUtilities
             EditorGUIUtility.fieldWidth = fieldWidth;
 
             EditorGUILayout.PropertyField(m_PropTextWrappingMode, Styles.textWrappingModeLabel);
-            EditorGUILayout.PropertyField(m_PropKerning, Styles.kerningLabel);
+
+            DrawFontFeatures();
 
             EditorGUILayout.PropertyField(m_PropExtraPadding, Styles.extraPaddingLabel);
             EditorGUILayout.PropertyField(m_PropTintAllSprites, Styles.tintAllSpritesLabel);
@@ -300,6 +329,17 @@ namespace TMPro.EditorUtilities
             //EditorGUILayout.PropertyField(m_PropSpriteRelativeScaling, Styles.spriteRelativeScale);
             EditorGUILayout.PropertyField(m_PropSpriteAssetPath, Styles.spriteAssetsPathLabel);
             EditorGUI.indentLevel = 0;
+
+            EditorGUILayout.Space();
+            EditorGUILayout.EndVertical();
+
+            // EMOJI FALLBACK TEXT ASSETS
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.Label(Styles.emojifallbackTextAssetsListLabel, EditorStyles.boldLabel);
+            EditorGUI.BeginChangeCheck();
+            m_EmojiFallbackTextAssetList.DoLayoutList();
+            if (EditorGUI.EndChangeCheck())
+                m_IsFallbackGlyphCacheDirty = true;
 
             EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
@@ -358,6 +398,50 @@ namespace TMPro.EditorUtilities
                 EditorUtility.SetDirty(target);
                 TextEventManager.ON_TMP_SETTINGS_CHANGED();
             }
+        }
+
+        void DrawFontFeatures()
+        {
+            int srcMask = 0;
+
+            int featureCount = m_PropFontFeatures.arraySize;
+            for (int i = 0; i < featureCount; i++)
+            {
+                SerializedProperty activeFeatureProperty = m_PropFontFeatures.GetArrayElementAtIndex(i);
+                
+                for (int j = 0; j < k_FontFeatures.Length; j++)
+                {
+                    if (activeFeatureProperty.intValue == k_FontFeatures[j].TagToInt())
+                    {
+                        srcMask |= 0x1 << j;
+                        break;
+                    }
+                }
+            }
+
+            EditorGUI.BeginChangeCheck();
+            
+            int mask = EditorGUILayout.MaskField(Styles.fontFeaturesLabel, srcMask, k_FontFeatures);
+            
+            if (EditorGUI.EndChangeCheck())
+            {
+                m_PropFontFeatures.ClearArray();
+
+                int writeIndex = 0;
+                
+                for (int i = 0; i < k_FontFeatures.Length; i++)
+                {
+                    int bit = 0x1 << i;
+                    if ((mask & bit) == bit)
+                    {
+                        m_PropFontFeatures.InsertArrayElementAtIndex(writeIndex);
+                        SerializedProperty newFeature = m_PropFontFeatures.GetArrayElementAtIndex(writeIndex);
+                        newFeature.intValue = k_FontFeatures[i].TagToInt();
+
+                        writeIndex += 1;
+                    }
+                }
+            }   
         }
     }
 

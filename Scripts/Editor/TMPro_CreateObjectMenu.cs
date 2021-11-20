@@ -34,7 +34,7 @@ namespace TMPro.EditorUtilities
                 Preset[] presets = Preset.GetDefaultPresetsForObject(textComponent);
 
                 if (presets == null || presets.Length == 0)
-                {            
+                {
                     textComponent.text = "Sample text";
                     textComponent.alignment = TextAlignmentOptions.TopLeft;
                 }
@@ -43,7 +43,7 @@ namespace TMPro.EditorUtilities
                     textComponent.renderer.sortingLayerID = textComponent._SortingLayerID;
                     textComponent.renderer.sortingOrder = textComponent._SortingOrder;
                 }
-                #else           
+                #else
                 if (Preset.GetDefaultForObject(textComponent) == null)
                 {
                     textComponent.text = "Sample text";
@@ -149,7 +149,6 @@ namespace TMPro.EditorUtilities
 
             PlaceUIElementRoot(go, menuCommand);
         }
-
 
 
         [MenuItem("GameObject/UI/Input Field - TextMeshPro", false, 2037)]

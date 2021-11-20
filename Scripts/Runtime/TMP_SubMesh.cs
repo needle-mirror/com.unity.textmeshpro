@@ -234,17 +234,19 @@ namespace TMPro
 
         public static TMP_SubMesh AddSubTextObject(TextMeshPro textComponent, MaterialReference materialReference)
         {
-            GameObject go = new GameObject("TMP SubMesh [" + materialReference.material.name + "]", typeof(TMP_SubMesh));
+            GameObject go = new GameObject();
             go.hideFlags = TMP_Settings.hideSubTextObjects ? HideFlags.HideAndDontSave : HideFlags.DontSave;
-
-            TMP_SubMesh subMesh = go.GetComponent<TMP_SubMesh>();
-
             go.transform.SetParent(textComponent.transform, false);
             go.transform.localPosition = Vector3.zero;
             go.transform.localRotation = Quaternion.identity;
             go.transform.localScale = Vector3.one;
             go.layer = textComponent.gameObject.layer;
+            
+            #if UNITY_EDITOR
+            go.name = materialReference.material == null ? "TMP SubMesh" : "TMP SubMesh [" + materialReference.material.name + "]";
+            #endif
 
+            TMP_SubMesh subMesh = go.AddComponent<TMP_SubMesh>();
             subMesh.m_TextComponent = textComponent;
             subMesh.m_fontAsset = materialReference.fontAsset;
             subMesh.m_spriteAsset = materialReference.spriteAsset;
@@ -599,7 +601,7 @@ namespace TMPro
             m_renderer.sharedMaterial = m_sharedMaterial;
 
             // Special handling to keep the Culling of the material in sync with parent text object
-            if (m_sharedMaterial.HasProperty(ShaderUtilities.ShaderTag_CullMode))
+            if (m_sharedMaterial.HasProperty(ShaderUtilities.ShaderTag_CullMode) && textComponent.fontSharedMaterial != null)
             {
                 float cullMode = textComponent.fontSharedMaterial.GetFloat(ShaderUtilities.ShaderTag_CullMode);
                 m_sharedMaterial.SetFloat(ShaderUtilities.ShaderTag_CullMode, cullMode);

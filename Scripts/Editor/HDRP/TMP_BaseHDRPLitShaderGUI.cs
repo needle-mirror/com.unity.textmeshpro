@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Rendering.HighDefinition;
+using UnityEngine.TextCore.Text;
 
 
 namespace TMPro.EditorUtilities
@@ -144,7 +145,7 @@ namespace TMPro.EditorUtilities
             {
                 // There's been at least one undo/redo since the last time this GUI got constructed.
                 // Maybe the undo/redo was for this material? Assume that is was.
-                TMPro_EventManager.ON_MATERIAL_PROPERTY_CHANGED(true, m_Material as Material);
+                TextEventManager.ON_MATERIAL_PROPERTY_CHANGED(true, m_Material as Material);
             }
 
             s_LastSeenUndoRedoCount = s_UndoRedoCount;
@@ -166,7 +167,7 @@ namespace TMPro.EditorUtilities
             DoGUI();
             if (EditorGUI.EndChangeCheck())
             {
-                TMPro_EventManager.ON_MATERIAL_PROPERTY_CHANGED(true, m_Material);
+                TextEventManager.ON_MATERIAL_PROPERTY_CHANGED(true, m_Material);
             }
 
             DoDragAndDropEnd();
@@ -646,7 +647,7 @@ namespace TMPro.EditorUtilities
             }
 
             Texture currentTex = m_Material.GetTexture(ShaderUtilities.ID_MainTex);
-            TMP_FontAsset requiredFontAsset = null;
+            FontAsset requiredFontAsset = null;
             if (droppedTex != currentTex)
             {
                 requiredFontAsset = TMP_EditorUtility.FindMatchingFontAsset(droppedMaterial);
@@ -668,7 +669,7 @@ namespace TMPro.EditorUtilities
                     }
                 }
 
-                TMPro_EventManager.ON_DRAG_AND_DROP_MATERIAL_CHANGED(o, m_Material, droppedMaterial);
+                TextEventManager.ON_DRAG_AND_DROP_MATERIAL_CHANGED(o, m_Material, droppedMaterial);
                 EditorUtility.SetDirty(o);
             }
         }

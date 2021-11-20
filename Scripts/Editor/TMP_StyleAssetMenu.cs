@@ -6,11 +6,9 @@ using UnityEditor;
 
 namespace TMPro.EditorUtilities
 {
-
     public static class TMP_StyleAssetMenu
     {
-
-        [MenuItem("Assets/Create/TextMeshPro/Style Sheet", false, 200)]
+        //[MenuItem("Assets/Create/TextMeshPro/Style Sheet", false, 210)]
         internal static void CreateTextMeshProObjectPerform()
         {
             string filePath;
@@ -34,12 +32,8 @@ namespace TMPro.EditorUtilities
 
             string filePathWithName = AssetDatabase.GenerateUniqueAssetPath(filePath + "/Text StyleSheet.asset");
 
-            //// Create new Style Sheet Asset.
+            // Create new Style Sheet Asset.
             TextStyleSheet styleSheet = ScriptableObject.CreateInstance<TextStyleSheet>();
-
-            // Create Normal default style
-            TextStyle style = new TextStyle("Normal", string.Empty, string.Empty);
-            styleSheet.styles.Add(style);
 
             AssetDatabase.CreateAsset(styleSheet, filePathWithName);
 

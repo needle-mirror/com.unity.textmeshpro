@@ -113,6 +113,9 @@ namespace TMPro
         HREF = 2535353,                 // <a href="url">text to be displayed.</a>
         ANGLE = 75347905,               // <i angle="40">Italic Slant Angle</i>
         PADDING = -2144568463,
+        FAMILYNAME = 704251153,
+        STYLENAME = -1207081936,
+        DUOSPACE = 582810522,           // <mspace="value" duospace=1> to enable this mode
 
         // Named Colors
         RED = 91635,
@@ -125,8 +128,10 @@ namespace TMPro
         PURPLE = -1250222130,
 
         // Unicode Characters
-        BR = 2256,                          // <br> Line Feed (LF) \u0A
+        BR = 2256,                          // <br> Line Feed (LF) \u000A
+        CR = 2289,                          // <cr> Carriage Return (CR) \u000D
         ZWSP = 3288238,                     // <zwsp> Zero Width Space \u200B
+        ZWJ = 99623,                        // <zwj> Zero Width Space \u200D
         NBSP = 2869039,                     // <nbsp> Non Breaking Space \u00A0
         SHY = 92674,                        // <SHY> Soft Hyphen \u00AD
 
@@ -162,6 +167,7 @@ namespace TMPro
 
         NORMAL = -1183493901,           // <style="Normal">
         DEFAULT = -620974005,           // <font="Default">
+        REGULAR = 1291372090,
     }
 
     /// <summary>

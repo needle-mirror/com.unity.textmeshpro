@@ -35,3 +35,20 @@ TextMesh Pro 3D text objects are nearly identical to their UI counterparts, but 
 1. From the menu, choose **GameObject > 3D GameObject > TextMesh Pro - Text**.
 1. In the **TextMesh Pro** Inspector, enter your text.
 1. Adjust the [3D text properties](TMPObject3DText.md) as needed.
+
+## OpenType FontFeature
+Font Features define the typographic capabilities of a font asset. These features define potential substitutions or positional adjustments of glyphs. The following are the currently supported Font Features:
+
+- **Ligatures:** Defines the substitution of multiple glyphs by a single glyph, such as 'fi' or 'ffl'. This features is identified as "liga".
+
+- **Kerning:** Defines positional adjustments between two glyphs relative to each other. This features is identified as "kern".
+
+- **Diacritical Marks:** Defines positional adjustments between Base glyphs and Mark glyphs. 
+
+    The Mark-to-Base feature "mark" defines the positional adjustments of Mark glyphs relative to Base glyphs.
+
+    The Mark-to-Mark feature "mkmk" defines the positional adjustments of Mark glyphs relative to Base Mark glyphs.
+
+You can enable or disable the Font Features through the Font Features field in the Text component's Extra Settings section shown in the image below:
+
+![](images/FontFeatures.png)

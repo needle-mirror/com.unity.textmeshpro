@@ -21,14 +21,14 @@ namespace TMPro
                 EditorGUIUtility.PingObject(textSettings);
             }
             else
-                TMPro_EventManager.RESOURCE_LOAD_EVENT.Add(ON_RESOURCES_LOADED);
+                TextEventManager.RESOURCE_LOAD_EVENT.Add(ON_RESOURCES_LOADED);
         }
 
 
         // Event received when TMP resources have been loaded.
         static void ON_RESOURCES_LOADED()
         {
-            TMPro_EventManager.RESOURCE_LOAD_EVENT.Remove(ON_RESOURCES_LOADED);
+            TextEventManager.RESOURCE_LOAD_EVENT.Remove(ON_RESOURCES_LOADED);
 
             TMP_Settings textSettings = TMP_Settings.instance;
 

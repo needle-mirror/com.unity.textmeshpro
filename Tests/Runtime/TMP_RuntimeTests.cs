@@ -188,7 +188,7 @@ namespace TMPro
         //public void Cleanup()
         //{
         //    // Remove TMP Essential Resources if they were imported in the project as a result of running tests.
-        //    if (TMPro_EventManager.temporaryResourcesImported == true)
+        //    if (TextEventManager.temporaryResourcesImported == true)
         //    {
         //        string testResourceFolderPath = Path.GetFullPath("Assets/TextMesh Pro");
 
@@ -198,7 +198,7 @@ namespace TMPro
         //            File.Delete(Path.GetFullPath("Assets/TextMesh Pro.meta"));
         //        }
 
-        //        TMPro_EventManager.temporaryResourcesImported = false;
+        //        TextEventManager.temporaryResourcesImported = false;
         //    }
         //}
 
