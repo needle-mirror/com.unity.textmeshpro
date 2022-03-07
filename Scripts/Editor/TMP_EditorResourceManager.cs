@@ -34,7 +34,7 @@ namespace TMPro
                     if (fontAsset != null && (fontAsset.atlasPopulationMode == AtlasPopulationMode.Dynamic || fontAsset.atlasPopulationMode == AtlasPopulationMode.DynamicOS) && fontAsset.clearDynamicDataOnBuild && fontAsset.atlasTexture.width != 0)
                     {
                         Debug.Log("Clearing [" + fontAsset.name + "] dynamic font asset data.");
-                        fontAsset.ClearFontAssetDataInternal(false);
+                        fontAsset.ClearCharacterAndGlyphTablesInternal();
                     }
                 }
             };
@@ -214,6 +214,11 @@ namespace TMPro
 
             for (int i = 0; i < objUpdateCount; i++)
             {
+                EditorUtilities.TMP_PropertyDrawerUtilities.s_RefreshGlyphProxyLookup = true;
+                #if TEXTCORE_FONT_ENGINE_1_5_OR_NEWER
+                UnityEditor.TextCore.Text.TextCorePropertyDrawerUtilities.s_RefreshGlyphProxyLookup = true;
+                #endif
+
                 Object obj = m_ObjectUpdateQueue[i];
                 if (obj != null)
                 {

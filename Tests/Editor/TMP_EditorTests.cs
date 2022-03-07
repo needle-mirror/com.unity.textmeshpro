@@ -69,8 +69,6 @@ namespace TMPro
             {
                 Debug.Log("Skipping over Editor tests as TMP Essential Resources are missing from the current test project.");
                 Assert.Ignore();
-
-                return;
             }
         }
 
@@ -85,10 +83,17 @@ namespace TMPro
             string packageFullPath = EditorUtilities.TMP_EditorUtility.packageFullPath;
 
             Assert.AreEqual(AssetDatabase.AssetPathToGUID(packageRelativePath + filePath), guid);
-            Assert.IsTrue(System.IO.File.Exists(packageFullPath + filePath));
-
+            Assert.IsTrue(File.Exists(packageFullPath + filePath));
         }
 
+        // =============================================
+        // Font Asset Creation Tests
+        // =============================================
+
+
+        // =============================================
+        // Text Parsing and Layout Tests
+        // =============================================
 
         [Test]
         [TestCase(4, 3423, 453, 500, 1)]

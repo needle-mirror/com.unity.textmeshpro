@@ -299,6 +299,17 @@ namespace TMPro
         private uint m_MissingCharacterSpriteUnicode;
 
         /// <summary>
+        /// list of Fallback Text Assets (Font Assets and Sprite Assets) used to lookup characters defined in the Unicode as Emojis.
+        /// </summary>
+        public static List<TMP_Asset> emojiFallbackTextAssets
+        {
+            get => instance.m_EmojiFallbackTextAssets;
+            set => instance.m_EmojiFallbackTextAssets = value;
+        }
+        [SerializeField]
+        private List<TMP_Asset> m_EmojiFallbackTextAssets;
+
+        /// <summary>
         /// Determines if sprites will be scaled relative to the primary font asset assigned to the text object or relative to the current font asset.
         /// </summary>
         //public static SpriteRelativeScaling spriteRelativeScaling

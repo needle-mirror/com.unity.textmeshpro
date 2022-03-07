@@ -275,7 +275,7 @@ namespace TMPro.EditorUtilities
 
         // Context Menus for TMPro Font Assets
         //This function is used for debugging and fixing potentially broken font atlas links.
-        [MenuItem("CONTEXT/TMP_FontAsset/Extract Atlas", false, 2100)]
+        [MenuItem("CONTEXT/TMP_FontAsset/Extract Atlas", false, 2200)]
         static void ExtractAtlas(MenuCommand command)
         {
             TMP_FontAsset font = command.context as TMP_FontAsset;
@@ -319,7 +319,7 @@ namespace TMPro.EditorUtilities
             }
         }
 
-        [MenuItem("CONTEXT/TMP_FontAsset/Force Upgrade To Version 1.1.0...", false, 2010)]
+        /*[MenuItem("CONTEXT/TMP_FontAsset/Force Upgrade To Version 1.1.0...", false, 2020)]
         static void ForceFontAssetUpgrade(MenuCommand command)
         {
             TMP_FontAsset fontAsset = command.context as TMP_FontAsset;
@@ -329,13 +329,19 @@ namespace TMPro.EditorUtilities
                 fontAsset.UpgradeFontAsset();
                 TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
             }
-        }
+        }*/
 
 
         /// <summary>
         /// Clear Dynamic Font Asset data such as glyph, character and font features.
         /// </summary>
         /// <param name="command"></param>
+        [MenuItem("CONTEXT/TMP_FontAsset/Reset", true, 100)]
+        static bool ClearFontAssetDataValidate(MenuCommand command)
+        {
+            return AssetDatabase.IsOpenForEdit(command.context);
+        }
+
         [MenuItem("CONTEXT/TMP_FontAsset/Reset", false, 100)]
         static void ClearFontAssetData(MenuCommand command)
         {
@@ -354,7 +360,62 @@ namespace TMPro.EditorUtilities
             TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
         }
 
+        /// <summary>
+        /// Clear Character and Glyph data (only).
+        /// </summary>
+        /// <param name="command"></param>
+        [MenuItem("CONTEXT/TMP_FontAsset/Clear Dynamic Data", true, 2100)]
+        static bool ClearFontCharacterDataValidate(MenuCommand command)
+        {
+            return AssetDatabase.IsOpenForEdit(command.context);
+        }
 
+        [MenuItem("CONTEXT/TMP_FontAsset/Clear Dynamic Data", false, 2100)]
+        static void ClearFontCharacterData(MenuCommand command)
+        {
+            TMP_FontAsset fontAsset = command.context as TMP_FontAsset;
+
+            if (fontAsset == null)
+                return;
+
+            if (Selection.activeObject != fontAsset)
+                Selection.activeObject = fontAsset;
+
+            fontAsset.ClearCharacterAndGlyphTablesInternal();
+
+            TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
+        }
+
+        /// <summary>
+        /// Reimport font features
+        /// </summary>
+        /// <param name="command"></param>
+        [MenuItem("CONTEXT/TMP_FontAsset/Import Font Features", true, 2110)]
+        static bool ReimportFontFeaturesValidate(MenuCommand command)
+        {
+            return AssetDatabase.IsOpenForEdit(command.context);
+        }
+
+        [MenuItem("CONTEXT/TMP_FontAsset/Import Font Features", false, 2110)]
+        static void ReimportFontFeatures(MenuCommand command)
+        {
+            TMP_FontAsset fontAsset = command.context as TMP_FontAsset;
+
+            if (fontAsset == null)
+                return;
+
+            if (Selection.activeObject != fontAsset)
+                Selection.activeObject = fontAsset;
+
+            fontAsset.ImportFontFeatures();
+
+            TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, fontAsset);
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="command"></param>
         [MenuItem("CONTEXT/TrueTypeFontImporter/Create TMP Font Asset...", false, 200)]
         static void CreateFontAsset(MenuCommand command)
         {

@@ -114,9 +114,14 @@ namespace TMPro
                 {
                     if (temp.characterLookupTable.TryGetValue(unicode, out character))
                     {
-                        isAlternativeTypeface = true;
+                        if (character.textAsset != null)
+                        {
+                            isAlternativeTypeface = true;
+                            return character;
+                        }
 
-                        return character;
+                        // Remove character from lookup table
+                        temp.characterLookupTable.Remove(unicode);
                     }
 
                     if (temp.atlasPopulationMode == AtlasPopulationMode.Dynamic || temp.atlasPopulationMode == AtlasPopulationMode.DynamicOS)
@@ -151,7 +156,13 @@ namespace TMPro
 
             // Search the source font asset for the requested character.
             if (sourceFontAsset.characterLookupTable.TryGetValue(unicode, out character))
-                return character;
+            {
+                if (character.textAsset != null)
+                    return character;
+
+                // Remove character from lookup table
+                sourceFontAsset.characterLookupTable.Remove(unicode);
+            }
 
             if (sourceFontAsset.atlasPopulationMode == AtlasPopulationMode.Dynamic || sourceFontAsset.atlasPopulationMode == AtlasPopulationMode.DynamicOS)
             {
@@ -241,6 +252,51 @@ namespace TMPro
 
                 if (character != null)
                     return character;
+            }
+
+            return null;
+        }
+
+        internal static TMP_TextElement GetTextElementFromTextAssets(uint unicode, TMP_FontAsset sourceFontAsset, List<TMP_Asset> textAssets, bool includeFallbacks, FontStyles fontStyle, FontWeight fontWeight, out bool isAlternativeTypeface)
+        {
+            isAlternativeTypeface = false;
+
+            // Make sure font asset list is valid
+            if (textAssets == null || textAssets.Count == 0)
+                return null;
+
+            if (includeFallbacks)
+            {
+                if (k_SearchedAssets == null)
+                    k_SearchedAssets = new HashSet<int>();
+                else
+                    k_SearchedAssets.Clear();
+            }
+
+            int textAssetCount = textAssets.Count;
+
+            for (int i = 0; i < textAssetCount; i++)
+            {
+                TMP_Asset textAsset = textAssets[i];
+
+                if (textAsset == null) continue;
+
+                if (textAsset.GetType() == typeof(TMP_FontAsset))
+                {
+                    TMP_FontAsset fontAsset = textAsset as TMP_FontAsset;
+                    TMP_Character character = GetCharacterFromFontAsset_Internal(unicode, fontAsset, includeFallbacks, fontStyle, fontWeight, out isAlternativeTypeface);
+
+                    if (character != null)
+                        return character;
+                }
+                else
+                {
+                    TMP_SpriteAsset spriteAsset = textAsset as TMP_SpriteAsset;
+                    TMP_SpriteCharacter spriteCharacter = GetSpriteCharacterFromSpriteAsset_Internal(unicode, spriteAsset, true);
+
+                    if (spriteCharacter != null)
+                        return spriteCharacter;
+                }
             }
 
             return null;

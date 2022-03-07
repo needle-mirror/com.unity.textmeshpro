@@ -47,11 +47,11 @@ namespace TMPro
         { get { return m_ClosingDefinition; } }
 
 
-        public int[] styleOpeningTagArray
+        public uint[] styleOpeningTagArray
         { get { return m_OpeningTagArray; } }
 
 
-        public int[] styleClosingTagArray
+        public uint[] styleClosingTagArray
         { get { return m_ClosingTagArray; } }
 
 
@@ -69,16 +69,10 @@ namespace TMPro
         private string m_ClosingDefinition;
 
         [SerializeField]
-        private int[] m_OpeningTagArray;
+        private uint[] m_OpeningTagArray;
 
         [SerializeField]
-        private int[] m_ClosingTagArray;
-
-        [SerializeField]
-        internal uint[] m_OpeningTagUnicodeArray;
-
-        [SerializeField]
-        internal uint[] m_ClosingTagUnicodeArray;
+        private uint[] m_ClosingTagArray;
 
         /// <summary>
         /// Constructor
@@ -105,23 +99,19 @@ namespace TMPro
             m_HashCode = TMP_TextParsingUtilities.GetHashCode(m_Name);
 
             int s1 = m_OpeningDefinition.Length;
-            m_OpeningTagArray = new int[s1];
-            m_OpeningTagUnicodeArray = new uint[s1];
+            m_OpeningTagArray = new uint[s1];
 
             for (int i = 0; i < s1; i++)
             {
                 m_OpeningTagArray[i] = m_OpeningDefinition[i];
-                m_OpeningTagUnicodeArray[i] = m_OpeningDefinition[i];
             }
 
             int s2 = m_ClosingDefinition.Length;
-            m_ClosingTagArray = new int[s2];
-            m_ClosingTagUnicodeArray = new uint[s2];
+            m_ClosingTagArray = new uint[s2];
 
             for (int i = 0; i < s2; i++)
             {
                 m_ClosingTagArray[i] = m_ClosingDefinition[i];
-                m_ClosingTagUnicodeArray[i] = m_ClosingDefinition[i];
             }
         }
 

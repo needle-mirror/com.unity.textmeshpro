@@ -891,6 +891,17 @@ namespace TMPro
         [SerializeField]
         protected bool m_isRichText = true; // Used to enable or disable Rich Text.
 
+        /// <summary>
+        /// Determines if text assets defined in the Emoji Fallback Text Assets list in the TMP Settings will be search first for characters defined as Emojis in the Unicode 14.0 standards.
+        /// </summary>
+        public bool emojiFallbackSupport
+        {
+            get { return m_EmojiFallbackSupport; }
+            set { if (m_EmojiFallbackSupport == value) return; m_EmojiFallbackSupport = value; m_havePropertiesChanged = true; SetVerticesDirty(); SetLayoutDirty(); }
+        }
+        [SerializeField]
+        private bool m_EmojiFallbackSupport = true;
+
 
         /// <summary>
         /// Enables or Disables parsing of CTRL characters in input text.
@@ -1493,7 +1504,7 @@ namespace TMPro
         protected bool tag_NoParsing;
         //protected TMP_LinkInfo tag_LinkInfo = new TMP_LinkInfo();
 
-        protected bool m_isParsingText;
+        protected bool m_isTextLayoutPhase;
         //protected Vector3 m_FXTranslation;
         protected Quaternion m_FXRotation;
         protected Vector3 m_FXScale;
@@ -1501,7 +1512,7 @@ namespace TMPro
         /// <summary>
         /// Array containing the Unicode characters to be parsed.
         /// </summary>
-        internal UnicodeChar[] m_TextProcessingArray = new UnicodeChar[8];
+        internal TextProcessingElement[] m_TextProcessingArray = new TextProcessingElement[8];
 
         /// <summary>
         /// The number of Unicode characters that have been parsed and contained in the m_InternalParsingBuffer
@@ -1509,9 +1520,10 @@ namespace TMPro
         internal int m_InternalTextProcessingArraySize;
 
         [System.Diagnostics.DebuggerDisplay("Unicode ({unicode})  '{(char)unicode}'")]
-        internal struct UnicodeChar
+        internal struct TextProcessingElement
         {
-            public int unicode;
+            public TextProcessingElementType elementType;
+            public uint unicode;
             public int stringIndex;
             public int length;
         }
@@ -1878,6 +1890,11 @@ namespace TMPro
         /// </summary>
         struct TextBackingContainer
         {
+            public uint[] Text
+            {
+                get { return m_Array; }
+            }
+
             public int Capacity
             {
                 get { return m_Array.Length; }
@@ -1885,12 +1902,12 @@ namespace TMPro
 
             public int Count
             {
-                get { return m_Count; }
-                set { m_Count = value; }
+                get { return m_Index; }
+                set { m_Index = value; }
             }
 
             private uint[] m_Array;
-            private int m_Count;
+            private int m_Index;
 
             public uint this[int index]
             {
@@ -1907,7 +1924,7 @@ namespace TMPro
             public TextBackingContainer(int size)
             {
                 m_Array = new uint[size];
-                m_Count = 0;
+                m_Index = 0;
             }
 
             public void Resize(int size)
@@ -2098,7 +2115,9 @@ namespace TMPro
 
             // Insert Opening Style
             if (textStyle.hashCode != (int)MarkupTag.NORMAL)
-                InsertOpeningStyleTag(m_TextStyle, 0, ref m_TextProcessingArray, ref writeIndex);
+                InsertOpeningStyleTag(m_TextStyle, ref m_TextProcessingArray, ref writeIndex);
+
+            tag_NoParsing = false;
 
             int readIndex = 0;
             for (; readIndex < srcLength; readIndex++)
@@ -2108,85 +2127,47 @@ namespace TMPro
                 if (c == 0)
                     break;
 
-                if (m_inputSource == TextInputSources.TextInputBox && c == '\\' && readIndex < srcLength - 1)
+                if (c == '\\' && readIndex < srcLength - 1)
                 {
                     switch (m_TextBackingArray[readIndex + 1])
                     {
                         case 92: // \ escape
                             if (!m_parseCtrlCharacters) break;
 
-                            if (srcLength <= readIndex + 2) break;
-
-                            if (writeIndex + 2 > m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
-
-                            m_TextProcessingArray[writeIndex].unicode = (int)m_TextBackingArray[readIndex + 1];
-                            m_TextProcessingArray[writeIndex].stringIndex = readIndex;
-                            m_TextProcessingArray[writeIndex].length = 1;
-
-                            m_TextProcessingArray[writeIndex + 1].unicode = (int)m_TextBackingArray[readIndex + 2];
-                            m_TextProcessingArray[writeIndex + 1].stringIndex = readIndex;
-                            m_TextProcessingArray[writeIndex + 1].length = 1;
-
-                            readIndex += 2;
-                            writeIndex += 2;
-                            continue;
+                            readIndex += 1;
+                            break;
                         case 110: // \n LineFeed
                             if (!m_parseCtrlCharacters) break;
 
-                            if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
-
-                            m_TextProcessingArray[writeIndex].unicode = 10;
-                            m_TextProcessingArray[writeIndex].stringIndex = readIndex;
-                            m_TextProcessingArray[writeIndex].length = 1;
-
+                            m_TextProcessingArray[writeIndex] = new TextProcessingElement { elementType = TextProcessingElementType.TextCharacterElement, stringIndex = readIndex, length = 1, unicode = 10 };
                             readIndex += 1;
                             writeIndex += 1;
                             continue;
                         case 114: // \r Carriage Return
                             if (!m_parseCtrlCharacters) break;
 
-                            if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
-
-                            m_TextProcessingArray[writeIndex].unicode = 13;
-                            m_TextProcessingArray[writeIndex].stringIndex = readIndex;
-                            m_TextProcessingArray[writeIndex].length = 1;
-
+                            m_TextProcessingArray[writeIndex] = new TextProcessingElement { elementType = TextProcessingElementType.TextCharacterElement, stringIndex = readIndex, length = 1, unicode = 13 };
                             readIndex += 1;
                             writeIndex += 1;
                             continue;
                         case 116: // \t Tab
                             if (!m_parseCtrlCharacters) break;
 
-                            if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
-
-                            m_TextProcessingArray[writeIndex].unicode = 9;
-                            m_TextProcessingArray[writeIndex].stringIndex = readIndex;
-                            m_TextProcessingArray[writeIndex].length = 1;
-
+                            m_TextProcessingArray[writeIndex] = new TextProcessingElement { elementType = TextProcessingElementType.TextCharacterElement, stringIndex = readIndex, length = 1, unicode = 9 };
                             readIndex += 1;
                             writeIndex += 1;
                             continue;
                         case 118: // \v Vertical tab used as soft line break
                             if (!m_parseCtrlCharacters) break;
 
-                            if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
-
-                            m_TextProcessingArray[writeIndex].unicode = 11;
-                            m_TextProcessingArray[writeIndex].stringIndex = readIndex;
-                            m_TextProcessingArray[writeIndex].length = 1;
-
+                            m_TextProcessingArray[writeIndex] = new TextProcessingElement { elementType = TextProcessingElementType.TextCharacterElement, stringIndex = readIndex, length = 1, unicode = 11 };
                             readIndex += 1;
                             writeIndex += 1;
                             continue;
                         case 117: // \u0000 for UTF-16 Unicode
                             if (srcLength > readIndex + 5 && IsValidUTF16(m_TextBackingArray, readIndex + 2))
                             {
-                                if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
-
-                                m_TextProcessingArray[writeIndex].unicode = GetUTF16(m_TextBackingArray, readIndex + 2);
-                                m_TextProcessingArray[writeIndex].stringIndex = readIndex;
-                                m_TextProcessingArray[writeIndex].length = 6;
-
+                                m_TextProcessingArray[writeIndex] = new TextProcessingElement { elementType = TextProcessingElementType.TextCharacterElement, stringIndex = readIndex, length = 6, unicode = GetUTF16(m_TextBackingArray, readIndex + 2) };
                                 readIndex += 5;
                                 writeIndex += 1;
                                 continue;
@@ -2195,12 +2176,7 @@ namespace TMPro
                         case 85: // \U00000000 for UTF-32 Unicode
                             if (srcLength > readIndex + 9 && IsValidUTF32(m_TextBackingArray, readIndex + 2))
                             {
-                                if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
-
-                                m_TextProcessingArray[writeIndex].unicode = GetUTF32(m_TextBackingArray, readIndex + 2);
-                                m_TextProcessingArray[writeIndex].stringIndex = readIndex;
-                                m_TextProcessingArray[writeIndex].length = 10;
-
+                                m_TextProcessingArray[writeIndex] = new TextProcessingElement { elementType = TextProcessingElementType.TextCharacterElement, stringIndex = readIndex, length = 10, unicode = GetUTF32(m_TextBackingArray, readIndex + 2) };
                                 readIndex += 9;
                                 writeIndex += 1;
                                 continue;
@@ -2209,15 +2185,10 @@ namespace TMPro
                     }
                 }
 
-                // Handle surrogate pair conversion in string, StringBuilder and char[] source.
+                // Handle surrogate pair conversion
                 if (c >= CodePoint.HIGH_SURROGATE_START && c <= CodePoint.HIGH_SURROGATE_END && srcLength > readIndex + 1 && m_TextBackingArray[readIndex + 1] >= CodePoint.LOW_SURROGATE_START && m_TextBackingArray[readIndex + 1] <= CodePoint.LOW_SURROGATE_END)
                 {
-                    if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
-
-                    m_TextProcessingArray[writeIndex].unicode = (int)TMP_TextParsingUtilities.ConvertToUTF32(c, m_TextBackingArray[readIndex + 1]);
-                    m_TextProcessingArray[writeIndex].stringIndex = readIndex;
-                    m_TextProcessingArray[writeIndex].length = 2;
-
+                    m_TextProcessingArray[writeIndex] = new TextProcessingElement { elementType = TextProcessingElementType.TextCharacterElement, stringIndex = readIndex, length = 2, unicode = TMP_TextParsingUtilities.ConvertToUTF32(c, m_TextBackingArray[readIndex + 1]) };
                     readIndex += 1;
                     writeIndex += 1;
                     continue;
@@ -2231,47 +2202,68 @@ namespace TMPro
 
                     switch ((MarkupTag)hashCode)
                     {
+                        case MarkupTag.NO_PARSE:
+                            tag_NoParsing = true;
+                            break;
+                        case MarkupTag.SLASH_NO_PARSE:
+                            tag_NoParsing = false;
+                            break;
                         case MarkupTag.BR:
+                            if (tag_NoParsing) break;
                             if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
 
-                            m_TextProcessingArray[writeIndex].unicode = 10;
-                            m_TextProcessingArray[writeIndex].stringIndex = readIndex;
-                            m_TextProcessingArray[writeIndex].length = 4;
+                            m_TextProcessingArray[writeIndex] = new TextProcessingElement { elementType = TextProcessingElementType.TextCharacterElement, stringIndex = readIndex, length = 4, unicode = 10 };
+                            writeIndex += 1;
+                            readIndex += 3;
+                            continue;
+                        case MarkupTag.CR:
+                            if (tag_NoParsing) break;
+                            if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
 
+                            m_TextProcessingArray[writeIndex] = new TextProcessingElement { elementType = TextProcessingElementType.TextCharacterElement, stringIndex = readIndex, length = 4, unicode = 13 };
                             writeIndex += 1;
                             readIndex += 3;
                             continue;
                         case MarkupTag.NBSP:
+                            if (tag_NoParsing) break;
                             if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
 
-                            m_TextProcessingArray[writeIndex].unicode = 160;
-                            m_TextProcessingArray[writeIndex].stringIndex = readIndex;
-                            m_TextProcessingArray[writeIndex].length = 6;
-
+                            m_TextProcessingArray[writeIndex] = new TextProcessingElement { elementType = TextProcessingElementType.TextCharacterElement, stringIndex = readIndex, length = 6, unicode = 0xA0 };
                             writeIndex += 1;
                             readIndex += 5;
                             continue;
                         case MarkupTag.ZWSP:
+                            if (tag_NoParsing) break;
                             if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
 
-                            m_TextProcessingArray[writeIndex].unicode = 0x200B;
-                            m_TextProcessingArray[writeIndex].stringIndex = readIndex;
-                            m_TextProcessingArray[writeIndex].length = 6;
-
+                            m_TextProcessingArray[writeIndex] = new TextProcessingElement { elementType = TextProcessingElementType.TextCharacterElement, stringIndex = readIndex, length = 6, unicode = 0x200B };
                             writeIndex += 1;
                             readIndex += 5;
                             continue;
-                        case MarkupTag.SHY:
+                        case MarkupTag.ZWJ:
+                            if (tag_NoParsing) break;
                             if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
 
-                            m_TextProcessingArray[writeIndex].unicode = 0xAD;
-                            m_TextProcessingArray[writeIndex].stringIndex = readIndex;
-                            m_TextProcessingArray[writeIndex].length = 5;
-
+                            m_TextProcessingArray[writeIndex] = new TextProcessingElement { elementType = TextProcessingElementType.TextCharacterElement, stringIndex = readIndex, length = 5, unicode = 0x200D };
                             writeIndex += 1;
                             readIndex += 4;
                             continue;
+                        case MarkupTag.SHY:
+                            if (tag_NoParsing) break;
+                            if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
+
+                            m_TextProcessingArray[writeIndex] = new TextProcessingElement { elementType = TextProcessingElementType.TextCharacterElement, stringIndex = readIndex, length = 5, unicode = 0xAD };
+                            writeIndex += 1;
+                            readIndex += 4;
+                            continue;
+                        case MarkupTag.A:
+                            // Additional check
+                            if (m_TextBackingArray.Count > readIndex + 4 && m_TextBackingArray[readIndex + 3] == 'h' && m_TextBackingArray[readIndex + 4] == 'r')
+                                InsertOpeningTextStyle(GetStyle((int)MarkupTag.A), ref m_TextProcessingArray, ref writeIndex);
+                            break;
                         case MarkupTag.STYLE:
+                            if (tag_NoParsing) break;
+
                             int openWriteIndex = writeIndex;
                             if (ReplaceOpeningStyleTag(ref m_TextBackingArray, readIndex, out int srcOffset, ref m_TextProcessingArray, ref writeIndex))
                             {
@@ -2286,9 +2278,14 @@ namespace TMPro
                                 continue;
                             }
                             break;
+                        case MarkupTag.SLASH_A:
+                            InsertClosingTextStyle(GetStyle((int)MarkupTag.A), ref m_TextProcessingArray, ref writeIndex);
+                            break;
                         case MarkupTag.SLASH_STYLE:
+                            if (tag_NoParsing) break;
+
                             int closeWriteIndex = writeIndex;
-                            ReplaceClosingStyleTag(ref m_TextBackingArray, readIndex, ref m_TextProcessingArray, ref writeIndex);
+                            ReplaceClosingStyleTag(ref m_TextProcessingArray, ref writeIndex);
 
                             // Update potential text elements added by the closing style.
                             for (; closeWriteIndex < writeIndex; closeWriteIndex++)
@@ -2300,13 +2297,21 @@ namespace TMPro
                             readIndex += 7;
                             continue;
                     }
+
+                    // Validate potential text markup element
+                    // if (TryGetTextMarkupElement(m_TextBackingArray.Text, ref readIndex, out TextProcessingElement markupElement))
+                    // {
+                    //     m_TextProcessingArray[writeIndex] = markupElement;
+                    //     writeIndex += 1;
+                    //     continue;
+                    // }
                 }
 
+                // Lookup character and glyph data
+                // TODO: Add future implementation for character and glyph lookups
                 if (writeIndex == m_TextProcessingArray.Length) ResizeInternalArray(ref m_TextProcessingArray);
 
-                m_TextProcessingArray[writeIndex].unicode = (int)c;
-                m_TextProcessingArray[writeIndex].stringIndex = readIndex;
-                m_TextProcessingArray[writeIndex].length = 1;
+                m_TextProcessingArray[writeIndex] = new TextProcessingElement { elementType = TextProcessingElementType.TextCharacterElement, stringIndex = readIndex, length = 1, unicode = c };
 
                 writeIndex += 1;
             }
@@ -2653,7 +2658,6 @@ namespace TMPro
             SetLayoutDirty();
         }
 
-
         /// <summary>
         /// Set the text using a StringBuilder object as the source.
         /// </summary>
@@ -2695,7 +2699,6 @@ namespace TMPro
             SetLayoutDirty();
         }
 
-
         /// <summary>
         /// Set the text using a char array.
         /// </summary>
@@ -2717,7 +2720,6 @@ namespace TMPro
         {
             SetCharArray(sourceText, start, length);
         }
-
 
         /// <summary>
         /// Set the text using a char array.
@@ -2757,7 +2759,6 @@ namespace TMPro
             SetLayoutDirty();
         }
 
-
         /// <summary>
         ///
         /// </summary>
@@ -2782,43 +2783,53 @@ namespace TMPro
             return style;
         }
 
-
-        /// <summary>
-        /// Method to handle inline replacement of style tag by opening style definition.
-        /// </summary>
-        /// <param name="sourceText"></param>
-        /// <param name="srcIndex"></param>
-        /// <param name="srcOffset"></param>
-        /// <param name="charBuffer"></param>
-        /// <param name="writeIndex"></param>
-        /// <returns></returns>
-        bool ReplaceOpeningStyleTag(ref TextBackingContainer sourceText, int srcIndex, out int srcOffset, ref UnicodeChar[] charBuffer, ref int writeIndex)
+        void InsertOpeningTextStyle(TMP_Style style, ref TextProcessingElement[] charBuffer, ref int writeIndex)
         {
-            // Validate <style> tag.
-            int styleHashCode = GetStyleHashCode(ref sourceText, srcIndex + 7, out srcOffset);
-            TMP_Style style = GetStyle(styleHashCode);
-
-            // Return if we don't have a valid style.
-            if (style == null || srcOffset == 0) return false;
-
             // Increase style depth
             m_TextStyleStackDepth += 1;
 
             // Push style hashcode onto stack
             m_TextStyleStacks[m_TextStyleStackDepth].Push(style.hashCode);
 
-            int styleLength = style.styleOpeningTagArray.Length;
+            // Replace <style> tag with opening definition
+            uint[] styleDefinition = style.styleOpeningTagArray;
+
+            InsertTextStyleInTextProcessingArray(ref charBuffer, ref writeIndex, styleDefinition);
+
+            m_TextStyleStackDepth -= 1;
+        }
+
+        void InsertClosingTextStyle(TMP_Style style, ref TextProcessingElement[] charBuffer, ref int writeIndex)
+        {
+            // Increase style depth
+            m_TextStyleStackDepth += 1;
+
+            // Push style hashcode onto stack
+            m_TextStyleStacks[m_TextStyleStackDepth].Push(style.hashCode);
 
             // Replace <style> tag with opening definition
-            int[] tagDefinition = style.styleOpeningTagArray;
+            uint[] styleDefinition = style.styleClosingTagArray;
+
+            InsertTextStyleInTextProcessingArray(ref charBuffer, ref writeIndex, styleDefinition);
+
+            m_TextStyleStackDepth -= 1;
+        }
+
+        private void InsertTextStyleInTextProcessingArray(ref TextProcessingElement[] charBuffer, ref int writeIndex, uint[] styleDefinition)
+        {
+            int styleLength = styleDefinition.Length;
+
+            // Make sure text processing buffer is of sufficient size
+            if (writeIndex + styleLength >= charBuffer.Length)
+                ResizeInternalArray(ref charBuffer, writeIndex + styleLength);
 
             for (int i = 0; i < styleLength; i++)
             {
-                int c = tagDefinition[i];
+                uint c = styleDefinition[i];
 
                 if (c == '\\' && i + 1 < styleLength)
                 {
-                    switch (tagDefinition[i + 1])
+                    switch (styleDefinition[i + 1])
                     {
                         case '\\':
                             i += 1;
@@ -2835,77 +2846,143 @@ namespace TMPro
                             // UTF16 format is "\uFF00" or u + 2 hex pairs.
                             if (i + 5 < styleLength)
                             {
-                                c = GetUTF16(tagDefinition, i + 2);
+                                c = GetUTF16(styleDefinition, i + 2);
 
                                 i += 5;
                             }
+
                             break;
                         case 'U':
                             // UTF32 format is "\UFF00FF00" or U + 4 hex pairs.
                             if (i + 9 < styleLength)
                             {
-                                c = GetUTF32(tagDefinition, i + 2);
+                                c = GetUTF32(styleDefinition, i + 2);
 
                                 i += 9;
                             }
+
                             break;
                     }
                 }
 
                 if (c == '<')
                 {
-                    int hashCode = GetMarkupTagHashCode(tagDefinition, i + 1);
+                    int hashCode = GetMarkupTagHashCode(styleDefinition, i + 1);
 
                     switch ((MarkupTag)hashCode)
                     {
+                        case MarkupTag.NO_PARSE:
+                            tag_NoParsing = true;
+                            break;
+                        case MarkupTag.SLASH_NO_PARSE:
+                            tag_NoParsing = false;
+                            break;
+
                         case MarkupTag.BR:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                            if (tag_NoParsing) break;
 
                             charBuffer[writeIndex].unicode = 10;
                             writeIndex += 1;
                             i += 3;
                             continue;
+                        case MarkupTag.CR:
+                            if (tag_NoParsing) break;
+
+                            charBuffer[writeIndex].unicode = 13;
+                            writeIndex += 1;
+                            i += 3;
+                            continue;
                         case MarkupTag.NBSP:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                            if (tag_NoParsing) break;
 
                             charBuffer[writeIndex].unicode = 160;
                             writeIndex += 1;
                             i += 5;
                             continue;
                         case MarkupTag.ZWSP:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                            if (tag_NoParsing) break;
 
                             charBuffer[writeIndex].unicode = 0x200B;
                             writeIndex += 1;
                             i += 5;
                             continue;
+                        case MarkupTag.ZWJ:
+                            if (tag_NoParsing) break;
+
+                            charBuffer[writeIndex].unicode = 0x200D;
+                            writeIndex += 1;
+                            i += 4;
+                            continue;
                         case MarkupTag.SHY:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                            if (tag_NoParsing) break;
 
                             charBuffer[writeIndex].unicode = 0xAD;
                             writeIndex += 1;
                             i += 4;
                             continue;
                         case MarkupTag.STYLE:
-                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
+                            if (tag_NoParsing) break;
+
+                            if (ReplaceOpeningStyleTag(ref styleDefinition, i, out int offset, ref charBuffer, ref writeIndex))
                             {
                                 i = offset;
                                 continue;
                             }
                             break;
                         case MarkupTag.SLASH_STYLE:
-                            ReplaceClosingStyleTag(ref tagDefinition, i, ref charBuffer, ref writeIndex);
+                            if (tag_NoParsing) break;
+
+                            ReplaceClosingStyleTag(ref charBuffer, ref writeIndex);
 
                             i += 7;
                             continue;
                     }
+
+                    // Validate potential text markup element
+                    // if (TryGetTextMarkupElement(tagDefinition, ref i, out TextProcessingElement markupElement))
+                    // {
+                    //     m_TextProcessingArray[writeIndex] = markupElement;
+                    //     writeIndex += 1;
+                    //     continue;
+                    // }
                 }
 
-                if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
+                // Lookup character and glyph data
+                // TODO: Add future implementation for character and glyph lookups
 
                 charBuffer[writeIndex].unicode = c;
                 writeIndex += 1;
             }
+        }
+
+        /// <summary>
+        /// Method to handle inline replacement of style tag by opening style definition.
+        /// </summary>
+        /// <param name="sourceText"></param>
+        /// <param name="srcIndex"></param>
+        /// <param name="srcOffset"></param>
+        /// <param name="charBuffer"></param>
+        /// <param name="writeIndex"></param>
+        /// <returns></returns>
+        bool ReplaceOpeningStyleTag(ref TextBackingContainer sourceText, int srcIndex, out int srcOffset, ref TextProcessingElement[] charBuffer, ref int writeIndex)
+        {
+            // Validate <style> tag.
+            int styleHashCode = GetStyleHashCode(ref sourceText, srcIndex + 7, out srcOffset);
+            TMP_Style style = GetStyle(styleHashCode);
+
+            // Return if we don't have a valid style.
+            if (style == null || srcOffset == 0) return false;
+
+            // Increase style depth
+            m_TextStyleStackDepth += 1;
+
+            // Push style hashcode onto stack
+            m_TextStyleStacks[m_TextStyleStackDepth].Push(style.hashCode);
+
+            // Replace <style> tag with opening definition
+            uint[] styleDefinition = style.styleOpeningTagArray;
+
+            InsertTextStyleInTextProcessingArray(ref charBuffer, ref writeIndex, styleDefinition);
 
             m_TextStyleStackDepth -= 1;
 
@@ -2921,7 +2998,7 @@ namespace TMPro
         /// <param name="charBuffer"></param>
         /// <param name="writeIndex"></param>
         /// <returns></returns>
-        bool ReplaceOpeningStyleTag(ref int[] sourceText, int srcIndex, out int srcOffset, ref UnicodeChar[] charBuffer, ref int writeIndex)
+        bool ReplaceOpeningStyleTag(ref uint[] sourceText, int srcIndex, out int srcOffset, ref TextProcessingElement[] charBuffer, ref int writeIndex)
         {
             // Validate <style> tag.
             int styleHashCode = GetStyleHashCode(ref sourceText, srcIndex + 7, out srcOffset);
@@ -2936,112 +3013,16 @@ namespace TMPro
             // Push style hashcode onto stack
             m_TextStyleStacks[m_TextStyleStackDepth].Push(style.hashCode);
 
-            int styleLength = style.styleOpeningTagArray.Length;
-
             // Replace <style> tag with opening definition
-            int[] tagDefinition = style.styleOpeningTagArray;
+            uint[] styleDefinition = style.styleOpeningTagArray;
 
-            for (int i = 0; i < styleLength; i++)
-            {
-                int c = tagDefinition[i];
+            InsertTextStyleInTextProcessingArray(ref charBuffer, ref writeIndex, styleDefinition);
 
-                if (c == '\\' && i + 1 < styleLength)
-                {
-                    switch (tagDefinition[i + 1])
-                    {
-                        case '\\':
-                            i += 1;
-                            break;
-                        case 'n':
-                            c = 10;
-                            i += 1;
-                            break;
-                        case 'r':
-                            break;
-                        case 't':
-                            break;
-                        case 'u':
-                            // UTF16 format is "\uFF00" or u + 2 hex pairs.
-                            if (i + 5 < styleLength)
-                            {
-                                c = GetUTF16(tagDefinition, i + 2);
-
-                                i += 5;
-                            }
-                            break;
-                        case 'U':
-                            // UTF32 format is "\UFF00FF00" or U + 4 hex pairs.
-                            if (i + 9 < styleLength)
-                            {
-                                c = GetUTF32(tagDefinition, i + 2);
-
-                                i += 9;
-                            }
-                            break;
-                    }
-                }
-
-                if (c == '<')
-                {
-                    int hashCode = GetMarkupTagHashCode(tagDefinition, i + 1);
-
-                    switch ((MarkupTag)hashCode)
-                    {
-                        case MarkupTag.BR:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 10;
-                            writeIndex += 1;
-                            i += 3;
-                            continue;
-                        case MarkupTag.NBSP:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 160;
-                            writeIndex += 1;
-                            i += 5;
-                            continue;
-                        case MarkupTag.ZWSP:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 0x200B;
-                            writeIndex += 1;
-                            i += 5;
-                            continue;
-                        case MarkupTag.SHY:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 0xAD;
-                            writeIndex += 1;
-                            i += 4;
-                            continue;
-                        case MarkupTag.STYLE:
-                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
-                            {
-                                i = offset;
-                                continue;
-                            }
-                            break;
-                        case MarkupTag.SLASH_STYLE:
-                            ReplaceClosingStyleTag(ref tagDefinition, i, ref charBuffer, ref writeIndex);
-
-                            i += 7;
-                            continue;
-                    }
-                }
-
-                if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                charBuffer[writeIndex].unicode = c;
-                writeIndex += 1;
-            }
-
-            m_TextStyleStackDepth -= 1;
+             m_TextStyleStackDepth -= 1;
 
             return true;
         }
 
-
         /// <summary>
         /// Method to handle inline replacement of style tag by closing style definition.
         /// </summary>
@@ -3050,7 +3031,7 @@ namespace TMPro
         /// <param name="charBuffer"></param>
         /// <param name="writeIndex"></param>
         /// <returns></returns>
-        void ReplaceClosingStyleTag(ref TextBackingContainer sourceText, int srcIndex, ref UnicodeChar[] charBuffer, ref int writeIndex)
+        void ReplaceClosingStyleTag(ref TextProcessingElement[] charBuffer, ref int writeIndex)
         {
             // Get style from the Style Stack
             int styleHashCode = m_TextStyleStacks[m_TextStyleStackDepth + 1].Pop();
@@ -3062,232 +3043,13 @@ namespace TMPro
             // Increase style depth
             m_TextStyleStackDepth += 1;
 
-            int styleLength = style.styleClosingTagArray.Length;
-
             // Replace <style> tag with opening definition
-            int[] tagDefinition = style.styleClosingTagArray;
+            uint[] styleDefinition = style.styleClosingTagArray;
 
-            for (int i = 0; i < styleLength; i++)
-            {
-                int c = tagDefinition[i];
-
-                if (c == '\\' && i + 1 < styleLength)
-                {
-                    switch (tagDefinition[i + 1])
-                    {
-                        case '\\':
-                            i += 1;
-                            break;
-                        case 'n':
-                            c = 10;
-                            i += 1;
-                            break;
-                        case 'r':
-                            break;
-                        case 't':
-                            break;
-                        case 'u':
-                            // UTF16 format is "\uFF00" or u + 2 hex pairs.
-                            if (i + 5 < styleLength)
-                            {
-                                c = GetUTF16(tagDefinition, i + 2);
-
-                                i += 5;
-                            }
-                            break;
-                        case 'U':
-                            // UTF32 format is "\UFF00FF00" or U + 4 hex pairs.
-                            if (i + 9 < styleLength)
-                            {
-                                c = GetUTF32(tagDefinition, i + 2);
-
-                                i += 9;
-                            }
-                            break;
-                    }
-                }
-
-                if (c == '<')
-                {
-                    int hashCode = GetMarkupTagHashCode(tagDefinition, i + 1);
-
-                    switch ((MarkupTag)hashCode)
-                    {
-                        case MarkupTag.BR:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 10;
-                            writeIndex += 1;
-                            i += 3;
-                            continue;
-                        case MarkupTag.NBSP:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 160;
-                            writeIndex += 1;
-                            i += 5;
-                            continue;
-                        case MarkupTag.ZWSP:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 0x200B;
-                            writeIndex += 1;
-                            i += 5;
-                            continue;
-                        case MarkupTag.SHY:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 0xAD;
-                            writeIndex += 1;
-                            i += 4;
-                            continue;
-                        case MarkupTag.STYLE:
-                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
-                            {
-                                i = offset;
-                                continue;
-                            }
-                            break;
-                        case MarkupTag.SLASH_STYLE:
-                            ReplaceClosingStyleTag(ref tagDefinition, i, ref charBuffer, ref writeIndex);
-
-                            i += 7;
-                            continue;
-                    }
-                }
-
-                if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                charBuffer[writeIndex].unicode = c;
-                writeIndex += 1;
-            }
+            InsertTextStyleInTextProcessingArray(ref charBuffer, ref writeIndex, styleDefinition);
 
             m_TextStyleStackDepth -= 1;
         }
-
-        /// <summary>
-        /// Method to handle inline replacement of style tag by closing style definition.
-        /// </summary>
-        /// <param name="sourceText"></param>
-        /// <param name="srcIndex"></param>
-        /// <param name="charBuffer"></param>
-        /// <param name="writeIndex"></param>
-        /// <returns></returns>
-        void ReplaceClosingStyleTag(ref int[] sourceText, int srcIndex, ref UnicodeChar[] charBuffer, ref int writeIndex)
-        {
-            // Get style from the Style Stack
-            int styleHashCode = m_TextStyleStacks[m_TextStyleStackDepth + 1].Pop();
-            TMP_Style style = GetStyle(styleHashCode);
-
-            // Return if we don't have a valid style.
-            if (style == null) return;
-
-            // Increase style depth
-            m_TextStyleStackDepth += 1;
-
-            int styleLength = style.styleClosingTagArray.Length;
-
-            // Replace <style> tag with opening definition
-            int[] tagDefinition = style.styleClosingTagArray;
-
-            for (int i = 0; i < styleLength; i++)
-            {
-                int c = tagDefinition[i];
-
-                if (c == '\\' && i + 1 < styleLength)
-                {
-                    switch (tagDefinition[i + 1])
-                    {
-                        case '\\':
-                            i += 1;
-                            break;
-                        case 'n':
-                            c = 10;
-                            i += 1;
-                            break;
-                        case 'r':
-                            break;
-                        case 't':
-                            break;
-                        case 'u':
-                            // UTF16 format is "\uFF00" or u + 2 hex pairs.
-                            if (i + 5 < styleLength)
-                            {
-                                c = GetUTF16(tagDefinition, i + 2);
-
-                                i += 5;
-                            }
-                            break;
-                        case 'U':
-                            // UTF32 format is "\UFF00FF00" or U + 4 hex pairs.
-                            if (i + 9 < styleLength)
-                            {
-                                c = GetUTF32(tagDefinition, i + 2);
-
-                                i += 9;
-                            }
-                            break;
-                    }
-                }
-
-                if (c == '<')
-                {
-                    int hashCode = GetMarkupTagHashCode(tagDefinition, i + 1);
-
-                    switch ((MarkupTag)hashCode)
-                    {
-                        case MarkupTag.BR:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 10;
-                            writeIndex += 1;
-                            i += 3;
-                            continue;
-                        case MarkupTag.NBSP:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 160;
-                            writeIndex += 1;
-                            i += 5;
-                            continue;
-                        case MarkupTag.ZWSP:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 0x200B;
-                            writeIndex += 1;
-                            i += 5;
-                            continue;
-                        case MarkupTag.SHY:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 0xAD;
-                            writeIndex += 1;
-                            i += 4;
-                            continue;
-                        case MarkupTag.STYLE:
-                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
-                            {
-                                i = offset;
-                                continue;
-                            }
-                            break;
-                        case MarkupTag.SLASH_STYLE:
-                            ReplaceClosingStyleTag(ref tagDefinition, i, ref charBuffer, ref writeIndex);
-
-                            i += 7;
-                            continue;
-                    }
-                }
-
-                if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                charBuffer[writeIndex].unicode = c;
-                writeIndex += 1;
-            }
-
-            m_TextStyleStackDepth -= 1;
-        }
-
 
         /// <summary>
         ///
@@ -3297,116 +3059,19 @@ namespace TMPro
         /// <param name="charBuffer"></param>
         /// <param name="writeIndex"></param>
         /// <returns></returns>
-        bool InsertOpeningStyleTag(TMP_Style style, int srcIndex, ref UnicodeChar[] charBuffer, ref int writeIndex)
+        void InsertOpeningStyleTag(TMP_Style style, ref TextProcessingElement[] charBuffer, ref int writeIndex)
         {
             // Return if we don't have a valid style.
-            if (style == null) return false;
+            if (style == null) return;
 
             m_TextStyleStacks[0].Push(style.hashCode);
 
-            int styleLength = style.styleOpeningTagArray.Length;
-
             // Replace <style> tag with opening definition
-            int[] tagDefinition = style.styleOpeningTagArray;
+            uint[] styleDefinition = style.styleOpeningTagArray;
 
-            for (int i = 0; i < styleLength; i++)
-            {
-                int c = tagDefinition[i];
-
-                if (c == '\\' && i + 1 < styleLength)
-                {
-                    switch (tagDefinition[i + 1])
-                    {
-                        case '\\':
-                            i += 1;
-                            break;
-                        case 'n':
-                            c = 10;
-                            i += 1;
-                            break;
-                        case 'r':
-                            break;
-                        case 't':
-                            break;
-                        case 'u':
-                            // UTF16 format is "\uFF00" or u + 2 hex pairs.
-                            if (i + 5 < styleLength)
-                            {
-                                c = GetUTF16(tagDefinition, i + 2);
-
-                                i += 5;
-                            }
-                            break;
-                        case 'U':
-                            // UTF32 format is "\UFF00FF00" or U + 4 hex pairs.
-                            if (i + 9 < styleLength)
-                            {
-                                c = GetUTF32(tagDefinition, i + 2);
-
-                                i += 9;
-                            }
-                            break;
-                    }
-                }
-
-                if (c == '<')
-                {
-                    int hashCode = GetMarkupTagHashCode(tagDefinition, i + 1);
-
-                    switch ((MarkupTag)hashCode)
-                    {
-                        case MarkupTag.BR:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 10;
-                            writeIndex += 1;
-                            i += 3;
-                            continue;
-                        case MarkupTag.NBSP:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 160;
-                            writeIndex += 1;
-                            i += 5;
-                            continue;
-                        case MarkupTag.ZWSP:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 0x200B;
-                            writeIndex += 1;
-                            i += 5;
-                            continue;
-                        case MarkupTag.SHY:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 0xAD;
-                            writeIndex += 1;
-                            i += 4;
-                            continue;
-                        case MarkupTag.STYLE:
-                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
-                            {
-                                i = offset;
-                                continue;
-                            }
-                            break;
-                        case MarkupTag.SLASH_STYLE:
-                            ReplaceClosingStyleTag(ref tagDefinition, i, ref charBuffer, ref writeIndex);
-
-                            i += 7;
-                            continue;
-                    }
-                }
-
-                if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                charBuffer[writeIndex].unicode = c;
-                writeIndex += 1;
-            }
+            InsertTextStyleInTextProcessingArray(ref charBuffer, ref writeIndex, styleDefinition);
 
             m_TextStyleStackDepth = 0;
-
-            return true;
         }
 
         /// <summary>
@@ -3414,167 +3079,69 @@ namespace TMPro
         /// </summary>
         /// <param name="charBuffer"></param>
         /// <param name="writeIndex"></param>
-        void InsertClosingStyleTag(ref UnicodeChar[] charBuffer, ref int writeIndex)
+        void InsertClosingStyleTag(ref TextProcessingElement[] charBuffer, ref int writeIndex)
         {
             // Get style from the Style Stack
             int styleHashCode = m_TextStyleStacks[0].Pop();
             TMP_Style style = GetStyle(styleHashCode);
 
-            int styleLength = style.styleClosingTagArray.Length;
-
             // Replace <style> tag with opening definition
-            int[] tagDefinition = style.styleClosingTagArray;
+            uint[] styleDefinition = style.styleClosingTagArray;
 
-            for (int i = 0; i < styleLength; i++)
-            {
-                int c = tagDefinition[i];
-
-                if (c == '\\' && i + 1 < styleLength)
-                {
-                    switch (tagDefinition[i + 1])
-                    {
-                        case '\\':
-                            i += 1;
-                            break;
-                        case 'n':
-                            c = 10;
-                            i += 1;
-                            break;
-                        case 'r':
-                            break;
-                        case 't':
-                            break;
-                        case 'u':
-                            // UTF16 format is "\uFF00" or u + 2 hex pairs.
-                            if (i + 5 < styleLength)
-                            {
-                                c = GetUTF16(tagDefinition, i + 2);
-
-                                i += 5;
-                            }
-                            break;
-                        case 'U':
-                            // UTF32 format is "\UFF00FF00" or U + 4 hex pairs.
-                            if (i + 9 < styleLength)
-                            {
-                                c = GetUTF32(tagDefinition, i + 2);
-
-                                i += 9;
-                            }
-                            break;
-                    }
-                }
-
-                if (c == '<')
-                {
-                    int hashCode = GetMarkupTagHashCode(tagDefinition, i + 1);
-
-                    switch ((MarkupTag)hashCode)
-                    {
-                        case MarkupTag.BR:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 10;
-                            writeIndex += 1;
-                            i += 3;
-                            continue;
-                        case MarkupTag.NBSP:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 160;
-                            writeIndex += 1;
-                            i += 5;
-                            continue;
-                        case MarkupTag.ZWSP:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 0x200B;
-                            writeIndex += 1;
-                            i += 5;
-                            continue;
-                        case MarkupTag.SHY:
-                            if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                            charBuffer[writeIndex].unicode = 0xAD;
-                            writeIndex += 1;
-                            i += 4;
-                            continue;
-                        case MarkupTag.STYLE:
-                            if (ReplaceOpeningStyleTag(ref tagDefinition, i, out int offset, ref charBuffer, ref writeIndex))
-                            {
-                                i = offset;
-                                continue;
-                            }
-                            break;
-                        case MarkupTag.SLASH_STYLE:
-                            ReplaceClosingStyleTag(ref tagDefinition, i, ref charBuffer, ref writeIndex);
-
-                            i += 7;
-                            continue;
-                    }
-                }
-
-                if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
-
-                charBuffer[writeIndex].unicode = c;
-                writeIndex += 1;
-            }
+            InsertTextStyleInTextProcessingArray(ref charBuffer, ref writeIndex, styleDefinition);
 
             m_TextStyleStackDepth = 0;
         }
 
-
         /// <summary>
         ///
         /// </summary>
-        /// <param name="tagDefinition"></param>
+        /// <param name="styleDefinition"></param>
         /// <param name="readIndex"></param>
         /// <returns></returns>
-        int GetMarkupTagHashCode(int[] tagDefinition, int readIndex)
+        int GetMarkupTagHashCode(uint[] styleDefinition, int readIndex)
         {
             int hashCode = 0;
             int maxReadIndex = readIndex + 16;
-            int tagDefinitionLength = tagDefinition.Length;
+            int styleDefinitionLength = styleDefinition.Length;
 
-            for (; readIndex < maxReadIndex && readIndex < tagDefinitionLength; readIndex++)
+            for (; readIndex < maxReadIndex && readIndex < styleDefinitionLength; readIndex++)
             {
-                int c = tagDefinition[readIndex];
+                uint c = styleDefinition[readIndex];
 
                 if (c == '>' || c == '=' || c == ' ')
                     return hashCode;
 
-                hashCode = ((hashCode << 5) + hashCode) ^ (int)TMP_TextUtilities.ToUpperASCIIFast((uint)c);
+                hashCode = ((hashCode << 5) + hashCode) ^ (int)TMP_TextParsingUtilities.ToUpperASCIIFast(c);
             }
 
             return hashCode;
         }
 
-
         /// <summary>
         ///
         /// </summary>
-        /// <param name="tagDefinition"></param>
+        /// <param name="styleDefinition"></param>
         /// <param name="readIndex"></param>
         /// <returns></returns>
-        int GetMarkupTagHashCode(TextBackingContainer tagDefinition, int readIndex)
+        int GetMarkupTagHashCode(TextBackingContainer styleDefinition, int readIndex)
         {
             int hashCode = 0;
             int maxReadIndex = readIndex + 16;
-            int tagDefinitionLength = tagDefinition.Capacity;
+            int styleDefinitionLength = styleDefinition.Capacity;
 
-            for (; readIndex < maxReadIndex && readIndex < tagDefinitionLength; readIndex++)
+            for (; readIndex < maxReadIndex && readIndex < styleDefinitionLength; readIndex++)
             {
-                uint c = tagDefinition[readIndex];
+                uint c = styleDefinition[readIndex];
 
                 if (c == '>' || c == '=' || c == ' ')
                     return hashCode;
 
-                hashCode = ((hashCode << 5) + hashCode) ^ (int)TMP_TextUtilities.ToUpperASCIIFast((uint)c);
+                hashCode = ((hashCode << 5) + hashCode) ^ (int)TMP_TextParsingUtilities.ToUpperASCIIFast(c);
             }
 
             return hashCode;
         }
-
 
         /// <summary>
         /// Get Hashcode for a given tag.
@@ -3583,7 +3150,7 @@ namespace TMPro
         /// <param name="index"></param>
         /// <param name="closeIndex"></param>
         /// <returns></returns>
-        int GetStyleHashCode(ref int[] text, int index, out int closeIndex)
+        int GetStyleHashCode(ref uint[] text, int index, out int closeIndex)
         {
             int hashCode = 0;
             closeIndex = 0;
@@ -3601,7 +3168,6 @@ namespace TMPro
 
             return hashCode;
         }
-
 
         /// <summary>
         /// Get Hashcode for a given tag.
@@ -3628,6 +3194,164 @@ namespace TMPro
 
             return hashCode;
         }
+
+        // New parser partial implementation
+        /*
+        bool TryGetTextMarkupElement(uint[] sourceText, ref int readIndex, out TextProcessingElement element)
+        {
+            element = new TextProcessingElement();
+
+            int srcReadIndex = readIndex;
+
+            // Parse source text to retrieve text markup attributes
+            if (!TryPopulateTextMarkupAttributes(sourceText, ref readIndex))
+            {
+                // Reset read positions
+                readIndex = srcReadIndex;
+                return false;
+            }
+
+            element.elementType = TextProcessingElementType.TextMarkupElement;
+            element.stringIndex = srcReadIndex;
+            element.length = readIndex - srcReadIndex + 1;
+
+            return true;
+        }
+
+        private readonly MarkupAttribute[] m_TextMarkupAttributes = new MarkupAttribute[8];
+
+        bool TryPopulateTextMarkupAttributes(uint[] sourceText, ref int readIndex)
+        {
+            int srcReadIndex = readIndex;
+
+            int srcLength = sourceText.Length;
+            bool isPotentiallyValidMarkupElement = false;
+
+            byte readingFlag = 0;
+            bool isValueInQuotes = false;
+
+            int attributeIndex = 0;
+            m_TextMarkupAttributes[attributeIndex].NameHashCode = 0; //5381;
+            m_TextMarkupAttributes[attributeIndex].ValueHashCode = 0; //5381;
+            m_TextMarkupAttributes[attributeIndex].ValueLength = 0;
+
+            // TODO : Add limit on tag search length and number of attributes
+            for (; readIndex < srcLength && sourceText[readIndex] != 0; readIndex++)
+            {
+                uint c = sourceText[readIndex];
+
+                if (c == '<')
+                {
+                    if (readIndex > srcReadIndex)
+                        break;
+
+                    continue;
+                }
+
+                // Check for closing tag
+                if (c == '>')
+                {
+                    isPotentiallyValidMarkupElement = true;
+                    break;
+                }
+
+                // Compute hashcode for Tag and Attribute names
+                if (readingFlag == 0)
+                {
+                    // Compute hashcode value for tag and attribute names
+                    if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '/' || c == '-')
+                    {
+                        m_TextMarkupAttributes[attributeIndex].NameHashCode = ((m_TextMarkupAttributes[attributeIndex].NameHashCode << 5) + m_TextMarkupAttributes[attributeIndex].NameHashCode) ^ (int)TMP_TextParsingUtilities.ToUpperASCIIFast(c);
+                        continue;
+                    }
+
+                    // Next - Determine the value and type.
+                    if (c == '=')
+                    {
+                        readingFlag = 1;
+                        continue;
+                    }
+
+                    // Special handling if using a short color tag like <#FF00FF>
+                    if (c == '#')
+                    {
+                        m_TextMarkupAttributes[attributeIndex].NameHashCode = (int)MarkupTag.COLOR;
+                        m_TextMarkupAttributes[attributeIndex].ValueStartIndex = readIndex;
+                        m_TextMarkupAttributes[attributeIndex].ValueLength = 1;
+
+                        readingFlag = 2;
+                        continue;
+                    }
+
+                    // Space separates tag names from attributes
+                    // Reset next attribute before going to read it
+                    if (c == ' ')
+                    {
+                        // Early exit if attribute name hash code is zero
+                        if (m_TextMarkupAttributes[attributeIndex].NameHashCode == 0)
+                            break;
+
+                        attributeIndex += 1;
+                        m_TextMarkupAttributes[attributeIndex].NameHashCode = 0; //5381;
+                        m_TextMarkupAttributes[attributeIndex].ValueHashCode = 0; //5381;
+                        m_TextMarkupAttributes[attributeIndex].ValueLength = 0;
+                        continue;
+                    }
+
+                    break;
+                }
+
+                // Determine value type for tag and attribute with special handling for values contained in quotes
+                if (readingFlag == 1)
+                {
+                    isValueInQuotes = false;
+                    readingFlag = 2;
+
+                    // Check for format where value is enclosed in quotes.
+                    if (c == '"')
+                    {
+                        isValueInQuotes = true;
+                        continue;
+                    }
+                }
+
+                // Read value
+                if (readingFlag == 2)
+                {
+                    // We are done reading the value if we run into a quote.
+                    if (c == '"')
+                    {
+                        if (!isValueInQuotes)
+                            break;
+
+                        readingFlag = 0;
+                        continue;
+                    }
+
+                    // Also done reading the value if we run into a space when quotes are not being used.
+                    if (!isValueInQuotes && c == ' ')
+                    {
+                        attributeIndex += 1;
+                        m_TextMarkupAttributes[attributeIndex].NameHashCode = 0; //5381;
+                        m_TextMarkupAttributes[attributeIndex].ValueHashCode = 0; //5381;
+                        m_TextMarkupAttributes[attributeIndex].ValueLength = 0;
+                        readingFlag = 0;
+                        continue;
+                    }
+
+                    if (m_TextMarkupAttributes[attributeIndex].ValueLength == 0)
+                        m_TextMarkupAttributes[attributeIndex].ValueStartIndex = readIndex;
+
+                    // Compute Hashcode value irrespective of the value type
+                    m_TextMarkupAttributes[attributeIndex].ValueHashCode = ((m_TextMarkupAttributes[attributeIndex].ValueHashCode << 5) + m_TextMarkupAttributes[attributeIndex].ValueHashCode) ^ (int)TMP_TextParsingUtilities.ToUpperASCIIFast(c);
+
+                    m_TextMarkupAttributes[attributeIndex].ValueLength += 1;
+                }
+            }
+
+            return isPotentiallyValidMarkupElement;
+        }
+        */
 
         /// <summary>
         ///
@@ -3756,7 +3480,7 @@ namespace TMPro
         /// </summary>
         /// <param name="unicodeChars"></param>
         /// <returns></returns>
-        internal virtual int SetArraySizes(UnicodeChar[] unicodeChars) { return 0; }
+        internal virtual int SetArraySizes(TextProcessingElement[] unicodeChars) { return 0; }
 
 
         /// <summary>
@@ -4183,7 +3907,7 @@ namespace TMPro
             // Parse through Character buffer to read HTML tags and begin creating mesh.
             for (int i = 0; i < m_TextProcessingArray.Length && m_TextProcessingArray[i].unicode != 0; i++)
             {
-                int charCode = m_TextProcessingArray[i].unicode;
+                uint charCode = m_TextProcessingArray[i].unicode;
 
                 // Skip characters that have been substituted.
                 if (charCode == 0x1A)
@@ -4193,7 +3917,7 @@ namespace TMPro
                 #region Parse Rich Text Tag
                 if (m_isRichText && charCode == 60)  // '<'
                 {
-                    m_isParsingText = true;
+                    m_isTextLayoutPhase = true;
                     m_textElementType = TMP_TextElementType.Character;
                     int endTagIndex;
 
@@ -4218,17 +3942,17 @@ namespace TMPro
                 int prev_MaterialIndex = m_currentMaterialIndex;
                 bool isUsingAltTypeface = m_textInfo.characterInfo[m_characterCount].isUsingAlternateTypeface;
 
-                m_isParsingText = false;
+                m_isTextLayoutPhase = false;
 
                 // Handle potential character substitutions
                 #region Character Substitutions
-                bool isInjectingCharacter = false;
+                bool isInjectedCharacter = false;
 
                 if (characterToSubstitute.index == m_characterCount)
                 {
-                    charCode = (int)characterToSubstitute.unicode;
+                    charCode = characterToSubstitute.unicode;
                     m_textElementType = TMP_TextElementType.Character;
-                    isInjectingCharacter = true;
+                    isInjectedCharacter = true;
 
                     switch (charCode)
                     {
@@ -4319,7 +4043,7 @@ namespace TMPro
 
                     // Sprites are assigned in the E000 Private Area + sprite Index
                     if (charCode == 60)
-                        charCode = 57344 + m_spriteIndex;
+                        charCode = 57344 + (uint)m_spriteIndex;
 
                     // The sprite scale calculations are based on the font asset assigned to the text object.
                     if (m_currentSpriteAsset.faceInfo.pointSize > 0)
@@ -4355,13 +4079,13 @@ namespace TMPro
                     m_currentMaterialIndex = m_textInfo.characterInfo[m_characterCount].materialReferenceIndex;
 
                     float adjustedScale;
-                    if (isInjectingCharacter && m_TextProcessingArray[i].unicode == 0x0A && m_characterCount != m_firstCharacterOfLine)
+                    if (isInjectedCharacter && m_TextProcessingArray[i].unicode == 0x0A && m_characterCount != m_firstCharacterOfLine)
                         adjustedScale = m_textInfo.characterInfo[m_characterCount - 1].pointSize * smallCapsMultiplier / m_currentFontAsset.m_FaceInfo.pointSize * m_currentFontAsset.m_FaceInfo.scale * (m_isOrthographic ? 1 : 0.1f);
                     else
                         adjustedScale = m_currentFontSize * smallCapsMultiplier / m_currentFontAsset.m_FaceInfo.pointSize * m_currentFontAsset.m_FaceInfo.scale * (m_isOrthographic ? 1 : 0.1f);
 
                     // Special handling for injected Ellipsis
-                    if (isInjectingCharacter && charCode == 0x2026)
+                    if (isInjectedCharacter && charCode == 0x2026)
                     {
                         elementAscentLine = 0;
                         elementDescentLine = 0;
@@ -4623,7 +4347,7 @@ namespace TMPro
 
                 // Setup Mesh for visible text elements. ie. not a SPACE / LINEFEED / CARRIAGE RETURN.
                 #region Handle Visible Characters
-                if (charCode == 9 || ((textWrapMode == TextWrappingModes.PreserveWhitespace || textWrapMode == TextWrappingModes.PreserveWhitespaceNoWrap) && isWhiteSpace) || (isWhiteSpace == false && charCode != 0x200B && charCode != 0xAD && charCode != 0x03) || (charCode == 0xAD && isSoftHyphenIgnored == false) || m_textElementType == TMP_TextElementType.Sprite)
+                if (charCode == 9 || ((textWrapMode == TextWrappingModes.PreserveWhitespace || textWrapMode == TextWrappingModes.PreserveWhitespaceNoWrap) && (isWhiteSpace || charCode == 0x200B)) || (isWhiteSpace == false && charCode != 0x200B && charCode != 0xAD && charCode != 0x03) || (charCode == 0xAD && isSoftHyphenIgnored == false) || m_textElementType == TMP_TextElementType.Sprite)
                 {
                     //float marginLeft = m_marginLeft;
                     //float marginRight = m_marginRight;
@@ -4849,7 +4573,7 @@ namespace TMPro
                     m_ElementDescender = m_ElementDescender < lineDescender ? m_ElementDescender : lineDescender;
 
                     // Add new line if not last lines or character.
-                    if (charCode == 10 || charCode == 11 || charCode == 0x2D || charCode == 0x2028 || charCode == 0x2029)
+                    if (charCode == 10 || charCode == 11 || (charCode == 0x2D && isInjectedCharacter) || charCode == 0x2028 || charCode == 0x2029)
                     {
                         // Store the state of the line before starting on the new line.
                         SaveWordWrappingState(ref internalLineState, i, m_characterCount);
@@ -4895,27 +4619,23 @@ namespace TMPro
                 #region Save Word Wrapping State
                 if ((textWrapMode != TextWrappingModes.NoWrap && textWrapMode != TextWrappingModes.PreserveWhitespaceNoWrap) || m_overflowMode == TextOverflowModes.Truncate || m_overflowMode == TextOverflowModes.Ellipsis)
                 {
+                    bool shouldSaveHardLineBreak = false;
+                    bool shouldSaveSoftLineBreak = false;
+
                     if ((isWhiteSpace || charCode == 0x200B || charCode == 0x2D || charCode == 0xAD) && (!m_isNonBreakingSpace || ignoreNonBreakingSpace) && charCode != 0xA0 && charCode != 0x2007 && charCode != 0x2011 && charCode != 0x202F && charCode != 0x2060)
                     {
-                        // We store the state of numerous variables for the most recent Space, LineFeed or Carriage Return to enable them to be restored
-                        // for Word Wrapping.
-                        SaveWordWrappingState(ref internalWordWrapState, i, m_characterCount);
-                        isFirstWordOfLine = false;
+                        // Ignore Hyphen (0x2D) when preceded by a whitespace
+                        if ((charCode == 0x2D && m_characterCount > 0 && char.IsWhiteSpace(m_textInfo.characterInfo[m_characterCount - 1].character)) == false)
+                        {
+                            isFirstWordOfLine = false;
+                            shouldSaveHardLineBreak = true;
 
-                        // Reset soft line breaking point since we now have a valid hard break point.
-                        internalSoftLineBreak.previous_WordBreak = -1;
+                            // Reset soft line breaking point since we now have a valid hard break point.
+                            internalSoftLineBreak.previous_WordBreak = -1;
+                        }
                     }
-                    // Handling for East Asian languages
-                    else if (m_isNonBreakingSpace == false &&
-                             ((charCode > 0x1100 && charCode < 0x11ff || /* Hangul Jamo */
-                               charCode > 0xA960 && charCode < 0xA97F || /* Hangul Jamo Extended-A */
-                               charCode > 0xAC00 && charCode < 0xD7FF)&& /* Hangul Syllables */
-                              TMP_Settings.useModernHangulLineBreakingRules == false ||
-
-                              (charCode > 0x2E80 && charCode < 0x9FFF || /* CJK */
-                               charCode > 0xF900 && charCode < 0xFAFF || /* CJK Compatibility Ideographs */
-                               charCode > 0xFE30 && charCode < 0xFE4F || /* CJK Compatibility Forms */
-                               charCode > 0xFF00 && charCode < 0xFFEF))) /* CJK Halfwidth */
+                    // Handling for East Asian scripts
+                    else if (m_isNonBreakingSpace == false && (TMP_TextParsingUtilities.IsHangul((uint)charCode) && TMP_Settings.useModernHangulLineBreakingRules == false || TMP_TextParsingUtilities.IsCJK((uint)charCode)))
                     {
                         bool isCurrentLeadingCharacter = TMP_Settings.linebreakingRules.leadingCharacters.Contains((uint)charCode);
                         bool isNextFollowingCharacter = m_characterCount < totalCharacterCount - 1 && TMP_Settings.linebreakingRules.followingCharacters.Contains(m_internalCharacterInfo[m_characterCount + 1].character);
@@ -4924,17 +4644,17 @@ namespace TMPro
                         {
                             if (isNextFollowingCharacter == false)
                             {
-                                SaveWordWrappingState(ref internalWordWrapState, i, m_characterCount);
                                 isFirstWordOfLine = false;
+                                shouldSaveHardLineBreak = true;
                             }
 
                             if (isFirstWordOfLine)
                             {
                                 // Special handling for non-breaking space and soft line breaks
                                 if (isWhiteSpace)
-                                    SaveWordWrappingState(ref internalSoftLineBreak, i, m_characterCount);
+                                    shouldSaveSoftLineBreak = true;
 
-                                SaveWordWrappingState(ref internalWordWrapState, i, m_characterCount);
+                                shouldSaveHardLineBreak = true;
                             }
                         }
                         else
@@ -4943,9 +4663,9 @@ namespace TMPro
                             {
                                 // Special handling for non-breaking space and soft line breaks
                                 if (isWhiteSpace)
-                                    SaveWordWrappingState(ref m_SavedSoftLineBreakState, i, m_characterCount);
+                                    shouldSaveSoftLineBreak = true;
 
-                                SaveWordWrappingState(ref m_SavedWordWrapState, i, m_characterCount);
+                                shouldSaveHardLineBreak = true;
                             }
                         }
                     }
@@ -4953,10 +4673,18 @@ namespace TMPro
                     {
                         // Special handling for non-breaking space and soft line breaks
                         if (isWhiteSpace && charCode != 0xA0 || (charCode == 0xAD && isSoftHyphenIgnored == false))
-                            SaveWordWrappingState(ref internalSoftLineBreak, i, m_characterCount);
+                            shouldSaveSoftLineBreak = true;
 
-                        SaveWordWrappingState(ref internalWordWrapState, i, m_characterCount);
+                        shouldSaveHardLineBreak = true;
                     }
+
+                    // Save potential Hard lines break
+                    if (shouldSaveHardLineBreak)
+                        SaveWordWrappingState(ref internalWordWrapState, i, m_characterCount);
+
+                    // Save potential Soft line break
+                    if (shouldSaveSoftLineBreak)
+                        SaveWordWrappingState(ref internalSoftLineBreak, i, m_characterCount);
                 }
                 #endregion Save Word Wrapping State
 
@@ -5157,57 +4885,6 @@ namespace TMPro
         /// Function to force an update of the margin size.
         /// </summary>
         public virtual void ComputeMarginSize() { }
-
-
-        /// <summary>
-        /// Function used in conjunction with GetTextInfo to figure out Array allocations.
-        /// </summary>
-        /// <param name="chars"></param>
-        /// <returns></returns>
-        //protected int GetArraySizes(int[] chars)
-        //{
-        //    //Debug.Log("Set Array Size called.");
-
-        //    //int visibleCount = 0;
-        //    //int totalCount = 0;
-        //    int tagEnd = 0;
-
-        //    m_totalCharacterCount = 0;
-        //    m_isUsingBold = false;
-        //    m_isParsingText = false;
-
-
-        //    //m_VisibleCharacters.Clear();
-
-        //    for (int i = 0; chars[i] != 0; i++)
-        //    {
-        //        int c = chars[i];
-
-        //        if (m_isRichText && c == 60) // if Char '<'
-        //        {
-        //            // Check if Tag is Valid
-        //            if (ValidateHtmlTag(chars, i + 1, out tagEnd))
-        //            {
-        //                i = tagEnd;
-        //                //if ((m_style & FontStyles.Underline) == FontStyles.Underline) visibleCount += 3;
-
-        //                if ((m_style & FontStyles.Bold) == FontStyles.Bold) m_isUsingBold = true;
-
-        //                continue;
-        //            }
-        //        }
-
-        //        //if (!char.IsWhiteSpace((char)c) && c != 0x200B)
-        //        //{
-        //            //visibleCount += 1;
-        //        //}
-
-        //        //m_VisibleCharacters.Add((char)c);
-        //        m_totalCharacterCount += 1;
-        //    }
-
-        //    return m_totalCharacterCount;
-        //}
 
 
         internal void InsertNewLine(int i, float baseScale, float currentElementScale, float currentEmScale, float boldSpacingAdjustment, float characterSpacingAdjustment, float width, float lineGap, ref bool isMaxVisibleDescenderSet, ref float maxVisibleDescender)
@@ -5508,9 +5185,18 @@ namespace TMPro
             // Alpha is the lower of the vertex color or tag color alpha used.
             vertexColor.a = m_fontColor32.a < vertexColor.a ? m_fontColor32.a : vertexColor.a;
 
+            #if TEXTCORE_FONT_ENGINE_1_5_OR_NEWER
+            bool isColorGlyph = ((GlyphRasterModes)m_currentFontAsset.m_AtlasRenderMode & GlyphRasterModes.RASTER_MODE_COLOR) == GlyphRasterModes.RASTER_MODE_COLOR;
+            #else
+            bool isColorGlyph = false;
+            #endif
+
             // Handle Vertex Colors & Vertex Color Gradient
-            if (!m_enableVertexGradient)
+            if (!m_enableVertexGradient || isColorGlyph)
             {
+                // Special handling for color glyphs
+                vertexColor = isColorGlyph ? new Color32(255, 255, 255, vertexColor.a) : vertexColor;
+
                 m_textInfo.characterInfo[m_characterCount].vertex_BL.color = vertexColor;
                 m_textInfo.characterInfo[m_characterCount].vertex_TL.color = vertexColor;
                 m_textInfo.characterInfo[m_characterCount].vertex_TR.color = vertexColor;
@@ -5545,7 +5231,7 @@ namespace TMPro
                 }
             }
 
-            if (m_colorGradientPreset != null)
+            if (m_colorGradientPreset != null && !isColorGlyph)
             {
                 if (m_colorGradientPresetIsTinted)
                 {
@@ -5922,7 +5608,7 @@ namespace TMPro
             if (m_Underline.character == null)
             {
                 if (!TMP_Settings.warningsDisabled)
-                    Debug.LogWarning("Unable to add underline since the primary Font Asset doesn't contain the underline character.", this);
+                    Debug.LogWarning("Unable to add underline or strikethrough since the character [0x5F] used by these features is not present in the Font Asset assigned to this text object.", this);
 
                 return;
             }
@@ -6288,14 +5974,7 @@ namespace TMPro
             */
 
             if (character != null)
-            {
                 m_Underline = new SpecialCharacter(character, 0);
-            }
-            else
-            {
-                if (!TMP_Settings.warningsDisabled)
-                    Debug.LogWarning("The character used for Underline is not available in font asset [" + fontAsset.name + "].", this);
-            }
         }
 
 
@@ -6321,20 +6000,6 @@ namespace TMPro
         ///
         /// </summary>
         /// <returns></returns>
-        //protected int GetMaterialReferenceForFontWeight()
-        //{
-        //    //bool isItalic = (m_style & FontStyles.Italic) == FontStyles.Italic || (m_fontStyle & FontStyles.Italic) == FontStyles.Italic;
-
-        //    m_currentMaterialIndex = MaterialReference.AddMaterialReference(m_currentFontAsset.fontWeights[0].italicTypeface.material, m_currentFontAsset.fontWeights[0].italicTypeface, m_materialReferences, m_materialReferenceIndexLookup);
-
-        //    return 0;
-        //}
-
-
-        /// <summary>
-        ///
-        /// </summary>
-        /// <returns></returns>
         protected TMP_FontAsset GetFontAssetForWeight(int fontWeight)
         {
             bool isItalic = (m_FontStyleInternal & FontStyles.Italic) == FontStyles.Italic || (m_fontStyle & FontStyles.Italic) == FontStyles.Italic;
@@ -6353,6 +6018,24 @@ namespace TMPro
 
         internal TMP_TextElement GetTextElement(uint unicode, TMP_FontAsset fontAsset, FontStyles fontStyle, FontWeight fontWeight, out bool isUsingAlternativeTypeface)
         {
+            //Debug.Log("Unicode: " + unicode.ToString("X8"));
+
+            if (m_EmojiFallbackSupport && TMP_TextParsingUtilities.IsEmoji(unicode))
+            {
+                if (TMP_Settings.emojiFallbackTextAssets != null && TMP_Settings.emojiFallbackTextAssets.Count > 0)
+                {
+                    TMP_TextElement textElement = TMP_FontAssetUtilities.GetTextElementFromTextAssets(unicode, fontAsset, TMP_Settings.emojiFallbackTextAssets, true, fontStyle, fontWeight, out isUsingAlternativeTypeface);
+
+                    if (textElement != null)
+                    {
+                        // Add character to font asset lookup cache
+                        //fontAsset.AddCharacterToLookupCache(unicode, character);
+
+                        return textElement;
+                    }
+                }
+            }
+
             TMP_Character character = TMP_FontAssetUtilities.GetCharacterFromFontAsset(unicode, fontAsset, false, fontStyle, fontWeight, out isUsingAlternativeTypeface);
 
             if (character != null)
@@ -6635,7 +6318,7 @@ namespace TMPro
         /// </summary>
         /// <param name="hex"></param>
         /// <returns></returns>
-        protected int HexToInt(char hex)
+        protected uint HexToInt(char hex)
         {
             switch (hex)
             {
@@ -6677,24 +6360,9 @@ namespace TMPro
             return true;
         }
 
-        /// <summary>
-        /// Convert UTF-16 Hex to Char
-        /// </summary>
-        /// <returns>The Unicode hex.</returns>
-        /// <param name="i">The index.</param>
-        protected int GetUTF16(string text, int i)
+        uint GetUTF16(uint[] text, int i)
         {
-            int unicode = 0;
-            unicode += HexToInt(text[i]) << 12;
-            unicode += HexToInt(text[i + 1]) << 8;
-            unicode += HexToInt(text[i + 2]) << 4;
-            unicode += HexToInt(text[i + 3]);
-            return unicode;
-        }
-
-        protected int GetUTF16(int[] text, int i)
-        {
-            int unicode = 0;
+            uint unicode = 0;
             unicode += HexToInt((char)text[i]) << 12;
             unicode += HexToInt((char)text[i + 1]) << 8;
             unicode += HexToInt((char)text[i + 2]) << 4;
@@ -6702,34 +6370,9 @@ namespace TMPro
             return unicode;
         }
 
-        internal int GetUTF16(uint[] text, int i)
+        uint GetUTF16(TextBackingContainer text, int i)
         {
-            int unicode = 0;
-            unicode += HexToInt((char)text[i]) << 12;
-            unicode += HexToInt((char)text[i + 1]) << 8;
-            unicode += HexToInt((char)text[i + 2]) << 4;
-            unicode += HexToInt((char)text[i + 3]);
-            return unicode;
-        }
-
-        /// <summary>
-        /// Convert UTF-16 Hex to Char
-        /// </summary>
-        /// <returns>The Unicode hex.</returns>
-        /// <param name="i">The index.</param>
-        protected int GetUTF16(StringBuilder text, int i)
-        {
-            int unicode = 0;
-            unicode += HexToInt(text[i]) << 12;
-            unicode += HexToInt(text[i + 1]) << 8;
-            unicode += HexToInt(text[i + 2]) << 4;
-            unicode += HexToInt(text[i + 3]);
-            return unicode;
-        }
-
-        private int GetUTF16(TextBackingContainer text, int i)
-        {
-            int unicode = 0;
+            uint unicode = 0;
             unicode += HexToInt((char)text[i]) << 12;
             unicode += HexToInt((char)text[i + 1]) << 8;
             unicode += HexToInt((char)text[i + 2]) << 4;
@@ -6749,28 +6392,9 @@ namespace TMPro
             return true;
         }
 
-        /// <summary>
-        /// Convert UTF-32 Hex to Char
-        /// </summary>
-        /// <returns>The Unicode hex.</returns>
-        /// <param name="i">The index.</param>
-        protected int GetUTF32(string text, int i)
+        uint GetUTF32(uint[] text, int i)
         {
-            int unicode = 0;
-            unicode += HexToInt(text[i]) << 28;
-            unicode += HexToInt(text[i + 1]) << 24;
-            unicode += HexToInt(text[i + 2]) << 20;
-            unicode += HexToInt(text[i + 3]) << 16;
-            unicode += HexToInt(text[i + 4]) << 12;
-            unicode += HexToInt(text[i + 5]) << 8;
-            unicode += HexToInt(text[i + 6]) << 4;
-            unicode += HexToInt(text[i + 7]);
-            return unicode;
-        }
-
-        protected int GetUTF32(int[] text, int i)
-        {
-            int unicode = 0;
+            uint unicode = 0;
             unicode += HexToInt((char)text[i]) << 28;
             unicode += HexToInt((char)text[i + 1]) << 24;
             unicode += HexToInt((char)text[i + 2]) << 20;
@@ -6782,42 +6406,9 @@ namespace TMPro
             return unicode;
         }
 
-        internal int GetUTF32(uint[] text, int i)
+        uint GetUTF32(TextBackingContainer text, int i)
         {
-            int unicode = 0;
-            unicode += HexToInt((char)text[i]) << 28;
-            unicode += HexToInt((char)text[i + 1]) << 24;
-            unicode += HexToInt((char)text[i + 2]) << 20;
-            unicode += HexToInt((char)text[i + 3]) << 16;
-            unicode += HexToInt((char)text[i + 4]) << 12;
-            unicode += HexToInt((char)text[i + 5]) << 8;
-            unicode += HexToInt((char)text[i + 6]) << 4;
-            unicode += HexToInt((char)text[i + 7]);
-            return unicode;
-        }
-
-        /// <summary>
-        /// Convert UTF-32 Hex to Char
-        /// </summary>
-        /// <returns>The Unicode hex.</returns>
-        /// <param name="i">The index.</param>
-        protected int GetUTF32(StringBuilder text, int i)
-        {
-            int unicode = 0;
-            unicode += HexToInt(text[i]) << 28;
-            unicode += HexToInt(text[i + 1]) << 24;
-            unicode += HexToInt(text[i + 2]) << 20;
-            unicode += HexToInt(text[i + 3]) << 16;
-            unicode += HexToInt(text[i + 4]) << 12;
-            unicode += HexToInt(text[i + 5]) << 8;
-            unicode += HexToInt(text[i + 6]) << 4;
-            unicode += HexToInt(text[i + 7]);
-            return unicode;
-        }
-
-        int GetUTF32(TextBackingContainer text, int i)
-        {
-            int unicode = 0;
+            uint unicode = 0;
             unicode += HexToInt((char)text[i]) << 28;
             unicode += HexToInt((char)text[i + 1]) << 24;
             unicode += HexToInt((char)text[i + 2]) << 20;
@@ -7082,7 +6673,7 @@ namespace TMPro
         /// <param name="startIndex"></param>
         /// <param name="endIndex"></param>
         /// <returns></returns>
-        internal bool ValidateHtmlTag(UnicodeChar[] chars, int startIndex, out int endIndex)
+        internal bool ValidateHtmlTag(TextProcessingElement[] chars, int startIndex, out int endIndex)
         {
             int tagCharCount = 0;
             byte attributeFlag = 0;
@@ -7098,7 +6689,7 @@ namespace TMPro
 
             for (int i = startIndex; i < chars.Length && chars[i].unicode != 0 && tagCharCount < m_htmlTag.Length && chars[i].unicode != '<'; i++)
             {
-                int unicode = chars[i].unicode;
+                uint unicode = chars[i].unicode;
 
                 if (unicode == '>') // ASCII Code of End HTML tag '>'
                 {
@@ -7177,7 +6768,7 @@ namespace TMPro
                                 m_xmlAttribute[attributeIndex].valueLength = 0;
 
                             }
-                            else if (attributeFlag != 2)
+                            else
                             {
                                 m_xmlAttribute[attributeIndex].valueLength += 1;
                             }
@@ -7839,11 +7430,35 @@ namespace TMPro
                         return true;
 
                     case MarkupTag.A:
-                        return false;
+                        if (m_isTextLayoutPhase && !m_isCalculatingPreferredValues)
+                        {
+                            if (m_xmlAttribute[1].nameHashCode == (int)MarkupTag.HREF)
+                            {
+                                // Make sure linkInfo array is of appropriate size.
+                                int index = m_textInfo.linkCount;
+
+                                if (index + 1 > m_textInfo.linkInfo.Length)
+                                    TMP_TextInfo.Resize(ref m_textInfo.linkInfo, index + 1);
+
+                                m_textInfo.linkInfo[index].textComponent = this;
+                                m_textInfo.linkInfo[index].hashCode = (int)MarkupTag.HREF;
+                                m_textInfo.linkInfo[index].linkTextfirstCharacterIndex = m_characterCount;
+                                m_textInfo.linkInfo[index].SetLinkID(m_htmlTag, m_xmlAttribute[1].valueStartIndex, m_xmlAttribute[1].valueLength);
+                            }
+                        }
+                        return true;
                     case MarkupTag.SLASH_A:
+                        if (m_isTextLayoutPhase && !m_isCalculatingPreferredValues)
+                        {
+                            int index = m_textInfo.linkCount;
+
+                            m_textInfo.linkInfo[index].linkTextLength = m_characterCount - m_textInfo.linkInfo[index].linkTextfirstCharacterIndex;
+
+                            m_textInfo.linkCount += 1;
+                        }
                         return true;
                     case MarkupTag.LINK:
-                        if (m_isParsingText && !m_isCalculatingPreferredValues)
+                        if (m_isTextLayoutPhase && !m_isCalculatingPreferredValues)
                         {
                             int index = m_textInfo.linkCount;
 
@@ -7860,7 +7475,7 @@ namespace TMPro
                         }
                         return true;
                     case MarkupTag.SLASH_LINK:
-                        if (m_isParsingText && !m_isCalculatingPreferredValues)
+                        if (m_isTextLayoutPhase && !m_isCalculatingPreferredValues)
                         {
                             if (m_textInfo.linkCount < m_textInfo.linkInfo.Length)
                             {
@@ -8104,7 +7719,7 @@ namespace TMPro
                         }
                         return true;
                     case MarkupTag.SLASH_CHARACTER_SPACE:
-                        if (!m_isParsingText) return true;
+                        if (!m_isTextLayoutPhase) return true;
 
                         // Adjust xAdvance to remove extra space from last character.
                         if (m_characterCount > 0)
@@ -8305,7 +7920,7 @@ namespace TMPro
 
                                     m_spriteIndex = (int)m_attributeParameterValues[0];
 
-                                    if (m_isParsingText)
+                                    if (m_isTextLayoutPhase)
                                     {
                                         // TODO : fix this!
                                         // It is possible for a sprite to get animated when it ends up being truncated.
@@ -8523,7 +8138,7 @@ namespace TMPro
                     case MarkupTag.ACTION:
                         int actionID = m_xmlAttribute[0].valueHashCode;
 
-                        if (m_isParsingText)
+                        if (m_isTextLayoutPhase)
                         {
                             m_actionStack.Add(actionID);
 
@@ -8537,7 +8152,7 @@ namespace TMPro
                         //}
                         return true;
                     case MarkupTag.SLASH_ACTION:
-                        if (m_isParsingText)
+                        if (m_isTextLayoutPhase)
                         {
                             Debug.Log("Action ID: [" + m_actionStack.CurrentItem() + "] Last character index: " + (m_characterCount - 1));
                         }

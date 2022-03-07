@@ -57,6 +57,7 @@ namespace TMPro.EditorUtilities
         static readonly GUIContent k_RichTextLabel = new GUIContent("Rich Text", "Enables the use of rich text tags such as <color> and <font>.");
         static readonly GUIContent k_EscapeCharactersLabel = new GUIContent("Parse Escape Characters", "Whether to display strings such as \"\\n\" as is or replace them by the character they represent.");
         static readonly GUIContent k_VisibleDescenderLabel = new GUIContent("Visible Descender", "Compute descender values from visible characters only. Used to adjust layout behavior when hiding and revealing characters dynamically.");
+        static readonly GUIContent k_EmojiFallbackSupportLabel = new GUIContent("Emoji Fallback Support", "When text contains Emojis, try using and displaying those from the potential Text Assets assigned in the TMP Settings Emoji Fallback Text Assets.");
         static readonly GUIContent k_SpriteAssetLabel = new GUIContent("Sprite Asset", "The Sprite Asset used when NOT specifically referencing one using <sprite=\"Sprite Asset Name\">.");
         static readonly GUIContent k_StyleSheetAssetLabel = new GUIContent("Style Sheet Asset", "The Style Sheet Asset used by this text object.");
 
@@ -160,6 +161,8 @@ namespace TMPro.EditorUtilities
         protected SerializedProperty m_GeometrySortingOrderProp;
         protected SerializedProperty m_IsTextObjectScaleStaticProp;
 
+        protected SerializedProperty m_EmojiFallbackSupportProp;
+
         protected SerializedProperty m_SpriteAssetProp;
 
         protected SerializedProperty m_StyleSheetAssetProp;
@@ -236,6 +239,8 @@ namespace TMPro.EditorUtilities
 
             m_GeometrySortingOrderProp = serializedObject.FindProperty("m_geometrySortingOrder");
             m_IsTextObjectScaleStaticProp = serializedObject.FindProperty("m_IsTextObjectScaleStatic");
+
+            m_EmojiFallbackSupportProp = serializedObject.FindProperty("m_EmojiFallbackSupport");
 
             m_SpriteAssetProp = serializedObject.FindProperty("m_spriteAsset");
 
@@ -338,11 +343,11 @@ namespace TMPro.EditorUtilities
 
             // LEFT HANDLE
             Vector3 oldLeft = (m_HandlePoints[0] + m_HandlePoints[1]) * 0.5f;
-            //#if UNITY_2022_1_OR_NEWER
-            //Vector3 newLeft = Handles.FreeMoveHandle(oldLeft, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
-            //#else
+            #if UNITY_2022_1_OR_NEWER
+            Vector3 newLeft = Handles.FreeMoveHandle(oldLeft, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
+            #else
             Vector3 newLeft = Handles.FreeMoveHandle(oldLeft, Quaternion.identity, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
-            //#endif
+            #endif
             bool hasChanged = false;
             if (oldLeft != newLeft)
             {
@@ -357,11 +362,11 @@ namespace TMPro.EditorUtilities
 
             // TOP HANDLE
             Vector3 oldTop = (m_HandlePoints[1] + m_HandlePoints[2]) * 0.5f;
-            //#if UNITY_2022_1_OR_NEWER
-            //Vector3 newTop = Handles.FreeMoveHandle(oldTop, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
-            //#else
+            #if UNITY_2022_1_OR_NEWER
+            Vector3 newTop = Handles.FreeMoveHandle(oldTop, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
+            #else
             Vector3 newTop = Handles.FreeMoveHandle(oldTop, Quaternion.identity, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
-            //#endif
+            #endif
             if (oldTop != newTop)
             {
                 oldTop = matrix.MultiplyPoint(oldTop);
@@ -375,11 +380,11 @@ namespace TMPro.EditorUtilities
 
             // RIGHT HANDLE
             Vector3 oldRight = (m_HandlePoints[2] + m_HandlePoints[3]) * 0.5f;
-            //#if UNITY_2022_1_OR_NEWER
-            //Vector3 newRight = Handles.FreeMoveHandle(oldRight, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
-            //#else
+            #if UNITY_2022_1_OR_NEWER
+            Vector3 newRight = Handles.FreeMoveHandle(oldRight, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
+            #else
             Vector3 newRight = Handles.FreeMoveHandle(oldRight, Quaternion.identity, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
-            //#endif
+            #endif
             if (oldRight != newRight)
             {
                 oldRight = matrix.MultiplyPoint(oldRight);
@@ -393,11 +398,11 @@ namespace TMPro.EditorUtilities
 
             // BOTTOM HANDLE
             Vector3 oldBottom = (m_HandlePoints[3] + m_HandlePoints[0]) * 0.5f;
-            //#if UNITY_2022_1_OR_NEWER
-            //Vector3 newBottom = Handles.FreeMoveHandle(oldBottom, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
-            //#else
+            #if UNITY_2022_1_OR_NEWER
+            Vector3 newBottom = Handles.FreeMoveHandle(oldBottom, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
+            #else
             Vector3 newBottom = Handles.FreeMoveHandle(oldBottom, Quaternion.identity, HandleUtility.GetHandleSize(m_RectTransform.position) * 0.05f, Vector3.zero, Handles.DotHandleCap);
-            //#endif
+            #endif
             if (oldBottom != newBottom)
             {
                 oldBottom = matrix.MultiplyPoint(oldBottom);
@@ -1103,6 +1108,18 @@ namespace TMPro.EditorUtilities
             DrawMarginProperty(m_MarginProp, k_MarginsLabel);
             if (EditorGUI.EndChangeCheck())
             {
+                // Value range check on margins to make sure they are not excessive.
+                Vector4 margins = m_MarginProp.vector4Value;
+                Vector2 textContainerSize = m_RectTransform.sizeDelta;
+
+                margins.x = Mathf.Clamp(margins.x, -textContainerSize.x, textContainerSize.x);
+                margins.z = Mathf.Clamp(margins.z, -textContainerSize.x, textContainerSize.x);
+
+                margins.y = Mathf.Clamp(margins.y, -textContainerSize.y, textContainerSize.y);
+                margins.w = Mathf.Clamp(margins.w, -textContainerSize.y, textContainerSize.y);
+
+                m_MarginProp.vector4Value = margins;
+
                 m_HavePropertiesChanged = true;
             }
 
@@ -1156,6 +1173,15 @@ namespace TMPro.EditorUtilities
                 m_HavePropertiesChanged = true;
 
             EditorGUILayout.Space();
+        }
+
+        protected void DrawEmojiFallbackSupport()
+        {
+            EditorGUI.BeginChangeCheck();
+
+            EditorGUILayout.PropertyField(m_EmojiFallbackSupportProp, k_EmojiFallbackSupportLabel);
+            if (EditorGUI.EndChangeCheck())
+                m_HavePropertiesChanged = true;
         }
 
         protected void DrawSpriteAsset()

@@ -13,8 +13,14 @@ namespace TMPro.EditorUtilities
     public static class TMP_SpriteAssetMenu
     {
         // Add a Context Menu to the Sprite Asset Editor Panel to Create and Add a Default Material.
+        [MenuItem("CONTEXT/TMP_SpriteAsset/Add Default Material", true, 2200)]
+        static bool AddDefaultMaterialValidate(MenuCommand command)
+        {
+            return AssetDatabase.IsOpenForEdit(command.context);
+        }
+
         [MenuItem("CONTEXT/TMP_SpriteAsset/Add Default Material", false, 2200)]
-        static void CopyTexture(MenuCommand command)
+        static void AddDefaultMaterial(MenuCommand command)
         {
             TMP_SpriteAsset spriteAsset = (TMP_SpriteAsset)command.context;
 
@@ -26,8 +32,13 @@ namespace TMPro.EditorUtilities
             }
         }
 
-
         // Add a Context Menu to the Sprite Asset Editor Panel to update existing sprite assets.
+        [MenuItem("CONTEXT/TMP_SpriteAsset/Update Sprite Asset", true, 2100)]
+        static bool UpdateSpriteAssetValidate(MenuCommand command)
+        {
+            return AssetDatabase.IsOpenForEdit(command.context);
+        }
+
         [MenuItem("CONTEXT/TMP_SpriteAsset/Update Sprite Asset", false, 2100)]
         static void UpdateSpriteAsset(MenuCommand command)
         {
@@ -171,7 +182,7 @@ namespace TMPro.EditorUtilities
         }
 
 
-        [MenuItem("Assets/Create/TextMeshPro/Sprite Asset", false, 110)]
+        [MenuItem("Assets/Create/TextMeshPro/Sprite Asset", false, 200)]
         static void CreateSpriteAsset()
         {
             Object[] targets = Selection.objects;
