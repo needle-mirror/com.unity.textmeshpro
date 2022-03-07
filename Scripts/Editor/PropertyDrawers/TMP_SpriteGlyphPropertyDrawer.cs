@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.TextCore;
 using UnityEditor;
-using System.Collections;
+using System.Collections.Generic;
 
 
 namespace TMPro.EditorUtilities
@@ -50,7 +50,7 @@ namespace TMPro.EditorUtilities
         void DrawGlyph(Rect position, SerializedProperty property)
         {
             // Get a reference to the sprite texture
-            Texture tex = (property.serializedObject.targetObject as TMP_SpriteAsset).spriteSheet;
+            Texture tex = property.serializedObject.FindProperty("spriteSheet").objectReferenceValue as Texture;
 
             // Return if we don't have a texture assigned to the sprite asset.
             if (tex == null)

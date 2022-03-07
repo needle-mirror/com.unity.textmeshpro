@@ -135,6 +135,8 @@ namespace TMPro
 
             for (int i = 0; i < length; i++)
                 linkID[i] = text[startIndex + i];
+
+            linkIdLength = length;
         }
 
         /// <summary>
@@ -153,6 +155,14 @@ namespace TMPro
             return text;
         }
 
+        /// <summary>
+        /// Function which returns the link as a string.
+        /// </summary>
+        /// <returns></returns>
+        public string GetLink()
+        {
+            return GetLinkID();
+        }
 
         /// <summary>
         /// Function which returns the link ID as a string.
@@ -165,8 +175,6 @@ namespace TMPro
                 return string.Empty;
 
             return new string(linkID, 0, linkIdLength);
-            //return textComponent.text.Substring(linkIdFirstCharacterIndex, linkIdLength);
-
         }
     }
 

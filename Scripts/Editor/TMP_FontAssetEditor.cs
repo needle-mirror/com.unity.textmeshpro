@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
 
@@ -112,6 +113,28 @@ namespace TMPro.EditorUtilities
         }
         static Material s_InternalBitmapMaterial;
 
+        /// <summary>
+        /// Material used to display color glyphs in the Character and Glyph tables.
+        /// </summary>
+        internal static Material internalRGBABitmapMaterial
+        {
+            get
+            {
+                if (s_Internal_Bitmap_RGBA_Material == null)
+                {
+                    Shader shader = Shader.Find("Hidden/Internal-GUITextureClip");
+
+                    if (shader != null)
+                        s_Internal_Bitmap_RGBA_Material = new Material(shader);
+                }
+
+                return s_Internal_Bitmap_RGBA_Material;
+            }
+        }
+        static Material s_Internal_Bitmap_RGBA_Material;
+
+
+
         private static string[] s_UiStateLabel = new string[] { "<i>(Click to collapse)</i> ", "<i>(Click to expand)</i> " };
         private GUIContent[] m_AtlasResolutionLabels = { new GUIContent("8"), new GUIContent("16"), new GUIContent("32"), new GUIContent("64"), new GUIContent("128"), new GUIContent("256"), new GUIContent("512"), new GUIContent("1024"), new GUIContent("2048"), new GUIContent("4096"), new GUIContent("8192") };
         private int[] m_AtlasResolutions = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };
@@ -218,6 +241,12 @@ namespace TMPro.EditorUtilities
 
         private TMP_SerializedPropertyHolder m_SerializedPropertyHolder;
         private SerializedProperty m_EmptyGlyphPairAdjustmentRecord_prop;
+        private SerializedProperty m_FirstCharacterUnicode_prop;
+        private SerializedProperty m_SecondCharacterUnicode_prop;
+
+
+        private string m_SecondCharacter;
+        private uint m_SecondGlyphIndex;
 
         private TMP_FontAsset m_fontAsset;
 
@@ -287,6 +316,8 @@ namespace TMPro.EditorUtilities
             m_SerializedPropertyHolder = CreateInstance<TMP_SerializedPropertyHolder>();
             m_SerializedPropertyHolder.fontAsset = m_fontAsset;
             SerializedObject internalSerializedObject = new SerializedObject(m_SerializedPropertyHolder);
+            m_FirstCharacterUnicode_prop = internalSerializedObject.FindProperty("firstCharacter");
+            m_SecondCharacterUnicode_prop = internalSerializedObject.FindProperty("secondCharacter");
             m_EmptyGlyphPairAdjustmentRecord_prop = internalSerializedObject.FindProperty("glyphPairAdjustmentRecord");
 
             m_materialPresets = TMP_EditorUtility.FindMaterialReferences(m_fontAsset);
@@ -545,7 +576,7 @@ namespace TMPro.EditorUtilities
                             {
                                 m_DisplayDestructiveChangeWarning = false;
 
-                                // Update face info if  sampling point size was changed.
+                                // Update face info if sampling point size was changed.
                                 if (m_GenerationSettings.pointSize != m_SamplingPointSize_prop.intValue || m_FaceInfoDirty)
                                 {
                                     LoadFontFace(m_SamplingPointSize_prop.intValue, m_FontFaceIndex_prop.intValue);
@@ -788,7 +819,7 @@ namespace TMPro.EditorUtilities
                                 m_CharacterSearchPattern = searchPattern;
 
                                 // Search Character Table for potential matches
-                                SearchCharacterTable (m_CharacterSearchPattern, ref m_CharacterSearchList);
+                                SearchCharacterTable(m_CharacterSearchPattern, ref m_CharacterSearchList);
                             }
                             else
                                 m_CharacterSearchPattern = null;
@@ -941,7 +972,6 @@ namespace TMPro.EditorUtilities
                             {
                                 EditorGUILayout.HelpBox("The Destination Character ID already exists", MessageType.Warning);
                             }
-
                         }
                     }
                 }
@@ -1478,7 +1508,12 @@ namespace TMPro.EditorUtilities
                 // Add new kerning pair
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 {
+                    EditorGUI.BeginChangeCheck();
                     EditorGUILayout.PropertyField(m_EmptyGlyphPairAdjustmentRecord_prop);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        SetPropertyHolderGlyphIndexes();
+                    }
                 }
                 EditorGUILayout.EndVertical();
 
@@ -2318,6 +2353,25 @@ namespace TMPro.EditorUtilities
             return record;
         }*/
 
+        void SetPropertyHolderGlyphIndexes()
+        {
+            uint firstCharacterUnicode = (uint)m_FirstCharacterUnicode_prop.intValue;
+            if (firstCharacterUnicode != 0)
+            {
+                uint glyphIndex = m_fontAsset.GetGlyphIndex(firstCharacterUnicode);
+                if (glyphIndex != 0)
+                    m_EmptyGlyphPairAdjustmentRecord_prop.FindPropertyRelative("m_FirstAdjustmentRecord").FindPropertyRelative("m_GlyphIndex").intValue = (int)glyphIndex;
+            }
+
+            uint secondCharacterUnicode = (uint)m_SecondCharacterUnicode_prop.intValue;
+            if (secondCharacterUnicode != 0)
+            {
+                uint glyphIndex = m_fontAsset.GetGlyphIndex(secondCharacterUnicode);
+                if (glyphIndex != 0)
+                    m_EmptyGlyphPairAdjustmentRecord_prop.FindPropertyRelative("m_SecondAdjustmentRecord").FindPropertyRelative("m_GlyphIndex").intValue = (int)glyphIndex;
+            }
+        }
+
         private void UpdatePairAdjustmentRecordLookup(SerializedProperty property)
         {
             GlyphPairAdjustmentRecord pairAdjustmentRecord = GetGlyphPairAdjustmentRecord(property);
@@ -2509,7 +2563,7 @@ namespace TMPro.EditorUtilities
         /// </summary>
         /// <param name="searchPattern"></param>
         /// <returns></returns>
-        void SearchGlyphTable (string searchPattern, ref List<int> searchResults)
+        void SearchGlyphTable(string searchPattern, ref List<int> searchResults)
         {
             if (searchResults == null) searchResults = new List<int>();
 
@@ -2853,7 +2907,14 @@ namespace TMPro.EditorUtilities
             Material mat;
             if (((GlyphRasterModes)m_fontAsset.atlasRenderMode & GlyphRasterModes.RASTER_MODE_BITMAP) == GlyphRasterModes.RASTER_MODE_BITMAP)
             {
+                #if TEXTCORE_FONT_ENGINE_1_5_OR_NEWER
+                if (m_fontAsset.atlasRenderMode == GlyphRenderMode.COLOR || m_fontAsset.atlasRenderMode == GlyphRenderMode.COLOR_HINTED)
+                    mat = internalRGBABitmapMaterial;
+                else
+                    mat = internalBitmapMaterial;
+                #else
                 mat = internalBitmapMaterial;
+                #endif
 
                 if (mat == null)
                     return;

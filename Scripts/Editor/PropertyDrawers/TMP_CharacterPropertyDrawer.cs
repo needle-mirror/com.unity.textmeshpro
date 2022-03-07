@@ -2,7 +2,7 @@
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
 using UnityEditor;
-using System.Collections;
+using System.Collections.Generic;
 
 
 namespace TMPro.EditorUtilities
@@ -10,8 +10,7 @@ namespace TMPro.EditorUtilities
     [CustomPropertyDrawer(typeof(TMP_Character))]
     public class TMP_CharacterPropertyDrawer : PropertyDrawer
     {
-        private string k_ColorProperty = "_Color";
-
+        private Dictionary<uint, GlyphProxy> m_GlyphLookupDictionary;
         int m_GlyphSelectedForEditing = -1;
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -20,6 +19,8 @@ namespace TMPro.EditorUtilities
             SerializedProperty prop_GlyphIndex = property.FindPropertyRelative("m_GlyphIndex");
             SerializedProperty prop_Scale = property.FindPropertyRelative("m_Scale");
 
+            if (TMP_PropertyDrawerUtilities.s_RefreshGlyphProxyLookup)
+                TMP_PropertyDrawerUtilities.RefreshGlyphProxyLookup(property.serializedObject, m_GlyphLookupDictionary);
 
             GUIStyle style = new GUIStyle(EditorStyles.label);
             style.richText = true;
@@ -39,7 +40,7 @@ namespace TMPro.EditorUtilities
                 EditorGUI.LabelField(new Rect(rect.x, rect.y + 36, 80, 18), new GUIContent("Scale: <color=#FFFF80>" + prop_Scale.floatValue + "</color>"), style);
 
                 // Draw Glyph (if exists)
-                DrawGlyph(position, property);
+                DrawGlyph((uint)prop_GlyphIndex.intValue, new Rect(position.x, position.y, 48, 58), property);
             }
             else // Display editable fields
             {
@@ -144,7 +145,7 @@ namespace TMPro.EditorUtilities
                 EditorGUI.PropertyField(new Rect(rect.x, rect.y + 36, 80, 18), prop_Scale, new GUIContent("Scale:"));
 
                 // Draw Glyph (if exists)
-                DrawGlyph(position, property);
+                DrawGlyph((uint)prop_GlyphIndex.intValue, new Rect(position.x, position.y, 48, 58), property);
             }
         }
 
@@ -153,67 +154,46 @@ namespace TMPro.EditorUtilities
             return 58;
         }
 
-        void DrawGlyph(Rect position, SerializedProperty property)
+        void DrawGlyph(uint glyphIndex, Rect position, SerializedProperty property)
         {
-            // Get a reference to the atlas texture
-            TMP_FontAsset fontAsset = property.serializedObject.targetObject as TMP_FontAsset;
-
-            if (fontAsset == null)
+            // Get a reference to the serialized object which can either be a TMP_FontAsset or FontAsset.
+            SerializedObject so = property.serializedObject;
+            if (so == null)
                 return;
 
-            // Get a reference to the Glyph Table
-            SerializedProperty prop_GlyphTable = property.serializedObject.FindProperty("m_GlyphTable");
-            int glyphIndex = property.FindPropertyRelative("m_GlyphIndex").intValue;
-            int elementIndex = fontAsset.glyphTable.FindIndex(item => item.index == glyphIndex);
+            if (m_GlyphLookupDictionary == null)
+            {
+                m_GlyphLookupDictionary = new Dictionary<uint, GlyphProxy>();
+                TMP_PropertyDrawerUtilities.PopulateGlyphProxyLookupDictionary(so, m_GlyphLookupDictionary);
+            }
 
-            // Return if we can't find the glyph
-            if (elementIndex == -1)
+            // Try getting a reference to the glyph for the given glyph index.
+            if (!m_GlyphLookupDictionary.TryGetValue(glyphIndex, out GlyphProxy glyph))
                 return;
 
-            SerializedProperty prop_Glyph = prop_GlyphTable.GetArrayElementAtIndex(elementIndex);
-
-            // Get reference to atlas texture.
-            int atlasIndex = prop_Glyph.FindPropertyRelative("m_AtlasIndex").intValue;
-            Texture2D atlasTexture = fontAsset.atlasTextures.Length > atlasIndex ? fontAsset.atlasTextures[atlasIndex] : null;
-
-            if (atlasTexture == null)
+            Texture2D atlasTexture;
+            if (TMP_PropertyDrawerUtilities.TryGetAtlasTextureFromSerializedObject(so, glyph.atlasIndex, out atlasTexture) == false)
                 return;
 
             Material mat;
-            if (((GlyphRasterModes)fontAsset.atlasRenderMode & GlyphRasterModes.RASTER_MODE_BITMAP) == GlyphRasterModes.RASTER_MODE_BITMAP)
-            {
-                mat = TMP_FontAssetEditor.internalBitmapMaterial;
+            if (TMP_PropertyDrawerUtilities.TryGetMaterial(so, atlasTexture, out mat) == false)
+                return;
 
-                if (mat == null)
-                    return;
+            // Draw glyph from atlas texture.
+            Rect glyphDrawPosition = position;
 
-                mat.mainTexture = atlasTexture;
-                mat.SetColor(k_ColorProperty, Color.white);
-            }
-            else
-            {
-                mat = TMP_FontAssetEditor.internalSDFMaterial;
+            int padding = so.FindProperty("m_AtlasPadding").intValue;
+            GlyphRect glyphRect = glyph.glyphRect;
+            int glyphOriginX = glyphRect.x - padding;
+            int glyphOriginY = glyphRect.y - padding;
+            int glyphWidth = glyphRect.width + padding * 2;
+            int glyphHeight = glyphRect.height + padding * 2;
 
-                if (mat == null)
-                    return;
+            SerializedProperty faceInfoProperty = so.FindProperty("m_FaceInfo");
+            float ascentLine = faceInfoProperty.FindPropertyRelative("m_AscentLine").floatValue;
+            float descentLine = faceInfoProperty.FindPropertyRelative("m_DescentLine").floatValue;
 
-                mat.mainTexture = atlasTexture;
-                mat.SetFloat(ShaderUtilities.ID_GradientScale, fontAsset.atlasPadding + 1);
-            }
-
-            // Draw glyph
-            Rect glyphDrawPosition = new Rect(position.x, position.y, 48, 58);
-
-            SerializedProperty glyphRectProperty = prop_Glyph.FindPropertyRelative("m_GlyphRect");
-
-            int padding = fontAsset.atlasPadding;
-
-            int glyphOriginX = glyphRectProperty.FindPropertyRelative("m_X").intValue - padding;
-            int glyphOriginY = glyphRectProperty.FindPropertyRelative("m_Y").intValue - padding;
-            int glyphWidth = glyphRectProperty.FindPropertyRelative("m_Width").intValue + padding * 2;
-            int glyphHeight = glyphRectProperty.FindPropertyRelative("m_Height").intValue + padding * 2;
-
-            float normalizedHeight = fontAsset.faceInfo.ascentLine - fontAsset.faceInfo.descentLine;
+            float normalizedHeight = ascentLine - descentLine;
             float scale = glyphDrawPosition.width / normalizedHeight;
 
             // Compute the normalized texture coordinates
@@ -230,6 +210,5 @@ namespace TMPro.EditorUtilities
                 Graphics.DrawTexture(glyphDrawPosition, atlasTexture, texCoords, 0, 0, 0, 0, new Color(1f, 1f, 1f), mat);
             }
         }
-
     }
 }

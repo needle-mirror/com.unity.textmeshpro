@@ -48,7 +48,8 @@ namespace TMPro
 
             public FontAssetRef(int nameHashCode, int familyNameHashCode, int styleNameHashCode, TMP_FontAsset fontAsset)
             {
-                this.nameHashCode = nameHashCode;
+                // Use familyNameHashCode for font assets created at runtime as these asset do not typically have a names.
+                this.nameHashCode = nameHashCode != 0 ? nameHashCode : familyNameHashCode;
                 this.familyNameHashCode = familyNameHashCode;
                 this.styleNameHashCode = styleNameHashCode;
                 this.familyNameAndStyleHashCode = (long) styleNameHashCode << 32 | (uint) familyNameHashCode;
@@ -124,16 +125,17 @@ namespace TMPro
         /// Remove font asset from resource manager.
         /// </summary>
         /// <param name="fontAsset">Font asset to be removed from the resource manager.</param>
-        // public static void RemoveFontAsset(TMP_FontAsset fontAsset)
-        // {
-        //     int hashCode = fontAsset.hashCode;
-        //
-        //     if (s_FontAssetNameReferenceLookup.ContainsKey(hashCode))
-        //     {
-        //         s_FontAssetNameReferenceLookup.Remove(hashCode);
-        //         s_FontAssetReferences.Remove(fontAsset);
-        //     }
-        // }
+        public static void RemoveFontAsset(TMP_FontAsset fontAsset)
+        {
+            int instanceID = fontAsset.instanceID;
+
+            if (s_FontAssetReferences.TryGetValue(instanceID, out FontAssetRef reference))
+            {
+                s_FontAssetNameReferenceLookup.Remove(reference.nameHashCode);
+                s_FontAssetFamilyNameAndStyleReferenceLookup.Remove(reference.familyNameAndStyleHashCode);
+                s_FontAssetReferences.Remove(instanceID);
+            }
+        }
 
         /// <summary>
         /// Try getting a reference to the font asset using the hash code calculated from its file name.
@@ -165,6 +167,14 @@ namespace TMPro
             long familyAndStyleNameHashCode = (long) styleNameHashCode << 32 | (uint) familyNameHashCode;
 
             return s_FontAssetFamilyNameAndStyleReferenceLookup.TryGetValue(familyAndStyleNameHashCode, out fontAsset);
+        }
+
+        /// <summary>
+        /// Clear all font asset glyph lookup cache.
+        /// </summary>
+        public static void ClearFontAssetGlyphCache()
+        {
+            RebuildFontAssetCache();
         }
 
         /// <summary>

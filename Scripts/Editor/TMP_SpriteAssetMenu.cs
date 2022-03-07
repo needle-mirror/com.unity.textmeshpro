@@ -182,7 +182,7 @@ namespace TMPro.EditorUtilities
         }
 
 
-        [MenuItem("Assets/Create/TextMeshPro/Sprite Asset", false, 110)]
+        [MenuItem("Assets/Create/TextMeshPro/Sprite Asset", false, 200)]
         static void CreateSpriteAsset()
         {
             Object[] targets = Selection.objects;

@@ -271,7 +271,11 @@ namespace TMPro.EditorUtilities
                 EditorGUILayout.PropertyField(m_RestoreOriginalTextOnEscape, new GUIContent("Restore On ESC Key", "Should the original text be restored when pressing ESC?"));
                 EditorGUILayout.PropertyField(m_ShouldActivateOnSelect, new GUIContent("Should Activate On Select", "Determines if the Input Field will be activated when selected."));
                 EditorGUILayout.PropertyField(m_HideMobileKeyboard, new GUIContent("Hide Soft Keyboard", "Controls the visibility of the mobile virtual keyboard."));
+
+                EditorGUI.BeginDisabledGroup(m_HideMobileKeyboard.boolValue);
                 EditorGUILayout.PropertyField(m_HideMobileInput, new GUIContent("Hide Mobile Input", "Controls the visibility of the editable text field above the mobile virtual keyboard."));
+                EditorGUI.EndDisabledGroup();
+
                 EditorGUILayout.PropertyField(m_ReadOnly);
                 EditorGUILayout.PropertyField(m_RichText);
                 EditorGUILayout.PropertyField(m_RichTextEditingAllowed, new GUIContent("Allow Rich Text Editing"));

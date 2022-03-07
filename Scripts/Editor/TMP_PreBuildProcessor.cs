@@ -22,7 +22,7 @@ namespace TMPro
 
                 if (fontAsset != null && (fontAsset.atlasPopulationMode == AtlasPopulationMode.Dynamic || fontAsset.atlasPopulationMode == AtlasPopulationMode.DynamicOS) && fontAsset.clearDynamicDataOnBuild && fontAsset.atlasTexture.width != 0)
                 {
-                    fontAsset.ClearFontAssetDataInternal(false);
+                    fontAsset.ClearCharacterAndGlyphTablesInternal();
                 }
             }
         }
