@@ -262,6 +262,17 @@ namespace TMPro
         private bool m_IsMultiAtlasTexturesEnabled;
 
         /// <summary>
+        /// Determines if OpenType font features should be retrieved from the source font file as new characters and glyphs are added dynamically to the font asset.
+        /// </summary>
+        public bool getFontFeatures
+        {
+            get { return m_GetFontFeatures; }
+            set { m_GetFontFeatures = value; }
+        }
+        [SerializeField]
+        private bool m_GetFontFeatures = true;
+        
+        /// <summary>
         /// Determines if dynamic font asset data should be cleared before builds.
         /// </summary>
         internal bool clearDynamicDataOnBuild
@@ -590,7 +601,7 @@ namespace TMPro
             #else
             TextureFormat texFormat = TextureFormat.Alpha8;
             #endif
-            Texture2D texture = new Texture2D(0, 0, texFormat, false);
+            Texture2D texture = new Texture2D(1, 1, texFormat, false);
             fontAsset.atlasTextures[0] = texture;
 
             fontAsset.isMultiAtlasTexturesEnabled = enableMultiAtlasSupport;
@@ -1810,7 +1821,7 @@ namespace TMPro
             }
 
             // Resize the Atlas Texture to the appropriate size
-            if (m_AtlasTextures[m_AtlasTextureIndex].width == 0 || m_AtlasTextures[m_AtlasTextureIndex].height == 0)
+            if (m_AtlasTextures[m_AtlasTextureIndex].width <= 1 || m_AtlasTextures[m_AtlasTextureIndex].height <= 1)
             {
                 #if UNITY_2021_2_OR_NEWER
                 m_AtlasTextures[m_AtlasTextureIndex].Reinitialize(m_AtlasWidth, m_AtlasHeight);
@@ -2034,7 +2045,7 @@ namespace TMPro
             }
 
             // Resize the Atlas Texture to the appropriate size
-            if (m_AtlasTextures[m_AtlasTextureIndex].width == 0 || m_AtlasTextures[m_AtlasTextureIndex].height == 0)
+            if (m_AtlasTextures[m_AtlasTextureIndex].width <= 1 || m_AtlasTextures[m_AtlasTextureIndex].height <= 1)
             {
                 #if UNITY_2021_2_OR_NEWER
                 m_AtlasTextures[m_AtlasTextureIndex].Reinitialize(m_AtlasWidth, m_AtlasHeight);
@@ -2164,7 +2175,7 @@ namespace TMPro
             }
 
             // Resize the Atlas Texture to the appropriate size
-            if (m_AtlasTextures[m_AtlasTextureIndex].width == 0 || m_AtlasTextures[m_AtlasTextureIndex].height == 0)
+            if (m_AtlasTextures[m_AtlasTextureIndex].width <= 1 || m_AtlasTextures[m_AtlasTextureIndex].height <= 1
             {
                 //Debug.Log("Setting initial size of atlas texture used by font asset [" + this.name + "].");
                 m_AtlasTextures[m_AtlasTextureIndex].Resize(m_AtlasWidth, m_AtlasHeight);
@@ -2213,7 +2224,7 @@ namespace TMPro
             uint glyphIndex = glyph.index;
 
             // Resize the Atlas Texture to the appropriate size
-            if (m_AtlasTextures[m_AtlasTextureIndex].width == 0 || m_AtlasTextures[m_AtlasTextureIndex].height == 0)
+            if (m_AtlasTextures[m_AtlasTextureIndex].width <= 1 || m_AtlasTextures[m_AtlasTextureIndex].height <= 1)
             {
                 //Debug.Log("Setting initial size of atlas texture used by font asset [" + this.name + "].");
                 m_AtlasTextures[m_AtlasTextureIndex].Resize(m_AtlasWidth, m_AtlasHeight);
@@ -2265,6 +2276,12 @@ namespace TMPro
         }
         */
 
+        internal bool AddGlyphInternal(uint glyphIndex)
+        {
+            Glyph glyph;
+            return TryAddGlyphInternal(glyphIndex, out glyph);
+        }
+
         /// <summary>
         ///
         /// </summary>
@@ -2285,6 +2302,13 @@ namespace TMPro
                 k_TryAddGlyphMarker.End();
                 return true;
             }
+            
+            // Return if font asset is static
+            if (m_AtlasPopulationMode == AtlasPopulationMode.Static)
+            {
+                k_TryAddGlyphMarker.End();
+                return false;   
+            }
 
             // Load font face.
             if (LoadFontFace() != FontEngineError.Success)
@@ -2302,7 +2326,7 @@ namespace TMPro
             }
 
             // Resize the Atlas Texture to the appropriate size
-            if (m_AtlasTextures[m_AtlasTextureIndex].width == 0 || m_AtlasTextures[m_AtlasTextureIndex].height == 0)
+            if (m_AtlasTextures[m_AtlasTextureIndex].width <= 1 || m_AtlasTextures[m_AtlasTextureIndex].height <= 1)
             {
                 #if UNITY_2021_2_OR_NEWER
                 m_AtlasTextures[m_AtlasTextureIndex].Reinitialize(m_AtlasWidth, m_AtlasHeight);
@@ -2334,7 +2358,7 @@ namespace TMPro
                 m_GlyphIndexList.Add(glyphIndex);
                 m_GlyphIndexListNewlyAdded.Add(glyphIndex);
 
-                if (TMP_Settings.getFontFeaturesAtRuntime)
+                if (m_GetFontFeatures && TMP_Settings.getFontFeaturesAtRuntime)
                 {
                     UpdateGSUBFontFeaturesForNewGlyphIndex(glyphIndex);
                     RegisterFontAssetForFontFeatureUpdate(this);
@@ -2376,7 +2400,7 @@ namespace TMPro
                     m_GlyphIndexList.Add(glyphIndex);
                     m_GlyphIndexListNewlyAdded.Add(glyphIndex);
 
-                    if (TMP_Settings.getFontFeaturesAtRuntime)
+                    if (m_GetFontFeatures && TMP_Settings.getFontFeaturesAtRuntime)
                     {
                         UpdateGSUBFontFeaturesForNewGlyphIndex(glyphIndex);
                         RegisterFontAssetForFontFeatureUpdate(this);
@@ -2509,7 +2533,7 @@ namespace TMPro
             }
 
             // Resize the Atlas Texture to the appropriate size
-            if (m_AtlasTextures[m_AtlasTextureIndex].width == 0 || m_AtlasTextures[m_AtlasTextureIndex].height == 0)
+            if (m_AtlasTextures[m_AtlasTextureIndex].width <= 1 || m_AtlasTextures[m_AtlasTextureIndex].height <= 1)
             {
                 #if UNITY_2021_2_OR_NEWER
                 m_AtlasTextures[m_AtlasTextureIndex].Reinitialize(m_AtlasWidth, m_AtlasHeight);
@@ -2541,7 +2565,7 @@ namespace TMPro
                 m_GlyphIndexList.Add(glyphIndex);
                 m_GlyphIndexListNewlyAdded.Add(glyphIndex);
 
-                if (TMP_Settings.getFontFeaturesAtRuntime)
+                if (m_GetFontFeatures && TMP_Settings.getFontFeaturesAtRuntime)
                 {
                     UpdateGSUBFontFeaturesForNewGlyphIndex(glyphIndex);
                     RegisterFontAssetForFontFeatureUpdate(this);
@@ -2583,7 +2607,7 @@ namespace TMPro
                     m_GlyphIndexList.Add(glyphIndex);
                     m_GlyphIndexListNewlyAdded.Add(glyphIndex);
 
-                    if (TMP_Settings.getFontFeaturesAtRuntime)
+                    if (m_GetFontFeatures && TMP_Settings.getFontFeaturesAtRuntime)
                     {
                         UpdateGSUBFontFeaturesForNewGlyphIndex(glyphIndex);
                         RegisterFontAssetForFontFeatureUpdate(this);
@@ -2691,7 +2715,7 @@ namespace TMPro
                 m_GlyphIndexList.Add(glyphIndex);
                 m_GlyphIndexListNewlyAdded.Add(glyphIndex);
 
-                if (TMP_Settings.getFontFeaturesAtRuntime)
+                if (m_GetFontFeatures && TMP_Settings.getFontFeaturesAtRuntime)
                 {
                     UpdateGSUBFontFeaturesForNewGlyphIndex(glyphIndex);
                     RegisterFontAssetForFontFeatureUpdate(this);
@@ -2728,7 +2752,7 @@ namespace TMPro
                 return;
 
             // Resize the Atlas Texture to the appropriate size
-            if (m_AtlasTextures[m_AtlasTextureIndex].width == 0 || m_AtlasTextures[m_AtlasTextureIndex].height == 0)
+            if (m_AtlasTextures[m_AtlasTextureIndex].width <= 1 || m_AtlasTextures[m_AtlasTextureIndex].height <= 1)
             {
                 //Debug.Log("Setting initial size of atlas texture used by font asset [" + this.name + "].");
                 m_AtlasTextures[m_AtlasTextureIndex].Resize(m_AtlasWidth, m_AtlasHeight);
@@ -2856,7 +2880,7 @@ namespace TMPro
             #if UNITY_EDITOR
             // Add new texture as sub asset to font asset
             Texture2D tex = m_AtlasTextures[m_AtlasTextureIndex];
-            tex.name = m_AtlasTexture.name + " " + m_AtlasTextureIndex;
+            tex.name = m_AtlasTextures[0].name + " " + m_AtlasTextureIndex;
 
             OnFontAssetTextureChanged?.Invoke(tex, this);
             #endif
@@ -2879,7 +2903,7 @@ namespace TMPro
             //FontEngine.RenderGlyphsToTexture(m_GlyphsPacked, m_AtlasPadding, GlyphRenderMode.SDFAA, m_AtlasTextures[m_AtlasTextureIndex]);
 
             // Resize the Atlas Texture to the appropriate size
-            if (m_AtlasTextures[m_AtlasTextureIndex].width == 0 || m_AtlasTextures[m_AtlasTextureIndex].height == 0)
+            if (m_AtlasTextures[m_AtlasTextureIndex].width <= 1 || m_AtlasTextures[m_AtlasTextureIndex].height <= 1)
             {
                 #if UNITY_2021_2_OR_NEWER
                     m_AtlasTextures[m_AtlasTextureIndex].Reinitialize(m_AtlasWidth, m_AtlasHeight);
@@ -3041,17 +3065,24 @@ namespace TMPro
                     return;
 
                 uint firstComponentGlyphIndex = record.componentGlyphIDs[0];
+                
+                LigatureSubstitutionRecord newRecord = new LigatureSubstitutionRecord { componentGlyphIDs = record.componentGlyphIDs, ligatureGlyphID = record.ligatureGlyphID };
 
-                LigatureSubstitutionRecord newRecord = new LigatureSubstitutionRecord() { componentGlyphIDs = record.componentGlyphIDs, ligatureGlyphID = record.ligatureGlyphID };
-
-                // Add new record to lookup
-                if (!m_FontFeatureTable.m_LigatureSubstitutionRecordLookup.ContainsKey(firstComponentGlyphIndex))
+                // Check if we already have a record for this new Ligature
+                if (m_FontFeatureTable.m_LigatureSubstitutionRecordLookup.TryGetValue(firstComponentGlyphIndex, out List<LigatureSubstitutionRecord> existingRecords))
                 {
-                    m_FontFeatureTable.m_LigatureSubstitutionRecordLookup.Add(firstComponentGlyphIndex, new List<LigatureSubstitutionRecord>() { newRecord });
+                    foreach (LigatureSubstitutionRecord ligature in existingRecords)
+                    {
+                        if (newRecord == ligature)
+                            return;
+                    }
+                    
+                    // Add new record to lookup
+                    m_FontFeatureTable.m_LigatureSubstitutionRecordLookup[firstComponentGlyphIndex].Add(newRecord);
                 }
                 else
                 {
-                    m_FontFeatureTable.m_LigatureSubstitutionRecordLookup[firstComponentGlyphIndex].Add(newRecord);
+                    m_FontFeatureTable.m_LigatureSubstitutionRecordLookup.Add(firstComponentGlyphIndex, new List<LigatureSubstitutionRecord> { newRecord });
                 }
 
                 m_FontFeatureTable.m_LigatureSubstitutionRecords.Add(newRecord);
@@ -3210,6 +3241,9 @@ namespace TMPro
             for (int i = 0; i < records.Length; i++)
             {
                 UnityEngine.TextCore.LowLevel.MarkToBaseAdjustmentRecord record = records[i];
+                
+                if (records[i].baseGlyphID == 0 || records[i].markGlyphID == 0)
+                    return;
 
                 uint key = record.markGlyphID << 16 | record.baseGlyphID;
 
@@ -3238,6 +3272,9 @@ namespace TMPro
             for (int i = 0; i < records.Length; i++)
             {
                 UnityEngine.TextCore.LowLevel.MarkToMarkAdjustmentRecord record = records[i];
+                
+                if (records[i].baseMarkGlyphID == 0 || records[i].combiningMarkGlyphID == 0)
+                    return;
 
                 uint key = record.combiningMarkGlyphID << 16 | record.baseMarkGlyphID;
 
@@ -3304,7 +3341,7 @@ namespace TMPro
 
             // Add existing glyphs and characters back in the font asset (if any)
             if (unicodeCharacters.Length > 0)
-                TryAddCharacters(unicodeCharacters, true);
+                TryAddCharacters(unicodeCharacters, m_GetFontFeatures && TMP_Settings.getFontFeaturesAtRuntime);
 
             k_UpdateFontAssetDataMarker.End();
         }
@@ -3480,7 +3517,7 @@ namespace TMPro
             if (setAtlasSizeToZero)
             {
                 #if UNITY_2021_2_OR_NEWER
-                texture.Reinitialize(0, 0, texFormat, false);
+                texture.Reinitialize(1, 1, texFormat, false);
                 #else
                 texture.Resize(0, 0, texFormat, false);
                 #endif

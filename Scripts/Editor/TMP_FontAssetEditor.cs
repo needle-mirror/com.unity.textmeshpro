@@ -136,6 +136,7 @@ namespace TMPro.EditorUtilities
 
 
         private static string[] s_UiStateLabel = new string[] { "<i>(Click to collapse)</i> ", "<i>(Click to expand)</i> " };
+        public static readonly GUIContent getFontFeaturesLabel = new GUIContent("Get Font Features", "Determines if OpenType font features should be retrieved from the source font file as new characters and glyphs are added to the font asset.");
         private GUIContent[] m_AtlasResolutionLabels = { new GUIContent("8"), new GUIContent("16"), new GUIContent("32"), new GUIContent("64"), new GUIContent("128"), new GUIContent("256"), new GUIContent("512"), new GUIContent("1024"), new GUIContent("2048"), new GUIContent("4096"), new GUIContent("8192") };
         private int[] m_AtlasResolutions = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };
 
@@ -196,6 +197,7 @@ namespace TMPro.EditorUtilities
         private string m_MarkToMarkTableSearchPattern;
         private List<int> m_MarkToMarkTableSearchList;
 
+        private HashSet<uint> m_GlyphsToAdd;
 
         private bool m_isSearchDirty;
 
@@ -213,6 +215,7 @@ namespace TMPro.EditorUtilities
         private SerializedProperty m_AtlasHeight_prop;
         private SerializedProperty m_IsMultiAtlasTexturesEnabled_prop;
         private SerializedProperty m_ClearDynamicDataOnBuild_prop;
+        private SerializedProperty m_GetFontFeatures_prop;
 
         private SerializedProperty fontWeights_prop;
 
@@ -276,6 +279,7 @@ namespace TMPro.EditorUtilities
             m_AtlasHeight_prop = serializedObject.FindProperty("m_AtlasHeight");
             m_IsMultiAtlasTexturesEnabled_prop = serializedObject.FindProperty("m_IsMultiAtlasTexturesEnabled");
             m_ClearDynamicDataOnBuild_prop = serializedObject.FindProperty("m_ClearDynamicDataOnBuild");
+            m_GetFontFeatures_prop = serializedObject.FindProperty("m_GetFontFeatures");
 
             fontWeights_prop = serializedObject.FindProperty("m_FontWeightTable");
 
@@ -327,6 +331,9 @@ namespace TMPro.EditorUtilities
 
             // Sort Font Asset Tables
             m_fontAsset.SortAllTables();
+
+            // Clear glyph proxy lookups
+            TMP_PropertyDrawerUtilities.ClearGlyphProxyLookups();
         }
 
         private ReorderableList PrepareReorderableList(SerializedProperty property, string label)
@@ -546,7 +553,6 @@ namespace TMPro.EditorUtilities
                         EditorGUILayout.IntPopup(m_AtlasWidth_prop, m_AtlasResolutionLabels, m_AtlasResolutions, new GUIContent("Atlas Width"));
                         EditorGUILayout.IntPopup(m_AtlasHeight_prop, m_AtlasResolutionLabels, m_AtlasResolutions, new GUIContent("Atlas Height"));
                         EditorGUILayout.PropertyField(m_IsMultiAtlasTexturesEnabled_prop, new GUIContent("Multi Atlas Textures", "Determines if the font asset will store glyphs in multiple atlas textures."));
-                        EditorGUILayout.PropertyField(m_ClearDynamicDataOnBuild_prop, new GUIContent("Clear Dynamic Data On Build", "Clears all dynamic data restoring the font asset back to its default creation and empty state."));
                         if (EditorGUI.EndChangeCheck())
                         {
                             if (m_AtlasPadding_prop.intValue < 0)
@@ -558,6 +564,8 @@ namespace TMPro.EditorUtilities
                             m_MaterialPresetsRequireUpdate = true;
                             m_DisplayDestructiveChangeWarning = true;
                         }
+                        EditorGUILayout.PropertyField(m_ClearDynamicDataOnBuild_prop, new GUIContent("Clear Dynamic Data On Build", "Clears all dynamic data restoring the font asset back to its default creation and empty state."));
+                        EditorGUILayout.PropertyField(m_GetFontFeatures_prop, getFontFeaturesLabel);
 
                         EditorGUILayout.Space();
 
@@ -991,9 +999,9 @@ namespace TMPro.EditorUtilities
 
             GUIStyle glyphPanelStyle = new GUIStyle(EditorStyles.helpBox);
 
-            int glyphCount = m_fontAsset.glyphTable.Count;
+            int glyphRecordCount = m_fontAsset.glyphTable.Count;
 
-            if (GUI.Button(rect, new GUIContent("<b>Glyph Table</b>   [" + glyphCount + "]" + (rect.width > 275 ? " Glyphs" : ""), "List of glyphs contained in this font asset."), TMP_UIStyleManager.sectionHeader))
+            if (GUI.Button(rect, new GUIContent("<b>Glyph Table</b>   [" + glyphRecordCount + "]" + (rect.width > 275 ? " Glyphs" : ""), "List of glyphs contained in this font asset."), TMP_UIStyleManager.sectionHeader))
                 UI_PanelState.glyphTablePanel = !UI_PanelState.glyphTablePanel;
 
             GUI.Label(rect, (UI_PanelState.glyphTablePanel ? "" : s_UiStateLabel[1]), TMP_UIStyleManager.rightLabel);
@@ -1177,6 +1185,8 @@ namespace TMPro.EditorUtilities
                     }
                 }
 
+                //DisplayAddRemoveButtons(m_GlyphTable_prop, m_SelectedGlyphRecord, glyphRecordCount);
+
                 DisplayPageNavigation(ref m_CurrentGlyphPage, arraySize, itemsPerPage);
 
                 EditorGUILayout.Space();
@@ -1266,7 +1276,7 @@ namespace TMPro.EditorUtilities
                         using (new EditorGUI.DisabledScope(i != m_SelectedLigatureRecord))
                         {
                             EditorGUI.BeginChangeCheck();
-                            EditorGUILayout.PropertyField(ligaturePropertyRecord, new GUIContent("Selectable"));
+                            EditorGUILayout.PropertyField(ligaturePropertyRecord);
 
                             if (EditorGUI.EndChangeCheck())
                             {
@@ -2114,7 +2124,7 @@ namespace TMPro.EditorUtilities
 
             rect.width /= 6;
             // Add Style
-            rect.x = rect.width * 4 + 15;
+            rect.x = rect.width * 4 + 17;
             if (GUI.Button(rect, "+"))
             {
                 int index = selectedRecord == -1 ? 0 : selectedRecord;
@@ -2297,6 +2307,38 @@ namespace TMPro.EditorUtilities
             m_fontAsset.ReadFontAssetDefinition();
         }
 
+        void AddNewGlyphsFromProperty(SerializedProperty property)
+        {
+            if (m_GlyphsToAdd == null)
+                m_GlyphsToAdd = new HashSet<uint>();
+            else
+                m_GlyphsToAdd.Clear();
+
+            string propertyType = property.type;
+
+            switch (propertyType)
+            {
+                case "LigatureSubstitutionRecord":
+                    int componentCount = property.FindPropertyRelative("m_ComponentGlyphIDs").arraySize;
+                    for (int i = 0; i < componentCount; i++)
+                    {
+                        uint glyphIndex = (uint)property.FindPropertyRelative("m_ComponentGlyphIDs").GetArrayElementAtIndex(i).intValue;
+                        m_GlyphsToAdd.Add(glyphIndex);
+                    }
+
+                    m_GlyphsToAdd.Add((uint)property.FindPropertyRelative("m_LigatureGlyphID").intValue);
+
+                    foreach (uint glyphIndex in m_GlyphsToAdd)
+                    {
+                        if (glyphIndex != 0)
+                            m_fontAsset.AddGlyphInternal(glyphIndex);
+                    }
+
+                    break;
+            }
+
+        }
+
 
         // Check if any of the Style elements were clicked on.
         private bool DoSelectionCheck(Rect selectionArea)
@@ -2321,37 +2363,10 @@ namespace TMPro.EditorUtilities
         private void UpdateLigatureSubstitutionRecordLookup(SerializedProperty property)
         {
             serializedObject.ApplyModifiedProperties();
+            AddNewGlyphsFromProperty(property);
             m_fontAsset.InitializeLigatureSubstitutionLookupDictionary();
             isAssetDirty = true;
-
-            /*LigatureSubstitutionRecord record = GetLigatureSubstitutionRecord(property);
-
-            uint firstComponentGlyphIndex = record.componentGlyphIDs[0];
-
-            // Lookup dictionary entry and update it
-            if (m_FontFeatureTable.m_LigatureSubstitutionRecordLookup.ContainsKey(firstComponentGlyphIndex))
-                m_FontFeatureTable.m_LigatureSubstitutionRecordLookup[firstComponentGlyphIndex] = record;*/
         }
-
-        /*
-        LigatureSubstitutionRecord GetLigatureSubstitutionRecord(SerializedProperty property)
-        {
-            LigatureSubstitutionRecord record = new LigatureSubstitutionRecord();
-
-            // Get Component Glyph IDs
-            SerializedProperty componentGlyphIDProperty = property.FindPropertyRelative("m_ComponentGlyphIDs");
-            uint[] glyphIndexes = new uint[componentGlyphIDProperty.arraySize];
-            for (int i = 0; i < glyphIndexes.Length; i++)
-            {
-                glyphIndexes[i] = (uint)componentGlyphIDProperty.GetArrayElementAtIndex(i).intValue;
-            }
-            record.componentGlyphIDs = glyphIndexes;
-
-            // Get Ligature Glyph ID
-            record.ligatureGlyphID = (uint)property.FindPropertyRelative("m_LigatureGlyphID").intValue;
-
-            return record;
-        }*/
 
         void SetPropertyHolderGlyphIndexes()
         {
@@ -2821,12 +2836,16 @@ namespace TMPro.EditorUtilities
 
             DrawAnchorPoint(baseAnchorPosition, Color.green);
 
-            Glyph markGlyph = m_fontAsset.glyphLookupTable[markGlyphIndex];
+            // Draw Mark
+            if (m_fontAsset.glyphLookupTable.ContainsKey(markGlyphIndex))
+            {
+                Glyph markGlyph = m_fontAsset.glyphLookupTable[markGlyphIndex];
 
-            Rect markGlyphPosition = new Rect(baseAnchorPosition.x + (markGlyph.metrics.horizontalBearingX - adjustmentRecord.markPositionAdjustment.xPositionAdjustment) * scale, baseAnchorPosition.y + (adjustmentRecord.markPositionAdjustment.yPositionAdjustment - markGlyph.metrics.horizontalBearingY) * scale, markGlyph.metrics.width, markGlyph.metrics.height);
+                Rect markGlyphPosition = new Rect(baseAnchorPosition.x + (markGlyph.metrics.horizontalBearingX - adjustmentRecord.markPositionAdjustment.xPositionAdjustment) * scale, baseAnchorPosition.y + (adjustmentRecord.markPositionAdjustment.yPositionAdjustment - markGlyph.metrics.horizontalBearingY) * scale, markGlyph.metrics.width, markGlyph.metrics.height);
 
-            // Draw Mark Origin
-            DrawGlyph(markGlyph, markGlyphPosition, scale);
+                // Draw Mark Origin
+                DrawGlyph(markGlyph, markGlyphPosition, scale);
+            }
         }
 
         void DrawMarkToMarkPreview(int selectedRecord, Rect rect)
@@ -2869,11 +2888,15 @@ namespace TMPro.EditorUtilities
 
             DrawAnchorPoint(baseAnchorPosition, Color.green);
 
-            Glyph markGlyph = m_fontAsset.glyphLookupTable[markGlyphIndex];
+            // Draw Mark Glyph
+            if (m_fontAsset.glyphLookupTable.ContainsKey(markGlyphIndex))
+            {
+                Glyph markGlyph = m_fontAsset.glyphLookupTable[markGlyphIndex];
 
-            Rect markGlyphPosition = new Rect(baseAnchorPosition.x + (markGlyph.metrics.horizontalBearingX - adjustmentRecord.combiningMarkPositionAdjustment.xPositionAdjustment) * scale, baseAnchorPosition.y + (adjustmentRecord.combiningMarkPositionAdjustment.yPositionAdjustment - markGlyph.metrics.horizontalBearingY) * scale, markGlyph.metrics.width, markGlyph.metrics.height);
+                Rect markGlyphPosition = new Rect(baseAnchorPosition.x + (markGlyph.metrics.horizontalBearingX - adjustmentRecord.combiningMarkPositionAdjustment.xPositionAdjustment) * scale, baseAnchorPosition.y + (adjustmentRecord.combiningMarkPositionAdjustment.yPositionAdjustment - markGlyph.metrics.horizontalBearingY) * scale, markGlyph.metrics.width, markGlyph.metrics.height);
 
-            DrawGlyph(markGlyph, markGlyphPosition, scale);
+                DrawGlyph(markGlyph, markGlyphPosition, scale);
+            }
         }
 
         void DrawBaseline(Vector2 position, float width, Color color)

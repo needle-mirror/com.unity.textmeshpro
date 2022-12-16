@@ -61,27 +61,21 @@ namespace TMPro.EditorUtilities
 
             Vector2 spriteTexPosition = new Vector2(position.x, position.y);
             Vector2 spriteSize = new Vector2(65, 65);
+            GlyphRect glyphRect = TMP_PropertyDrawerUtilities.GetGlyphRectFromGlyphSerializedProperty(property);
 
-            SerializedProperty prop_GlyphRect = property.FindPropertyRelative("m_GlyphRect");
-
-            int spriteImageX = prop_GlyphRect.FindPropertyRelative("m_X").intValue;
-            int spriteImageY = prop_GlyphRect.FindPropertyRelative("m_Y").intValue;
-            int spriteImageWidth = prop_GlyphRect.FindPropertyRelative("m_Width").intValue;
-            int spriteImageHeight = prop_GlyphRect.FindPropertyRelative("m_Height").intValue;
-
-            if (spriteImageWidth >= spriteImageHeight)
+            if (glyphRect.width >= glyphRect.height)
             {
-                spriteSize.y = spriteImageHeight * spriteSize.x / spriteImageWidth;
+                spriteSize.y = glyphRect.height * spriteSize.x / glyphRect.width;
                 spriteTexPosition.y += (spriteSize.x - spriteSize.y) / 2;
             }
             else
             {
-                spriteSize.x = spriteImageWidth * spriteSize.y / spriteImageHeight;
+                spriteSize.x = glyphRect.width * spriteSize.y / glyphRect.height;
                 spriteTexPosition.x += (spriteSize.y - spriteSize.x) / 2;
             }
 
             // Compute the normalized texture coordinates
-            Rect texCoords = new Rect((float)spriteImageX / tex.width, (float)spriteImageY / tex.height, (float)spriteImageWidth / tex.width, (float)spriteImageHeight / tex.height);
+            Rect texCoords = new Rect((float)glyphRect.x / tex.width, (float)glyphRect.y / tex.height, (float)glyphRect.width / tex.width, (float)glyphRect.height / tex.height);
             GUI.DrawTextureWithTexCoords(new Rect(spriteTexPosition.x + 5, spriteTexPosition.y + 32f, spriteSize.x, spriteSize.y), tex, texCoords, true);
         }
 

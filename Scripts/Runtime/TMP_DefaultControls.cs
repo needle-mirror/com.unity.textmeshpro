@@ -37,10 +37,17 @@ namespace TMPro
 
         private static GameObject CreateUIElementRoot(string name, Vector2 size)
         {
-            GameObject child = new GameObject(name);
-            RectTransform rectTransform = child.AddComponent<RectTransform>();
+            GameObject root;
+
+            #if UNITY_EDITOR
+            root = ObjectFactory.CreateGameObject(name);
+            #else
+            root = new GameObject(name);
+            #endif
+
+            RectTransform rectTransform = root.AddComponent<RectTransform>();
             rectTransform.sizeDelta = size;
-            return child;
+            return root;
         }
 
         static GameObject CreateUIObject(string name, GameObject parent)

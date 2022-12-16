@@ -24,3 +24,46 @@ Font Assets can have the following types of font atlas:
 * **Smooth/Hinted Smooth:** This type of atlas is an antialiased bitmap texture. A Hinted smooth atlas aligns glyph pixels with texture pixels to produce a smoother result.<br/><br/>Smooth atlases work well for static text that is viewed head on, in situations where there is a good correspondence between texture pixels and screen pixels. Transforming text generated from a smooth atlas blurs the text edges.
 
 * **Raster/Raster Hinted:** Raster atlases are un-smoothed bitmap textures. They almost always produce text with jagged, pixellated edges. The Hinted rater atlases align glyph pixels with texture pixels to produce a smoother result.
+
+## Get Font Features
+
+This option determines if OpenType font features should be retrieved from the source font file as new characters and glyphs are added to the font asset. Disabling this option will prevent extracting font features.
+
+To update the Get Font Features option on a FontAsset:
+1. Select the FontAsset
+2. In the FontAsset inspector, navigate to the Generation Settings section.
+3. Select **Get Font Features**. 
+
+![](images/GetFontFeatures.png)
+
+## Reset
+The `Reset` context menu option clears all tables which includes the Character and Glyph tables along with all font features tables such as the Ligature, Glyph Adjustment, Mark to Base, Mark to Mark tables. This option also clears the font asset's atlas texture and resets it back to size zero.
+
+To reset a FontAsset: 
+1. Select the FontAsset
+2. Expand the top right menu in the FontAsset Inspector. 
+3. Select **Reset**. 
+
+![](images/ResetMenuItem.png)
+
+## Clear Dynamic Data
+The `Clear Dynamic Data` context menu option clears the character and glyph tables as well as the font asset's atlas texture which is also resized back to size zero. This option preserves all font feature table data such as Ligatures, Glyph Adjustment, Mark to Base, Mark to Mark, etc.
+
+To clear a FontAsset:
+1. Select the FontAsset
+2. Expand the top right menu in the FontAsset Inspector. 
+3. Select **Clear Dynamic Data**. 
+
+![](images/ClearDynamicDataMenuItem.png)
+
+This preserves the custom ligatures, kernings, and diacritical marks you added to the font asset when clearing the atlas.
+
+## Clear Dynamic Data on Build
+The "Clear Dynamic Data on Build" performs the same function as the "Clear Dynamic Data" context menu option but performs this operation when creating a build as well as when closing the Editor.
+
+To update the Clear Dynamic Data on Build option:
+1. Select the FontAsset
+2. In the FontAsset inspector, navigate to the Generation Settings section.
+3. Select **Clear Dynamic Data on Build**. 
+
+![](images/ClearDynamicDataOnBuild.png)

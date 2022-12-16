@@ -181,7 +181,7 @@ namespace TMPro
             {
                 case GlyphRenderMode.SMOOTH:
                     fontAsset.atlasRenderMode = GlyphRenderMode.SMOOTH;
-                    texture = new Texture2D(0, 0, TextureFormat.Alpha8, false);
+                    texture = new Texture2D(1, 1, TextureFormat.Alpha8, false);
                     shader = Shader.Find("TextMeshPro/Bitmap");
                     packingModifier = 0;
                     mat = new Material(shader);
@@ -189,7 +189,7 @@ namespace TMPro
                 #if TEXTCORE_FONT_ENGINE_1_5_OR_NEWER
                 case GlyphRenderMode.COLOR:
                     fontAsset.atlasRenderMode = GlyphRenderMode.COLOR;
-                    texture = new Texture2D(0, 0, TextureFormat.RGBA32, false);
+                    texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
                     shader = Shader.Find("TextMeshPro/Sprite");
                     packingModifier = 0;
                     mat = new Material(shader);
@@ -198,7 +198,7 @@ namespace TMPro
                 case GlyphRenderMode.SDFAA:
                 default:
                     fontAsset.atlasRenderMode = GlyphRenderMode.SDFAA;
-                    texture = new Texture2D(0, 0, TextureFormat.Alpha8, false);
+                    texture = new Texture2D(1, 1, TextureFormat.Alpha8, false);
                     shader = Shader.Find("TextMeshPro/Distance Field");
                     packingModifier = 1;
                     mat = new Material(shader);

@@ -651,6 +651,7 @@ namespace TMPro
         protected float m_characterSpacing = 0;
         protected float m_cSpacing = 0;
         protected float m_monoSpacing = 0;
+        protected bool m_duoSpace;
 
         /// <summary>
         /// The amount of additional spacing between words.
@@ -731,7 +732,7 @@ namespace TMPro
         [Obsolete("The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.")]
         public bool enableWordWrapping
         {
-            get { return m_TextWrappingMode != 0; }
+            get { return m_TextWrappingMode == TextWrappingModes.Normal || textWrappingMode == TextWrappingModes.PreserveWhitespace; }
             set
             {
                 TextWrappingModes mode = (TextWrappingModes)(value ? 1 : 0);
@@ -857,15 +858,56 @@ namespace TMPro
         /// <summary>
         /// Determines if kerning is enabled or disabled.
         /// </summary>
+        [Obsolete("The \"enableKerning\" property has been deprecated. Use the \"fontFeatures\" property to control what features are enabled on the text component.")]
         public bool enableKerning
         {
-            get { return m_enableKerning; }
-            set { if (m_enableKerning == value) return; m_havePropertiesChanged = true; m_enableKerning = value; SetVerticesDirty(); SetLayoutDirty(); }
+            get { return m_ActiveFontFeatures.Contains(OTL_FeatureTag.kern); }
+            set
+            {
+                if (m_ActiveFontFeatures.Contains(OTL_FeatureTag.kern))
+                {
+                    if (value)
+                        return;
+                    
+                    m_ActiveFontFeatures.Remove(OTL_FeatureTag.kern); 
+                    m_enableKerning = false;
+                }
+                else
+                {
+                    if (!value)
+                        return;
+                    
+                    m_ActiveFontFeatures.Add(OTL_FeatureTag.kern);
+                    m_enableKerning = true;
+
+                }
+                
+                m_havePropertiesChanged = true;
+                SetVerticesDirty();
+                SetLayoutDirty();
+            }
         }
         [SerializeField]
         protected bool m_enableKerning;
         protected int m_LastBaseGlyphIndex;
 
+        /// <summary>
+        /// List of OpenType font features that are enabled.
+        /// </summary>
+        public List<OTL_FeatureTag> fontFeatures
+        {
+            get { return m_ActiveFontFeatures; }
+            set
+            {
+                if (value == null)
+                    return;
+               
+                m_havePropertiesChanged = true; m_ActiveFontFeatures = value; SetVerticesDirty(); SetLayoutDirty();
+            }
+        }
+        [SerializeField] 
+        protected List<OTL_FeatureTag> m_ActiveFontFeatures = new List<OTL_FeatureTag> { 0 };
+        
         /// <summary>
         /// Adds extra padding around each character. This may be necessary when the displayed text is very small to prevent clipping.
         /// </summary>
@@ -1631,7 +1673,7 @@ namespace TMPro
         /// Method which derived classes need to override to load Font Assets.
         /// </summary>
         protected virtual void LoadFontAsset() { }
-
+        
         /// <summary>
         /// Function called internally when a new shared material is assigned via the fontSharedMaterial property.
         /// </summary>
@@ -4635,9 +4677,9 @@ namespace TMPro
                         }
                     }
                     // Handling for East Asian scripts
-                    else if (m_isNonBreakingSpace == false && (TMP_TextParsingUtilities.IsHangul((uint)charCode) && TMP_Settings.useModernHangulLineBreakingRules == false || TMP_TextParsingUtilities.IsCJK((uint)charCode)))
+                    else if (m_isNonBreakingSpace == false && (TMP_TextParsingUtilities.IsHangul(charCode) && TMP_Settings.useModernHangulLineBreakingRules == false || TMP_TextParsingUtilities.IsCJK(charCode)))
                     {
-                        bool isCurrentLeadingCharacter = TMP_Settings.linebreakingRules.leadingCharacters.Contains((uint)charCode);
+                        bool isCurrentLeadingCharacter = TMP_Settings.linebreakingRules.leadingCharacters.Contains(charCode);
                         bool isNextFollowingCharacter = m_characterCount < totalCharacterCount - 1 && TMP_Settings.linebreakingRules.followingCharacters.Contains(m_internalCharacterInfo[m_characterCount + 1].character);
 
                         if (isCurrentLeadingCharacter == false)
@@ -4668,6 +4710,11 @@ namespace TMPro
                                 shouldSaveHardLineBreak = true;
                             }
                         }
+                    }
+                    // Special handling for Latin characters followed by a CJK character.
+                    else if (m_isNonBreakingSpace == false && m_characterCount + 1 < totalCharacterCount && TMP_TextParsingUtilities.IsCJK(m_textInfo.characterInfo[m_characterCount + 1].character))
+                    {
+                        shouldSaveHardLineBreak = true;
                     }
                     else if (isFirstWordOfLine)
                     {
@@ -5402,10 +5449,10 @@ namespace TMPro
         /// </summary>
         /// <param name="i"></param>
         /// <param name="index_X4"></param>
-        protected virtual void FillCharacterVertexBuffers(int i, int index_X4)
+        protected virtual void FillCharacterVertexBuffers(int i)
         {
             int materialIndex = m_textInfo.characterInfo[i].materialReferenceIndex;
-            index_X4 = m_textInfo.meshInfo[materialIndex].vertexCount;
+            int index_X4 = m_textInfo.meshInfo[materialIndex].vertexCount;
 
             // Check to make sure our current mesh buffer allocations can hold these new Quads.
             if (index_X4 >= m_textInfo.meshInfo[materialIndex].vertices.Length)
@@ -5453,10 +5500,10 @@ namespace TMPro
         }
 
 
-        protected virtual void FillCharacterVertexBuffers(int i, int index_X4, bool isVolumetric)
+        protected virtual void FillCharacterVertexBuffers(int i, bool isVolumetric)
         {
             int materialIndex = m_textInfo.characterInfo[i].materialReferenceIndex;
-            index_X4 = m_textInfo.meshInfo[materialIndex].vertexCount;
+            int index_X4 = m_textInfo.meshInfo[materialIndex].vertexCount;
 
             // Check to make sure our current mesh buffer allocations can hold these new Quads.
             if (index_X4 >= m_textInfo.meshInfo[materialIndex].vertices.Length)
@@ -5541,10 +5588,10 @@ namespace TMPro
         /// </summary>
         /// <param name="i"></param>
         /// <param name="spriteIndex_X4"></param>
-        protected virtual void FillSpriteVertexBuffers(int i, int index_X4)
+        protected virtual void FillSpriteVertexBuffers(int i)
         {
             int materialIndex = m_textInfo.characterInfo[i].materialReferenceIndex;
-            index_X4 = m_textInfo.meshInfo[materialIndex].vertexCount;
+            int index_X4 = m_textInfo.meshInfo[materialIndex].vertexCount;
 
             // Check to make sure our current mesh buffer allocations can hold these new Quads.
             if (index_X4 >= m_textInfo.meshInfo[materialIndex].vertices.Length)
@@ -5809,20 +5856,20 @@ namespace TMPro
             Vector2 uvTexelSize = new Vector2(1.0f / atlasWidth, 1.0f / atlasHeight);
 
             // UVs for the Quad
-            uvs0[0 + index] = uvGlyphCenter - uvTexelSize; // BL
-            uvs0[1 + index] = uvGlyphCenter + new Vector2(-uvTexelSize.x, uvTexelSize.y); // TL
-            uvs0[2 + index] = uvGlyphCenter + uvTexelSize; // TR
-            uvs0[3 + index] = uvGlyphCenter + new Vector2(uvTexelSize.x, -uvTexelSize.y); // BR
+            uvs0[index + 0] = uvGlyphCenter - uvTexelSize; // BL
+            uvs0[index + 1] = uvGlyphCenter + new Vector2(-uvTexelSize.x, uvTexelSize.y); // TL
+            uvs0[index + 2] = uvGlyphCenter + uvTexelSize; // TR
+            uvs0[index + 3] = uvGlyphCenter + new Vector2(uvTexelSize.x, -uvTexelSize.y); // BR
             #endregion
 
             // HIGHLIGHT UV2
             #region HANDLE UV2 - SDF SCALE
             Vector2[] uvs2 = m_textInfo.meshInfo[underlineMaterialIndex].uvs2;
             Vector2 customUV = new Vector2(0, 1);
-            uvs2[0 + index] = customUV;
-            uvs2[1 + index] = customUV;
-            uvs2[2 + index] = customUV;
-            uvs2[3 + index] = customUV;
+            uvs2[index + 0] = customUV;
+            uvs2[index + 1] = customUV;
+            uvs2[index + 2] = customUV;
+            uvs2[index + 3] = customUV;
             #endregion
 
             // HIGHLIGHT VERTEX COLORS
@@ -5831,10 +5878,10 @@ namespace TMPro
             highlightColor.a = m_fontColor32.a < highlightColor.a ? m_fontColor32.a : highlightColor.a;
 
             Color32[] colors32 = m_textInfo.meshInfo[underlineMaterialIndex].colors32;
-            colors32[0 + index] = highlightColor;
-            colors32[1 + index] = highlightColor;
-            colors32[2 + index] = highlightColor;
-            colors32[3 + index] = highlightColor;
+            colors32[index + 0] = highlightColor;
+            colors32[index + 1] = highlightColor;
+            colors32[index + 2] = highlightColor;
+            colors32[index + 3] = highlightColor;
             #endregion
 
             index += 4;
@@ -5870,7 +5917,9 @@ namespace TMPro
                 }
 
                 m_TextWrappingMode = TMP_Settings.textWrappingMode;
-                m_enableKerning = TMP_Settings.enableKerning;
+
+                m_ActiveFontFeatures = new List<OTL_FeatureTag>(TMP_Settings.fontFeatures);
+
                 m_enableExtraPadding = TMP_Settings.enableExtraPadding;
                 m_tintAllSprites = TMP_Settings.enableTintAllSprites;
                 m_parseCtrlCharacters = TMP_Settings.enableParseEscapeCharacters;
@@ -5881,10 +5930,20 @@ namespace TMPro
                 raycastTarget = TMP_Settings.enableRaycastTarget;
                 m_IsTextObjectScaleStatic = TMP_Settings.isTextObjectScaleStatic;
             }
-            else if ((int)m_textAlignment < 0xFF)
+            else
             {
                 // Convert Legacy TextAlignmentOptions enumerations from Unity 5.2 / 5.3.
-                m_textAlignment = TMP_Compatibility.ConvertTextAlignmentEnumValues(m_textAlignment);
+                if ((int)m_textAlignment < 0xFF)
+                    m_textAlignment = TMP_Compatibility.ConvertTextAlignmentEnumValues(m_textAlignment);
+                
+                // Convert use of the "enableKerning" property to the new "fontFeature" property.
+                if (m_ActiveFontFeatures.Count == 1 && m_ActiveFontFeatures[0] == 0)
+                {
+                    m_ActiveFontFeatures.Clear();
+                    
+                    if (m_enableKerning)
+                        m_ActiveFontFeatures.Add(OTL_FeatureTag.kern);
+                }
             }
 
             // Convert text alignment to independent horizontal and vertical alignment properties
@@ -7734,7 +7793,7 @@ namespace TMPro
                         // Reject tag if value is invalid.
                         if (value == Int16.MinValue) return false;
 
-                        switch (tagUnitType)
+                        switch (m_xmlAttribute[0].unitType)
                         {
                             case TagUnitType.Pixels:
                                 m_monoSpacing = value * (m_isOrthographic ? 1 : 0.1f);
@@ -7745,9 +7804,15 @@ namespace TMPro
                             case TagUnitType.Percentage:
                                 return false;
                         }
+                        
+                        // Check for potential DuoSpace attribute. 
+                        if (m_xmlAttribute[1].nameHashCode == (int)MarkupTag.DUOSPACE)
+                            m_duoSpace = ConvertToFloat(m_htmlTag, m_xmlAttribute[1].valueStartIndex, m_xmlAttribute[1].valueLength) != 0;
+
                         return true;
                     case MarkupTag.SLASH_MONOSPACE:
                         m_monoSpacing = 0;
+                        m_duoSpace = false;
                         return true;
                     case MarkupTag.CLASS:
                         return false;

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.Serialization;
-using System.Collections;
+using UnityEngine.TextCore;
 using System.Collections.Generic;
 
 
@@ -44,13 +44,30 @@ namespace TMPro
         /// <summary>
         /// Controls if Kerning is enabled on newly created text objects by default.
         /// </summary>
+        [System.Obsolete("The \"enableKerning\" property has been deprecated. Use the \"fontFeatures\" property to control what features are enabled by default on newly created text components.")]
         public static bool enableKerning
         {
-            get { return instance.m_enableKerning; }
+            get
+            {
+                if (instance.m_ActiveFontFeatures != null)
+                    return instance.m_ActiveFontFeatures.Contains(OTL_FeatureTag.kern);
+
+                return instance.m_enableKerning;
+            }
         }
         [SerializeField]
         private bool m_enableKerning;
 
+        /// <summary>
+        /// Controls which font features are enabled by default on newly created text objects.
+        /// </summary>
+        public static List<OTL_FeatureTag> fontFeatures
+        {
+            get { return instance.m_ActiveFontFeatures; }
+        }
+        [SerializeField]
+        private List<OTL_FeatureTag> m_ActiveFontFeatures = new List<OTL_FeatureTag> { 0 };
+        
         /// <summary>
         /// Controls if Extra Padding is enabled on newly created text objects by default.
         /// </summary>
@@ -433,6 +450,15 @@ namespace TMPro
                         TMP_PackageResourceImporterWindow.ShowPackageImporterWindow();
                     }
                     #endif
+
+                    // Convert use of the "enableKerning" property to the new "fontFeature" property.
+                    if (s_Instance != null && s_Instance.m_ActiveFontFeatures.Count == 1 && s_Instance.m_ActiveFontFeatures[0] == 0)
+                    {
+                        s_Instance.m_ActiveFontFeatures.Clear();
+                        
+                        if (s_Instance.m_enableKerning)
+                            s_Instance.m_ActiveFontFeatures.Add(OTL_FeatureTag.kern);
+                    }
                 }
 
                 return s_Instance;

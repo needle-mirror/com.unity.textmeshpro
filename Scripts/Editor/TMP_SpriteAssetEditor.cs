@@ -75,7 +75,7 @@ namespace TMPro.EditorUtilities
             m_spriteAtlas_prop = serializedObject.FindProperty("spriteSheet");
             m_material_prop = serializedObject.FindProperty("m_Material");
             m_SpriteCharacterTableProperty = serializedObject.FindProperty("m_SpriteCharacterTable");
-            m_SpriteGlyphTableProperty = serializedObject.FindProperty("m_SpriteGlyphTable");
+            m_SpriteGlyphTableProperty = serializedObject.FindProperty("m_GlyphTable");
 
             // Fallback TMP Sprite Asset list
             m_fallbackSpriteAssetList = new ReorderableList(serializedObject, serializedObject.FindProperty("fallbackSpriteAssets"), true, true, true, true);
@@ -91,6 +91,9 @@ namespace TMPro.EditorUtilities
             {
                 EditorGUI.LabelField(rect, new GUIContent("Fallback Sprite Asset List", "Select the Sprite Assets that will be searched and used as fallback when a given sprite is missing from this sprite asset."));
             };
+
+            // Clear glyph proxy lookups
+            TMP_PropertyDrawerUtilities.ClearGlyphProxyLookups();
         }
 
 

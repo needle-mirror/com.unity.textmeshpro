@@ -27,6 +27,10 @@ namespace TMPro.EditorUtilities
             SerializedProperty prop_MarkGlyphID = property.FindPropertyRelative("m_MarkGlyphID");
             SerializedProperty prop_MarkAdjustmentRecord = property.FindPropertyRelative("m_MarkPositionAdjustment");
 
+            // Refresh glyph proxy lookup dictionary if needed
+            if (TMP_PropertyDrawerUtilities.s_RefreshGlyphProxyLookup)
+                TMP_PropertyDrawerUtilities.RefreshGlyphProxyLookup(property.serializedObject);
+
             position.yMin += 2;
 
             float width = position.width / 2;
@@ -180,7 +184,7 @@ namespace TMPro.EditorUtilities
             return unicode;
         }
 
-        void DrawGlyph(uint glyphIndex, Rect position, SerializedProperty property)
+        void DrawGlyph(uint glyphIndex, Rect glyphDrawPosition, SerializedProperty property)
         {
             // Get a reference to the serialized object which can either be a TMP_FontAsset or FontAsset.
             SerializedObject so = property.serializedObject;
@@ -188,10 +192,7 @@ namespace TMPro.EditorUtilities
                 return;
 
             if (m_GlyphLookupDictionary == null)
-            {
-                m_GlyphLookupDictionary = new Dictionary<uint, GlyphProxy>();
-                TMP_PropertyDrawerUtilities.PopulateGlyphProxyLookupDictionary(so, m_GlyphLookupDictionary);
-            }
+                m_GlyphLookupDictionary = TMP_PropertyDrawerUtilities.GetGlyphProxyLookupDictionary(so);
 
             // Try getting a reference to the glyph for the given glyph index.
             if (!m_GlyphLookupDictionary.TryGetValue(glyphIndex, out GlyphProxy glyph))
@@ -204,9 +205,6 @@ namespace TMPro.EditorUtilities
             Material mat;
             if (TMP_PropertyDrawerUtilities.TryGetMaterial(so, atlasTexture, out mat) == false)
                 return;
-
-            // Draw glyph from atlas texture.
-            Rect glyphDrawPosition = position;
 
             int padding = so.FindProperty("m_AtlasPadding").intValue;
             GlyphRect glyphRect = glyph.glyphRect;

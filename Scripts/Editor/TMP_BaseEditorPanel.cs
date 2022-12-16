@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.TextCore.LowLevel;
 
 
 namespace TMPro.EditorUtilities
@@ -65,7 +66,7 @@ namespace TMPro.EditorUtilities
         static readonly GUIContent k_VerticalMappingLabel = new GUIContent("Vertical Mapping", "Vertical UV mapping when using a shader with a texture face option.");
         static readonly GUIContent k_LineOffsetLabel = new GUIContent("Line Offset", "Adds an horizontal offset to each successive line. Used for slanted texturing.");
 
-        static readonly GUIContent k_KerningLabel = new GUIContent("Kerning", "Enables character specific spacing between pairs of characters.");
+        static readonly GUIContent k_FontFeaturesLabel = new GUIContent("Font Features", "Font features available for the primary font asset assigned to the text component.");
         static readonly GUIContent k_PaddingLabel = new GUIContent("Extra Padding", "Adds some padding between the characters and the edge of the text mesh. Can reduce graphical errors when displaying small text.");
 
         static readonly GUIContent k_LeftLabel = new GUIContent("Left");
@@ -148,7 +149,7 @@ namespace TMPro.EditorUtilities
         protected SerializedProperty m_LinkedTextComponentProp;
         protected SerializedProperty m_ParentLinkedTextComponentProp;
 
-        protected SerializedProperty m_EnableKerningProp;
+        protected SerializedProperty m_FontFeaturesActiveProp;
 
         protected SerializedProperty m_IsRichTextProp;
 
@@ -182,6 +183,8 @@ namespace TMPro.EditorUtilities
 
         protected Vector3[] m_RectCorners = new Vector3[4];
         protected Vector3[] m_HandlePoints = new Vector3[4];
+
+        private static readonly string[] k_FontFeatures = new string[] { "kern", "liga", "mark", "mkmk" };
 
         protected virtual void OnEnable()
         {
@@ -229,7 +232,7 @@ namespace TMPro.EditorUtilities
             m_LinkedTextComponentProp = serializedObject.FindProperty("m_linkedTextComponent");
             m_ParentLinkedTextComponentProp = serializedObject.FindProperty("parentLinkedComponent");
 
-            m_EnableKerningProp = serializedObject.FindProperty("m_enableKerning");
+            m_FontFeaturesActiveProp = serializedObject.FindProperty("m_ActiveFontFeatures");
 
             m_EnableExtraPaddingProp = serializedObject.FindProperty("m_enableExtraPadding");
             m_IsRichTextProp = serializedObject.FindProperty("m_isRichText");
@@ -272,6 +275,25 @@ namespace TMPro.EditorUtilities
             // Get Styles from Style Sheet
             if (TMP_Settings.instance != null)
                 m_StyleNames = GetStyleNames();
+            
+            // Get list of font features for the primary font asset assigned to the text component
+            // FontEngine.LoadFontFace(m_TextComponent.font.SourceFont_EditorRef);
+            // OTL_Table gposTable = UnityEngine.TextCore.LowLevel.FontEngine.GetOpenTypeLayoutTable(OTL_TableType.GPOS);
+            // OTL_Table gsubTable = UnityEngine.TextCore.LowLevel.FontEngine.GetOpenTypeLayoutTable(OTL_TableType.GSUB);
+            //
+            // HashSet<string> fontFeatures = new HashSet<string>();
+            //
+            // foreach (OTL_Feature feature in gposTable.features)
+            // {
+            //     fontFeatures.Add(feature.tag);
+            // }
+            //
+            // foreach (OTL_Feature feature in gsubTable.features)
+            // {
+            //     fontFeatures.Add(feature.tag);
+            // }
+            //
+            // m_FontFeatures = fontFeatures.OrderBy(item => item).ToArray();
 
             // Register to receive events when style sheets are modified.
             TMPro_EventManager.TEXT_STYLE_PROPERTY_EVENT.Add(ON_TEXT_STYLE_CHANGED);
@@ -1236,15 +1258,50 @@ namespace TMPro.EditorUtilities
             EditorGUILayout.Space();
         }
 
-        protected void DrawKerning()
+        protected void DrawFontFeatures()
         {
-            // KERNING
+            int srcMask = 0;
+
+            int featureCount = m_FontFeaturesActiveProp.arraySize;
+            for (int i = 0; i < featureCount; i++)
+            {
+                SerializedProperty activeFeatureProperty = m_FontFeaturesActiveProp.GetArrayElementAtIndex(i);
+                
+                for (int j = 0; j < k_FontFeatures.Length; j++)
+                {
+                    if (activeFeatureProperty.intValue == k_FontFeatures[j].TagToInt())
+                    {
+                        srcMask |= 0x1 << j;
+                        break;
+                    }
+                }
+            }
+
             EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(m_EnableKerningProp, k_KerningLabel);
+            
+            int mask = EditorGUILayout.MaskField(k_FontFeaturesLabel, srcMask, k_FontFeatures);
+            
             if (EditorGUI.EndChangeCheck())
             {
+                m_FontFeaturesActiveProp.ClearArray();
+
+                int writeIndex = 0;
+                
+                for (int i = 0; i < k_FontFeatures.Length; i++)
+                {
+                    int bit = 0x1 << i;
+                    if ((mask & bit) == bit)
+                    {
+                        m_FontFeaturesActiveProp.InsertArrayElementAtIndex(writeIndex);
+                        SerializedProperty newFeature = m_FontFeaturesActiveProp.GetArrayElementAtIndex(writeIndex);
+                        newFeature.intValue = k_FontFeatures[i].TagToInt();
+
+                        writeIndex += 1;
+                    }
+                }
+
                 m_HavePropertiesChanged = true;
-            }
+            }   
         }
 
         protected void DrawPadding()

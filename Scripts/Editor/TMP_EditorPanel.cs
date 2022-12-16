@@ -69,7 +69,6 @@ namespace TMPro.EditorUtilities
 
             if (Foldout.extraSettings)
             {
-                //EditorGUI.indentLevel += 1;
 
                 DrawMargins();
 
@@ -91,13 +90,10 @@ namespace TMPro.EditorUtilities
 
                 DrawStyleSheet();
 
-                //DrawVolumetricSetup();
-
-                DrawKerning();
+                DrawFontFeatures();
 
                 DrawPadding();
-
-                //EditorGUI.indentLevel -= 1;
+                
             }
         }
 

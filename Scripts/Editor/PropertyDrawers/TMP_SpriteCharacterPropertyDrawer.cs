@@ -16,7 +16,6 @@ namespace TMPro.EditorUtilities
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             SerializedProperty prop_SpriteName = property.FindPropertyRelative("m_Name");
-            //SerializedProperty prop_SpriteNameHashCode = property.FindPropertyRelative("m_HashCode");
             SerializedProperty prop_SpriteUnicode = property.FindPropertyRelative("m_Unicode");
             SerializedProperty prop_SpriteGlyphIndex = property.FindPropertyRelative("m_GlyphIndex");
             SerializedProperty prop_SpriteScale = property.FindPropertyRelative("m_Scale");
@@ -168,10 +167,7 @@ namespace TMPro.EditorUtilities
         void DrawSpriteGlyph(uint glyphIndex,  Rect position, SerializedProperty property)
         {
             if (m_GlyphLookupDictionary == null)
-            {
-                m_GlyphLookupDictionary = new Dictionary<uint, GlyphProxy>();
-                TMP_PropertyDrawerUtilities.PopulateSpriteGlyphProxyLookupDictionary(property.serializedObject, m_GlyphLookupDictionary);
-            }
+                m_GlyphLookupDictionary = TMP_PropertyDrawerUtilities.GetGlyphProxyLookupDictionary(property.serializedObject);
 
             // Try getting a reference to the glyph for the given glyph index.
             if (!m_GlyphLookupDictionary.TryGetValue(glyphIndex, out GlyphProxy glyph))

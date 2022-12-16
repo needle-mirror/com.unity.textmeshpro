@@ -159,6 +159,8 @@ namespace TMPro
             Assert.AreEqual(recordCount, records.Length);
         }
 
+        // GetOpenTypeFontFeatureList throws NotImplementedException with new FontEngine changes to support FontFeature (TEXTCORE_FONT_ENGINE_1_5_OR_NEWER)
+        /*
         [TestCase("e3265ab4bf004d28a9537516768c1c75", 0)]
         [TestCase("4beb055f07aaff244873dec698d0363e", 0)]
         [TestCase("24007ea0bd4d6b2418f4caf1b06e2cb4", 324)]
@@ -170,13 +172,13 @@ namespace TMPro
             if (FontEngine.LoadFontFace(filePath) != FontEngineError.Success)
                 return;
 
-            UnityEngine.TextCore.LowLevel.OpenTypeFeature[] fontFeatureList = FontEngine.GetOpenTypeFontFeatureList();
+            OpenTypeFeature[] fontFeatureList = FontEngine.GetOpenTypeFontFeatureList();
 
             if (fontFeatureList == null)
                 return;
 
             Assert.AreEqual(recordCount, fontFeatureList.Length);
-        }
+        } */
         #endif
     }
 }

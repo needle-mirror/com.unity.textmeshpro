@@ -1,6 +1,26 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [3.2.0-pre.4] - 2022-12-16
+### Changes
+- Fixed italic horizontal displacement of punctuation. (TMPB-133)
+- Updated Input Field to not restore the original text when the X in the HoloLens keyboard is pressed.
+- Fixed MissingReferenceException when changing scenes. See case [TMPB-120](https://issuetracker.unity3d.com/issues/missingreferenceexception-thrown-when-changing-scenes) and forum [thread](https://forum.unity.com/threads/tmpro-submeshui-error-when-changing-scenes.1129724/) for more info.
+- Fixed Undo operation not correctly undoing some newly created TMP objects. Case #1400391
+- Fixed glyphs not being drawn in the various font asset inspector tables although present in the glyph table until unselecting and re-selecting the font asset.
+- Fixed incorrect line breaking when using a mixture of Latin and CJK text.
+- Fixed potential NullReferenceException when creating font asset with multiple atlas textures. See [forum post](https://forum.unity.com/threads/how-can-i-submit-bugs-or-issues-for-tmp.628687/#post-8186100) for details.
+- Fixed potential issue when using the &lt;mark&gt; tag in conjunction with Ellipsis.
+- Added new "Get Font Features" option in the Generation Settings of Font Assets to provide control over fetching of font feature data.
+- Fix potential duplication of Ligature data when using Dynamic Font Assets.
+- Added new "duospace" attribute to the &lt;mspace=value&gt; markup tag where the spacing of the '.', ':' and ',' characters will be half of the value. This was added as an option when displaying numerical values using this markup tag.
+- With the addition of support for new OpenType Layout features such as Ligatures, Mark-to-Base and Mark-to-Mark, we have made the following changes:
+  - The "Kerning" option in the Extra Settings of the text component inspector has been replaced by a new popup menu to independently control these features which are "kern", "liga", "mark" and "mkmk"
+  - The "enableKerning" property has been deprecated and replaced by the "fontFeatures" property which is a list that contains which features are enabled on the text component.
+- Fixed two potential NullReferenceException related to missing material references or materials on SubMesh text objects. See [forum post](https://forum.unity.com/threads/tmpro-submeshui-error-when-changing-scenes.1129724/#post-8462771) for details.
+- Fixed for text alignment mode Justified and Flush blending not working correctly when using &lt;NBSP&gt; in the text.
+- Fixed external keyboard on iOS/tvOS and Android when Hide Soft Keyboard is used
+
 ## [3.2.0-pre.3] - 2022-03-07
 ### Changes
 - Fixed a potential IndexOutOfRangeException when trying to select any portions of text in an Input Field whose child text component is using Overflow mode Truncate or Ellipsis where due to RectTransform width and / or height restrictions have results in the text being fully truncated. Case #1361032 

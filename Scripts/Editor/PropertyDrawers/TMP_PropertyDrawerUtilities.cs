@@ -18,16 +18,36 @@ namespace TMPro.EditorUtilities
     internal static class TMP_PropertyDrawerUtilities
     {
         internal static bool s_RefreshGlyphProxyLookup;
+        private static Dictionary<SerializedObject, Dictionary<uint, GlyphProxy>> s_GlyphProxyLookups = new Dictionary<SerializedObject, Dictionary<uint, GlyphProxy>>();
 
-        internal static void RefreshGlyphProxyLookup(SerializedObject so, Dictionary<uint, GlyphProxy> glyphLookup)
+        internal static void ClearGlyphProxyLookups()
         {
-            if (glyphLookup != null)
-            {
-                glyphLookup.Clear();
-                PopulateGlyphProxyLookupDictionary(so, glyphLookup);
-            }
+            s_GlyphProxyLookups.Clear();
+        }
+
+        internal static void RefreshGlyphProxyLookup(SerializedObject so)
+        {
+            if (!s_GlyphProxyLookups.ContainsKey(so))
+                return;
+
+            Dictionary<uint, GlyphProxy> glyphProxyLookup = s_GlyphProxyLookups[so];
+
+            glyphProxyLookup.Clear();
+            PopulateGlyphProxyLookupDictionary(so, glyphProxyLookup);
 
             s_RefreshGlyphProxyLookup = false;
+        }
+
+        internal static Dictionary<uint, GlyphProxy> GetGlyphProxyLookupDictionary(SerializedObject so)
+        {
+            if (s_GlyphProxyLookups.ContainsKey(so))
+                return s_GlyphProxyLookups[so];
+
+            Dictionary<uint, GlyphProxy> glyphProxyLookup = new Dictionary<uint, GlyphProxy>();
+            PopulateGlyphProxyLookupDictionary(so, glyphProxyLookup);
+            s_GlyphProxyLookups.Add(so, glyphProxyLookup);
+
+            return glyphProxyLookup;
         }
 
         /// <summary>
@@ -35,7 +55,7 @@ namespace TMPro.EditorUtilities
         /// </summary>
         /// <param name="so"></param>
         /// <param name="lookupDictionary"></param>
-        internal static void PopulateGlyphProxyLookupDictionary(SerializedObject so, Dictionary<uint, GlyphProxy> lookupDictionary)
+        static void PopulateGlyphProxyLookupDictionary(SerializedObject so, Dictionary<uint, GlyphProxy> lookupDictionary)
         {
             if (lookupDictionary == null)
                 return;
@@ -52,21 +72,31 @@ namespace TMPro.EditorUtilities
             }
         }
 
-        internal static void PopulateSpriteGlyphProxyLookupDictionary(SerializedObject so, Dictionary<uint, GlyphProxy> lookupDictionary)
+        internal static GlyphRect GetGlyphRectFromGlyphSerializedProperty(SerializedProperty property)
         {
-            if (lookupDictionary == null)
-                return;
+            SerializedProperty glyphRectProp = property.FindPropertyRelative("m_GlyphRect");
 
-            // Get reference to serialized property for the glyph table
-            SerializedProperty glyphTable = so.FindProperty("m_SpriteGlyphTable");
+            GlyphRect glyphRect = new GlyphRect();
+            glyphRect.x = glyphRectProp.FindPropertyRelative("m_X").intValue;
+            glyphRect.y = glyphRectProp.FindPropertyRelative("m_Y").intValue;
+            glyphRect.width = glyphRectProp.FindPropertyRelative("m_Width").intValue;
+            glyphRect.height = glyphRectProp.FindPropertyRelative("m_Height").intValue;
 
-            for (int i = 0; i < glyphTable.arraySize; i++)
-            {
-                SerializedProperty glyphProperty = glyphTable.GetArrayElementAtIndex(i);
-                GlyphProxy proxy = GetGlyphProxyFromSerializedProperty(glyphProperty);
+            return glyphRect;
+        }
 
-                lookupDictionary.Add(proxy.index, proxy);
-            }
+        internal static GlyphMetrics GetGlyphMetricsFromGlyphSerializedProperty(SerializedProperty property)
+        {
+            SerializedProperty glyphMetricsProperty = property.FindPropertyRelative("m_Metrics");
+
+            GlyphMetrics glyphMetrics = new GlyphMetrics();
+            glyphMetrics.horizontalBearingX = glyphMetricsProperty.FindPropertyRelative("m_HorizontalBearingX").floatValue;
+            glyphMetrics.horizontalBearingY = glyphMetricsProperty.FindPropertyRelative("m_HorizontalBearingY").floatValue;
+            glyphMetrics.horizontalAdvance = glyphMetricsProperty.FindPropertyRelative("m_HorizontalAdvance").floatValue;
+            glyphMetrics.width = glyphMetricsProperty.FindPropertyRelative("m_Width").floatValue;
+            glyphMetrics.height = glyphMetricsProperty.FindPropertyRelative("m_Height").floatValue;
+
+            return glyphMetrics;
         }
 
         /// <summary>
@@ -74,25 +104,13 @@ namespace TMPro.EditorUtilities
         /// </summary>
         /// <param name="property"></param>
         /// <returns></returns>
-        static GlyphProxy GetGlyphProxyFromSerializedProperty(SerializedProperty property)
+        internal static GlyphProxy GetGlyphProxyFromSerializedProperty(SerializedProperty property)
         {
             GlyphProxy proxy = new GlyphProxy();
             proxy.index = (uint)property.FindPropertyRelative("m_Index").intValue;
-
-            SerializedProperty glyphRectProperty = property.FindPropertyRelative("m_GlyphRect");
-            proxy.glyphRect = new GlyphRect();
-            proxy.glyphRect.x = glyphRectProperty.FindPropertyRelative("m_X").intValue;
-            proxy.glyphRect.y = glyphRectProperty.FindPropertyRelative("m_Y").intValue;
-            proxy.glyphRect.width = glyphRectProperty.FindPropertyRelative("m_Width").intValue;
-            proxy.glyphRect.height = glyphRectProperty.FindPropertyRelative("m_Height").intValue;
-
-            SerializedProperty glyphMetricsProperty = property.FindPropertyRelative("m_Metrics");
-            proxy.metrics = new GlyphMetrics();
-            proxy.metrics.horizontalBearingX = glyphMetricsProperty.FindPropertyRelative("m_HorizontalBearingX").floatValue;
-            proxy.metrics.horizontalBearingY = glyphMetricsProperty.FindPropertyRelative("m_HorizontalBearingY").floatValue;
-            proxy.metrics.horizontalAdvance = glyphMetricsProperty.FindPropertyRelative("m_HorizontalAdvance").floatValue;
-            proxy.metrics.width = glyphMetricsProperty.FindPropertyRelative("m_Width").floatValue;
-            proxy.metrics.height = glyphMetricsProperty.FindPropertyRelative("m_Height").floatValue;
+            proxy.glyphRect = GetGlyphRectFromGlyphSerializedProperty(property);
+            proxy.metrics = GetGlyphMetricsFromGlyphSerializedProperty(property);
+            proxy.atlasIndex = property.FindPropertyRelative("m_AtlasIndex").intValue;
 
             return proxy;
         }
@@ -142,6 +160,7 @@ namespace TMPro.EditorUtilities
                     return false;
 
                 mat.mainTexture = texture;
+                mat.color = Color.white;
             }
             else
             {

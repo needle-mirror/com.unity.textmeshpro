@@ -38,12 +38,13 @@ namespace TMPro.EditorUtilities
 
             public static readonly GUIContent textWrappingModeLabel = new GUIContent("Text Wrapping Mode");
             public static readonly GUIContent kerningLabel = new GUIContent("Kerning");
+            public static readonly GUIContent fontFeaturesLabel = new GUIContent("Font Features", "Font features that should be set by default on the text component.");
             public static readonly GUIContent extraPaddingLabel = new GUIContent("Extra Padding");
             public static readonly GUIContent tintAllSpritesLabel = new GUIContent("Tint All Sprites");
             public static readonly GUIContent parseEscapeCharactersLabel = new GUIContent("Parse Escape Sequence");
 
             public static readonly GUIContent dynamicFontSystemSettingsLabel = new GUIContent("Dynamic Font System Settings");
-            public static readonly GUIContent getFontFeaturesAtRuntime = new GUIContent("Get Font Features at Runtime", "Determines if Glyph Adjustment Data will be retrieved from font files at runtime when new characters and glyphs are added to font assets.");
+            public static readonly GUIContent getFontFeaturesAtRuntime = new GUIContent("Get Font Features at Runtime", "Determines if OpenType font features should be retrieved from source font files as new characters and glyphs are added to font assets.");
             public static readonly GUIContent dynamicAtlasTextureGroup = new GUIContent("Dynamic Atlas Texture Group");
 
             public static readonly GUIContent missingGlyphLabel = new GUIContent("Missing Character Unicode", "The character to be displayed when the requested character is not found in any font asset or fallbacks.");
@@ -96,7 +97,7 @@ namespace TMPro.EditorUtilities
         SerializedProperty m_PropMatchMaterialPreset;
         SerializedProperty m_PropHideSubTextObjects;
         SerializedProperty m_PropTextWrappingMode;
-        SerializedProperty m_PropKerning;
+        SerializedProperty m_PropFontFeatures;
         SerializedProperty m_PropExtraPadding;
         SerializedProperty m_PropTintAllSprites;
         SerializedProperty m_PropParseEscapeCharacters;
@@ -114,6 +115,8 @@ namespace TMPro.EditorUtilities
 
         private const string k_UndoRedo = "UndoRedoPerformed";
         private bool m_IsFallbackGlyphCacheDirty;
+        
+        private static readonly string[] k_FontFeatures = new string[] { "kern", "liga", "mark", "mkmk" };
 
         public void OnEnable()
         {
@@ -187,7 +190,8 @@ namespace TMPro.EditorUtilities
             m_PropHideSubTextObjects = serializedObject.FindProperty("m_HideSubTextObjects");
 
             m_PropTextWrappingMode = serializedObject.FindProperty("m_TextWrappingMode");
-            m_PropKerning = serializedObject.FindProperty("m_enableKerning");
+            
+            m_PropFontFeatures = serializedObject.FindProperty("m_ActiveFontFeatures");
             m_PropExtraPadding = serializedObject.FindProperty("m_enableExtraPadding");
             m_PropTintAllSprites = serializedObject.FindProperty("m_enableTintAllSprites");
             m_PropParseEscapeCharacters = serializedObject.FindProperty("m_enableParseEscapeCharacters");
@@ -297,7 +301,8 @@ namespace TMPro.EditorUtilities
             EditorGUIUtility.fieldWidth = fieldWidth;
 
             EditorGUILayout.PropertyField(m_PropTextWrappingMode, Styles.textWrappingModeLabel);
-            EditorGUILayout.PropertyField(m_PropKerning, Styles.kerningLabel);
+
+            DrawFontFeatures();
 
             EditorGUILayout.PropertyField(m_PropExtraPadding, Styles.extraPaddingLabel);
             EditorGUILayout.PropertyField(m_PropTintAllSprites, Styles.tintAllSpritesLabel);
@@ -392,6 +397,50 @@ namespace TMPro.EditorUtilities
                 EditorUtility.SetDirty(target);
                 TMPro_EventManager.ON_TMP_SETTINGS_CHANGED();
             }
+        }
+
+        void DrawFontFeatures()
+        {
+            int srcMask = 0;
+
+            int featureCount = m_PropFontFeatures.arraySize;
+            for (int i = 0; i < featureCount; i++)
+            {
+                SerializedProperty activeFeatureProperty = m_PropFontFeatures.GetArrayElementAtIndex(i);
+                
+                for (int j = 0; j < k_FontFeatures.Length; j++)
+                {
+                    if (activeFeatureProperty.intValue == k_FontFeatures[j].TagToInt())
+                    {
+                        srcMask |= 0x1 << j;
+                        break;
+                    }
+                }
+            }
+
+            EditorGUI.BeginChangeCheck();
+            
+            int mask = EditorGUILayout.MaskField(Styles.fontFeaturesLabel, srcMask, k_FontFeatures);
+            
+            if (EditorGUI.EndChangeCheck())
+            {
+                m_PropFontFeatures.ClearArray();
+
+                int writeIndex = 0;
+                
+                for (int i = 0; i < k_FontFeatures.Length; i++)
+                {
+                    int bit = 0x1 << i;
+                    if ((mask & bit) == bit)
+                    {
+                        m_PropFontFeatures.InsertArrayElementAtIndex(writeIndex);
+                        SerializedProperty newFeature = m_PropFontFeatures.GetArrayElementAtIndex(writeIndex);
+                        newFeature.intValue = k_FontFeatures[i].TagToInt();
+
+                        writeIndex += 1;
+                    }
+                }
+            }   
         }
     }
 

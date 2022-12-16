@@ -14,8 +14,6 @@ namespace TMPro.EditorUtilities
         private static readonly GUIContent k_AtlasIndexLabel = new GUIContent("Atlas Index:", "The index of the atlas texture that contains this glyph.");
         private static readonly GUIContent k_ClassTypeLabel = new GUIContent("Class Type:", "The class definition type of this glyph.");
 
-        private Dictionary<uint, GlyphProxy> m_GlyphLookupDictionary;
-
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             SerializedProperty prop_GlyphIndex = property.FindPropertyRelative("m_Index");
@@ -24,9 +22,6 @@ namespace TMPro.EditorUtilities
             SerializedProperty prop_Scale = property.FindPropertyRelative("m_Scale");
             SerializedProperty prop_AtlasIndex = property.FindPropertyRelative("m_AtlasIndex");
             SerializedProperty prop_ClassDefinitionType = property.FindPropertyRelative("m_ClassDefinitionType");
-
-            if (TMP_PropertyDrawerUtilities.s_RefreshGlyphProxyLookup)
-                TMP_PropertyDrawerUtilities.RefreshGlyphProxyLookup(property.serializedObject, m_GlyphLookupDictionary);
 
             GUIStyle style = new GUIStyle(EditorStyles.label);
             style.richText = true;
@@ -55,7 +50,7 @@ namespace TMPro.EditorUtilities
                 EditorGUI.PropertyField(new Rect(rect.x + 190, rect.y + 65, minWidth, 18), prop_ClassDefinitionType, k_ClassTypeLabel);
             }
 
-            DrawGlyph((uint)prop_GlyphIndex.intValue, new Rect(position.x, position.y + 2, 64, 80), property);
+            DrawGlyph(new Rect(position.x, position.y + 2, 64, 80), property);
         }
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
@@ -63,36 +58,24 @@ namespace TMPro.EditorUtilities
             return 130f;
         }
 
-        void DrawGlyph(uint glyphIndex, Rect position, SerializedProperty property)
+        void DrawGlyph(Rect glyphDrawPosition, SerializedProperty property)
         {
             // Get a reference to the serialized object which can either be a TMP_FontAsset or FontAsset.
             SerializedObject so = property.serializedObject;
             if (so == null)
                 return;
 
-            if (m_GlyphLookupDictionary == null)
-            {
-                m_GlyphLookupDictionary = new Dictionary<uint, GlyphProxy>();
-                TMP_PropertyDrawerUtilities.PopulateGlyphProxyLookupDictionary(so, m_GlyphLookupDictionary);
-            }
-
-            // Try getting a reference to the glyph for the given glyph index.
-            if (!m_GlyphLookupDictionary.TryGetValue(glyphIndex, out GlyphProxy glyph))
-                return;
-
             Texture2D atlasTexture;
-            if (TMP_PropertyDrawerUtilities.TryGetAtlasTextureFromSerializedObject(so, glyph.atlasIndex, out atlasTexture) == false)
+            int atlasIndex = property.FindPropertyRelative("m_AtlasIndex").intValue;
+            int padding = so.FindProperty("m_AtlasPadding").intValue;
+            if (TMP_PropertyDrawerUtilities.TryGetAtlasTextureFromSerializedObject(so, atlasIndex, out atlasTexture) == false)
                 return;
 
             Material mat;
             if (TMP_PropertyDrawerUtilities.TryGetMaterial(so, atlasTexture, out mat) == false)
                 return;
 
-            // Draw glyph from atlas texture.
-            Rect glyphDrawPosition = position;
-
-            int padding = so.FindProperty("m_AtlasPadding").intValue;
-            GlyphRect glyphRect = glyph.glyphRect;
+            GlyphRect glyphRect = TMP_PropertyDrawerUtilities.GetGlyphRectFromGlyphSerializedProperty(property);
             int glyphOriginX = glyphRect.x - padding;
             int glyphOriginY = glyphRect.y - padding;
             int glyphWidth = glyphRect.width + padding * 2;

@@ -271,7 +271,7 @@ namespace TMPro
 
         [Test]
         [TestCase("<mspace=30>ABC</mspace>", -34.0965118f, -32.0f, -31.1279068f, -29.0f, -28.1593018f, -26.0f)]
-        [TestCase("<mspace=2em>ABC</mspace>", -33.7965126f, -31.3999996f, -30.2279072f, -27.7999992f, -26.6593018f, -24.1999989f)]
+        [TestCase("<mspace=2em>ABC</mspace>", -33.7965126f, -31.3999996f, -30.2279072f, -27.7999992f, -26.6593018f, -24.2000008f)]
         public void MarkupTag_Mspace(string sourceText, float origin1, float advance1, float origin2, float advance2, float origin3, float advance3)
         {
             m_TextComponent.text = sourceText;

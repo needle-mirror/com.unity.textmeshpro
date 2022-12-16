@@ -115,6 +115,7 @@ namespace TMPro
         PADDING = -2144568463,
         FAMILYNAME = 704251153,
         STYLENAME = -1207081936,
+        DUOSPACE = 582810522,           // <mspace="value" duospace=1> to enable this mode
 
         // Named Colors
         RED = 91635,

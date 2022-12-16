@@ -31,7 +31,6 @@ namespace TMPro.EditorUtilities
             GUI.Label(rect, (Foldout.extraSettings ? k_UiStateLabel[0] : k_UiStateLabel[1]), TMP_UIStyleManager.rightLabel);
             if (Foldout.extraSettings)
             {
-                //EditorGUI.indentLevel += 1;
 
                 DrawMargins();
 
@@ -52,12 +51,11 @@ namespace TMPro.EditorUtilities
                 DrawSpriteAsset();
 
                 DrawStyleSheet();
-
-                DrawKerning();
+                
+                DrawFontFeatures();
 
                 DrawPadding();
 
-                //EditorGUI.indentLevel -= 1;
             }
         }
 
