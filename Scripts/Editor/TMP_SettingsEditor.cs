@@ -115,7 +115,7 @@ namespace TMPro.EditorUtilities
 
         private const string k_UndoRedo = "UndoRedoPerformed";
         private bool m_IsFallbackGlyphCacheDirty;
-        
+
         private static readonly string[] k_FontFeatures = new string[] { "kern", "liga", "mark", "mkmk" };
 
         public void OnEnable()
@@ -190,7 +190,7 @@ namespace TMPro.EditorUtilities
             m_PropHideSubTextObjects = serializedObject.FindProperty("m_HideSubTextObjects");
 
             m_PropTextWrappingMode = serializedObject.FindProperty("m_TextWrappingMode");
-            
+
             m_PropFontFeatures = serializedObject.FindProperty("m_ActiveFontFeatures");
             m_PropExtraPadding = serializedObject.FindProperty("m_enableExtraPadding");
             m_PropTintAllSprites = serializedObject.FindProperty("m_enableTintAllSprites");
@@ -407,7 +407,7 @@ namespace TMPro.EditorUtilities
             for (int i = 0; i < featureCount; i++)
             {
                 SerializedProperty activeFeatureProperty = m_PropFontFeatures.GetArrayElementAtIndex(i);
-                
+
                 for (int j = 0; j < k_FontFeatures.Length; j++)
                 {
                     if (activeFeatureProperty.intValue == k_FontFeatures[j].TagToInt())
@@ -419,15 +419,15 @@ namespace TMPro.EditorUtilities
             }
 
             EditorGUI.BeginChangeCheck();
-            
+
             int mask = EditorGUILayout.MaskField(Styles.fontFeaturesLabel, srcMask, k_FontFeatures);
-            
+
             if (EditorGUI.EndChangeCheck())
             {
                 m_PropFontFeatures.ClearArray();
 
                 int writeIndex = 0;
-                
+
                 for (int i = 0; i < k_FontFeatures.Length; i++)
                 {
                     int bit = 0x1 << i;
@@ -440,11 +440,10 @@ namespace TMPro.EditorUtilities
                         writeIndex += 1;
                     }
                 }
-            }   
+            }
         }
     }
 
-#if UNITY_2018_3_OR_NEWER
     class TMP_ResourceImporterProvider : SettingsProvider
     {
         TMP_PackageResourceImporter m_ResourceImporter;
@@ -489,5 +488,4 @@ namespace TMPro.EditorUtilities
             return providers.ToArray();
         }
     }
-#endif
 }

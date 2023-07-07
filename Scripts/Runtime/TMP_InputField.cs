@@ -1,4 +1,4 @@
-﻿//#define TMP_DEBUG_MODE
+//#define TMP_DEBUG_MODE
 
 using System;
 using System.Collections;
@@ -27,6 +27,7 @@ namespace TMPro
         IEndDragHandler,
         IPointerClickHandler,
         ISubmitHandler,
+        ICancelHandler,
         ICanvasElement,
         ILayoutElement,
         IScrollHandler
@@ -113,7 +114,7 @@ namespace TMPro
         protected RectMask2D m_TextComponentRectMask;
 
         protected RectMask2D m_TextViewportRectMask;
-        private Rect m_CachedViewportRect;
+        //private Rect m_CachedViewportRect;
 
         [SerializeField]
         protected TMP_Text m_TextComponent;
@@ -454,7 +455,6 @@ namespace TMPro
                     case RuntimePlatform.WSAPlayerX86:
                     case RuntimePlatform.WSAPlayerX64:
                     case RuntimePlatform.WSAPlayerARM:
-                    case RuntimePlatform.Stadia:
                     #if UNITY_2020_2_OR_NEWER
                     case RuntimePlatform.PS4:
                         #if !(UNITY_2020_2_1 || UNITY_2020_2_2)
@@ -485,7 +485,6 @@ namespace TMPro
                     case RuntimePlatform.WSAPlayerX86:
                     case RuntimePlatform.WSAPlayerX64:
                     case RuntimePlatform.WSAPlayerARM:
-                    case RuntimePlatform.Stadia:
                     #if UNITY_2020_2_OR_NEWER
                     case RuntimePlatform.PS4:
                         #if !(UNITY_2020_2_1 || UNITY_2020_2_2)
@@ -983,7 +982,7 @@ namespace TMPro
         private bool m_IsStringPositionDirty;
         private bool m_IsCaretPositionDirty;
         private bool m_forceRectTransformAdjustment;
-		
+
 		// Primary to track when an user presses on the X to close the keyboard in the HoloLens
 		private bool m_IsKeyboardBeingClosedInHoloLens = false;
 
@@ -1515,11 +1514,7 @@ namespace TMPro
         // In-place editing can change state if a hardware keyboard becomes available or is hidden while the input field is activated.
         private bool InPlaceEditingChanged()
         {
-            #if UNITY_2019_1_OR_NEWER
                 return !s_IsQuestDevice && m_TouchKeyboardAllowsInPlaceEditing != TouchScreenKeyboard.isInPlaceEditingAllowed;
-            #else
-                return false;
-            #endif
         }
 
         // Returns true if the TouchScreenKeyboard should be used. On Android and Chrome OS, we only want to use the
@@ -1529,13 +1524,11 @@ namespace TMPro
             RuntimePlatform platform = Application.platform;
             switch (platform)
             {
-                #if UNITY_2019_1_OR_NEWER
                 case RuntimePlatform.Android:
                     if (s_IsQuestDevice)
                         return TouchScreenKeyboard.isSupported;
 
                     return !TouchScreenKeyboard.isInPlaceEditingAllowed;
-                #endif
                 default:
                     return TouchScreenKeyboard.isSupported;
             }
@@ -2281,10 +2274,6 @@ namespace TMPro
 
         protected virtual bool IsValidChar(char c)
         {
-            // Null character
-            if (c == 0)
-                return false;
-
             // Delete key on mac
             if (c == 127)
                 return false;
@@ -2292,6 +2281,10 @@ namespace TMPro
             // Accept newline and tab
             if (c == '\t' || c == '\n')
                 return true;
+
+            // Control characters (not printable)
+            if (c < 32)
+                return false;
 
             return true;
 
@@ -2376,9 +2369,10 @@ namespace TMPro
             }
 
             if (consumedEvent)
+            {
                 UpdateLabel();
-
-            eventData.Use();
+                eventData.Use();
+            }
         }
 
 
@@ -4295,9 +4289,7 @@ namespace TMPro
 
             // Cache the value of isInPlaceEditingAllowed, because on UWP this involves calling into native code
             // The value only needs to be updated once when the TouchKeyboard is opened.
-            #if UNITY_2019_1_OR_NEWER
             m_TouchKeyboardAllowsInPlaceEditing = !s_IsQuestDevice && TouchScreenKeyboard.isInPlaceEditingAllowed;
-            #endif
 
             if (TouchScreenKeyboardShouldBeUsed() && shouldHideSoftKeyboard == false)
             {
@@ -4442,6 +4434,28 @@ namespace TMPro
                 m_ShouldActivateNextUpdate = true;
 
             SendOnSubmit();
+            DeactivateInputField();
+            eventData.Use();
+        }
+
+        public virtual void OnCancel(BaseEventData eventData)
+        {
+            if (!IsActive() || !IsInteractable())
+                return;
+
+            if (!isFocused)
+                m_ShouldActivateNextUpdate = true;
+
+            m_WasCanceled = true;
+            DeactivateInputField();
+            eventData.Use();
+        }
+
+        public override void OnMove(AxisEventData eventData)
+        {
+            // Prevent UI navigation while text is being edited.
+            if (!m_AllowInput)
+                base.OnMove(eventData);
         }
 
         //public virtual void OnLostFocus(BaseEventData eventData)

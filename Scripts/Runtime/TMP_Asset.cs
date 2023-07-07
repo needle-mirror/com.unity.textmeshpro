@@ -54,7 +54,7 @@ namespace TMPro
         public FaceInfo faceInfo
         {
             get { return m_FaceInfo; }
-            internal set { m_FaceInfo = value; }
+            set { m_FaceInfo = value; }
         }
 
         /// <summary>

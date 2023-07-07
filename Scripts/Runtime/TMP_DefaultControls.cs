@@ -190,9 +190,7 @@ namespace TMPro
             SetDefaultColorTransitionValues(inputField);
 
             RectMask2D rectMask = textArea.AddComponent<RectMask2D>();
-            #if UNITY_2019_4_OR_NEWER
             rectMask.padding = new Vector4(-8, -5, -8, -5);
-            #endif
 
             RectTransform textAreaRectTransform = textArea.GetComponent<RectTransform>();
             textAreaRectTransform.anchorMin = Vector2.zero;

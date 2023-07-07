@@ -1,6 +1,18 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [3.2.0-pre.5] - 2023-07-07
+### Changes
+- Fixed Input Field not handling submit and cancel for Gamepad and other input devices. [UUM-5093](https://issuetracker.unity3d.com/issues/gamepad-cannot-submit-or-exit-inputfield)
+- Fixed Input Field showing square character and warning when control characters are entered. (UUM-24871)
+- Fixed TextMeshPro crash when upgrading materials. Case #TMPB-187
+- Ensured PreferredHeight handles various line heights correctly in TextMeshPro. Case #TMPB-165
+- Set FaceInfo setter to public in TextMeshPro. Case #TMPB-182
+- Ensured sprites used correct indexes in TextMeshPro. Case #TMPB-200
+- Made Maskable now propagates to SubMesh in TextMeshPro. Case #TMPB-191
+- Added missing _ScaleRatioA to HDRP and URP shaders in TextMeshPro. Case #TMPB-169
+- Fixed TextCore crash when upgrading materials. Case #UUM-32513
+
 ## [3.2.0-pre.4] - 2022-12-16
 ### Changes
 - Fixed italic horizontal displacement of punctuation. (TMPB-133)

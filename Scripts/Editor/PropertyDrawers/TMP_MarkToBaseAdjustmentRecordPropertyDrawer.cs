@@ -15,8 +15,6 @@ namespace TMPro.EditorUtilities
 
         private string m_PreviousInput;
 
-        private TMP_FontAsset m_FontAsset;
-
         //static GUIContent s_CharacterTextFieldLabel = new GUIContent("Char:", "Enter the character or its UTF16 or UTF32 Unicode character escape sequence. For UTF16 use \"\\uFF00\" and for UTF32 use \"\\UFF00FF00\" representation.");
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)

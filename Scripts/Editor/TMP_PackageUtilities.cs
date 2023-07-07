@@ -1016,25 +1016,6 @@ namespace TMPro
 
     public class TMP_PackageUtilities : Editor
     {
-
-        enum SaveAssetDialogueOptions { Unset = 0, Save = 1, SaveAll = 2, DoNotSave = 3 };
-
-        private static SerializationMode m_ProjectAssetSerializationMode;
-        private static string m_ProjectExternalVersionControl;
-
-        struct AssetRemappingRecord
-        {
-            public string oldGuid;
-            public string newGuid;
-            public string assetPath;
-        }
-
-        struct AssetModificationRecord
-        {
-            public string assetFilePath;
-            public string assetDataFile;
-        }
-
         /// <summary>
         ///
         /// </summary>
@@ -1053,14 +1034,6 @@ namespace TMPro
         {
             ImportExamplesAndExtras();
         }
-
-
-        private static void GetVersionInfo()
-        {
-            string version = TMP_Settings.version;
-            Debug.Log("The version of this TextMesh Pro UPM package is (" + version + ").");
-        }
-
 
         /// <summary>
         ///
@@ -1100,7 +1073,7 @@ namespace TMPro
             AssetDatabase.ImportPackage(packageFullPath + "/Package Resources/TMP Essential Resources.unitypackage", true);
         }
 
-        private static void RegisterResourceImportCallback()
+        internal static void RegisterResourceImportCallback()
         {
             AssetDatabase.importPackageCompleted += ImportCallback;
         }
@@ -1110,6 +1083,9 @@ namespace TMPro
             // Restore backup of TMP Settings from byte[]
             File.WriteAllBytes(k_SettingsFilePath, k_SettingsBackup);
 
+            TMP_Settings.instance.SetAssetVersion();
+            EditorUtility.SetDirty(TMP_Settings.instance);
+            AssetDatabase.SaveAssetIfDirty(TMP_Settings.instance);
             AssetDatabase.Refresh();
 
             AssetDatabase.importPackageCompleted -= ImportCallback;

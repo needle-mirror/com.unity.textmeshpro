@@ -5,10 +5,7 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
-
-#if UNITY_2018_4_OR_NEWER && !UNITY_2018_4_0 && !UNITY_2018_4_1 && !UNITY_2018_4_2 && !UNITY_2018_4_3 && !UNITY_2018_4_4
-    using UnityEditor.TextCore.LowLevel;
-#endif
+using UnityEditor.TextCore.LowLevel;
 
 
 namespace TMPro.EditorUtilities
@@ -247,10 +244,6 @@ namespace TMPro.EditorUtilities
         private SerializedProperty m_FirstCharacterUnicode_prop;
         private SerializedProperty m_SecondCharacterUnicode_prop;
 
-
-        private string m_SecondCharacter;
-        private uint m_SecondGlyphIndex;
-
         private TMP_FontAsset m_fontAsset;
 
         private Material[] m_materialPresets;
@@ -319,11 +312,12 @@ namespace TMPro.EditorUtilities
             // Create serialized object to allow us to use a serialized property of an empty kerning pair.
             m_SerializedPropertyHolder = CreateInstance<TMP_SerializedPropertyHolder>();
             m_SerializedPropertyHolder.fontAsset = m_fontAsset;
-            SerializedObject internalSerializedObject = new SerializedObject(m_SerializedPropertyHolder);
-            m_FirstCharacterUnicode_prop = internalSerializedObject.FindProperty("firstCharacter");
-            m_SecondCharacterUnicode_prop = internalSerializedObject.FindProperty("secondCharacter");
-            m_EmptyGlyphPairAdjustmentRecord_prop = internalSerializedObject.FindProperty("glyphPairAdjustmentRecord");
-
+            using (SerializedObject internalSerializedObject = new SerializedObject(m_SerializedPropertyHolder))
+            {
+                m_FirstCharacterUnicode_prop = internalSerializedObject.FindProperty("firstCharacter");
+                m_SecondCharacterUnicode_prop = internalSerializedObject.FindProperty("secondCharacter");
+                m_EmptyGlyphPairAdjustmentRecord_prop = internalSerializedObject.FindProperty("glyphPairAdjustmentRecord");
+            }
             m_materialPresets = TMP_EditorUtility.FindMaterialReferences(m_fontAsset);
 
             m_GlyphSearchList = new List<int>();

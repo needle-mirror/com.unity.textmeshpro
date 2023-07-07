@@ -7,6 +7,9 @@ using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
 using Unity.Profiling;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace TMPro
 {
@@ -56,7 +59,19 @@ namespace TMPro
             }
         }
         internal Font m_SourceFontFile_EditorRef;
+
         #endif
+
+        /// <summary>
+        /// The settings used in the Font Asset Creator when this font asset was created or edited.
+        /// </summary>
+        public FontAssetCreationSettings creationSettings
+        {
+            get { return m_CreationSettings; }
+            set { m_CreationSettings = value; }
+        }
+        [SerializeField]
+        internal FontAssetCreationSettings m_CreationSettings;
 
         /// <summary>
         /// Source font file when atlas population mode is set to dynamic. Null when the atlas population mode is set to static.
@@ -271,7 +286,7 @@ namespace TMPro
         }
         [SerializeField]
         private bool m_GetFontFeatures = true;
-        
+
         /// <summary>
         /// Determines if dynamic font asset data should be cleared before builds.
         /// </summary>
@@ -374,17 +389,6 @@ namespace TMPro
         internal List<TMP_FontAsset> m_FallbackFontAssetTable;
 
         /// <summary>
-        /// The settings used in the Font Asset Creator when this font asset was created or edited.
-        /// </summary>
-        public FontAssetCreationSettings creationSettings
-        {
-            get { return m_CreationSettings; }
-            set { m_CreationSettings = value; }
-        }
-        [SerializeField]
-        internal FontAssetCreationSettings m_CreationSettings;
-
-        /// <summary>
         /// Array containing font assets to be used as alternative typefaces for the various potential font weights of this font asset.
         /// </summary>
         public TMP_FontWeightPair[] fontWeightTable
@@ -482,7 +486,6 @@ namespace TMPro
         /// <param name="styleName">The style name of the source font face.</param>
         /// <param name="pointSize">Optional point size.</param>
         /// <returns>An instance of the newly created font asset.</returns>
-        #if UNITY_2020_3_OR_NEWER && !(UNITY_2020_3_1 || UNITY_2020_3_2 || UNITY_2020_3_3 || UNITY_2020_3_4 || UNITY_2020_3_5 || UNITY_2020_3_6 || UNITY_2021_1_1|| UNITY_2021_1_2|| UNITY_2021_1_3|| UNITY_2021_1_4)
         public static TMP_FontAsset CreateFontAsset(string familyName, string styleName, int pointSize = 90)
         {
             if (FontEngine.TryGetSystemFontReference(familyName, styleName, out FontReference fontRef))
@@ -492,7 +495,6 @@ namespace TMPro
 
             return null;
         }
-        #endif
 
         /// <summary>
         /// Creates a new font asset instance from the font file at the given file path.
@@ -692,12 +694,14 @@ namespace TMPro
         //
         // ================================================================================
 
+        #if UNITY_EDITOR
         void Awake()
         {
             // Check version number of font asset to see if it needs to be upgraded.
             if (this.material != null && string.IsNullOrEmpty(m_Version))
                 UpgradeFontAsset();
         }
+        #endif
 
         private void OnDestroy()
         {
@@ -711,6 +715,10 @@ namespace TMPro
         {
             // Skip validation until the Editor has been fully loaded.
             if (Time.frameCount == 0)
+                return;
+
+            // See TMPB-187
+            if (EditorApplication.isUpdating)
                 return;
 
             // Make sure our lookup dictionary have been initialized.
@@ -728,11 +736,11 @@ namespace TMPro
         {
             k_ReadFontAssetDefinitionMarker.Begin();
 
-            //Debug.Log("Reading Font Asset Definition for " + this.name + ".");
-
+            #if UNITY_EDITOR
             // Check version number of font asset to see if it needs to be upgraded.
             if (this.material != null && string.IsNullOrEmpty(m_Version))
                 UpgradeFontAsset();
+            #endif
 
             // Initialize lookup tables for characters and glyphs.
             InitializeDictionaryLookupTables();
@@ -1116,7 +1124,6 @@ namespace TMPro
                 return FontEngineError.Invalid_Face;
             }
 
-           #if UNITY_2020_3_OR_NEWER && !(UNITY_2020_3_1 || UNITY_2020_3_2 || UNITY_2020_3_3 || UNITY_2020_3_4 || UNITY_2020_3_5 || UNITY_2020_3_6 || UNITY_2021_1_1|| UNITY_2021_1_2|| UNITY_2021_1_3|| UNITY_2021_1_4)
             // Font Asset is Dynamic OS
             #if UNITY_EDITOR
             if (SourceFont_EditorRef != null)
@@ -1128,9 +1135,6 @@ namespace TMPro
             #endif
 
             return FontEngine.LoadFontFace(m_FaceInfo.familyName, m_FaceInfo.styleName, m_FaceInfo.pointSize);
-            #else
-            return FontEngineError.Invalid_Face;
-            #endif
         }
 
         /// <summary>
@@ -2302,12 +2306,12 @@ namespace TMPro
                 k_TryAddGlyphMarker.End();
                 return true;
             }
-            
+
             // Return if font asset is static
             if (m_AtlasPopulationMode == AtlasPopulationMode.Static)
             {
                 k_TryAddGlyphMarker.End();
-                return false;   
+                return false;
             }
 
             // Load font face.
@@ -3065,7 +3069,7 @@ namespace TMPro
                     return;
 
                 uint firstComponentGlyphIndex = record.componentGlyphIDs[0];
-                
+
                 LigatureSubstitutionRecord newRecord = new LigatureSubstitutionRecord { componentGlyphIDs = record.componentGlyphIDs, ligatureGlyphID = record.ligatureGlyphID };
 
                 // Check if we already have a record for this new Ligature
@@ -3076,7 +3080,7 @@ namespace TMPro
                         if (newRecord == ligature)
                             return;
                     }
-                    
+
                     // Add new record to lookup
                     m_FontFeatureTable.m_LigatureSubstitutionRecordLookup[firstComponentGlyphIndex].Add(newRecord);
                 }
@@ -3241,7 +3245,7 @@ namespace TMPro
             for (int i = 0; i < records.Length; i++)
             {
                 UnityEngine.TextCore.LowLevel.MarkToBaseAdjustmentRecord record = records[i];
-                
+
                 if (records[i].baseGlyphID == 0 || records[i].markGlyphID == 0)
                     return;
 
@@ -3272,7 +3276,7 @@ namespace TMPro
             for (int i = 0; i < records.Length; i++)
             {
                 UnityEngine.TextCore.LowLevel.MarkToMarkAdjustmentRecord record = records[i];
-                
+
                 if (records[i].baseMarkGlyphID == 0 || records[i].combiningMarkGlyphID == 0)
                     return;
 
@@ -3550,6 +3554,7 @@ namespace TMPro
             }
         }
 
+        #if UNITY_EDITOR
         /// <summary>
         /// Internal method used to upgrade font asset to support Dynamic SDF.
         /// </summary>
@@ -3697,11 +3702,10 @@ namespace TMPro
 
             // Convert atlas textures data to new format
             // TODO
-            #if UNITY_EDITOR
             // Makes the changes to the font asset persistent.
             RegisterResourceForUpdate?.Invoke(this);
-            #endif
         }
+        #endif
 
         /// <summary>
         ///

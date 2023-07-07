@@ -418,9 +418,9 @@ namespace TMPro
         // FONT ENGINE & FONT FILE MANAGEMENT - Fields, Properties and Functions
         // =====================================================================
 
+        /*
         private static bool k_IsFontEngineInitialized;
 
-        /*
         private static bool TryGetCharacterFromFontFile(uint unicode, TMP_FontAsset fontAsset, out TMP_Character character)
         {
             character = null;

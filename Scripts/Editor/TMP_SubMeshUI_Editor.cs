@@ -22,7 +22,6 @@ namespace TMPro.EditorUtilities
         //private TMP_SubMeshUI m_SubMeshComponent;
 
         //private CanvasRenderer m_canvasRenderer;
-        private Editor m_materialEditor;
         private Material m_targetMaterial;
 
 

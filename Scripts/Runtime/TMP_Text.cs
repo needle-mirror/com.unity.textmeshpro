@@ -868,20 +868,20 @@ namespace TMPro
                 {
                     if (value)
                         return;
-                    
-                    m_ActiveFontFeatures.Remove(OTL_FeatureTag.kern); 
+
+                    m_ActiveFontFeatures.Remove(OTL_FeatureTag.kern);
                     m_enableKerning = false;
                 }
                 else
                 {
                     if (!value)
                         return;
-                    
+
                     m_ActiveFontFeatures.Add(OTL_FeatureTag.kern);
                     m_enableKerning = true;
 
                 }
-                
+
                 m_havePropertiesChanged = true;
                 SetVerticesDirty();
                 SetLayoutDirty();
@@ -901,13 +901,13 @@ namespace TMPro
             {
                 if (value == null)
                     return;
-               
+
                 m_havePropertiesChanged = true; m_ActiveFontFeatures = value; SetVerticesDirty(); SetLayoutDirty();
             }
         }
-        [SerializeField] 
+        [SerializeField]
         protected List<OTL_FeatureTag> m_ActiveFontFeatures = new List<OTL_FeatureTag> { 0 };
-        
+
         /// <summary>
         /// Adds extra padding around each character. This may be necessary when the displayed text is very small to prevent clipping.
         /// </summary>
@@ -1673,7 +1673,7 @@ namespace TMPro
         /// Method which derived classes need to override to load Font Assets.
         /// </summary>
         protected virtual void LoadFontAsset() { }
-        
+
         /// <summary>
         /// Function called internally when a new shared material is assigned via the fontSharedMaterial property.
         /// </summary>
@@ -4538,7 +4538,7 @@ namespace TMPro
 
                     // Compute Preferred Width & Height
                     m_RenderedWidth = Mathf.Max(m_RenderedWidth, textWidth + m_marginLeft + m_marginRight);
-                    m_RenderedHeight = m_maxTextAscender - m_ElementDescender;
+                    m_RenderedHeight = Mathf.Max(m_RenderedHeight, m_maxTextAscender - m_ElementDescender);
 
                 }
                 #endregion Handle Visible Characters
@@ -4546,7 +4546,7 @@ namespace TMPro
 
                 // Check if Line Spacing of previous line needs to be adjusted.
                 #region Adjust Line Spacing
-                /*if (m_lineOffset > 0 && !TMP_Math.Approximately(m_maxLineAscender, m_startOfLineAscender) && m_IsDrivenLineSpacing == false && !m_isNewPage)
+                if (m_lineOffset > 0 && !TMP_Math.Approximately(m_maxLineAscender, m_startOfLineAscender) && m_IsDrivenLineSpacing == false && !m_isNewPage)
                 {
                     float offsetDelta = m_maxLineAscender - m_startOfLineAscender;
                     //AdjustLineOffset(m_firstCharacterOfLine, m_characterCount, offsetDelta);
@@ -4556,7 +4556,7 @@ namespace TMPro
                     m_startOfLineAscender += offsetDelta;
                     internalWordWrapState.lineOffset = m_lineOffset;
                     internalWordWrapState.startOfLineAscender = m_startOfLineAscender;
-                }*/
+                }
                 #endregion
 
 
@@ -5935,12 +5935,12 @@ namespace TMPro
                 // Convert Legacy TextAlignmentOptions enumerations from Unity 5.2 / 5.3.
                 if ((int)m_textAlignment < 0xFF)
                     m_textAlignment = TMP_Compatibility.ConvertTextAlignmentEnumValues(m_textAlignment);
-                
+
                 // Convert use of the "enableKerning" property to the new "fontFeature" property.
                 if (m_ActiveFontFeatures.Count == 1 && m_ActiveFontFeatures[0] == 0)
                 {
                     m_ActiveFontFeatures.Clear();
-                    
+
                     if (m_enableKerning)
                         m_ActiveFontFeatures.Add(OTL_FeatureTag.kern);
                 }
@@ -7804,8 +7804,8 @@ namespace TMPro
                             case TagUnitType.Percentage:
                                 return false;
                         }
-                        
-                        // Check for potential DuoSpace attribute. 
+
+                        // Check for potential DuoSpace attribute.
                         if (m_xmlAttribute[1].nameHashCode == (int)MarkupTag.DUOSPACE)
                             m_duoSpace = ConvertToFloat(m_htmlTag, m_xmlAttribute[1].valueStartIndex, m_xmlAttribute[1].valueLength) != 0;
 

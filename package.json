@@ -1,7 +1,7 @@
 {
   "name": "com.unity.textmeshpro",
   "displayName": "TextMeshPro",
-  "version": "3.2.0-pre.4",
+  "version": "3.2.0-pre.5",
   "unity": "2020.3",
   "description": "TextMeshPro is the ultimate text solution for Unity. It's the perfect replacement for Unity's UI Text and the legacy Text Mesh.\n\nPowerful and easy to use, TextMeshPro (also known as TMP) uses Advanced Text Rendering techniques along with a set of custom shaders; delivering substantial visual quality improvements while giving users incredible flexibility when it comes to text styling and texturing.\n\nTextMeshPro provides Improved Control over text formatting and layout with features like character, word, line and paragraph spacing, kerning, justified text, Links, over 30 Rich Text Tags available, support for Multi Font & Sprites, Custom Styles and more.\n\nGreat performance. Since the geometry created by TextMeshPro uses two triangles per character just like Unity's text components, this improved visual quality and flexibility comes at no additional performance cost.\n\n\n\nUPGRADE NOTE\n--------------------\nThis latest release of the TMP package includes updated TMP Essential Resources and TMP Examples & Extras. Be sure to update those via the \"Window - TextMeshPro - Import...\" menu options.",
   "keywords": [
@@ -15,16 +15,16 @@
   "dependencies": {
     "com.unity.ugui": "1.0.0"
   },
-  "repository": {
-    "url": "https://github.cds.internal.unity3d.com/unity/com.unity.textmeshpro.git",
-    "type": "git",
-    "revision": "26fadfb632ffe5cb14bab5019ef8097eece1e62a"
-  },
   "_upm": {
-    "changelog": "### Changes\n- Fixed italic horizontal displacement of punctuation. (TMPB-133)\n- Updated Input Field to not restore the original text when the X in the HoloLens keyboard is pressed.\n- Fixed MissingReferenceException when changing scenes. See case [TMPB-120](https://issuetracker.unity3d.com/issues/missingreferenceexception-thrown-when-changing-scenes) and forum [thread](https://forum.unity.com/threads/tmpro-submeshui-error-when-changing-scenes.1129724/) for more info.\n- Fixed Undo operation not correctly undoing some newly created TMP objects. Case #1400391\n- Fixed glyphs not being drawn in the various font asset inspector tables although present in the glyph table until unselecting and re-selecting the font asset.\n- Fixed incorrect line breaking when using a mixture of Latin and CJK text.\n- Fixed potential NullReferenceException when creating font asset with multiple atlas textures. See [forum post](https://forum.unity.com/threads/how-can-i-submit-bugs-or-issues-for-tmp.628687/#post-8186100) for details.\n- Fixed potential issue when using the &lt;mark&gt; tag in conjunction with Ellipsis.\n- Added new \"Get Font Features\" option in the Generation Settings of Font Assets to provide control over fetching of font feature data.\n- Fix potential duplication of Ligature data when using Dynamic Font Assets.\n- Added new \"duospace\" attribute to the &lt;mspace=value&gt; markup tag where the spacing of the '.', ':' and ',' characters will be half of the value. This was added as an option when displaying numerical values using this markup tag.\n- With the addition of support for new OpenType Layout features such as Ligatures, Mark-to-Base and Mark-to-Mark, we have made the following changes:\n  - The \"Kerning\" option in the Extra Settings of the text component inspector has been replaced by a new popup menu to independently control these features which are \"kern\", \"liga\", \"mark\" and \"mkmk\"\n  - The \"enableKerning\" property has been deprecated and replaced by the \"fontFeatures\" property which is a list that contains which features are enabled on the text component.\n- Fixed two potential NullReferenceException related to missing material references or materials on SubMesh text objects. See [forum post](https://forum.unity.com/threads/tmpro-submeshui-error-when-changing-scenes.1129724/#post-8462771) for details.\n- Fixed for text alignment mode Justified and Flush blending not working correctly when using &lt;NBSP&gt; in the text.\n- Fixed external keyboard on iOS/tvOS and Android when Hide Soft Keyboard is used"
+    "changelog": "### Changes\n- Fixed Input Field not handling submit and cancel for Gamepad and other input devices. [UUM-5093](https://issuetracker.unity3d.com/issues/gamepad-cannot-submit-or-exit-inputfield)\n- Fixed Input Field showing square character and warning when control characters are entered. (UUM-24871)\n- Fixed TextMeshPro crash when upgrading materials. Case #TMPB-187\n- Ensured PreferredHeight handles various line heights correctly in TextMeshPro. Case #TMPB-165\n- Set FaceInfo setter to public in TextMeshPro. Case #TMPB-182\n- Ensured sprites used correct indexes in TextMeshPro. Case #TMPB-200\n- Made Maskable now propagates to SubMesh in TextMeshPro. Case #TMPB-191\n- Added missing _ScaleRatioA to HDRP and URP shaders in TextMeshPro. Case #TMPB-169\n- Fixed TextCore crash when upgrading materials. Case #UUM-32513"
   },
   "upmCi": {
-    "footprint": "ec3068141184eaa4c855a462f5ea357e961ad27a"
+    "footprint": "fc8d6e47ccb2e8eaa4bbff84c935be20074cee43"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.2/manual/index.html"
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.2/manual/index.html",
+  "repository": {
+    "url": "https://github.cds.internal.unity3d.com/unity/unity.git",
+    "type": "git",
+    "revision": "9a6f6e5097f5a48ffe942c51b2a4cc733f8bc3d5"
+  }
 }

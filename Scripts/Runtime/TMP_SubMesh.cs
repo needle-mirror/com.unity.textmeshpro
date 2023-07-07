@@ -241,7 +241,7 @@ namespace TMPro
             go.transform.localRotation = Quaternion.identity;
             go.transform.localScale = Vector3.one;
             go.layer = textComponent.gameObject.layer;
-            
+
             #if UNITY_EDITOR
             go.name = materialReference.material == null ? "TMP SubMesh" : "TMP SubMesh [" + materialReference.material.name + "]";
             #endif
@@ -391,11 +391,7 @@ namespace TMPro
         void ON_DRAG_AND_DROP_MATERIAL(GameObject obj, Material currentMaterial, Material newMaterial)
         {
             // Check if event applies to this current object
-            #if UNITY_2018_2_OR_NEWER
             if (obj == gameObject || UnityEditor.PrefabUtility.GetCorrespondingObjectFromSource(gameObject) == obj)
-            #else
-            if (obj == gameObject || UnityEditor.PrefabUtility.GetPrefabParent(gameObject) == obj)
-            #endif
             {
                 if (!m_isDefaultMaterial) return;
 

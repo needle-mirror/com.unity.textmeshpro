@@ -1,8 +1,9 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.TextCore;
 using System.Collections.Generic;
-
+using System.Threading.Tasks;
 
 #pragma warning disable 0649 // Disabled warnings related to serialized fields not assigned in this script but used in the editor.
 
@@ -28,6 +29,16 @@ namespace TMPro
         public static string version
         {
             get { return "1.4.0"; }
+        }
+
+        [SerializeField]
+        internal string assetVersion;
+
+        internal static string s_CurrentAssetVersion = "1";
+
+        internal void SetAssetVersion()
+        {
+            assetVersion = s_CurrentAssetVersion;
         }
 
         /// <summary>
@@ -67,7 +78,7 @@ namespace TMPro
         }
         [SerializeField]
         private List<OTL_FeatureTag> m_ActiveFontFeatures = new List<OTL_FeatureTag> { 0 };
-        
+
         /// <summary>
         /// Controls if Extra Padding is enabled on newly created text objects by default.
         /// </summary>
@@ -438,24 +449,24 @@ namespace TMPro
         {
             get
             {
-                if (s_Instance == null)
+                if (isTMPSettingsNull)
                 {
                     s_Instance = Resources.Load<TMP_Settings>("TMP Settings");
 
                     #if UNITY_EDITOR
                     // Make sure TextMesh Pro UPM packages resources have been added to the user project
-                    if (s_Instance == null && Time.frameCount != 0)
+                    if (isTMPSettingsNull && Time.frameCount != 0 || (!isTMPSettingsNull && s_Instance.assetVersion != s_CurrentAssetVersion))
                     {
-                        // Open TMP Resources Importer
-                        TMP_PackageResourceImporterWindow.ShowPackageImporterWindow();
+						// It needs to open after loading the default Editor layout
+                        DelayShowPackageImporterWindow();
                     }
                     #endif
 
                     // Convert use of the "enableKerning" property to the new "fontFeature" property.
-                    if (s_Instance != null && s_Instance.m_ActiveFontFeatures.Count == 1 && s_Instance.m_ActiveFontFeatures[0] == 0)
+                    if (!isTMPSettingsNull && s_Instance.m_ActiveFontFeatures.Count == 1 && s_Instance.m_ActiveFontFeatures[0] == 0)
                     {
                         s_Instance.m_ActiveFontFeatures.Clear();
-                        
+
                         if (s_Instance.m_enableKerning)
                             s_Instance.m_ActiveFontFeatures.Add(OTL_FeatureTag.kern);
                     }
@@ -464,6 +475,19 @@ namespace TMPro
                 return s_Instance;
             }
         }
+
+        internal static bool isTMPSettingsNull
+        {
+            get { return s_Instance == null; }
+        }
+
+#if UNITY_EDITOR
+        public static async void DelayShowPackageImporterWindow()
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1f));
+            TMP_PackageResourceImporterWindow.ShowPackageImporterWindow();
+        }
+#endif
 
 
         /// <summary>
