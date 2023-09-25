@@ -2,7 +2,8 @@
 using NUnit.Framework;
 using System.IO;
 using System.Collections.Generic;
-
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 namespace TMPro
 {
@@ -183,6 +184,56 @@ namespace TMPro
             Assert.AreEqual(m_TextComponent.textInfo.lineCount, lineCount);
         }
 
+        public static IEnumerable<object[]> TestCases_MultiLineNewline_OnLastLine_WhenPressedEnter_Caret_ShouldNotGoto_NextLine()
+        {
+            yield return new object[] { 1, 1 };
+            yield return new object[] { 2, 2 };
+            yield return new object[] { 3, 3 };
+            yield return new object[] { 4, 4 };
+            yield return new object[] { 5, 5 };
+            yield return new object[] { 6, 6 };
+        }
+
+        [Test, TestCaseSource("TestCases_MultiLineNewline_OnLastLine_WhenPressedEnter_Caret_ShouldNotGoto_NextLine")]
+        public void MultiLineNewline_OnLastLine_WhenPressedEnter_Caret_ShouldNotGoto_NextLine(int lineLimit, int expectedLineCount)
+        {
+            GameObject cameraObject = new GameObject("Camera Object", typeof(Camera));
+            GameObject canvasObject = new GameObject("Canvas Object", typeof(Canvas), typeof(GraphicRaycaster));
+            canvasObject.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+            GameObject inputObject = new GameObject("Input Object", typeof(TMP_InputField));
+            inputObject.transform.parent = canvasObject.transform;
+            inputObject.AddComponent<Image>();
+            TMP_InputField m_InputField = inputObject.GetComponent<TMP_InputField>();
+            m_InputField.targetGraphic = inputObject.GetComponent<Image>();
+            m_InputField.textComponent = m_TextComponent;
+            m_InputField.lineType = TMP_InputField.LineType.MultiLineNewline;
+            m_InputField.lineLimit = lineLimit;
+
+            GameObject eventGameObject = new GameObject("Event Object", typeof(EventSystem), typeof(StandaloneInputModule));
+            Event enterKeyDownEvent = new Event { type = EventType.KeyDown, keyCode = KeyCode.KeypadEnter, modifiers = EventModifiers.None, character = '\n' };
+
+            m_InputField.text = "POTUS";
+            EventSystem.current.SetSelectedGameObject(inputObject);
+            m_InputField.ActivateInputField();
+            int count = 0;
+            while (count < lineLimit + 3)
+            {
+                m_InputField.ProcessEvent(enterKeyDownEvent);
+                m_InputField.ForceLabelUpdate();
+                count++;
+            }
+
+            m_InputField.textComponent.ForceMeshUpdate();
+            CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(m_InputField);
+
+            m_InputField.DeactivateInputField();
+            GameObject.Destroy(eventGameObject);
+            GameObject.Destroy(inputObject);
+            GameObject.Destroy(canvasObject);
+            GameObject.Destroy(cameraObject);
+
+            Assert.AreEqual(m_TextComponent.textInfo.lineCount, expectedLineCount);
+        }
 
         //[OneTimeTearDown]
         //public void Cleanup()

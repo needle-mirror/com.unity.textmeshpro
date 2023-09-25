@@ -1,6 +1,12 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [3.2.0-pre.6] - 2023-09-25
+### Changes
+- Fix TextMeshPro component does not perform linear color conversion when the VertexColorAlwaysGammaSpace option is enabled. Case #UUM-36113
+- Addressed issue surrounding dropdown not closing correctly in certain situations. Case #UUM-33691
+- Fixed Multi Line Newline input field from not accepting any new line past the set line limit. Case #UUM-42585
+
 ## [3.2.0-pre.5] - 2023-07-07
 ### Changes
 - Fixed Input Field not handling submit and cancel for Gamepad and other input devices. [UUM-5093](https://issuetracker.unity3d.com/issues/gamepad-cannot-submit-or-exit-inputfield)

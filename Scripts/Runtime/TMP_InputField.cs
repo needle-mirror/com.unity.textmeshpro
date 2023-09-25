@@ -2232,6 +2232,16 @@ namespace TMPro
                             m_ReleaseSelection = true;
                             return EditState.Finish;
                         }
+                        else
+                        {
+                            TMP_TextInfo textInfo = m_TextComponent.textInfo;
+
+                            if (textInfo != null && textInfo.lineCount >= m_LineLimit)
+                            {
+                                m_ReleaseSelection = true;
+                                return EditState.Finish;
+                            }
+                        }
                         break;
                     }
 

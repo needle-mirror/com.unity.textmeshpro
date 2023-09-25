@@ -34,7 +34,7 @@ namespace TMPro
         [SerializeField]
         internal string assetVersion;
 
-        internal static string s_CurrentAssetVersion = "1";
+        internal static string s_CurrentAssetVersion = "2";
 
         internal void SetAssetVersion()
         {

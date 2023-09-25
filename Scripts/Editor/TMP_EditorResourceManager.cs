@@ -77,7 +77,13 @@ namespace TMPro
             if (RenderPipelineManager.currentPipeline == null)
                 Camera.onPostRender += OnCameraPostRender;
             else
-                RenderPipelineManager.endFrameRendering += OnEndOfFrame;
+            {
+                #if UNITY_2023_3_OR_NEWER
+                    RenderPipelineManager.endContextRendering += OnEndOfFrame;
+                #else
+                    RenderPipelineManager.endFrameRendering += OnEndOfFrame;
+                #endif
+            }
 
             Canvas.willRenderCanvases += OnPreRenderCanvases;
         }
@@ -96,10 +102,17 @@ namespace TMPro
             DoPreRenderUpdates();
         }
 
+        #if UNITY_2023_3_OR_NEWER
+        void OnEndOfFrame(ScriptableRenderContext renderContext, List<Camera> cameras)
+        {
+            DoPostRenderUpdates();
+        }
+        #else
         void OnEndOfFrame(ScriptableRenderContext renderContext, Camera[] cameras)
         {
             DoPostRenderUpdates();
         }
+        #endif
 
         /// <summary>
         /// Register resource for re-import.
