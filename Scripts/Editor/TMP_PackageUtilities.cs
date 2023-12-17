@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEditor;
 using System;
@@ -10,6 +10,11 @@ using System.Globalization;
 using System.Threading;
 using TMPro.EditorUtilities;
 
+#if UNITY_2023_3_OR_NEWER
+using PhysicsMaterialAsset = UnityEngine.PhysicsMaterial;
+#else
+using PhysicsMaterialAsset = UnityEngine.PhysicMaterial;
+#endif
 
 namespace TMPro
 {
@@ -618,7 +623,7 @@ namespace TMPro
             typeof(LightingDataAsset),
             typeof(Mesh),
             typeof(MonoScript),
-            typeof(PhysicMaterial),
+            typeof(PhysicsMaterialAsset),
             typeof(PhysicsMaterial2D),
             typeof(RenderTexture),
             typeof(Shader),

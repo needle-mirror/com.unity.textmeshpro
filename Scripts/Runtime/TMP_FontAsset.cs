@@ -2884,7 +2884,7 @@ namespace TMPro
             #if UNITY_EDITOR
             // Add new texture as sub asset to font asset
             Texture2D tex = m_AtlasTextures[m_AtlasTextureIndex];
-            tex.name = m_AtlasTextures[0].name + " " + m_AtlasTextureIndex;
+            tex.name = atlasTexture.name + " " + m_AtlasTextureIndex;
 
             OnFontAssetTextureChanged?.Invoke(tex, this);
             #endif

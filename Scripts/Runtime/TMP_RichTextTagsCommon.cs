@@ -126,6 +126,8 @@ namespace TMPro
         BLACK = 81074727,
         WHITE = 105680263,
         PURPLE = -1250222130,
+        GREY = 2638345,
+        LIGHTBLUE= 341063360,
 
         // Unicode Characters
         BR = 2256,                          // <br> Line Feed (LF) \u000A

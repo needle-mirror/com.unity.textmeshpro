@@ -452,6 +452,9 @@ namespace TMPro
                     case RuntimePlatform.Android:
                     case RuntimePlatform.IPhonePlayer:
                     case RuntimePlatform.tvOS:
+                    #if UNITY_2022_3_OR_NEWER
+                    case RuntimePlatform.VisionOS:
+                    #endif
                     case RuntimePlatform.WSAPlayerX86:
                     case RuntimePlatform.WSAPlayerX64:
                     case RuntimePlatform.WSAPlayerARM:
@@ -482,6 +485,9 @@ namespace TMPro
                     case RuntimePlatform.Android:
                     case RuntimePlatform.IPhonePlayer:
                     case RuntimePlatform.tvOS:
+                    #if UNITY_2022_3_OR_NEWER
+                    case RuntimePlatform.VisionOS:
+                    #endif
                     case RuntimePlatform.WSAPlayerX86:
                     case RuntimePlatform.WSAPlayerX64:
                     case RuntimePlatform.WSAPlayerARM:
@@ -522,6 +528,9 @@ namespace TMPro
                     return InPlaceEditing() && m_HideSoftKeyboard;
                 case RuntimePlatform.IPhonePlayer:
                 case RuntimePlatform.tvOS:
+                #if UNITY_2022_3_OR_NEWER
+                case RuntimePlatform.VisionOS:
+                #endif
                     return m_HideSoftKeyboard;
                 #if UNITY_2020_2_OR_NEWER
                 case RuntimePlatform.PS4:
@@ -1768,6 +1777,7 @@ namespace TMPro
                     for (int i = 0; i < val.Length; ++i)
                     {
                         char c = val[i];
+						bool hasValidateUpdatedText = false;
 
                         if (c == '\r' || c == 3)
                             c = '\n';
@@ -1775,7 +1785,11 @@ namespace TMPro
                         if (onValidateInput != null)
                             c = onValidateInput(m_Text, m_Text.Length, c);
                         else if (characterValidation != CharacterValidation.None)
+						{
+							string textBeforeValidate = m_Text;
                             c = Validate(m_Text, m_Text.Length, c);
+                            hasValidateUpdatedText = textBeforeValidate != m_Text;
+						}
 
                         if (lineType == LineType.MultiLineSubmit && c == '\n')
                         {
@@ -1787,7 +1801,8 @@ namespace TMPro
                         }
 
                         // In the case of a Custom Validator, the user is expected to modify the m_Text where as such we do not append c.
-                        if (c != 0 && characterValidation != CharacterValidation.CustomValidator)
+                        // However we will append c if the user did not modify the m_Text (UUM-42147)
+                        if (c != 0 && (characterValidation != CharacterValidation.CustomValidator || !hasValidateUpdatedText))
                             m_Text += c;
                     }
 
@@ -2236,7 +2251,7 @@ namespace TMPro
                         {
                             TMP_TextInfo textInfo = m_TextComponent.textInfo;
 
-                            if (textInfo != null && textInfo.lineCount >= m_LineLimit)
+                            if (m_LineLimit > 0 && textInfo != null && textInfo.lineCount >= m_LineLimit)
                             {
                                 m_ReleaseSelection = true;
                                 return EditState.Finish;
@@ -4445,7 +4460,7 @@ namespace TMPro
 
             SendOnSubmit();
             DeactivateInputField();
-            eventData.Use();
+            eventData?.Use();
         }
 
         public virtual void OnCancel(BaseEventData eventData)

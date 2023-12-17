@@ -5271,7 +5271,7 @@ namespace TMPro
             #endregion
 
             // Set vertex count for Underline geometry
-            //m_textInfo.meshInfo[m_Underline.materialIndex].vertexCount = last_vert_index;
+            m_textInfo.meshInfo[m_Underline.materialIndex].vertexCount = last_vert_index;
 
             // METRICS ABOUT THE TEXT OBJECT
             m_textInfo.characterCount = m_characterCount;

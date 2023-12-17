@@ -12,7 +12,7 @@ namespace TMPro
 {
     static class TMP_FontAsset_CreationMenu
     {
-        [MenuItem("Assets/Create/TextMeshPro/FontAsset/Font Asset Variant", false, 200)]
+        [MenuItem("Assets/Create/TextMeshPro/Font Asset/Font Asset Variant", false, 200)]
         static void CreateFontAssetVariant()
         {
             Object target = Selection.activeObject;
@@ -56,21 +56,21 @@ namespace TMPro
             AssetDatabase.SaveAssets();
         }
 
-        [MenuItem("Assets/Create/TextMeshPro/FontAsset/SDF #%F12", false, 100)]
+        [MenuItem("Assets/Create/TextMeshPro/Font Asset/SDF #%F12", false, 100)]
         //[MenuItem("Assets/Create/TextMeshPro/Font Asset", false, 100)]
         static void CreateFontAssetSDF()
         {
             CreateFontAsset(GlyphRenderMode.SDFAA);
         }
 
-        [MenuItem("Assets/Create/TextMeshPro/FontAsset/Bitmap", false, 105)]
+        [MenuItem("Assets/Create/TextMeshPro/Font Asset/Bitmap", false, 105)]
         static void CreateFontAssetBitmap()
         {
             CreateFontAsset(GlyphRenderMode.SMOOTH);
         }
 
         #if TEXTCORE_FONT_ENGINE_1_5_OR_NEWER
-        [MenuItem("Assets/Create/TextMeshPro/FontAsset/Color", false, 110)]
+        [MenuItem("Assets/Create/TextMeshPro/Font Asset/Color", false, 110)]
         static void CreateFontAssetColor()
         {
             CreateFontAsset(GlyphRenderMode.COLOR);

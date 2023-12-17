@@ -363,6 +363,27 @@ namespace TMPro
             Assert.AreEqual(advance3, m_TextComponent.textInfo.characterInfo[2].xAdvance);
         }
 
+#if TMP_TEST_RESOURCES
+        const string k_SpriteAssetPath = "Assets/TextMesh Pro/Resources/Sprite Assets/MixedIndexTest.asset";
+        [Test]
+        public void SpriteAssetIndexAreValidAfterReordering()
+        {
+            var spriteAsset = AssetDatabase.LoadAssetAtPath<TMP_SpriteAsset>(k_SpriteAssetPath);
+            if (spriteAsset == null)
+            {
+                Debug.LogError("Failed to load Sprite Asset at path: " + k_SpriteAssetPath);
+                return;
+            }
+
+            string text = $"<sprite name=\"cta_obsidianjade\">";
+            m_TextComponent.spriteAsset = spriteAsset;
+            m_TextComponent.text = text;
+            m_TextComponent.ForceMeshUpdate();
+
+            Assert.AreEqual(203, m_TextComponent.textInfo.characterInfo[0].textElement.glyphIndex, $"Mismatch between sprite index. Expected 203 but was {m_TextComponent.textInfo.characterInfo[0].textElement.glyphIndex}");
+        }
+#endif
+
 
         // Add tests that check position of individual characters in a complex block of text.
         // These test also use the data contained inside the TMP_TextInfo class.

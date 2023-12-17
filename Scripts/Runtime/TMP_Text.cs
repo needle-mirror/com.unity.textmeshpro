@@ -4077,10 +4077,10 @@ namespace TMPro
                 if (m_textElementType == TMP_TextElementType.Sprite)
                 {
                     // If a sprite is used as a fallback then get a reference to it and set the color to white.
-                    m_currentSpriteAsset = m_textInfo.characterInfo[m_characterCount].textElement.textAsset as TMP_SpriteAsset;
-                    m_spriteIndex = (int)m_textInfo.characterInfo[m_characterCount].textElement.glyphIndex;
+                    TMP_SpriteCharacter sprite = (TMP_SpriteCharacter)m_textInfo.characterInfo[m_characterCount].textElement;
+                    m_currentSpriteAsset = sprite.textAsset as TMP_SpriteAsset;
+                    m_spriteIndex = (int)sprite.glyphIndex;
 
-                    TMP_SpriteCharacter sprite = m_currentSpriteAsset.spriteCharacterTable[m_spriteIndex];
                     if (sprite == null) continue;
 
                     // Sprites are assigned in the E000 Private Area + sprite Index
@@ -7669,7 +7669,7 @@ namespace TMPro
                                 m_htmlColor = Color.red;
                                 m_colorStack.Add(m_htmlColor);
                                 return true;
-                            case -992792864: // <color=lightblue>
+                            case (int)MarkupTag.LIGHTBLUE: // <color=lightblue>
                                 m_htmlColor = new Color32(173, 216, 230, 255);
                                 m_colorStack.Add(m_htmlColor);
                                 return true;
@@ -7677,7 +7677,7 @@ namespace TMPro
                                 m_htmlColor = Color.blue;
                                 m_colorStack.Add(m_htmlColor);
                                 return true;
-                            case 3680713: // <color=grey>
+                            case (int)MarkupTag.GREY: // <color=grey>
                                 m_htmlColor = new Color32(128, 128, 128, 255);
                                 m_colorStack.Add(m_htmlColor);
                                 return true;

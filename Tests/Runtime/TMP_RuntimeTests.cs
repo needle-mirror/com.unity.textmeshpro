@@ -194,8 +194,16 @@ namespace TMPro
             yield return new object[] { 6, 6 };
         }
 
-        [Test, TestCaseSource("TestCases_MultiLineNewline_OnLastLine_WhenPressedEnter_Caret_ShouldNotGoto_NextLine")]
-        public void MultiLineNewline_OnLastLine_WhenPressedEnter_Caret_ShouldNotGoto_NextLine(int lineLimit, int expectedLineCount)
+        [Test, TestCaseSource(nameof(TestCases_MultiLineNewline_OnLastLine_WhenPressedEnter_Caret_ShouldNotGoto_NextLine))]
+        public void MultiLineNewline_OnLastLine_WhenPressedEnter_Caret_ShouldNotGoto_NextLine(int lineLimit,
+            int expectedLineCount)
+        {
+            MultiLineNewline_LineLimit_ExpectedLineCount_Logic(lineLimit, lineLimit, 3);
+            Assert.AreEqual(m_TextComponent.textInfo.lineCount, expectedLineCount);
+        }
+
+        private void MultiLineNewline_LineLimit_ExpectedLineCount_Logic(int lineLimitValue, int lineLimitApplied,
+            int extraKeyDownEventCount)
         {
             GameObject cameraObject = new GameObject("Camera Object", typeof(Camera));
             GameObject canvasObject = new GameObject("Canvas Object", typeof(Canvas), typeof(GraphicRaycaster));
@@ -207,7 +215,7 @@ namespace TMPro
             m_InputField.targetGraphic = inputObject.GetComponent<Image>();
             m_InputField.textComponent = m_TextComponent;
             m_InputField.lineType = TMP_InputField.LineType.MultiLineNewline;
-            m_InputField.lineLimit = lineLimit;
+            m_InputField.lineLimit = lineLimitValue;
 
             GameObject eventGameObject = new GameObject("Event Object", typeof(EventSystem), typeof(StandaloneInputModule));
             Event enterKeyDownEvent = new Event { type = EventType.KeyDown, keyCode = KeyCode.KeypadEnter, modifiers = EventModifiers.None, character = '\n' };
@@ -215,12 +223,12 @@ namespace TMPro
             m_InputField.text = "POTUS";
             EventSystem.current.SetSelectedGameObject(inputObject);
             m_InputField.ActivateInputField();
-            int count = 0;
-            while (count < lineLimit + 3)
+            int count = lineLimitApplied + extraKeyDownEventCount;
+            while (count > 0)
             {
                 m_InputField.ProcessEvent(enterKeyDownEvent);
                 m_InputField.ForceLabelUpdate();
-                count++;
+                count--;
             }
 
             m_InputField.textComponent.ForceMeshUpdate();
@@ -231,8 +239,21 @@ namespace TMPro
             GameObject.Destroy(inputObject);
             GameObject.Destroy(canvasObject);
             GameObject.Destroy(cameraObject);
+        }
 
-            Assert.AreEqual(m_TextComponent.textInfo.lineCount, expectedLineCount);
+        public static IEnumerable<object[]> TestCases_MultiLineNewLine_NegativeOrZeroLineLimit_AddsNewLine()
+        {
+            yield return new object[] { 0, 0, 1 };
+            yield return new object[] { 0, 0, 4 };
+            yield return new object[] { -1, 0, 2 };
+        }
+
+        [Test, TestCaseSource(nameof(TestCases_MultiLineNewLine_NegativeOrZeroLineLimit_AddsNewLine))]
+        public void MultiLineNewLine_NegativeOrZeroLineLimit_AddsNewLine(int lineLimitValue, int lineLimitApplied,
+            int extraKeyDownEventCount)
+        {
+            MultiLineNewline_LineLimit_ExpectedLineCount_Logic(lineLimitValue, lineLimitApplied, extraKeyDownEventCount);
+            Assert.AreEqual(m_TextComponent.textInfo.lineCount, extraKeyDownEventCount + 1);
         }
 
         //[OneTimeTearDown]

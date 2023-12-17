@@ -1,6 +1,18 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+
+## [3.2.0-pre.7] - 2023-12-17
+### Changes
+- Fixed TMP_InputField line limit behavior to mean unlimited when the value is set to zero or negative (UUM-57192)
+- Fixed custom validator ignores the returned character from the validate function (UUM-42147)
+- Fixed editing a textfield on mobile and then submitting throws an exception (UUM-37282)
+- Addressed issue surrounding dropdown not closing correctly in certain situations(UUM-33691)
+- Ensure Sprites can be reordered within a SpriteAsset. (UUM-49349)
+- Added missing grey and lightblue tags (UUM-54820)
+- Fix underline when use at end of text. (UUM-55135)
+- Add support for Visions OS keyboard.
+
 ## [3.2.0-pre.6] - 2023-09-25
 ### Changes
 - Fix TextMeshPro component does not perform linear color conversion when the VertexColorAlwaysGammaSpace option is enabled. Case #UUM-36113

@@ -312,12 +312,11 @@ namespace TMPro.EditorUtilities
             // Create serialized object to allow us to use a serialized property of an empty kerning pair.
             m_SerializedPropertyHolder = CreateInstance<TMP_SerializedPropertyHolder>();
             m_SerializedPropertyHolder.fontAsset = m_fontAsset;
-            using (SerializedObject internalSerializedObject = new SerializedObject(m_SerializedPropertyHolder))
-            {
-                m_FirstCharacterUnicode_prop = internalSerializedObject.FindProperty("firstCharacter");
-                m_SecondCharacterUnicode_prop = internalSerializedObject.FindProperty("secondCharacter");
-                m_EmptyGlyphPairAdjustmentRecord_prop = internalSerializedObject.FindProperty("glyphPairAdjustmentRecord");
-            }
+            SerializedObject internalSerializedObject = new SerializedObject(m_SerializedPropertyHolder);
+            m_FirstCharacterUnicode_prop = internalSerializedObject.FindProperty("firstCharacter");
+            m_SecondCharacterUnicode_prop = internalSerializedObject.FindProperty("secondCharacter");
+            m_EmptyGlyphPairAdjustmentRecord_prop = internalSerializedObject.FindProperty("glyphPairAdjustmentRecord");
+
             m_materialPresets = TMP_EditorUtility.FindMaterialReferences(m_fontAsset);
 
             m_GlyphSearchList = new List<int>();

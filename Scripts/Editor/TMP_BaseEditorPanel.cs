@@ -1132,13 +1132,13 @@ namespace TMPro.EditorUtilities
             {
                 // Value range check on margins to make sure they are not excessive.
                 Vector4 margins = m_MarginProp.vector4Value;
-                Vector2 textContainerSize = m_RectTransform.sizeDelta;
+                Rect textContainerSize = m_RectTransform.rect;
 
-                margins.x = Mathf.Clamp(margins.x, -textContainerSize.x, textContainerSize.x);
-                margins.z = Mathf.Clamp(margins.z, -textContainerSize.x, textContainerSize.x);
+                margins.x = Mathf.Clamp(margins.x, -textContainerSize.width, textContainerSize.width);
+                margins.z = Mathf.Clamp(margins.z, -textContainerSize.width, textContainerSize.width);
 
-                margins.y = Mathf.Clamp(margins.y, -textContainerSize.y, textContainerSize.y);
-                margins.w = Mathf.Clamp(margins.w, -textContainerSize.y, textContainerSize.y);
+                margins.y = Mathf.Clamp(margins.y, -textContainerSize.height, textContainerSize.height);
+                margins.w = Mathf.Clamp(margins.w, -textContainerSize.height, textContainerSize.height);
 
                 m_MarginProp.vector4Value = margins;
 
