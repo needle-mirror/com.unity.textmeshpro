@@ -1,6 +1,9 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [3.0.7] - 2024-01-14
+### Changes
+- Add support for Visions OS keyboard.
 ## [3.0.6] - 2021-04-23
 ## [2.1.6]
 ## [1.5.6]

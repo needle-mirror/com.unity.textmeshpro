@@ -420,6 +420,9 @@ namespace TMPro
                     case RuntimePlatform.Android:
                     case RuntimePlatform.IPhonePlayer:
                     case RuntimePlatform.tvOS:
+                    #if UNITY_XR_VISIONOS_SUPPORTED
+                    case RuntimePlatform.VisionOS:
+                    #endif
                     case RuntimePlatform.WSAPlayerX86:
                     case RuntimePlatform.WSAPlayerX64:
                     case RuntimePlatform.WSAPlayerARM:
@@ -444,6 +447,9 @@ namespace TMPro
                     case RuntimePlatform.Android:
                     case RuntimePlatform.IPhonePlayer:
                     case RuntimePlatform.tvOS:
+                    #if UNITY_XR_VISIONOS_SUPPORTED
+                    case RuntimePlatform.VisionOS:
+                    #endif
                     case RuntimePlatform.WSAPlayerX86:
                     case RuntimePlatform.WSAPlayerX64:
                     case RuntimePlatform.WSAPlayerARM:
@@ -477,6 +483,9 @@ namespace TMPro
                 case RuntimePlatform.Android:
                 case RuntimePlatform.IPhonePlayer:
                 case RuntimePlatform.tvOS:
+                #if UNITY_XR_VISIONOS_SUPPORTED
+                case RuntimePlatform.VisionOS:
+                #endif
                 #if UNITY_2020_2_OR_NEWER
                 case RuntimePlatform.PS4:
                     #if !(UNITY_2020_2_1 || UNITY_2020_2_2)
