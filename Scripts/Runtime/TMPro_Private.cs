@@ -1473,18 +1473,26 @@ namespace TMPro
             // We need to update the SDF scale or possibly regenerate the text object if lossy scale has changed.
             if (m_havePropertiesChanged == false)
             {
-                float lossyScaleY = m_rectTransform.lossyScale.y;
-
-                // Ignore very small lossy scale changes as their effect on SDF Scale would not be visually noticeable.
-                // Do not update SDF Scale if the text is null or empty
-                if (Mathf.Abs(lossyScaleY - m_previousLossyScaleY) > 0.0001f && m_TextProcessingArray[0].unicode != 0)
+                if (m_rectTransform)
                 {
-                    float scaleDelta = lossyScaleY / m_previousLossyScaleY;
+                    float lossyScaleY = m_rectTransform.lossyScale.y;
 
-                    UpdateSDFScale(scaleDelta);
+                    // Ignore very small lossy scale changes as their effect on SDF Scale would not be visually noticeable.
+                    // Do not update SDF Scale if the text is null or empty
+                    if (Mathf.Abs(lossyScaleY - m_previousLossyScaleY) > 0.0001f && m_TextProcessingArray[0].unicode != 0)
+                    {
+                        float scaleDelta = lossyScaleY / m_previousLossyScaleY;
 
-                    m_previousLossyScaleY = lossyScaleY;
+                        UpdateSDFScale(scaleDelta);
+
+                        m_previousLossyScaleY = lossyScaleY;
+                    }
                 }
+                else
+                {
+                    Debug.LogError("the element m_rectTransform is null, added else otherwise the texts disappeared");
+                }
+                
             }
 
             // Added to handle legacy animation mode.
