@@ -1,6 +1,14 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [3.2.0-pre.8] - 2024-01-30
+### Changes
+- Fix Dropdown creation causing a crash after undoing.
+- Addressed issue surrounding dropdown not closing correctly in certain situations
+- Resolves issue in editor where a null mesh may be set with still present submesh data, not having the canvas update.
+- Ensure enabling and disabling Canvases does not cause a regeneration of the text.
+- Fixed un-detected sprite asset changes after adding new sprites.
+- Ensure Kerning is not applied to Sprites
 
 ## [3.2.0-pre.7] - 2023-12-17
 ### Changes

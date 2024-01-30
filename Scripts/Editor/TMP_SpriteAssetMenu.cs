@@ -178,6 +178,7 @@ namespace TMPro.EditorUtilities
             spriteAsset.SortGlyphTable();
             spriteAsset.UpdateLookupTables();
             TMPro_EventManager.ON_SPRITE_ASSET_PROPERTY_CHANGED(true, spriteAsset);
+            EditorUtility.SetDirty(spriteAsset);
 
         }
 
