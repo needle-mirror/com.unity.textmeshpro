@@ -1,6 +1,10 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [3.0.8] - 2024-01-31
+### Fixed
+- Fixed compile errors due to missing `RuntimePlatform.VisionOS` enum value in Unity 2023.1 - 2023.3.0b3.
+
 ## [3.0.7] - 2024-01-14
 ### Changes
 - Add support for Visions OS keyboard.
