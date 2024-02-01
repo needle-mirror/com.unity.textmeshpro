@@ -1490,7 +1490,16 @@ namespace TMPro
                 }
                 else
                 {
-                    Debug.LogError("the element m_rectTransform is null, added else otherwise the texts disappeared");
+                    
+                    /*
+                        AnotheReality: we added a debug log warning just to check where the TMPro error was occurring
+                        if you see this warning then it means that the texts were previously disappearing at this point but now they don't anymore                
+                        we simply added a check to the m_rectTransform that was returning null and because of that the texts were disappearing
+                    */
+
+                    if(Application.isPlaying){                       
+                        Debug.LogWarning("AnotheReality: this check was added to avoid the TMPro error where the texts were disappearing");
+                    }
                 }
                 
             }
