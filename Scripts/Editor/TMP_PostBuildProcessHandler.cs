@@ -19,7 +19,13 @@ namespace TMPro
                 if (settings == null || TMP_Settings.enableEmojiSupport == false)
                     return;
 
-                string file = Path.Combine(pathToBuiltProject, "Classes/UI/Keyboard.mm");
+                string file = Path.Combine(pathToBuiltProject, "Trampoline", "Classes/UI/Keyboard.mm");
+
+                if (!File.Exists(file))
+                {
+                    file = Path.Combine(pathToBuiltProject, "Classes/UI/Keyboard.mm");
+                }
+                
                 string content = File.ReadAllText(file);
                 content = content.Replace("FILTER_EMOJIS_IOS_KEYBOARD 1", "FILTER_EMOJIS_IOS_KEYBOARD 0");
                 File.WriteAllText(file, content);

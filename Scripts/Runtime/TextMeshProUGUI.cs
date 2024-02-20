@@ -1972,7 +1972,7 @@ namespace TMPro
 
                     #region VARIATION SELECTOR
                     uint nextCharacter = i + 1 < textProcessingArray.Length ? (uint)textProcessingArray[i + 1].unicode : 0;
-                    if (nextCharacter >= 0xFE00 && nextCharacter <= 0xFE0F)
+                    if (nextCharacter >= 0xFE00 && nextCharacter <= 0xFE0F || nextCharacter >= 0xE0100 && nextCharacter <= 0xE01EF)
                     {
                         // Get potential variant glyph index
                         uint variantGlyphIndex = m_currentFontAsset.GetGlyphVariantIndex((uint)unicode, nextCharacter);

@@ -1580,7 +1580,8 @@ namespace TMPro.EditorUtilities
             }
 
             // Set texture to non readable
-            FontEngineEditorUtilities.SetAtlasTextureIsReadable(fontAsset.atlasTexture, false);
+            if (fontAsset.atlasPopulationMode == AtlasPopulationMode.Static)
+                FontEngineEditorUtilities.SetAtlasTextureIsReadable(fontAsset.atlasTexture, false);
 
             // Add list of GlyphRects to font asset.
             fontAsset.freeGlyphRects = m_FreeGlyphRects;
@@ -1774,7 +1775,8 @@ namespace TMPro.EditorUtilities
             //File.WriteAllBytes("Assets/Textures/Debug Distance Field.png", pngData);
 
             // Set texture to non readable
-            FontEngineEditorUtilities.SetAtlasTextureIsReadable(fontAsset.atlasTexture, false);
+            if (fontAsset.atlasPopulationMode == AtlasPopulationMode.Static)
+                FontEngineEditorUtilities.SetAtlasTextureIsReadable(fontAsset.atlasTexture, false);
 
             // Add list of GlyphRects to font asset.
             fontAsset.freeGlyphRects = m_FreeGlyphRects;

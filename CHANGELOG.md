@@ -1,6 +1,16 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [3.2.0-pre.9] - 2024-02-20
+### Changes
+- Fix Incorrect cursor placement when selecting text and typing if text is center-aligned.
+- Setting the game object layer for the Dropdown blocker game object to match the Canvas value.
+- Fixed the virtual keyboard of InputField not closing upon Enter/Newline on Android.
+- Fixed Ideographic Variation Selector.
+- Ensure Dynamic FontAsset have a readable Atlas
+- Fixed compile error on TMP_PostBuildProcessorHandler.cs when building for iOS with "install into source code"
+- Fixed missing help documentation for SpriteAsset component in TextCore.
+
 ## [3.2.0-pre.8] - 2024-01-30
 ### Changes
 - Fix Dropdown creation causing a crash after undoing.

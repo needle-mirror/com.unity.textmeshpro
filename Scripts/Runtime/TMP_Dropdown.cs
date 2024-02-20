@@ -1010,6 +1010,10 @@ namespace TMPro
             // Create blocker GameObject.
             GameObject blocker = new GameObject("Blocker");
 
+            // Set the game object layer to match the Canvas' game object layer, as not doing this can lead to issues
+            // especially in XR applications like PolySpatial on VisionOS (UUM-62470).
+            blocker.layer = rootCanvas.gameObject.layer;
+
             // Setup blocker RectTransform to cover entire root canvas area.
             RectTransform blockerRect = blocker.AddComponent<RectTransform>();
             blockerRect.SetParent(rootCanvas.transform, false);
