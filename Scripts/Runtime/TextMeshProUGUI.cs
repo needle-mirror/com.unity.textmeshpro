@@ -2015,7 +2015,7 @@ namespace TMPro
                     {
                         isUsingFallbackOrAlternativeTypeface = true;
                         m_currentFontAsset = character.textAsset as TMP_FontAsset;
-                        m_currentMaterialIndex = MaterialReference.AddMaterialReference(m_currentFontAsset.material, m_currentFontAsset, ref m_materialReferences, m_materialReferenceIndexLookup);
+                        //m_currentMaterialIndex = MaterialReference.AddMaterialReference(m_currentFontAsset.material, m_currentFontAsset, ref m_materialReferences, m_materialReferenceIndexLookup);
                     }
 
                     #region VARIATION SELECTOR
@@ -2379,7 +2379,7 @@ namespace TMPro
 
             // Check if Canvas scale factor has changed as this requires an update of the SDF Scale.
             bool hasCanvasScaleFactorChanged = false;
-            if (m_canvas != null && m_CanvasScaleFactor != m_canvas.scaleFactor)
+            if (m_canvas != null && !Mathf.Approximately(m_CanvasScaleFactor, m_canvas.scaleFactor))
             {
                 m_CanvasScaleFactor = m_canvas.scaleFactor;
                 hasCanvasScaleFactorChanged = true;

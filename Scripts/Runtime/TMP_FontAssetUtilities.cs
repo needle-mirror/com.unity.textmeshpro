@@ -73,25 +73,14 @@ namespace TMPro
 
             if (isItalic || fontWeight != FontWeight.Regular)
             {
-                // Check if character is already cached using the composite unicode value the takes into consideration the font style and weight
+                // Check if character is already cached using the composite Unicode value the takes into consideration the font style and weight
                 uint compositeUnicodeLookupKey = ((0x80u | ((uint)fontStyle << 4) | ((uint)fontWeight / 100)) << 24) | unicode;
                 if (sourceFontAsset.characterLookupTable.TryGetValue(compositeUnicodeLookupKey, out character))
                 {
                     // Set isAlternativeTypeface
                     isAlternativeTypeface = true;
 
-                    if (character.textAsset is not null)
-                        return character;
-
-                    // Remove character from lookup table
-                    sourceFontAsset.characterLookupTable.Remove(unicode);
-                }
-                else if (sourceFontAsset.characterLookupTable.TryGetValue(compositeUnicodeLookupKey & 0x7FFFFFFF, out character))
-                {
-                    // Set isAlternativeTypeface
-                    isAlternativeTypeface = false;
-
-                    if (character.textAsset is not null)
+                    if (character.textAsset != null)
                         return character;
 
                     // Remove character from lookup table
@@ -139,7 +128,7 @@ namespace TMPro
                 {
                     if (temp.characterLookupTable.TryGetValue(unicode, out character))
                     {
-                        if (character.textAsset is not null)
+                        if (character.textAsset != null)
                         {
                             isAlternativeTypeface = true;
                             return character;
@@ -171,7 +160,7 @@ namespace TMPro
             // Search the source font asset for the requested character
             if (sourceFontAsset.characterLookupTable.TryGetValue(unicode, out character))
             {
-                if (character.textAsset is not null)
+                if (character.textAsset != null)
                     return character;
 
                 // Remove character from lookup table

@@ -1,6 +1,10 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [3.2.0-pre.12] - 2025-03-07
+- Fix for recently uncovered issues related to character caching which can occur when multiple text objects are present in a scene when fallback font assets are used in conjunction with font styles (ie. bold, italic, etc.).(UUM-97348)
+- Fix crash when reading fonts. (UUM-78322)
+
 ## [3.2.0-pre.11] - 2024-12-09
 ### Changes
 - Fix TMP crash on Hyphen wrapping.

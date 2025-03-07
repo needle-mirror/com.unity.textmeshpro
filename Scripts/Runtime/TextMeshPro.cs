@@ -477,6 +477,9 @@ namespace TMPro
             }
         }
 
+        /// <summary>
+        /// Loads either the default font or a newly assigned font asset, and assigns the appropriate material to the renderer.
+        /// </summary>
         public void UpdateFontAsset()
         {
             LoadFontAsset();
@@ -1700,7 +1703,7 @@ namespace TMPro
                     {
                         isUsingFallbackOrAlternativeTypeface = true;
                         m_currentFontAsset = character.textAsset as TMP_FontAsset;
-                        m_currentMaterialIndex = MaterialReference.AddMaterialReference(m_currentFontAsset.material, m_currentFontAsset, ref m_materialReferences, m_materialReferenceIndexLookup);
+                        //m_currentMaterialIndex = MaterialReference.AddMaterialReference(m_currentFontAsset.material, m_currentFontAsset, ref m_materialReferences, m_materialReferenceIndexLookup);
                     }
 
                     #region VARIATION SELECTOR

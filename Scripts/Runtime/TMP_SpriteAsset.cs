@@ -237,7 +237,7 @@ namespace TMPro
             if (m_NameLookup == null)
                 UpdateLookupTables();
 
-            int hashCode = TMP_TextUtilities.GetSimpleHashCode(name);
+            int hashCode = TMP_TextUtilities.GetHashCode(name);
 
             return GetSpriteIndexFromHashcode(hashCode);
         }

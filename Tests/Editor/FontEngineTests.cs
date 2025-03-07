@@ -54,6 +54,19 @@ namespace TMPro
             Assert.AreEqual(fontAsset.faceInfo.styleName, styleName);
         }
 
+        [TestCase("e3265ab4bf004d28a9537516768c1c75", "Liberation Sans", "Regular")]
+        public void TryAddCharacters_SanityCheck(string fontFileGUID, string familyName, string styleName)
+        {
+            string filePath = AssetDatabase.GUIDToAssetPath(fontFileGUID);
+
+            TMP_FontAsset fontAsset = TMP_FontAsset.CreateFontAsset(filePath, 0, 90, 9, GlyphRenderMode.SDFAA, 512, 512);
+
+            Assert.NotNull(fontAsset);
+
+            fontAsset.TryAddCharacters("abc");
+            Assert.IsTrue(fontAsset.HasCharacters("abc"));
+        }
+
         // =============================================
         // FONT ENGINE - OPENTYPE TESTS
         // =============================================

@@ -104,9 +104,6 @@ namespace TMPro
 
         #if UNITY_2023_3_OR_NEWER
         void OnEndOfFrame(ScriptableRenderContext renderContext, List<Camera> cameras)
-        {
-            DoPostRenderUpdates();
-        }
         #else
         void OnEndOfFrame(ScriptableRenderContext renderContext, Camera[] cameras)
         {
