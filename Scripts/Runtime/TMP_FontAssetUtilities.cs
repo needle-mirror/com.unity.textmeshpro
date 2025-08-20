@@ -73,7 +73,7 @@ namespace TMPro
 
             if (isItalic || fontWeight != FontWeight.Regular)
             {
-                // Check if character is already cached using the composite Unicode value the takes into consideration the font style and weight
+                // Check if character is already cached using the composite Unicode value that takes into consideration the font style and weight
                 uint compositeUnicodeLookupKey = ((0x80u | ((uint)fontStyle << 4) | ((uint)fontWeight / 100)) << 24) | unicode;
                 if (sourceFontAsset.characterLookupTable.TryGetValue(compositeUnicodeLookupKey, out character))
                 {
@@ -138,7 +138,7 @@ namespace TMPro
                         temp.characterLookupTable.Remove(unicode);
                     }
 
-                    if (temp.atlasPopulationMode == AtlasPopulationMode.Dynamic || temp.atlasPopulationMode == AtlasPopulationMode.DynamicOS)
+                    if (temp.atlasPopulationMode is AtlasPopulationMode.Dynamic or AtlasPopulationMode.DynamicOS)
                     {
                         if (temp.TryAddCharacterInternal(unicode, out character))
                         {
@@ -150,7 +150,7 @@ namespace TMPro
                 }
 
                 // Search potential fallbacks of the source font asset
-                if (includeFallbacks && sourceFontAsset.fallbackFontAssetTable != null)
+                if (includeFallbacks && sourceFontAsset.fallbackFontAssetTable is { Count: > 0 })
                     return SearchFallbacksForCharacter(unicode, sourceFontAsset, fontStyle, fontWeight, out isAlternativeTypeface);
 
                 return null;
@@ -167,14 +167,14 @@ namespace TMPro
                 sourceFontAsset.characterLookupTable.Remove(unicode);
             }
 
-            if (sourceFontAsset.atlasPopulationMode == AtlasPopulationMode.Dynamic || sourceFontAsset.atlasPopulationMode == AtlasPopulationMode.DynamicOS)
+            if (sourceFontAsset.atlasPopulationMode is AtlasPopulationMode.Dynamic or AtlasPopulationMode.DynamicOS)
             {
                 if (sourceFontAsset.TryAddCharacterInternal(unicode, out character))
                     return character;
             }
 
-            // Search fallback font assets if we still don't have a valid character and include fallback is set to true.
-            if (includeFallbacks && sourceFontAsset.fallbackFontAssetTable != null)
+            // Search fallback font assets if we still don't have a valid character and include fallbacks is set to true.
+            if (includeFallbacks && sourceFontAsset.fallbackFontAssetTable is { Count: > 0 })
                 return SearchFallbacksForCharacter(unicode, sourceFontAsset, fontStyle, fontWeight, out isAlternativeTypeface);
 
             return null;
@@ -200,7 +200,7 @@ namespace TMPro
 
                 int id = temp.instanceID;
 
-                // Try adding font asset to search list. If already present skip to the next one otherwise check if it contains the requested character.
+                // Try adding font asset to the search list. If already present, skip to the next one otherwise check if it contains the requested character.
                 if (k_SearchedAssets.Add(id) == false)
                     continue;
 
@@ -418,6 +418,48 @@ namespace TMPro
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Extracts a Unicode code point from a string at the specified index, handling surrogate pairs if present.
+        /// </summary>
+        /// <param name="text">The input string containing the characters to process.</param>
+        /// <param name="index">The current index in the string. This will be incremented if a surrogate pair is found.</param>
+        /// <returns>The Unicode code point at the specified index.</returns>
+        internal static uint GetCodePoint(string text, ref int index)
+        {
+            char c = text[index];
+            if (char.IsHighSurrogate(c)
+                && index + 1 < text.Length
+                && char.IsLowSurrogate(text[index + 1]))
+            {
+                uint cp = (uint)char.ConvertToUtf32(c, text[index + 1]);
+                index++;
+                return cp;
+            }
+
+            return c;
+        }
+
+        /// <summary>
+        /// Extracts a Unicode code point from an array of uint values at the specified index, handling surrogate pairs if present.
+        /// </summary>
+        /// <param name="codesPoints">The array of uint values representing characters to process.</param>
+        /// <param name="index">The current index in the array. This will be incremented if a surrogate pair is found.</param>
+        /// <returns>The Unicode code point at the specified index.</returns>
+        internal static uint GetCodePoint(uint[] codesPoints, ref int index)
+        {
+            char c = (char)codesPoints[index];
+            if (char.IsHighSurrogate(c)
+                && index + 1 < codesPoints.Length
+                && char.IsLowSurrogate((char)codesPoints[index + 1]))
+            {
+                uint cp = (uint)char.ConvertToUtf32(c, (char)codesPoints[index + 1]);
+                index++;
+                return cp;
+            }
+
+            return c;
         }
 
 

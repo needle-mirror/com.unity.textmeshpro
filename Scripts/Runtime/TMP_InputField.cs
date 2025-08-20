@@ -1763,7 +1763,6 @@ namespace TMPro
                     }
                 }
 
-                OnDeselect(null);
                 return;
             }
 
@@ -2395,16 +2394,15 @@ namespace TMPro
                         }
                         break;
                 }
-
             }
 
-            if (consumedEvent)
+            // We must also consume events when IME is active to prevent them from being passed to the text field. // UUM-100552
+            if (consumedEvent || (m_IsCompositionActive && compositionLength > 0))
             {
                 UpdateLabel();
                 eventData.Use();
             }
         }
-
 
         /// <summary>
         ///
@@ -3901,6 +3899,7 @@ namespace TMPro
             TMP_FontAsset fontAsset = m_TextComponent.font;
             float baseScale = (m_TextComponent.fontSize / fontAsset.m_FaceInfo.pointSize * fontAsset.m_FaceInfo.scale);
             float width = m_CaretWidth * fontAsset.faceInfo.lineHeight * baseScale * 0.05f;
+            width = Mathf.Max(width, 1.0f);
 
             m_CursorVerts[0].position = new Vector3(startPosition.x, bottom, 0.0f);
             m_CursorVerts[1].position = new Vector3(startPosition.x, top, 0.0f);
@@ -4188,14 +4187,15 @@ namespace TMPro
                 if (!cursorBeforeDash)
                 {
                     if (ch >= '0' && ch <= '9') return ch;
-                    if (ch == '-' && (pos == 0 || selectionAtStart)) return ch;
+                    if (ch == '-' && (pos == 0 || selectionAtStart) && !text.Contains('-')) return ch;
 
                     var separator = Thread.CurrentThread.CurrentCulture.NumberFormat.NumberDecimalSeparator;
                     if (ch == Convert.ToChar(separator) && characterValidation == CharacterValidation.Decimal && !text.Contains(separator)) return ch;
 
                     //Some keyboards including Samsung require double tapping a . to get a - this allows these keyboards to input negative integers
-                    if (characterValidation == CharacterValidation.Integer && ch == '.' && (pos == 0 || selectionAtStart)) return '-';
+                    if (characterValidation == CharacterValidation.Integer && ch == '.' && (pos == 0 || selectionAtStart) && !text.Contains('-')) return '-';
                 }
+
             }
             else if (characterValidation == CharacterValidation.Digit)
             {

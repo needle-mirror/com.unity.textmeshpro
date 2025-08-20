@@ -6,6 +6,7 @@ using JetBrains.Annotations;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
 using UnityEditor.TextCore.LowLevel;
+using System;
 
 
 namespace TMPro.EditorUtilities
@@ -254,7 +255,6 @@ namespace TMPro.EditorUtilities
         private int errorCode;
 
         private System.DateTime timeStamp;
-
 
         public void OnEnable()
         {

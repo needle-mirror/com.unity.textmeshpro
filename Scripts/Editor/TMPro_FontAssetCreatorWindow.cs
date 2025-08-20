@@ -720,7 +720,7 @@ namespace TMPro.EditorUtilities
 
                         if (errorCode != FontEngineError.Success)
                         {
-                            Debug.Log("Font Asset Creator - Error Code [" + errorCode + "] has occurred trying to load the [" + m_SourceFont.name + "] font file. This typically results from the use of an incompatible or corrupted font file.", m_SourceFont);
+                            Debug.LogWarning("Unable to load font face for [" + m_SourceFont.name + "]. Make sure \"Include Font Data\" is enabled in the Font Import Settings. You may disable it after creating the static Font Asset.", m_SourceFont);
                         }
                     }
 
@@ -1183,7 +1183,6 @@ namespace TMPro.EditorUtilities
             if (m_IsFontAtlasInvalid)
                 ClearGeneratedData();
         }
-
 
         /// <summary>
         /// Clear the previously generated data.

@@ -2023,6 +2023,11 @@ namespace TMPro
         /// <returns></returns>
         private static bool PointIntersectRectangle(Vector3 m, Vector3 a, Vector3 b, Vector3 c, Vector3 d)
         {
+            // A zero area rectangle is not valid for this method.
+            Vector3 normal = Vector3.Cross(b - a, d - a);
+            if (normal == Vector3.zero)
+                return false;
+
             Vector3 ab = b - a;
             Vector3 am = m - a;
             Vector3 bc = c - b;
@@ -2116,6 +2121,13 @@ namespace TMPro
         /// <returns></returns>
         public static float DistanceToLine(Vector3 a, Vector3 b, Vector3 point)
         {
+            // If a and b are the same point, just return distance to that point
+            if (a == b)
+            {
+                Vector3 diff = point - a;
+                return Vector3.Dot(diff, diff);
+            }
+
             Vector3 n = b - a;
             Vector3 pa = a - point;
 

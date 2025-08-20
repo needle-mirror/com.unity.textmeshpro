@@ -604,8 +604,12 @@ namespace TMPro
             // Load TMP Settings for new text object instances.
             LoadDefaultSettings();
 
-            // Load the font asset and assign material to renderer.
-            LoadFontAsset();
+#if UNITY_EDITOR
+            // We don't want to call LoadFontAsset when building the game since it causes some characters to be added to the atlas, making the build bigger.
+            if (!UnityEditor.BuildPipeline.isBuildingPlayer)
+#endif
+                // Load the font asset and assign material to renderer.
+                LoadFontAsset();
 
             // Allocate our initial buffers.
             if (m_TextProcessingArray == null)
@@ -4085,9 +4089,13 @@ namespace TMPro
                         }
                     }
                     // Special handling for Latin characters followed by a CJK character.
-                    else if (m_isNonBreakingSpace == false && m_characterCount + 1 < totalCharacterCount && TMP_TextParsingUtilities.IsCJK(m_textInfo.characterInfo[m_characterCount + 1].character))
+                    else if (!m_isNonBreakingSpace && (m_characterCount + 1) < totalCharacterCount && TMP_TextParsingUtilities.IsCJK(m_textInfo.characterInfo[m_characterCount + 1].character))
                     {
-                        shouldSaveHardLineBreak = true;
+                        uint nextChar = m_textInfo.characterInfo[m_characterCount + 1].character;
+                        bool prevIsLeading = TMP_Settings.linebreakingRules.leadingCharacters.Contains(charCode);
+                        bool nextIsFollowing = TMP_Settings.linebreakingRules.followingCharacters.Contains(nextChar);
+                        if (!prevIsLeading && !nextIsFollowing)
+                            shouldSaveHardLineBreak = true;
                     }
                     else if (isFirstWordOfLine)
                     {
