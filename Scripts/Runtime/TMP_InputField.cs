@@ -473,6 +473,9 @@ namespace TMPro
                     case RuntimePlatform.GameCoreXboxSeries:
                     #endif
                     case RuntimePlatform.Switch:
+                    #if UNITY_2023_3_OR_NEWER
+                    case RuntimePlatform.Switch2:
+                    #endif
                     #if UNITY_2022_1_OR_NEWER
                     case RuntimePlatform.WebGLPlayer:
                     #endif
@@ -506,6 +509,9 @@ namespace TMPro
                     case RuntimePlatform.GameCoreXboxSeries:
                     #endif
                     case RuntimePlatform.Switch:
+                    #if UNITY_2023_3_OR_NEWER
+                    case RuntimePlatform.Switch2:
+                    #endif
                     #if UNITY_2022_1_OR_NEWER
                     case RuntimePlatform.WebGLPlayer:
                     #endif
@@ -547,6 +553,9 @@ namespace TMPro
                 case RuntimePlatform.GameCoreXboxSeries:
                 #endif
                 case RuntimePlatform.Switch:
+                #if UNITY_2023_3_OR_NEWER
+                case RuntimePlatform.Switch2:
+                #endif
                     return false;
                 #if UNITY_2022_1_OR_NEWER
                 case RuntimePlatform.WebGLPlayer:
@@ -4346,8 +4355,8 @@ namespace TMPro
                     OnFocus();
 
                     // Opening the soft keyboard sets its selection to the end of the text.
-                    // As such, we set the selection to match the Input Field's internal selection.
-                    if (m_SoftKeyboard != null && m_SoftKeyboard.canSetSelection)
+                    // As such, we set the selection to match the Input Field's internal selection. // UUM-112457
+                    if (m_SoftKeyboard != null)
                     {
                         int length = stringPositionInternal < stringSelectPositionInternal ? stringSelectPositionInternal - stringPositionInternal : stringPositionInternal - stringSelectPositionInternal;
                         m_SoftKeyboard.selection = new RangeInt(stringPositionInternal < stringSelectPositionInternal ? stringPositionInternal : stringSelectPositionInternal, length);

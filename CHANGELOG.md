@@ -1,6 +1,12 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [3.2.0-pre.14] - 2025-10-07
+- Removed EmojiOne sprite asset and png.
+- Fixed incorrect preferred value calculations for text objects that contain characters and / or sprites whose character or glyph metrics have a scale = 0.
+- Fixed incorrect Ligature glyph atlas index when using font assets with Multi Atlas Texture enabled.
+- Fixed incorrect handling of ligatures that contain variant selectors in their input sequences. This is fairly common for Emoji sequences.
+- Improve line breaking for Chinese and Japanese
 
 ## [3.2.0-pre.13] - 2025-08-20
 - Ensure line breaking rules are preserved for CJK. (UUM-108849)
