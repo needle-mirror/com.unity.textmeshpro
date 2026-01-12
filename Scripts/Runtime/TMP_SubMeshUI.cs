@@ -238,12 +238,10 @@ namespace TMPro
             subMesh.m_fontAsset = materialReference.fontAsset;
             subMesh.m_spriteAsset = materialReference.spriteAsset;
             subMesh.m_isDefaultMaterial = materialReference.isDefaultMaterial;
-            subMesh.maskable = textComponent.maskable;
             subMesh.SetSharedMaterial(materialReference.material);
 
             return subMesh;
         }
-
 
 
         /// <summary>

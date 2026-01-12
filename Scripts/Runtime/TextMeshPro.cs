@@ -1778,7 +1778,10 @@ namespace TMPro
                             // If we matched all components, perform the substitution.
                             if (ligatureGlyphID != 0 && componentIndex == componentCount)
                             {
-                                // idx now points one past the last code point we consume (including any skipped VS/ZWJ within the cluster).
+                                // Check for potential trailing variant selector that should also be consumed in the sequence.
+                                if (idx < textProcessingArray.Length && TMP_TextParsingUtilities.IsIgnorableForLigature(textProcessingArray[idx].unicode))
+                                    idx++;
+
                                 int spanLen = idx - i;
                                 if (m_currentFontAsset.TryAddGlyphInternal(ligatureGlyphID, out Glyph glyph))
                                 {
@@ -2779,7 +2782,7 @@ namespace TMPro
                 #region Handle Right-to-Left
                 if (m_isRightToLeft)
                 {
-                    m_xAdvance -= currentGlyphMetrics.horizontalAdvance * (1 - m_charWidthAdjDelta) * currentElementScale;
+                    m_xAdvance -= currentGlyphMetrics.horizontalAdvance * (1 - m_charWidthAdjDelta) * m_characterHorizontalScale * currentElementScale;
 
                     if (isWhiteSpace || charCode == 0x200B)
                         m_xAdvance -= m_wordSpacing * currentEmScale;
@@ -2793,9 +2796,9 @@ namespace TMPro
                 if (m_monoSpacing != 0)
                 {
                     if (m_duoSpace && (charCode == '.' || charCode == ':' || charCode == ','))
-                        monoAdvance = (m_monoSpacing / 4 - (currentGlyphMetrics.width / 2 + currentGlyphMetrics.horizontalBearingX) * currentElementScale) * (1 - m_charWidthAdjDelta);
+                        monoAdvance = (m_monoSpacing / 4 - (currentGlyphMetrics.width / 2 + currentGlyphMetrics.horizontalBearingX) * currentElementScale) * (1 - m_charWidthAdjDelta) * m_characterHorizontalScale;
                     else
-                        monoAdvance = (m_monoSpacing / 2 - (currentGlyphMetrics.width / 2 + currentGlyphMetrics.horizontalBearingX) * currentElementScale) * (1 - m_charWidthAdjDelta);
+                        monoAdvance = (m_monoSpacing / 2 - (currentGlyphMetrics.width / 2 + currentGlyphMetrics.horizontalBearingX) * currentElementScale) * (1 - m_charWidthAdjDelta) * m_characterHorizontalScale;
 
                     m_xAdvance += monoAdvance;
                 }
@@ -2804,39 +2807,26 @@ namespace TMPro
 
                 // Set Padding based on selected font style
                 #region Handle Style Padding
-                float boldSpacingAdjustment;
-                float style_padding;
-                if (m_textElementType == TMP_TextElementType.Character && !isUsingAltTypeface && ((m_FontStyleInternal & FontStyles.Bold) == FontStyles.Bold)) // Checks for any combination of Bold Style.
-                {
-                    if (m_currentMaterial != null && m_currentMaterial.HasProperty(ShaderUtilities.ID_GradientScale))
-                    {
-                        float gradientScale = m_currentMaterial.GetFloat(ShaderUtilities.ID_GradientScale);
-                        style_padding = m_currentFontAsset.boldStyle / 4.0f * gradientScale * m_currentMaterial.GetFloat(ShaderUtilities.ID_ScaleRatio_A);
+                float boldSpacingAdjustment = 0;
+                float style_padding = 0;
 
-                        // Clamp overall padding to Gradient Scale size.
-                        if (style_padding + padding > gradientScale)
-                            padding = gradientScale - style_padding;
-                    }
-                    else
-                        style_padding = 0;
-
-                    boldSpacingAdjustment = m_currentFontAsset.boldSpacing;
-                }
-                else
+                if (m_textElementType == TMP_TextElementType.Character)
                 {
+                    bool isBold = !isUsingAltTypeface && (m_FontStyleInternal & FontStyles.Bold) == FontStyles.Bold;
+                    boldSpacingAdjustment = isBold ? m_currentFontAsset.boldSpacing : 0;
+
                     if (m_currentMaterial != null && m_currentMaterial.HasProperty(ShaderUtilities.ID_GradientScale) && m_currentMaterial.HasProperty(ShaderUtilities.ID_ScaleRatio_A))
                     {
                         float gradientScale = m_currentMaterial.GetFloat(ShaderUtilities.ID_GradientScale);
-                        style_padding = m_currentFontAsset.normalStyle / 4.0f * gradientScale * m_currentMaterial.GetFloat(ShaderUtilities.ID_ScaleRatio_A);
+                        float scaleRatioA = m_currentMaterial.GetFloat(ShaderUtilities.ID_ScaleRatio_A);
+                        float styleModifier = isBold ? m_currentFontAsset.boldStyle : m_currentFontAsset.normalStyle;
+
+                        style_padding = styleModifier * 0.25f * gradientScale * scaleRatioA;
 
                         // Clamp overall padding to Gradient Scale size.
                         if (style_padding + padding > gradientScale)
                             padding = gradientScale - style_padding;
                     }
-                    else
-                        style_padding = 0;
-
-                    boldSpacingAdjustment = 0;
                 }
                 #endregion Handle Style Padding
 
@@ -2845,7 +2835,7 @@ namespace TMPro
                 #region Calculate Vertices Position
                 k_CalculateVerticesPositionMarker.Begin();
                 Vector3 top_left;
-                top_left.x = m_xAdvance + ((currentGlyphMetrics.horizontalBearingX * m_FXScale.x - padding - style_padding + glyphAdjustments.xPlacement) * currentElementScale * (1 - m_charWidthAdjDelta));
+                top_left.x = m_xAdvance + (currentGlyphMetrics.horizontalBearingX * m_FXScale.x - padding - style_padding + glyphAdjustments.xPlacement) * currentElementScale * (1 - m_charWidthAdjDelta) * m_characterHorizontalScale;
                 top_left.y = baselineOffset + (currentGlyphMetrics.horizontalBearingY + padding + glyphAdjustments.yPlacement) * currentElementScale - m_lineOffset + m_baselineOffset;
                 top_left.z = 0;
 
@@ -2855,7 +2845,7 @@ namespace TMPro
                 bottom_left.z = 0;
 
                 Vector3 top_right;
-                top_right.x = bottom_left.x + ((currentGlyphMetrics.width * m_FXScale.x + padding * 2 + style_padding * 2) * currentElementScale * (1 - m_charWidthAdjDelta));
+                top_right.x = bottom_left.x + (currentGlyphMetrics.width * m_FXScale.x + padding * 2 + style_padding * 2) * currentElementScale * (1 - m_charWidthAdjDelta) * m_characterHorizontalScale;
                 top_right.y = top_left.y;
                 top_right.z = 0;
 
@@ -3042,7 +3032,7 @@ namespace TMPro
                     widthOfTextArea = m_width != -1 ? Mathf.Min(marginWidth + 0.0001f - marginLeft - marginRight, m_width) : marginWidth + 0.0001f - marginLeft - marginRight;
 
                     // Calculate the line breaking width of the text.
-                    float textWidth = Mathf.Abs(m_xAdvance) + (!m_isRightToLeft ? currentGlyphMetrics.horizontalAdvance : 0) * (1 - m_charWidthAdjDelta) * (charCode == 0xAD ? currentElementUnmodifiedScale : currentElementScale);
+                    float textWidth = Mathf.Abs(m_xAdvance) + (!m_isRightToLeft ? currentGlyphMetrics.horizontalAdvance : 0) * (1 - m_charWidthAdjDelta) * m_characterHorizontalScale * (charCode == 0xAD ? currentElementUnmodifiedScale : currentElementScale);
                     float textHeight = m_maxTextAscender - (m_maxLineDescender - m_lineOffset) + (m_lineOffset > 0 && m_IsDrivenLineSpacing == false ? m_maxLineAscender - m_startOfLineAscender : 0);
 
                     int testedCharacterCount = m_characterCount;
@@ -3796,7 +3786,7 @@ namespace TMPro
                     }
 
                     float textHeight = m_maxTextAscender - (m_maxLineDescender - m_lineOffset) + (m_lineOffset > 0 && m_IsDrivenLineSpacing == false ? m_maxLineAscender - m_startOfLineAscender : 0);
-                    float textWidth = Mathf.Abs(m_xAdvance) + (!m_isRightToLeft ? m_Ellipsis.character.m_Glyph.metrics.horizontalAdvance : 0) * (1 - m_charWidthAdjDelta) * scale;
+                    float textWidth = Mathf.Abs(m_xAdvance) + (!m_isRightToLeft ? m_Ellipsis.character.m_Glyph.metrics.horizontalAdvance : 0) * (1 - m_charWidthAdjDelta) * m_characterHorizontalScale * scale;
                     float widthOfTextAreaForEllipsis = m_width != -1 ? Mathf.Min(marginWidth + 0.0001f - marginLeft - marginRight, m_width) : marginWidth + 0.0001f - marginLeft - marginRight;
 
                     if (textWidth < widthOfTextAreaForEllipsis * (isJustifiedOrFlush ? 1.05f : 1.0f) && textHeight < marginHeight + 0.0001f)
@@ -3844,21 +3834,21 @@ namespace TMPro
                     else
                         monoAdjustment = m_monoSpacing - monoAdvance;
 
-                    m_xAdvance += (monoAdjustment + ((m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment) * currentEmScale) + m_cSpacing) * (1 - m_charWidthAdjDelta);
+                    m_xAdvance += (monoAdjustment + ((m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment) * currentEmScale) + m_cSpacing) * (1 - m_charWidthAdjDelta) * m_characterHorizontalScale;
 
                     if (isWhiteSpace || charCode == 0x200B)
                         m_xAdvance += m_wordSpacing * currentEmScale;
                 }
                 else if (m_isRightToLeft)
                 {
-                    m_xAdvance -= ((glyphAdjustments.xAdvance * currentElementScale + (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment + boldSpacingAdjustment) * currentEmScale + m_cSpacing) * (1 - m_charWidthAdjDelta));
+                    m_xAdvance -= (glyphAdjustments.xAdvance * currentElementScale + (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment + boldSpacingAdjustment) * currentEmScale + m_cSpacing) * (1 - m_charWidthAdjDelta) * m_characterHorizontalScale;
 
                     if (isWhiteSpace || charCode == 0x200B)
                         m_xAdvance -= m_wordSpacing * currentEmScale;
                 }
                 else
                 {
-                    m_xAdvance += ((currentGlyphMetrics.horizontalAdvance * m_FXScale.x + glyphAdjustments.xAdvance) * currentElementScale + (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment + boldSpacingAdjustment) * currentEmScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
+                    m_xAdvance += ((currentGlyphMetrics.horizontalAdvance * m_FXScale.x + glyphAdjustments.xAdvance) * currentElementScale + (m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment + boldSpacingAdjustment) * currentEmScale + m_cSpacing) * (1 - m_charWidthAdjDelta) * m_characterHorizontalScale;
 
                     if (isWhiteSpace || charCode == 0x200B)
                         m_xAdvance += m_wordSpacing * currentEmScale;
@@ -3963,7 +3953,7 @@ namespace TMPro
                     if (m_textInfo.lineInfo[m_lineNumber].characterCount == 1)
                         m_textInfo.lineInfo[m_lineNumber].alignment = m_lineJustification;
 
-                    float maxAdvanceOffset = ((m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment + boldSpacingAdjustment) * currentEmScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
+                    float maxAdvanceOffset = ((m_currentFontAsset.normalSpacingOffset + characterSpacingAdjustment + boldSpacingAdjustment) * currentEmScale + m_cSpacing) * (1 - m_charWidthAdjDelta) * m_characterHorizontalScale;
                     if (m_textInfo.characterInfo[m_lastVisibleCharacterOfLine].isVisible)
                         m_textInfo.lineInfo[m_lineNumber].maxAdvance = m_textInfo.characterInfo[m_lastVisibleCharacterOfLine].xAdvance + (m_isRightToLeft ? maxAdvanceOffset : - maxAdvanceOffset);
                     else
@@ -4060,6 +4050,7 @@ namespace TMPro
 
                     bool shouldSaveHardLineBreak = false;
                     bool shouldSaveSoftLineBreak = false;
+                    uint nextChar = m_characterCount + 1 < totalCharacterCount ? m_textInfo.characterInfo[m_characterCount + 1].character : 0u;
 
                     if ((isWhiteSpace || charCode == 0x200B || charCode == 0x2D || charCode == 0xAD) && (!m_isNonBreakingSpace || ignoreNonBreakingSpace) && charCode != 0xA0 && charCode != 0x2007 && charCode != 0x2011 && charCode != 0x202F && charCode != 0x2060)
                     {
@@ -4077,7 +4068,7 @@ namespace TMPro
                     else if (m_isNonBreakingSpace == false && (TMP_TextParsingUtilities.IsHangul(charCode) && TMP_Settings.useModernHangulLineBreakingRules == false || TMP_TextParsingUtilities.IsCJK(charCode)))
                     {
                         bool isCurrentLeadingCharacter = TMP_Settings.linebreakingRules.leadingCharacters.Contains(charCode);
-                        bool isNextFollowingCharacter = m_characterCount < totalCharacterCount - 1 && TMP_Settings.linebreakingRules.followingCharacters.Contains(m_textInfo.characterInfo[m_characterCount + 1].character);
+                        bool isNextFollowingCharacter = m_characterCount < totalCharacterCount - 1 && TMP_Settings.linebreakingRules.followingCharacters.Contains(nextChar);
 
                         if (isCurrentLeadingCharacter == false)
                         {
@@ -4108,14 +4099,10 @@ namespace TMPro
                             }
                         }
                     }
-                    // Special handling for Latin characters followed by a CJK character.
-                    else if (!m_isNonBreakingSpace && (m_characterCount + 1) < totalCharacterCount && TMP_TextParsingUtilities.IsCJK(m_textInfo.characterInfo[m_characterCount + 1].character))
+                    // Handling for Latin characters followed by a CJK character that is not a following character.
+                    else if (m_isNonBreakingSpace == false && TMP_TextParsingUtilities.IsCJK(nextChar) && !TMP_Settings.linebreakingRules.followingCharacters.Contains(nextChar))
                     {
-                        uint nextChar = m_textInfo.characterInfo[m_characterCount + 1].character;
-                        bool prevIsLeading = TMP_Settings.linebreakingRules.leadingCharacters.Contains(charCode);
-                        bool nextIsFollowing = TMP_Settings.linebreakingRules.followingCharacters.Contains(nextChar);
-                        if (!prevIsLeading && !nextIsFollowing)
-                            shouldSaveHardLineBreak = true;
+                        shouldSaveHardLineBreak = true;
                     }
                     else if (isFirstWordOfLine)
                     {
@@ -4509,7 +4496,7 @@ namespace TMPro
 
                             // Pack UV's so that we can pass Xscale needed for Shader to maintain 1:1 ratio.
                             #region Pack Scale into UV2
-                            xScale = characterInfos[i].scale * Mathf.Abs(lossyScale) * (1 - m_charWidthAdjDelta);
+                            xScale = characterInfos[i].scale * Mathf.Abs(lossyScale) * (1 - m_charWidthAdjDelta) * m_characterHorizontalScale;
                             if (!characterInfos[i].isUsingAlternateTypeface && (characterInfos[i].style & FontStyles.Bold) == FontStyles.Bold) xScale *= -1;
 
                             // Set SDF Scale

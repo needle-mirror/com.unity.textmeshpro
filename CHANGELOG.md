@@ -1,6 +1,13 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [3.2.0-pre.15] - 2026-01-12
+- Improved preferred value calculation when multiple fonts are used in the same text object. (UUM-122933)
+- Fixed maskable property state not being mirrored on sub mesh objects. (UUM-119215)
+- Fixed font styles and weights being applied to sprites. (UUM-102112)
+- Made further improvements to CJK line breaking handling. (UUM-121295)
+- Added new feature to allow users to control Character Horizontal Scaling to provided added text layout flexibility. 
+
 ## [3.2.0-pre.14] - 2025-10-07
 - Removed EmojiOne sprite asset and png.
 - Fixed incorrect preferred value calculations for text objects that contain characters and / or sprites whose character or glyph metrics have a scale = 0.

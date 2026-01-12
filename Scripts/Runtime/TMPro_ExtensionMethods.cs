@@ -7,9 +7,9 @@ namespace TMPro
 {
     public static class TMPro_ExtensionMethods
     {
-        
+
         /// <summary>
-        /// Converts a string of 4 ascii characters to an int. 
+        /// Converts a string of 4 ascii characters to an int.
         /// </summary>
         /// <param name="s">String comprised of 4 ascii characters.</param>
         /// <returns>The integer value for the string.</returns>
@@ -17,11 +17,11 @@ namespace TMPro
         {
             if (string.IsNullOrEmpty(s))
                 return 0;
-            
-            return s[0] << 24 | s[1] << 16 | s[2] << 8 | s[3];            
+
+            return s[0] << 24 | s[1] << 16 | s[2] << 8 | s[3];
         }
-        
-        
+
+
         public static int[] ToIntArray(this string text)
         {
             int[] intArray = new int[text.Length];

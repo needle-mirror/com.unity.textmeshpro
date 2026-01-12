@@ -1005,8 +1005,9 @@ namespace TMPro
         private bool m_IsCaretPositionDirty;
         private bool m_forceRectTransformAdjustment;
 
-		// Primary to track when an user presses on the X to close the keyboard in the HoloLens
-		private bool m_IsKeyboardBeingClosedInHoloLens = false;
+        // Primary to track when an user presses on the X to close the keyboard in touchscreen.
+        // This was first observed as an issue on HoloLens (TMBP-98) as the X button does not act as an ESC key.
+		private bool m_IsKeyboardBeingClosedInTouchscreen = false;
 
         /// <summary>
         /// Get: Returns the focus position as thats the position that moves around even during selection.
@@ -1746,30 +1747,28 @@ namespace TMPro
 
                     TouchScreenKeyboard.Status status = m_SoftKeyboard.status;
 
-                    // Special handling for UWP - Hololens which does not support Canceled status
                     if (m_LastKeyCode != KeyCode.Return && status == TouchScreenKeyboard.Status.Done && isUWP())
-					{
+                    {
                         status = TouchScreenKeyboard.Status.Canceled;
-                        // The HoloLen's X button will not be acting as an ESC Key (TMBP-98)
-						m_IsKeyboardBeingClosedInHoloLens = true;
-					}
+                        m_IsKeyboardBeingClosedInTouchscreen = true;
+                    }
 
                     switch (status)
-                    {
-                        case TouchScreenKeyboard.Status.LostFocus:
-                            SendTouchScreenKeyboardStatusChanged();
-                            break;
-                        case TouchScreenKeyboard.Status.Canceled:
-                            m_ReleaseSelection = true;
-                            m_WasCanceled = true;
-                            SendTouchScreenKeyboardStatusChanged();
-                            break;
-                        case TouchScreenKeyboard.Status.Done:
-                            m_ReleaseSelection = true;
-                            SendTouchScreenKeyboardStatusChanged();
-                            OnSubmit(null);
-                            break;
-                    }
+                        {
+                            case TouchScreenKeyboard.Status.LostFocus:
+                                SendTouchScreenKeyboardStatusChanged();
+                                break;
+                            case TouchScreenKeyboard.Status.Canceled:
+                                m_ReleaseSelection = true;
+                                m_WasCanceled = true;
+                                SendTouchScreenKeyboardStatusChanged();
+                                break;
+                            case TouchScreenKeyboard.Status.Done:
+                                m_ReleaseSelection = true;
+                                SendTouchScreenKeyboardStatusChanged();
+                                OnSubmit(null);
+                                break;
+                        }
                 }
 
                 return;
@@ -1946,9 +1945,9 @@ namespace TMPro
                 if (multiLine)
                 {
                     if (localMousePos.y > rect.yMax)
-                        MoveUp(true, true);
+                        MoveUp(true, false);
                     else if (localMousePos.y < rect.yMin)
-                        MoveDown(true, true);
+                        MoveDown(true, false);
                 }
                 else
                 {
@@ -4433,7 +4432,7 @@ namespace TMPro
 
             if (m_TextComponent != null && IsInteractable())
             {
-                if (m_WasCanceled && m_RestoreOriginalTextOnEscape && !m_IsKeyboardBeingClosedInHoloLens)
+                if (m_WasCanceled && m_RestoreOriginalTextOnEscape && !m_IsKeyboardBeingClosedInTouchscreen)
                     text = m_OriginalText;
 
                 if (m_SoftKeyboard != null)
@@ -4457,7 +4456,7 @@ namespace TMPro
                 if (inputSystem != null)
                     inputSystem.imeCompositionMode = IMECompositionMode.Auto;
 
-				m_IsKeyboardBeingClosedInHoloLens = false;
+                m_IsKeyboardBeingClosedInTouchscreen = false;
             }
 
             MarkGeometryAsDirty();
@@ -4482,6 +4481,12 @@ namespace TMPro
                 m_ShouldActivateNextUpdate = true;
 
             SendOnSubmit();
+#if PLATFORM_TVOS
+            // When a keyboard is open in tvOS, the submit button is used for typing.
+            // Only actually close the keyboard on tvOS if "Done" was pressed in the soft keyboard.
+            if (m_SoftKeyboard != null && m_SoftKeyboard.status == TouchScreenKeyboard.Status.Visible)
+                return;
+#endif
             DeactivateInputField();
             eventData?.Use();
         }
